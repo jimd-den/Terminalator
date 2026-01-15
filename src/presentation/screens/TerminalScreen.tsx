@@ -15,6 +15,7 @@ import { FileSystem } from '../../domain/entities/FileSystem';
 import { createInitialTerminalState } from '../../domain/entities/TerminalState';
 import { GameCommandExecutor } from '../../interface-adapters/GameCommandExecutor';
 import { GameManager } from '../../interface-adapters/GameManager';
+import { VirtualKeyboard } from '../components/VirtualKeyboard';
 
 export const TerminalScreen: React.FC = () => {
     const [fs] = useState(new FileSystem());
@@ -28,7 +29,41 @@ export const TerminalScreen: React.FC = () => {
         { text: 'TYPE "mail" TO CHECK TRANSMISSIONS', type: 'output' },
     ]);
 
+    const [ghostText, setGhostText] = useState('');
+
+    const suggestions = ['help', 'ls', 'cd', 'cat', 'whoami', 'mail', 'check-comms', 'clear', 'vim', 'man'];
+
+    const handleInputChange = (text: string) => {
+        setInput(text);
+        if (!text) {
+            setGhostText('');
+            return;
+        }
+        const match = suggestions.find(s => s.startsWith(text.toLowerCase()) && s !== text.toLowerCase());
+        setGhostText(match ? match.substring(text.length) : '');
+    };
+
+    const handleKeyPress = (key: string) => {
+        if (key === 'TAB') {
+            if (ghostText) {
+                const fullCommand = input + ghostText;
+                setInput(fullCommand);
+                setGhostText('');
+            }
+        } else if (key === 'ESC') {
+            setInput('');
+            setGhostText('');
+        } else {
+            setInput(prev => prev + key);
+        }
+    };
+
     const handleCommand = () => {
+        const cmdToRun = input || (ghostText ? input + ghostText : ''); // Allow running ghost suggestion on enter if partial? No, standard behavior is strictly input.
+        if (!cmdToRun) return;
+
+        // Actually standard terminal doesn't autoComplete on enter, but let's stick to strict input for realism unless user tabbed.
+        // Waiting for user to be explicit.
         if (!input) return;
 
         const { output: cmdOutput, newState } = commandExecutor.execute(input, state);
@@ -40,6 +75,7 @@ export const TerminalScreen: React.FC = () => {
         ]);
         setState(newState);
         setInput('');
+        setGhostText('');
 
         // Procedural event simulation after a few commands
         if (outputLines.length > 5 && outputLines.length % 4 === 0) {
@@ -80,22 +116,31 @@ export const TerminalScreen: React.FC = () => {
                     </ScrollView>
                 </View>
 
+                {/* MIDDLE: Virtual Toolbar */}
+                <VirtualKeyboard onKeyPress={handleKeyPress} />
+
                 {/* BOTTOM BOX: Input/Prompt */}
                 <View style={styles.inputBox}>
                     <View style={styles.promptLine}>
                         <Text style={styles.promptText}>{state.user}@system:~$ </Text>
-                        <TextInput
-                            style={styles.input}
-                            value={input}
-                            onChangeText={setInput}
-                            onSubmitEditing={handleCommand}
-                            autoCapitalize="none"
-                            autoCorrect={false}
-                            autoFocus={true}
-                            cursorColor={THEME.colors.primary}
-                            placeholderTextColor={THEME.colors.text.dim}
-                            placeholder="Awaiting command..."
-                        />
+                        <View style={styles.inputContainer}>
+                            <Text style={[styles.input, styles.ghostText]}>
+                                <Text style={{ opacity: 0 }}>{input}</Text>
+                                <Text style={{ opacity: 0.5 }}>{ghostText}</Text>
+                            </Text>
+                            <TextInput
+                                style={styles.input}
+                                value={input}
+                                onChangeText={handleInputChange}
+                                onSubmitEditing={handleCommand}
+                                autoCapitalize="none"
+                                autoCorrect={false}
+                                autoFocus={true}
+                                cursorColor={THEME.colors.primary}
+                                placeholderTextColor={THEME.colors.text.dim}
+                                placeholder=""
+                            />
+                        </View>
                     </View>
                 </View>
             </KeyboardAvoidingView>
@@ -131,13 +176,30 @@ const styles = StyleSheet.create({
         borderColor: THEME.colors.border,
         backgroundColor: THEME.colors.surface,
     },
+    inputBoxWrapper: {
+        flex: 0,
+    },
     inputBox: {
-        flex: 1,
         margin: THEME.spacing.md,
+        marginTop: 0,
         padding: THEME.spacing.md,
         borderWidth: THEME.borders.width,
         borderColor: THEME.colors.primary,
         backgroundColor: THEME.colors.surface,
+        minHeight: 60,
+    },
+    inputContainer: {
+        flex: 1,
+        position: 'relative',
+        justifyContent: 'center',
+    },
+    ghostText: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        color: THEME.colors.text.dim, // Should be same font as input
+        zIndex: 0,
     },
     scrollContent: {
         paddingBottom: THEME.spacing.xl,
