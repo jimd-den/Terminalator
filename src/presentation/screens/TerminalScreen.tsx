@@ -32,6 +32,7 @@ export const TerminalScreen: React.FC = () => {
     ]);
 
     const [ghostText, setGhostText] = useState('');
+    const [isTransitioning, setIsTransitioning] = useState(false);
 
     const suggestions = ['help', 'ls', 'cd', 'cat', 'whoami', 'mail', 'check-comms', 'clear', 'vim', 'man'];
 
@@ -72,13 +73,21 @@ export const TerminalScreen: React.FC = () => {
         const { output: cmdOutput, newState, navigationAction } = response;
 
         if (navigationAction && navigationAction.type === 'NAVIGATE') {
-            (navigation.navigate as any)(navigationAction.target, navigationAction.params);
-            // Optionally clear input here or wait for return?
-            // Usually we clear input so when they come back it's fresh.
-            setInput('');
-            setGhostText('');
-            // Do NOT print the output if we navigate? Or print "Opening..." then navigate?
-            // The executor returns "Opening...", so let's print it.
+            // Trigger CRT Blink Effect
+            setIsTransitioning(true);
+            setTimeout(() => {
+                (navigation.navigate as any)(navigationAction.target, navigationAction.params);
+                // Reset interaction state
+                setInput('');
+                setGhostText('');
+                // Reset transition state after a delay (or when returning?)
+                // Actually, when we return, this component re-renders or stays mounted?
+                // Navigator keeps it mounted. So we need to unset this.
+                // Better: unset it quickly after nav, OR rely on focus listener.
+                // Simple approach: unset after slightly longer timeout.
+                setTimeout(() => setIsTransitioning(false), 300);
+            }, 100); // 100ms blink
+            return; // Stop execution here to prevent immediate state updates visible before blink
         }
 
         setOutputLines(prev => [
@@ -143,7 +152,9 @@ export const TerminalScreen: React.FC = () => {
                     </View>
                 </View>
             }
-        />
+        >
+            {isTransitioning && <View style={styles.crtBlinkOverlay} />}
+        </ConsoleLayout>
     );
 };
 
@@ -193,4 +204,9 @@ const styles = StyleSheet.create({
         color: THEME.colors.text.dim,
         zIndex: 0,
     },
+    crtBlinkOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: THEME.colors.background, // Black out
+        zIndex: 999, // On top of everything
+    }
 });

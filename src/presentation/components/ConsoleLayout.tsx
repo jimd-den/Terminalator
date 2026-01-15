@@ -9,6 +9,7 @@ interface ConsoleLayoutProps {
     middleContent?: React.ReactNode;
     bottomContent: React.ReactNode;
     style?: ViewStyle;
+    children?: React.ReactNode;
 }
 
 export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
@@ -16,7 +17,8 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
     topContent,
     middleContent,
     bottomContent,
-    style
+    style,
+    children
 }) => {
     return (
         <SafeAreaView style={[styles.container, style]}>
@@ -42,6 +44,7 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
                     {bottomContent}
                 </View>
             </KeyboardAvoidingView>
+            {children}
         </SafeAreaView>
     );
 };

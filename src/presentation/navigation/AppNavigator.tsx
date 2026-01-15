@@ -11,6 +11,7 @@ export const AppNavigator = () => {
             initialRouteName="Terminal"
             screenOptions={{
                 headerShown: false,
+                animation: 'none',
             }}
         >
             <Stack.Screen name="Terminal" component={TerminalScreen} />

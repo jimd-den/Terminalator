@@ -23,6 +23,7 @@ export const EditorScreen: React.FC = () => {
     const [mode, setMode] = useState<'NORMAL' | 'INSERT' | 'COMMAND'>('NORMAL');
     const [commandInput, setCommandInput] = useState('');
     const [statusMessage, setStatusMessage] = useState('');
+    const [isMounting, setIsMounting] = useState(true);
 
     const contentInputRef = useRef<TextInput>(null);
     const commandInputRef = useRef<TextInput>(null);
@@ -54,6 +55,12 @@ export const EditorScreen: React.FC = () => {
         // Clear hidden input to keep it ready for next char
         hiddenInputRef.current?.clear();
     };
+
+    useEffect(() => {
+        // Simulating CRT "warm up" or refresh on mode switch
+        const timer = setTimeout(() => setIsMounting(false), 50);
+        return () => clearTimeout(timer);
+    }, []);
 
     useEffect(() => {
         // Load file content
@@ -273,5 +280,10 @@ const styles = StyleSheet.create({
         width: 1,
         height: 1,
         opacity: 0,
+    },
+    crtBlinkOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: THEME.colors.background,
+        zIndex: 999,
     }
 });
