@@ -19,10 +19,30 @@ import { VirtualKeyboard } from '../components/VirtualKeyboard';
 import { ConsoleLayout } from '../components/ConsoleLayout';
 import { useGame } from '../context/GameContext';
 import { useNavigation } from '@react-navigation/native';
+import { useVimEditor } from '../components/vim/VimEditor';
+
+type ActiveApp = { type: 'SHELL' } | { type: 'VIM', filename: string };
 
 export const TerminalScreen: React.FC = () => {
     const { fs, gameManager, commandExecutor } = useGame();
+    // Navigation still needed? Maybe for other features, but not for Vim anymore.
     const navigation = useNavigation();
+
+    // App State
+    const [activeApp, setActiveApp] = useState<ActiveApp>({ type: 'SHELL' });
+
+    // Vim Hook
+    // We conditionally use the hook? No, hooks must be unconditional.
+    // We can pass a dummy filename if not active? 
+    // Or we render a child component that uses the hook.
+    // Let's render the hook usage in a wrapper or just use null if not active.
+    // Actually, creating a sub-component for the Vim part is cleaner to avoid Hook rules issues with conditional rendering logic if we were to unmount it.
+    // But since we want to keep state, we should probably mount/unmount the Vim subsystem.
+
+    // Let's use a sub-component <VimContainer /> that takes filename.
+    // But we defined useVimEditor as a hook returning UI.
+    // So we need a component that calls this hook.
+
     const [state, setState] = useState(createInitialTerminalState());
     const [input, setInput] = useState('');
     const [outputLines, setOutputLines] = useState<{ text: string, type: 'input' | 'output' }[]>([
@@ -73,21 +93,18 @@ export const TerminalScreen: React.FC = () => {
         const { output: cmdOutput, newState, navigationAction } = response;
 
         if (navigationAction && navigationAction.type === 'NAVIGATE') {
-            // Trigger CRT Blink Effect
-            setIsTransitioning(true);
-            setTimeout(() => {
-                (navigation.navigate as any)(navigationAction.target, navigationAction.params);
-                // Reset interaction state
-                setInput('');
-                setGhostText('');
-                // Reset transition state after a delay (or when returning?)
-                // Actually, when we return, this component re-renders or stays mounted?
-                // Navigator keeps it mounted. So we need to unset this.
-                // Better: unset it quickly after nav, OR rely on focus listener.
-                // Simple approach: unset after slightly longer timeout.
-                setTimeout(() => setIsTransitioning(false), 300);
-            }, 100); // 100ms blink
-            return; // Stop execution here to prevent immediate state updates visible before blink
+            if (navigationAction.target === 'Editor') {
+                // Trigger CRT Blink
+                setIsTransitioning(true);
+                setTimeout(() => {
+                    setActiveApp({ type: 'VIM', filename: navigationAction.params.filename });
+                    setTimeout(() => setIsTransitioning(false), 300);
+                }, 100);
+                return;
+            }
+            // Other nav?
+            (navigation.navigate as any)(navigationAction.target, navigationAction.params);
+            return;
         }
 
         setOutputLines(prev => [
@@ -106,57 +123,89 @@ export const TerminalScreen: React.FC = () => {
         }
     };
 
+    const handleVimExit = () => {
+        setIsTransitioning(true);
+        setTimeout(() => {
+            setActiveApp({ type: 'SHELL' });
+            setTimeout(() => setIsTransitioning(false), 300);
+        }, 100);
+    };
+
+    return (
+        <>
+            {activeApp.type === 'SHELL' ? (
+                <ConsoleLayout
+                    status="OPERATIONAL"
+                    topContent={
+                        <ScrollView
+                            contentContainerStyle={styles.scrollContent}
+                            ref={(ref) => ref?.scrollToEnd({ animated: true })}
+                        >
+                            {outputLines.map((line, i) => (
+                                line.type === 'output' ? (
+                                    <GhostWriter
+                                        key={i}
+                                        text={line.text}
+                                        speed={10}
+                                        style={styles.outputText}
+                                    />
+                                ) : (
+                                    <Text key={i} style={styles.inputEchoText}>{line.text}</Text>
+                                )
+                            ))}
+                        </ScrollView>
+                    }
+                    middleContent={<VirtualKeyboard onKeyPress={handleKeyPress} />}
+                    bottomContent={
+                        <View style={styles.promptLine}>
+                            <Text style={styles.promptText}>{state.user}@system:~$ </Text>
+                            <View style={styles.inputContainer}>
+                                <Text style={[styles.input, styles.ghostText]}>
+                                    <Text style={{ opacity: 0 }}>{input}</Text>
+                                    <Text style={{ opacity: 0.5 }}>{ghostText}</Text>
+                                </Text>
+                                <TextInput
+                                    style={styles.input}
+                                    value={input}
+                                    onChangeText={handleInputChange}
+                                    onSubmitEditing={handleCommand}
+                                    autoCapitalize="none"
+                                    autoCorrect={false}
+                                    autoFocus={true}
+                                    cursorColor={THEME.colors.primary}
+                                    placeholderTextColor={THEME.colors.text.dim}
+                                    placeholder=""
+                                />
+                            </View>
+                        </View>
+                    }
+                >
+                    {isTransitioning && <View style={styles.crtBlinkOverlay} />}
+                </ConsoleLayout>
+            ) : (
+                <VimContainer filename={activeApp.filename} onExit={handleVimExit} isTransitioning={isTransitioning} />
+            )}
+        </>
+    );
+};
+
+// Sub-component to safely use the hook
+const VimContainer: React.FC<{ filename: string; onExit: () => void; isTransitioning: boolean }> = ({ filename, onExit, isTransitioning }) => {
+    const { topContent, middleContent, bottomContent } = useVimEditor(filename, onExit);
+
     return (
         <ConsoleLayout
-            status="OPERATIONAL"
-            topContent={
-                <ScrollView
-                    contentContainerStyle={styles.scrollContent}
-                    ref={(ref) => ref?.scrollToEnd({ animated: true })}
-                >
-                    {outputLines.map((line, i) => (
-                        line.type === 'output' ? (
-                            <GhostWriter
-                                key={i}
-                                text={line.text}
-                                speed={10}
-                                style={styles.outputText}
-                            />
-                        ) : (
-                            <Text key={i} style={styles.inputEchoText}>{line.text}</Text>
-                        )
-                    ))}
-                </ScrollView>
-            }
-            middleContent={<VirtualKeyboard onKeyPress={handleKeyPress} />}
-            bottomContent={
-                <View style={styles.promptLine}>
-                    <Text style={styles.promptText}>{state.user}@system:~$ </Text>
-                    <View style={styles.inputContainer}>
-                        <Text style={[styles.input, styles.ghostText]}>
-                            <Text style={{ opacity: 0 }}>{input}</Text>
-                            <Text style={{ opacity: 0.5 }}>{ghostText}</Text>
-                        </Text>
-                        <TextInput
-                            style={styles.input}
-                            value={input}
-                            onChangeText={handleInputChange}
-                            onSubmitEditing={handleCommand}
-                            autoCapitalize="none"
-                            autoCorrect={false}
-                            autoFocus={true}
-                            cursorColor={THEME.colors.primary}
-                            placeholderTextColor={THEME.colors.text.dim}
-                            placeholder=""
-                        />
-                    </View>
-                </View>
-            }
+            status={`EDITING: ${filename}`}
+            topContent={topContent}
+            middleContent={middleContent}
+            bottomContent={bottomContent}
         >
             {isTransitioning && <View style={styles.crtBlinkOverlay} />}
         </ConsoleLayout>
     );
 };
+
+
 
 const styles = StyleSheet.create({
     scrollContent: {
