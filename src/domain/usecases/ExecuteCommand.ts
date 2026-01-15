@@ -13,6 +13,7 @@ export interface CommandResponse {
     output: string;
     newState: TerminalState;
     exitCode: number;
+    uiAction?: 'CLEAR';
     navigationAction?: {
         type: 'NAVIGATE';
         target: string;
@@ -32,6 +33,7 @@ export class ExecuteCommand {
             let output = '';
             let exitCode = 0;
             let newState = { ...state };
+            let uiAction: 'CLEAR' | undefined;
 
             switch (command) {
                 case 'ls':
@@ -46,6 +48,9 @@ export class ExecuteCommand {
                 case 'cat':
                     output = this.cat(args[0], state.currentDirectory);
                     break;
+                case 'grep':
+                    output = this.grep(args, state.currentDirectory);
+                    break;
                 case 'pwd':
                     output = state.currentDirectory;
                     break;
@@ -53,7 +58,8 @@ export class ExecuteCommand {
                     output = state.user;
                     break;
                 case 'clear':
-                    output = ''; // Handle in UI
+                    output = '';
+                    uiAction = 'CLEAR';
                     break;
                 case '':
                     output = '';
@@ -63,14 +69,17 @@ export class ExecuteCommand {
                     exitCode = 127;
             }
 
-            return { output, newState, exitCode };
+            return { output, newState, exitCode, uiAction };
         }, { commandString, currentDir: state.currentDirectory });
     }
 
     private ls(path: string): string {
         const node = this.fs.getNode(path);
         if (node && node.type === 'directory' && node.children) {
-            return Object.keys(node.children).join('  ');
+            // Check for empty directory
+            const files = Object.keys(node.children);
+            if (files.length === 0) return '';
+            return files.join('  ');
         }
         return '';
     }
@@ -86,7 +95,9 @@ export class ExecuteCommand {
         if (target === '..') {
             const parts = state.currentDirectory.split('/').filter(p => p.length > 0);
             parts.pop();
-            newPath = '/' + parts.join('/');
+            newPath = parts.length === 0 ? '/' : '/' + parts.join('/');
+        } else if (target === '.') {
+            newPath = state.currentDirectory;
         }
 
         const node = this.fs.getNode(newPath);
@@ -104,5 +115,24 @@ export class ExecuteCommand {
             return node.content || '';
         }
         return `cat: ${filename}: No such file or directory`;
+    }
+
+    private grep(args: string[], currentDir: string): string {
+        if (args.length < 2) return 'Usage: grep <pattern> <filename>';
+        const pattern = args[0];
+        const filename = args[1];
+
+        const path = currentDir === '/' ? `/${filename}` : `${currentDir}/${filename}`;
+        const node = this.fs.getNode(path);
+
+        if (node && node.type === 'file') {
+            const content = node.content || '';
+            const lines = content.split('\n');
+            // Basic substring match, regex could be added if needed
+            const matches = lines.filter(line => line.includes(pattern));
+            return matches.join('\n');
+        }
+
+        return `grep: ${filename}: No such file or directory`;
     }
 }

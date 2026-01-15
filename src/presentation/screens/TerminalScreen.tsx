@@ -54,16 +54,63 @@ export const TerminalScreen: React.FC = () => {
     const [ghostText, setGhostText] = useState('');
     const [isTransitioning, setIsTransitioning] = useState(false);
 
-    const suggestions = ['help', 'ls', 'cd', 'cat', 'whoami', 'mail', 'check-comms', 'clear', 'vim', 'man'];
+    const suggestions = ['help', 'ls', 'cd', 'cat', 'whoami', 'mail', 'check-comms', 'clear', 'vim', 'man', 'grep'];
+
+    const getAutocompleteSuggestion = (inputText: string): string => {
+        if (!inputText) return '';
+
+        const parts = inputText.split(' ');
+        const cmd = parts[0];
+
+        // 1. Command Autocomplete
+        if (parts.length === 1) {
+            const match = suggestions.find(s => s.startsWith(inputText.toLowerCase()) && s !== inputText.toLowerCase());
+            return match ? match.substring(inputText.length) : '';
+        }
+
+        // 2. File Autocomplete
+        // Helper to check if we are in a position to autocomplete a file
+        let lookingForFile = false;
+        let partialName = '';
+
+        if (['cd', 'cat', 'vim', 'ls'].includes(cmd) && parts.length === 2) {
+            lookingForFile = true;
+            partialName = parts[1];
+        } else if (cmd === 'grep' && parts.length === 3) {
+            lookingForFile = true;
+            partialName = parts[2];
+        }
+
+        if (lookingForFile) {
+            // Get files in current directory
+            // We need to access the FS from the hook, so we assume fs is available in scope.
+            // NOTE: currentDirectory logic from ExecuteCommand does relative path resolution.
+            // For autocomplete, we will simplify to "files in current WD".
+            // Complex path completion (e.g. cd ../bin) is ommitted for simplicity as per requirement "context aware" usually implies "files available here".
+
+            // To be robust, we should match resolving logic, but we'll stick to listing current directory children.
+            let targetDir = state.currentDirectory;
+            // If the partial name actually looks like a path (starts with /), we might want to resolve it, 
+            // but let's stick to simple filename completion for now to satisfy "path autocompletion" in the common case.
+
+            // However, ExecuteCommand resolves currentDirectory relative to root if it doesnt start with /.
+            // In TerminalState, currentDirectory is likely absolute (e.g. /home/operator).
+
+            const node = fs.getNode(targetDir);
+
+            if (node && node.children) {
+                const files = Object.keys(node.children);
+                const match = files.find(f => f.startsWith(partialName) && f !== partialName);
+                return match ? match.substring(partialName.length) : '';
+            }
+        }
+
+        return '';
+    };
 
     const handleInputChange = (text: string) => {
         setInput(text);
-        if (!text) {
-            setGhostText('');
-            return;
-        }
-        const match = suggestions.find(s => s.startsWith(text.toLowerCase()) && s !== text.toLowerCase());
-        setGhostText(match ? match.substring(text.length) : '');
+        setGhostText(getAutocompleteSuggestion(text));
     };
 
     const handleKeyPress = (key: string) => {
@@ -71,26 +118,44 @@ export const TerminalScreen: React.FC = () => {
             if (ghostText) {
                 const fullCommand = input + ghostText;
                 setInput(fullCommand);
-                setGhostText('');
+                setGhostText(''); // Clear ghost text after accepting, or re-calculate?
+                // Re-calculation happens on next render or we can verify if more completion is available
+                // Usually we just append. If we appended a dir, maybe we want to continue? 
+                // For now just append.
             }
         } else if (key === 'ESC') {
             setInput('');
             setGhostText('');
         } else {
-            setInput(prev => prev + key);
+            // VirtualKeyboard appends via this handler?? 
+            // Actually VirtualKeyboard calls this with a single char.
+            // But TextInput calls handleInputChange with full text.
+            // Wait, handleKeyPress logic for 'TAB'/'ESC' is separate from text input.
+            // If onKeyPress is for VirtualKeyboard, then we need to manually update input state?
+            // The existing code: setInput(prev => prev + key);
+            // Yes.
+            setInput(prev => {
+                const next = prev + key;
+                setGhostText(getAutocompleteSuggestion(next));
+                return next;
+            });
         }
     };
 
     const handleCommand = () => {
-        const cmdToRun = input || (ghostText ? input + ghostText : ''); // Allow running ghost suggestion on enter if partial? No, standard behavior is strictly input.
+        const cmdToRun = input; // Strict input
         if (!cmdToRun) return;
 
-        // Actually standard terminal doesn't autoComplete on enter, but let's stick to strict input for realism unless user tabbed.
-        // Waiting for user to be explicit.
-        if (!input) return;
-
         const response = commandExecutor.execute(input, state);
-        const { output: cmdOutput, newState, navigationAction } = response;
+        const { output: cmdOutput, newState, navigationAction, uiAction } = response;
+
+        if (uiAction === 'CLEAR') {
+            setOutputLines([]);
+            setState(newState);
+            setInput('');
+            setGhostText('');
+            return;
+        }
 
         if (navigationAction && navigationAction.type === 'NAVIGATE') {
             if (navigationAction.target === 'Editor') {
@@ -109,7 +174,7 @@ export const TerminalScreen: React.FC = () => {
 
         setOutputLines(prev => [
             ...prev,
-            { text: `${state.user}@system:~$ ${input}`, type: 'input' },
+            { text: `> ${input}`, type: 'input' }, // Simplified echo
             { text: cmdOutput, type: 'output' }
         ]);
         setState(newState);
@@ -157,8 +222,10 @@ export const TerminalScreen: React.FC = () => {
                     }
                     middleContent={<VirtualKeyboard onKeyPress={handleKeyPress} />}
                     bottomContent={
-                        <View style={styles.promptLine}>
-                            <Text style={styles.promptText}>{state.user}@system:~$ </Text>
+                        <View style={styles.inputWrapper}>
+                            <Text style={styles.inputLabel}>
+                                INPUT // {state.user}@system
+                            </Text>
                             <View style={styles.inputContainer}>
                                 <Text style={[styles.input, styles.ghostText]}>
                                     <Text style={{ opacity: 0 }}>{input}</Text>
@@ -224,26 +291,33 @@ const styles = StyleSheet.create({
         marginBottom: THEME.spacing.xs,
         opacity: 0.7,
     },
-    promptLine: {
-        flexDirection: 'row',
-        alignItems: 'center',
+    inputWrapper: {
+        width: '100%',
+        flexDirection: 'column',
     },
-    promptText: {
+    inputLabel: {
         color: THEME.colors.secondary,
         fontFamily: THEME.typography.fontFamily,
-        fontSize: THEME.typography.fontSize.lg,
+        fontSize: THEME.typography.fontSize.sm, // Smaller label
+        marginBottom: THEME.spacing.xs,
+        opacity: 0.8,
+        letterSpacing: 1,
     },
     inputContainer: {
-        flex: 1,
+        width: '100%',
         position: 'relative',
         justifyContent: 'center',
+        // Optional: Add a background or border to define the input area more clearly
+        // backgroundColor: 'rgba(0, 255, 65, 0.05)', 
+        // padding: THEME.spacing.xs,
     },
     input: {
-        flex: 1,
+        width: '100%',
         color: THEME.colors.text.primary,
         fontFamily: THEME.typography.fontFamily,
         fontSize: THEME.typography.fontSize.lg,
         padding: 0,
+        height: 30, // Fixed height to roughly match font size
     },
     ghostText: {
         position: 'absolute',
