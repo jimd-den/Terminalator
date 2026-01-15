@@ -13,7 +13,7 @@ interface VirtualKeyboardProps {
     onKeyPress: (key: string) => void;
 }
 
-const KEYS = ['TAB', 'ESC', '/', '-', 'CTRL', 'UP', 'DOWN', 'ls', 'cd ..'];
+const KEYS = ['TAB', 'ESC', '/', '-', 'CTRL', 'UP', 'DOWN'];
 
 export const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({ onKeyPress }) => {
     return (
