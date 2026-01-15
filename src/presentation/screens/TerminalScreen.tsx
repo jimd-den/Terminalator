@@ -209,6 +209,7 @@ export const TerminalScreen: React.FC = () => {
                         <ScrollView
                             contentContainerStyle={styles.scrollContent}
                             ref={(ref) => ref?.scrollToEnd({ animated: true })}
+                            keyboardShouldPersistTaps="handled"
                         >
                             {outputLines.map((line, i) => (
                                 line.type === 'output' ? (
