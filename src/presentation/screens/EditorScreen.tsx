@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, SafeAreaView } from 'react-native';
+import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useGame } from '../context/GameContext';
 import { THEME } from '../../frameworks-drivers/ui/Theme';
+import { ConsoleLayout } from '../components/ConsoleLayout';
+import { VirtualKeyboard } from '../components/VirtualKeyboard';
 
 type RootStackParamList = {
     Editor: { filename: string };
@@ -23,6 +26,34 @@ export const EditorScreen: React.FC = () => {
 
     const contentInputRef = useRef<TextInput>(null);
     const commandInputRef = useRef<TextInput>(null);
+    const hiddenInputRef = useRef<TextInput>(null);
+
+    // Keep keyboard up for Normal mode
+    useEffect(() => {
+        if (mode === 'NORMAL') {
+            hiddenInputRef.current?.focus();
+        } else if (mode === 'INSERT') {
+            contentInputRef.current?.focus();
+        } else if (mode === 'COMMAND') {
+            commandInputRef.current?.focus();
+        }
+    }, [mode]);
+
+    const handleHiddenInput = (text: string) => {
+        if (!text) return;
+        const char = text.charAt(text.length - 1).toLowerCase();
+
+        if (char === 'i') {
+            setMode('INSERT');
+        } else if (char === ':') {
+            // Transition to command mode handled by effect? 
+            // We need to set state and clear the hidden input
+            setMode('COMMAND');
+            setCommandInput(':');
+        }
+        // Clear hidden input to keep it ready for next char
+        hiddenInputRef.current?.clear();
+    };
 
     useEffect(() => {
         // Load file content
@@ -97,16 +128,27 @@ export const EditorScreen: React.FC = () => {
         setCommandInput('');
     };
 
-    return (
-        <SafeAreaView style={styles.container}>
-            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
-                {/* Header / Status Line */}
-                <View style={styles.header}>
-                    <Text style={styles.headerText}>{filename} {statusMessage}</Text>
-                </View>
 
-                {/* Main Content Area */}
+
+    // To ensure "clean" hidden input behavior, we might need a workaround for Android
+    // where clear() might not fire onChange text if strictly controlled?
+    // Let's rely on standard TextInput behavior.
+
+    return (
+        <ConsoleLayout
+            status={`EDITING: ${filename} [${mode}]`}
+            topContent={
                 <View style={styles.editorContainer}>
+                    {/* Hidden Input for Normal Mode */}
+                    <TextInput
+                        ref={hiddenInputRef}
+                        style={styles.hiddenInput}
+                        autoFocus={true}
+                        onChangeText={handleHiddenInput}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                    />
+
                     <TextInput
                         ref={contentInputRef}
                         style={styles.contentInput}
@@ -123,18 +165,24 @@ export const EditorScreen: React.FC = () => {
                             }
                         }}
                     />
-                    {/* Overlay for Normal Mode to intercept keys or show visuals? 
-                         For simplicity, we just leverage TextInput editable prop.
-                     */}
                 </View>
-
-                {/* Footer / Command Bar */}
+            }
+            middleContent={<VirtualKeyboard onKeyPress={(key) => {
+                if (mode === 'INSERT') {
+                    setContent(prev => prev + key); // Simplified handling
+                } else if (key === 'ESC') {
+                    setMode('NORMAL');
+                }
+                // Handle navigation keys?
+            }} />}
+            bottomContent={
                 <View style={styles.footer}>
                     <View style={styles.statusBar}>
                         <Text style={styles.statusText}>
                             {mode === 'NORMAL' ? '-- NORMAL --' :
                                 mode === 'INSERT' ? '-- INSERT --' :
                                     '-- COMMAND --'}
+                            {' '}{statusMessage}
                         </Text>
                     </View>
 
@@ -171,33 +219,16 @@ export const EditorScreen: React.FC = () => {
                         </View>
                     )}
                 </View>
-
-            </KeyboardAvoidingView>
-        </SafeAreaView>
+            }
+        />
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: THEME.colors.background,
-    },
-    flex: {
-        flex: 1,
-    },
-    header: {
-        padding: THEME.spacing.sm,
-        borderBottomWidth: 1,
-        borderBottomColor: THEME.colors.secondary,
-    },
-    headerText: {
-        color: THEME.colors.text.dim,
-        fontFamily: THEME.typography.fontFamily,
-        fontSize: THEME.typography.fontSize.sm,
-    },
+    // Structural styles replaced by ConsoleLayout
     editorContainer: {
         flex: 1,
-        padding: THEME.spacing.md,
+        // Remove padding to fit topBox? topBox has padding.
     },
     contentInput: {
         flex: 1,
@@ -207,16 +238,15 @@ const styles = StyleSheet.create({
         lineHeight: 24,
     },
     footer: {
-        borderTopWidth: 1,
-        borderTopColor: THEME.colors.secondary,
-        padding: THEME.spacing.sm,
-        backgroundColor: THEME.colors.surface,
+        // No border/bg as container has it
+        flex: 1,
+        justifyContent: 'center',
     },
     statusBar: {
         marginBottom: THEME.spacing.xs,
     },
     statusText: {
-        color: THEME.colors.primary, // Vim Bold/Yellow/Green usually
+        color: THEME.colors.primary,
         fontWeight: 'bold',
         fontFamily: THEME.typography.fontFamily,
     },
@@ -237,5 +267,11 @@ const styles = StyleSheet.create({
         borderColor: THEME.colors.border,
         paddingHorizontal: 8,
         paddingVertical: 4,
+    },
+    hiddenInput: {
+        position: 'absolute',
+        width: 1,
+        height: 1,
+        opacity: 0,
     }
 });

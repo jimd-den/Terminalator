@@ -16,6 +16,7 @@ import { createInitialTerminalState } from '../../domain/entities/TerminalState'
 import { GameCommandExecutor } from '../../interface-adapters/GameCommandExecutor';
 import { GameManager } from '../../interface-adapters/GameManager';
 import { VirtualKeyboard } from '../components/VirtualKeyboard';
+import { ConsoleLayout } from '../components/ConsoleLayout';
 import { useGame } from '../context/GameContext';
 import { useNavigation } from '@react-navigation/native';
 
@@ -97,122 +98,56 @@ export const TerminalScreen: React.FC = () => {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={styles.flex}
-            >
-                <View style={styles.header}>
-                    <Text style={styles.headerText}>[ STATUS: OPERATIONAL ]</Text>
-                    <Text style={styles.headerText}>{new Date().toLocaleTimeString()}</Text>
-                </View>
-
-                {/* TOP BOX: Output/Environment */}
-                <View style={styles.outputBox}>
-                    <ScrollView
-                        contentContainerStyle={styles.scrollContent}
-                        ref={(ref) => ref?.scrollToEnd({ animated: true })}
-                    >
-                        {outputLines.map((line, i) => (
-                            line.type === 'output' ? (
-                                <GhostWriter
-                                    key={i}
-                                    text={line.text}
-                                    speed={10}
-                                    style={styles.outputText}
-                                />
-                            ) : (
-                                <Text key={i} style={styles.inputEchoText}>{line.text}</Text>
-                            )
-                        ))}
-                    </ScrollView>
-                </View>
-
-                {/* MIDDLE: Virtual Toolbar */}
-                <VirtualKeyboard onKeyPress={handleKeyPress} />
-
-                {/* BOTTOM BOX: Input/Prompt */}
-                <View style={styles.inputBox}>
-                    <View style={styles.promptLine}>
-                        <Text style={styles.promptText}>{state.user}@system:~$ </Text>
-                        <View style={styles.inputContainer}>
-                            <Text style={[styles.input, styles.ghostText]}>
-                                <Text style={{ opacity: 0 }}>{input}</Text>
-                                <Text style={{ opacity: 0.5 }}>{ghostText}</Text>
-                            </Text>
-                            <TextInput
-                                style={styles.input}
-                                value={input}
-                                onChangeText={handleInputChange}
-                                onSubmitEditing={handleCommand}
-                                autoCapitalize="none"
-                                autoCorrect={false}
-                                autoFocus={true}
-                                cursorColor={THEME.colors.primary}
-                                placeholderTextColor={THEME.colors.text.dim}
-                                placeholder=""
+        <ConsoleLayout
+            status="OPERATIONAL"
+            topContent={
+                <ScrollView
+                    contentContainerStyle={styles.scrollContent}
+                    ref={(ref) => ref?.scrollToEnd({ animated: true })}
+                >
+                    {outputLines.map((line, i) => (
+                        line.type === 'output' ? (
+                            <GhostWriter
+                                key={i}
+                                text={line.text}
+                                speed={10}
+                                style={styles.outputText}
                             />
-                        </View>
+                        ) : (
+                            <Text key={i} style={styles.inputEchoText}>{line.text}</Text>
+                        )
+                    ))}
+                </ScrollView>
+            }
+            middleContent={<VirtualKeyboard onKeyPress={handleKeyPress} />}
+            bottomContent={
+                <View style={styles.promptLine}>
+                    <Text style={styles.promptText}>{state.user}@system:~$ </Text>
+                    <View style={styles.inputContainer}>
+                        <Text style={[styles.input, styles.ghostText]}>
+                            <Text style={{ opacity: 0 }}>{input}</Text>
+                            <Text style={{ opacity: 0.5 }}>{ghostText}</Text>
+                        </Text>
+                        <TextInput
+                            style={styles.input}
+                            value={input}
+                            onChangeText={handleInputChange}
+                            onSubmitEditing={handleCommand}
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                            autoFocus={true}
+                            cursorColor={THEME.colors.primary}
+                            placeholderTextColor={THEME.colors.text.dim}
+                            placeholder=""
+                        />
                     </View>
                 </View>
-            </KeyboardAvoidingView>
-        </SafeAreaView>
+            }
+        />
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: THEME.colors.background,
-    },
-    flex: {
-        flex: 1,
-    },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        padding: THEME.spacing.md,
-        borderBottomWidth: 1,
-        borderBottomColor: THEME.colors.border,
-    },
-    headerText: {
-        color: THEME.colors.text.dim,
-        fontFamily: THEME.typography.fontFamily,
-        fontSize: THEME.typography.fontSize.sm,
-    },
-    outputBox: {
-        flex: 2,
-        margin: THEME.spacing.md,
-        padding: THEME.spacing.md,
-        borderWidth: THEME.borders.width,
-        borderColor: THEME.colors.border,
-        backgroundColor: THEME.colors.surface,
-    },
-    inputBoxWrapper: {
-        flex: 0,
-    },
-    inputBox: {
-        margin: THEME.spacing.md,
-        marginTop: 0,
-        padding: THEME.spacing.md,
-        borderWidth: THEME.borders.width,
-        borderColor: THEME.colors.primary,
-        backgroundColor: THEME.colors.surface,
-        minHeight: 60,
-    },
-    inputContainer: {
-        flex: 1,
-        position: 'relative',
-        justifyContent: 'center',
-    },
-    ghostText: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        color: THEME.colors.text.dim, // Should be same font as input
-        zIndex: 0,
-    },
     scrollContent: {
         paddingBottom: THEME.spacing.xl,
     },
@@ -238,11 +173,24 @@ const styles = StyleSheet.create({
         fontFamily: THEME.typography.fontFamily,
         fontSize: THEME.typography.fontSize.lg,
     },
+    inputContainer: {
+        flex: 1,
+        position: 'relative',
+        justifyContent: 'center',
+    },
     input: {
         flex: 1,
         color: THEME.colors.text.primary,
         fontFamily: THEME.typography.fontFamily,
         fontSize: THEME.typography.fontSize.lg,
         padding: 0,
+    },
+    ghostText: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        color: THEME.colors.text.dim,
+        zIndex: 0,
     },
 });
