@@ -1,89 +1,104 @@
 /**
- * GameCommandDecorator - Application Logic / Interface Adapter
+ * GameCommandExecutor - Application Logic / Interface Adapter
  * 
- * Extends the basic terminal commands with game-specific logic
- * like 'mail', 'vim', and 'compile'.
+ * Composition Root for all Terminal Commands.
+ * Extends ExecuteCommand to register both Standard, POSIX, and Game-specific commands.
  */
 
 import { ExecuteCommand } from '../domain/usecases/ExecuteCommand';
-import { CommandResponse } from '../domain/entities/Command';
 import { MailSystem } from '../domain/usecases/MailSystem';
-import { TerminalState } from '../domain/entities/TerminalState';
 import { FileSystem } from '../domain/entities/FileSystem';
-import { VimSimulator } from './VimSimulator';
 import { CodeCompiler } from '../domain/usecases/CodeCompiler';
-
 import { GameManager } from './GameManager';
+import { ICommand } from '../domain/entities/Command';
+
+// Standard Commands
+import { LSCommand } from './commands/ls';
+import { CDCommand } from './commands/cd';
+import { MkdirCommand } from './commands/mkdir';
+import { CatCommand } from './commands/cat';
+import { PwdCommand } from './commands/pwd';
+import { WhoamiCommand } from './commands/whoami';
+import { ClearCommand } from './commands/clear';
+import { GrepCommand } from './commands/grep';
+
+// POSIX Commands
+import { TouchCommand } from './commands/posix/TouchCommand';
+import { RmCommand } from './commands/posix/RmCommand';
+import { CpCommand } from './commands/posix/CpCommand';
+import { MvCommand } from './commands/posix/MvCommand';
+import { EchoCommand } from './commands/posix/EchoCommand';
+import { HeadCommand } from './commands/posix/HeadCommand';
+import { TailCommand } from './commands/posix/TailCommand';
+import { ChmodCommand } from './commands/posix/ChmodCommand';
+import { ChownCommand } from './commands/posix/ChownCommand';
+import { WcCommand } from './commands/posix/WcCommand';
+import { SortCommand } from './commands/posix/SortCommand';
+import { UniqCommand } from './commands/posix/UniqCommand';
+import { FindCommand } from './commands/posix/FindCommand';
+import { DateCommand } from './commands/posix/DateCommand';
+import { HistoryCommand } from './commands/posix/HistoryCommand';
+import { ExportCommand } from './commands/posix/ExportCommand';
+import { EnvCommand } from './commands/posix/EnvCommand';
+
+// Game Commands
+import { MailCommand } from './commands/game/MailCommand';
+import { CheckCommsCommand } from './commands/game/CheckCommsCommand';
+import { CompileCommand } from './commands/game/CompileCommand';
+import { VimCommand } from './commands/game/VimCommand';
 
 export class GameCommandExecutor extends ExecuteCommand {
     private mailSystem: MailSystem;
     private compiler: CodeCompiler;
     private gameManager: GameManager;
-    // private vimInstance: VimSimulator | null = null; // Removed in favor of EditorScreen
 
     constructor(fs: FileSystem, gameManager: GameManager) {
-        super(fs);
-        this.mailSystem = new MailSystem(fs);
-        this.compiler = new CodeCompiler(fs);
+        // Initialize dependencies
+        const mailSystem = new MailSystem(fs);
+        const compiler = new CodeCompiler(fs);
+
+        // Instantiate all commands
+        const commands: ICommand[] = [
+            // Standard
+            new LSCommand(fs),
+            new CDCommand(fs),
+            new MkdirCommand(fs),
+            new CatCommand(fs),
+            new PwdCommand(),
+            new WhoamiCommand(),
+            new ClearCommand(),
+            new GrepCommand(fs),
+
+            // POSIX
+            new TouchCommand(fs),
+            new RmCommand(fs),
+            new CpCommand(fs),
+            new MvCommand(fs),
+            new EchoCommand(),
+            new HeadCommand(fs),
+            new TailCommand(fs),
+            new ChmodCommand(fs),
+            new ChownCommand(fs),
+            new WcCommand(fs),
+            new SortCommand(fs),
+            new UniqCommand(fs),
+            new FindCommand(fs),
+            new DateCommand(),
+            new HistoryCommand(),
+            new ExportCommand(),
+            new EnvCommand(),
+
+            // Game
+            new MailCommand(mailSystem),
+            new CheckCommsCommand(gameManager),
+            new CompileCommand(compiler),
+            new VimCommand()
+        ];
+
+        super(fs, commands);
+
+        this.mailSystem = mailSystem;
+        this.compiler = compiler;
         this.gameManager = gameManager;
     }
-
-    async execute(commandString: string, state: TerminalState): Promise<CommandResponse> {
-        const parts = commandString.trim().split(/\s+/);
-        const command = parts[0];
-        const args = parts.slice(1);
-
-        // Vim handling moved to EditorScreen, this check is no longer needed in the main loop
-        // as the terminal screen won't be active or handling input for vim.
-        /*
-        if (this.vimInstance) {
-            ...
-        }
-        */
-
-        if (command === 'mail') {
-            return {
-                output: this.mailSystem.listMail(),
-                exitCode: 0,
-                newState: state,
-            };
-        }
-
-        if (command === 'check-comms') {
-            const mail = this.gameManager.spawnNPCEvent();
-            return {
-                output: `[ SECURE CHANNEL ESTABLISHED ]\nIncoming transmission from ${mail.from}...\nMessage saved to /home/operator/mail/${mail.id}`,
-                exitCode: 0,
-                newState: state,
-            };
-        }
-
-        if (command === 'compile') {
-            const res = this.compiler.compile(args[0] || '');
-            return {
-                output: res.output,
-                exitCode: res.success ? 0 : 1,
-                newState: state,
-            };
-        }
-
-        if (command === 'vim') {
-            const filename = args[0] || 'scratchpad.24xx';
-            // We do not lock the terminal here; the navigation will take the user away.
-            // When they return, they return to the terminal state.
-            return {
-                output: `Opening ${filename} in editor...`,
-                exitCode: 0,
-                newState: state,
-                navigationAction: {
-                    type: 'NAVIGATE',
-                    target: 'Editor',
-                    params: { filename }
-                }
-            };
-        }
-
-        return super.execute(commandString, state);
-    }
 }
-

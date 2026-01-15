@@ -211,4 +211,24 @@ export class FileSystem {
             return newNode;
         }
     }
+
+    /**
+     * Change file mode (permissions)
+     */
+    chmod(path: string, mode: string, cwd: string = '/'): void {
+        const node = this.resolveNode(path, cwd);
+        if (!node) throw new Error(`chmod: cannot access '${path}': No such file or directory`);
+        node.permissions = mode;
+        node.updatedAt = new Date().toISOString();
+    }
+
+    /**
+     * Change file owner
+     */
+    chown(path: string, owner: string, cwd: string = '/'): void {
+        const node = this.resolveNode(path, cwd);
+        if (!node) throw new Error(`chown: cannot access '${path}': No such file or directory`);
+        node.owner = owner;
+        node.updatedAt = new Date().toISOString();
+    }
 }
