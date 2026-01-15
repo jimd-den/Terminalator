@@ -18,7 +18,7 @@ export class GameCommandExecutor extends ExecuteCommand {
     private mailSystem: MailSystem;
     private compiler: CodeCompiler;
     private gameManager: GameManager;
-    private vimInstance: VimSimulator | null = null;
+    // private vimInstance: VimSimulator | null = null; // Removed in favor of EditorScreen
 
     constructor(fs: FileSystem, gameManager: GameManager) {
         super(fs);
@@ -32,23 +32,13 @@ export class GameCommandExecutor extends ExecuteCommand {
         const command = parts[0];
         const args = parts.slice(1);
 
-        // If vim is active, input goes to vim
+        // Vim handling moved to EditorScreen, this check is no longer needed in the main loop
+        // as the terminal screen won't be active or handling input for vim.
+        /*
         if (this.vimInstance) {
-            const result = this.vimInstance.handleInput(commandString);
-            if (result.output.includes('Vim closed')) {
-                this.vimInstance = null;
-                return {
-                    output: 'Vim session terminated.',
-                    newState: { ...state, isLocked: false },
-                    exitCode: 0,
-                };
-            }
-            return {
-                output: result.output.join('\n'),
-                newState: state,
-                exitCode: 0,
-            };
+            ...
         }
+        */
 
         if (command === 'mail') {
             return {
@@ -78,15 +68,17 @@ export class GameCommandExecutor extends ExecuteCommand {
 
         if (command === 'vim') {
             const filename = args[0] || 'scratchpad.24xx';
-            const path = state.currentDirectory === '/' ? `/${filename}` : `${state.currentDirectory}/${filename}`;
-            const node = this.fs.getNode(path);
-            const content = node?.content || '';
-
-            this.vimInstance = new VimSimulator(filename, content);
+            // We do not lock the terminal here; the navigation will take the user away.
+            // When they return, they return to the terminal state.
             return {
-                output: `VIM v8.2 simulation active.\nEditing ${filename}...\n[Type 'i' for insert, ':' for commands]`,
-                newState: { ...state, isLocked: true },
+                output: `Opening ${filename} in editor...`,
+                newState: state,
                 exitCode: 0,
+                navigationAction: {
+                    type: 'NAVIGATE',
+                    target: 'Editor',
+                    params: { filename }
+                }
             };
         }
 

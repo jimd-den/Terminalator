@@ -16,11 +16,12 @@ import { createInitialTerminalState } from '../../domain/entities/TerminalState'
 import { GameCommandExecutor } from '../../interface-adapters/GameCommandExecutor';
 import { GameManager } from '../../interface-adapters/GameManager';
 import { VirtualKeyboard } from '../components/VirtualKeyboard';
+import { useGame } from '../context/GameContext';
+import { useNavigation } from '@react-navigation/native';
 
 export const TerminalScreen: React.FC = () => {
-    const [fs] = useState(new FileSystem());
-    const [gameManager] = useState(new GameManager(fs));
-    const [commandExecutor] = useState(new GameCommandExecutor(fs, gameManager));
+    const { fs, gameManager, commandExecutor } = useGame();
+    const navigation = useNavigation();
     const [state, setState] = useState(createInitialTerminalState());
     const [input, setInput] = useState('');
     const [outputLines, setOutputLines] = useState<{ text: string, type: 'input' | 'output' }[]>([
@@ -66,7 +67,18 @@ export const TerminalScreen: React.FC = () => {
         // Waiting for user to be explicit.
         if (!input) return;
 
-        const { output: cmdOutput, newState } = commandExecutor.execute(input, state);
+        const response = commandExecutor.execute(input, state);
+        const { output: cmdOutput, newState, navigationAction } = response;
+
+        if (navigationAction && navigationAction.type === 'NAVIGATE') {
+            (navigation.navigate as any)(navigationAction.target, navigationAction.params);
+            // Optionally clear input here or wait for return?
+            // Usually we clear input so when they come back it's fresh.
+            setInput('');
+            setGhostText('');
+            // Do NOT print the output if we navigate? Or print "Opening..." then navigate?
+            // The executor returns "Opening...", so let's print it.
+        }
 
         setOutputLines(prev => [
             ...prev,

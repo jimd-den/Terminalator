@@ -13,6 +13,11 @@ export interface CommandResponse {
     output: string;
     newState: TerminalState;
     exitCode: number;
+    navigationAction?: {
+        type: 'NAVIGATE';
+        target: string;
+        params?: any;
+    };
 }
 
 export class ExecuteCommand {

@@ -11,6 +11,10 @@ import { TerminalScreen } from './src/presentation/screens/TerminalScreen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts, SpaceMono_400Regular, SpaceMono_700Bold } from '@expo-google-fonts/space-mono';
 
+import { NavigationContainer } from '@react-navigation/native';
+import { GameProvider } from './src/presentation/context/GameContext';
+import { AppNavigator } from './src/presentation/navigation/AppNavigator';
+
 export default function App() {
   const [fontsLoaded] = useFonts({
     SpaceMono_400Regular,
@@ -24,7 +28,11 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <StatusBar style="light" />
-      <TerminalScreen />
+      <GameProvider>
+        <NavigationContainer>
+          <AppNavigator />
+        </NavigationContainer>
+      </GameProvider>
     </SafeAreaProvider>
   );
 }
