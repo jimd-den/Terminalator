@@ -1,0 +1,174 @@
+/**
+ * TerminalScreen - Presentation Layer
+ * 
+ * The core UI of the "Terminalator".
+ * Features a high-contrast, two-box layout inspired by "Aliens" and Grid computers.
+ * Follows Nintendo/Jack Dorsey principles: Large, intuitive, focused.
+ */
+
+import React, { useState } from 'react';
+import { View, StyleSheet, TextInput, ScrollView, Text, KeyboardAvoidingView, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { THEME } from '../../frameworks-drivers/ui/Theme';
+import { GhostWriter } from '../../frameworks-drivers/ui/GhostWriter';
+import { FileSystem } from '../../domain/entities/FileSystem';
+import { createInitialTerminalState } from '../../domain/entities/TerminalState';
+import { GameCommandExecutor } from '../../interface-adapters/GameCommandExecutor';
+import { GameManager } from '../../interface-adapters/GameManager';
+
+export const TerminalScreen: React.FC = () => {
+    const [fs] = useState(new FileSystem());
+    const [gameManager] = useState(new GameManager(fs));
+    const [commandExecutor] = useState(new GameCommandExecutor(fs, gameManager));
+    const [state, setState] = useState(createInitialTerminalState());
+    const [input, setInput] = useState('');
+    const [outputLines, setOutputLines] = useState<{ text: string, type: 'input' | 'output' }[]>([
+        { text: 'SYSTEM INITIALIZED... BOOT SEQUENCE READY', type: 'output' },
+        { text: 'WELCOME TO MAINFRAME v1.0', type: 'output' },
+        { text: 'TYPE "mail" TO CHECK TRANSMISSIONS', type: 'output' },
+    ]);
+
+    const handleCommand = () => {
+        if (!input) return;
+
+        const { output: cmdOutput, newState } = commandExecutor.execute(input, state);
+
+        setOutputLines(prev => [
+            ...prev,
+            { text: `${state.user}@system:~$ ${input}`, type: 'input' },
+            { text: cmdOutput, type: 'output' }
+        ]);
+        setState(newState);
+        setInput('');
+
+        // Procedural event simulation after a few commands
+        if (outputLines.length > 5 && outputLines.length % 4 === 0) {
+            const mail = gameManager.spawnNPCEvent();
+            setOutputLines(prev => [...prev, { text: `[ NEW TRANSMISSION: ID ${mail.id} FROM ${mail.from} ]`, type: 'output' }]);
+        }
+    };
+
+    return (
+        <SafeAreaView style={styles.container}>
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={styles.flex}
+            >
+                <View style={styles.header}>
+                    <Text style={styles.headerText}>[ STATUS: OPERATIONAL ]</Text>
+                    <Text style={styles.headerText}>{new Date().toLocaleTimeString()}</Text>
+                </View>
+
+                {/* TOP BOX: Output/Environment */}
+                <View style={styles.outputBox}>
+                    <ScrollView
+                        contentContainerStyle={styles.scrollContent}
+                        ref={(ref) => ref?.scrollToEnd({ animated: true })}
+                    >
+                        {outputLines.map((line, i) => (
+                            line.type === 'output' ? (
+                                <GhostWriter
+                                    key={i}
+                                    text={line.text}
+                                    speed={10}
+                                    style={styles.outputText}
+                                />
+                            ) : (
+                                <Text key={i} style={styles.inputEchoText}>{line.text}</Text>
+                            )
+                        ))}
+                    </ScrollView>
+                </View>
+
+                {/* BOTTOM BOX: Input/Prompt */}
+                <View style={styles.inputBox}>
+                    <View style={styles.promptLine}>
+                        <Text style={styles.promptText}>{state.user}@system:~$ </Text>
+                        <TextInput
+                            style={styles.input}
+                            value={input}
+                            onChangeText={setInput}
+                            onSubmitEditing={handleCommand}
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                            autoFocus={true}
+                            cursorColor={THEME.colors.primary}
+                            placeholderTextColor={THEME.colors.text.dim}
+                            placeholder="Awaiting command..."
+                        />
+                    </View>
+                </View>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: THEME.colors.background,
+    },
+    flex: {
+        flex: 1,
+    },
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        padding: THEME.spacing.md,
+        borderBottomWidth: 1,
+        borderBottomColor: THEME.colors.border,
+    },
+    headerText: {
+        color: THEME.colors.text.dim,
+        fontFamily: THEME.typography.fontFamily,
+        fontSize: THEME.typography.fontSize.sm,
+    },
+    outputBox: {
+        flex: 2,
+        margin: THEME.spacing.md,
+        padding: THEME.spacing.md,
+        borderWidth: THEME.borders.width,
+        borderColor: THEME.colors.border,
+        backgroundColor: THEME.colors.surface,
+    },
+    inputBox: {
+        flex: 1,
+        margin: THEME.spacing.md,
+        padding: THEME.spacing.md,
+        borderWidth: THEME.borders.width,
+        borderColor: THEME.colors.primary,
+        backgroundColor: THEME.colors.surface,
+    },
+    scrollContent: {
+        paddingBottom: THEME.spacing.xl,
+    },
+    outputText: {
+        color: THEME.colors.text.primary,
+        fontFamily: THEME.typography.fontFamily,
+        fontSize: THEME.typography.fontSize.md,
+        marginBottom: THEME.spacing.sm,
+    },
+    inputEchoText: {
+        color: THEME.colors.secondary,
+        fontFamily: THEME.typography.fontFamily,
+        fontSize: THEME.typography.fontSize.md,
+        marginBottom: THEME.spacing.xs,
+        opacity: 0.7,
+    },
+    promptLine: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    promptText: {
+        color: THEME.colors.secondary,
+        fontFamily: THEME.typography.fontFamily,
+        fontSize: THEME.typography.fontSize.lg,
+    },
+    input: {
+        flex: 1,
+        color: THEME.colors.text.primary,
+        fontFamily: THEME.typography.fontFamily,
+        fontSize: THEME.typography.fontSize.lg,
+        padding: 0,
+    },
+});
