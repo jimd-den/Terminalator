@@ -142,16 +142,18 @@ export const TerminalScreen: React.FC = () => {
         }
     };
 
-    const handleCommand = () => {
+    const handleCommand = async () => {
         const cmdToRun = input; // Strict input
         if (!cmdToRun) return;
 
-        const response = commandExecutor.execute(input, state);
+        const response = await commandExecutor.execute(input, state);
         const { output: cmdOutput, newState, navigationAction, uiAction } = response;
 
         if (uiAction === 'CLEAR') {
             setOutputLines([]);
-            setState(newState);
+            if (newState) {
+                setState(prev => ({ ...prev, ...newState }));
+            }
             setInput('');
             setGhostText('');
             return;
@@ -177,7 +179,9 @@ export const TerminalScreen: React.FC = () => {
             { text: `> ${input}`, type: 'input' }, // Simplified echo
             { text: cmdOutput, type: 'output' }
         ]);
-        setState(newState);
+        if (newState) {
+            setState(prev => ({ ...prev, ...newState }));
+        }
         setInput('');
         setGhostText('');
 

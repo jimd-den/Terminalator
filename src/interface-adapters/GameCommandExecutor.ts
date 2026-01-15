@@ -5,7 +5,8 @@
  * like 'mail', 'vim', and 'compile'.
  */
 
-import { ExecuteCommand, CommandResponse } from '../domain/usecases/ExecuteCommand';
+import { ExecuteCommand } from '../domain/usecases/ExecuteCommand';
+import { CommandResponse } from '../domain/entities/Command';
 import { MailSystem } from '../domain/usecases/MailSystem';
 import { TerminalState } from '../domain/entities/TerminalState';
 import { FileSystem } from '../domain/entities/FileSystem';
@@ -27,7 +28,7 @@ export class GameCommandExecutor extends ExecuteCommand {
         this.gameManager = gameManager;
     }
 
-    execute(commandString: string, state: TerminalState): CommandResponse {
+    async execute(commandString: string, state: TerminalState): Promise<CommandResponse> {
         const parts = commandString.trim().split(/\s+/);
         const command = parts[0];
         const args = parts.slice(1);
@@ -43,8 +44,8 @@ export class GameCommandExecutor extends ExecuteCommand {
         if (command === 'mail') {
             return {
                 output: this.mailSystem.listMail(),
-                newState: state,
                 exitCode: 0,
+                newState: state,
             };
         }
 
@@ -52,8 +53,8 @@ export class GameCommandExecutor extends ExecuteCommand {
             const mail = this.gameManager.spawnNPCEvent();
             return {
                 output: `[ SECURE CHANNEL ESTABLISHED ]\nIncoming transmission from ${mail.from}...\nMessage saved to /home/operator/mail/${mail.id}`,
-                newState: state,
                 exitCode: 0,
+                newState: state,
             };
         }
 
@@ -61,8 +62,8 @@ export class GameCommandExecutor extends ExecuteCommand {
             const res = this.compiler.compile(args[0] || '');
             return {
                 output: res.output,
-                newState: state,
                 exitCode: res.success ? 0 : 1,
+                newState: state,
             };
         }
 
@@ -72,8 +73,8 @@ export class GameCommandExecutor extends ExecuteCommand {
             // When they return, they return to the terminal state.
             return {
                 output: `Opening ${filename} in editor...`,
-                newState: state,
                 exitCode: 0,
+                newState: state,
                 navigationAction: {
                     type: 'NAVIGATE',
                     target: 'Editor',

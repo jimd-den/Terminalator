@@ -80,19 +80,23 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
     }, [filename, fs]);
 
     const handleSave = () => {
-        const targetDir = fs.root.children?.['home']?.children?.['operator'];
-        if (targetDir && targetDir.children) {
-            targetDir.children[filename] = {
-                name: filename,
-                type: 'file',
-                content: content,
-                owner: 'operator',
-                permissions: 'rw-------',
-                updatedAt: new Date().toISOString()
-            };
-            setStatusMessage(`"${filename}" written`);
-        } else {
-            setStatusMessage('Error: Could not save file.');
+        const fullPath = filename.startsWith('/') ? filename : `/home/operator/${filename}`;
+        try {
+            const existingNode = fs.getNode(fullPath);
+            if (existingNode && existingNode.type === 'file') {
+                existingNode.content = content;
+                existingNode.updatedAt = new Date().toISOString();
+                setStatusMessage(`"${filename}" written`);
+            } else {
+                // Determine cwd for relative paths, though we forced absolute above mostly
+                // If it doesn't exist, create it.
+                // existingNode might be null.
+                const newNode = fs.createNode(fullPath, 'file');
+                newNode.content = content;
+                setStatusMessage(`"${filename}" [New] written`);
+            }
+        } catch (e: any) {
+            setStatusMessage(`Error: ${e.message}`);
         }
     };
 

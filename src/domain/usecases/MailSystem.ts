@@ -33,17 +33,17 @@ export class MailSystem {
                 isRead: false,
             };
 
-            // Create a virtual file for the mail in /home/operator/mail
-            const mailDir = this.fs.root.children?.home.children?.operator.children?.mail;
-            if (mailDir && mailDir.children) {
-                mailDir.children[id] = {
-                    name: id,
-                    type: 'file',
-                    content: `From: ${npc.name}\nSubject: ${subject}\nDate: ${message.timestamp}\n\n${body}`,
-                    owner: 'operator',
-                    permissions: 'rw-------',
-                    updatedAt: message.timestamp,
-                };
+            // Create a virtual file for the mail in the mail directory
+            // We use createNode to ensure parent linkage is correct
+            // Assuming /home/operator/mail exists as per initial state
+            try {
+                const mailPath = `/home/operator/mail/${id}`;
+                const fileNode = this.fs.createNode(mailPath, 'file');
+                fileNode.content = `From: ${npc.name}\nSubject: ${subject}\nDate: ${message.timestamp}\n\n${body}`;
+                fileNode.updatedAt = message.timestamp;
+                fileNode.permissions = 'rw-------';
+            } catch (e) {
+                Logger.error('MailSystem: Failed to create mail file', e);
             }
 
             return message;
