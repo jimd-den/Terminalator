@@ -12,13 +12,15 @@ interface GameContextType {
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
 export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    // Initialize singletons once
-    const [fs] = useState(new FileSystem());
-    const [gameManager] = useState(new GameManager(fs));
-    const [commandExecutor] = useState(new GameCommandExecutor(fs, gameManager));
+    const [gameContext] = useState(() => {
+        const fs = new FileSystem();
+        const gameManager = new GameManager(fs);
+        const commandExecutor = new GameCommandExecutor(fs, gameManager);
+        return { fs, gameManager, commandExecutor };
+    });
 
     return (
-        <GameContext.Provider value={{ fs, gameManager, commandExecutor }}>
+        <GameContext.Provider value={gameContext}>
             {children}
         </GameContext.Provider>
     );

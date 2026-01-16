@@ -43,7 +43,7 @@ export const TerminalScreen: React.FC = () => {
     // But we defined useVimEditor as a hook returning UI.
     // So we need a component that calls this hook.
 
-    const [state, setState] = useState(createInitialTerminalState());
+    const [state, setState] = useState(() => createInitialTerminalState());
     const [input, setInput] = useState('');
     const [outputLines, setOutputLines] = useState<{ text: string, type: 'input' | 'output' }[]>([
         { text: 'SYSTEM INITIALIZED... BOOT SEQUENCE READY', type: 'output' },
