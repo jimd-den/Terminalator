@@ -3,11 +3,14 @@
  * 
  * Parses and executes simulated terminal commands.
  * Adheres to POSIX-compliant behavior in a simulated environment.
+ *
+ * Pillar: The Four-Fold Shield (Strict Architecture)
+ * Pillar: The Swift Stream (Performance & Purity)
  */
 
 import { FileSystem, FSNode } from '../entities/FileSystem';
 import { TerminalState } from '../entities/TerminalState';
-import { Logger } from '../../infrastructure/telemetry/Logger';
+import { TelemetryPort } from '../ports/TelemetryPort';
 
 export interface CommandResponse {
     output: string;
@@ -22,10 +25,10 @@ export interface CommandResponse {
 }
 
 export class ExecuteCommand {
-    constructor(protected fs: FileSystem) { }
+    constructor(protected fs: FileSystem, protected telemetry?: TelemetryPort) { }
 
     execute(commandString: string, state: TerminalState): CommandResponse {
-        return Logger.trace('ExecuteCommand.execute', () => {
+        const executeLogic = () => {
             const parts = commandString.trim().split(/\s+/);
             const command = parts[0];
             const args = parts.slice(1);
@@ -70,7 +73,13 @@ export class ExecuteCommand {
             }
 
             return { output, newState, exitCode, uiAction };
-        }, { commandString, currentDir: state.currentDirectory });
+        };
+
+        if (this.telemetry) {
+            return this.telemetry.trace('ExecuteCommand.execute', executeLogic, commandString, state.currentDirectory);
+        }
+
+        return executeLogic();
     }
 
     private ls(path: string): string {

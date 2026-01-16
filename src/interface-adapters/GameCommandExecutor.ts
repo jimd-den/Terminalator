@@ -9,8 +9,8 @@ import { ExecuteCommand, CommandResponse } from '../domain/usecases/ExecuteComma
 import { MailSystem } from '../domain/usecases/MailSystem';
 import { TerminalState } from '../domain/entities/TerminalState';
 import { FileSystem } from '../domain/entities/FileSystem';
-import { VimSimulator } from './VimSimulator';
 import { CodeCompiler } from '../domain/usecases/CodeCompiler';
+import { TelemetryPort } from '../domain/ports/TelemetryPort';
 
 import { GameManager } from './GameManager';
 
@@ -20,10 +20,10 @@ export class GameCommandExecutor extends ExecuteCommand {
     private gameManager: GameManager;
     // private vimInstance: VimSimulator | null = null; // Removed in favor of EditorScreen
 
-    constructor(fs: FileSystem, gameManager: GameManager) {
-        super(fs);
-        this.mailSystem = new MailSystem(fs);
-        this.compiler = new CodeCompiler(fs);
+    constructor(fs: FileSystem, gameManager: GameManager, telemetry?: TelemetryPort) {
+        super(fs, telemetry);
+        this.mailSystem = new MailSystem(fs, telemetry);
+        this.compiler = new CodeCompiler(fs, telemetry);
         this.gameManager = gameManager;
     }
 
@@ -85,4 +85,3 @@ export class GameCommandExecutor extends ExecuteCommand {
         return super.execute(commandString, state);
     }
 }
-
