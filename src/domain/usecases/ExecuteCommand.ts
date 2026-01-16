@@ -97,9 +97,26 @@ export class ExecuteCommand {
         // Expand variables before parsing args
         const expandedCommand = this.expandVariables(commandString, state.environment);
 
+        // Alias Expansion
+        // We need to check the first word for alias match
+        const initialParts = expandedCommand.trim().split(/\s+/);
+        const firstWord = initialParts[0];
+
+        // Check aliases if defined (state.aliases might be undefined if old state passed, guard it)
+        let finalCommandString = expandedCommand;
+        if (state.aliases && state.aliases[firstWord]) {
+            const aliasValue = state.aliases[firstWord];
+            // Replace first word with alias value
+            // Avoid infinite recursion by doing single pass
+            if (aliasValue !== firstWord) {
+                // simple sub
+                finalCommandString = aliasValue + expandedCommand.substring(firstWord.length);
+            }
+        }
+
         // Handle quoted strings to allow spaces in arguments?
         // Basic split for now, robust parsing requires a tokenizer but this suffices for simulations
-        const parts = expandedCommand.trim().split(/\s+/);
+        const parts = finalCommandString.trim().split(/\s+/);
         const commandName = parts[0];
         const args = parts.slice(1);
 

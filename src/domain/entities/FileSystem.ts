@@ -81,36 +81,63 @@ export class FileSystem {
     }
 
     private createInitialState(): FSNode {
-        return {
+        const now = new Date().toISOString();
+        const root: FSNode = {
             name: '/',
             type: 'directory',
             parent: null,
             children: {
                 'bin': {
-                    name: 'bin', type: 'directory', parent: null, owner: 'root', permissions: 'rwxr-xr-x', updatedAt: new Date().toISOString(), children: {
-                        'help': { name: 'help', type: 'file', parent: null, content: 'AVAILABLE COMMANDS:\nls - List files\ncd <dir> - Change directory\ncat <file> - Read file\nmail - Check mail\nvim <file> - Edit file\ncompile <file> - Process 24XX scripts\n', owner: 'root', permissions: 'r-xr-xr-x', updatedAt: new Date().toISOString() },
+                    name: 'bin', type: 'directory', parent: null, owner: 'root', permissions: 'rwxr-xr-x', updatedAt: now, children: {
+                        'help': { name: 'help', type: 'file', parent: null, content: 'AVAILABLE COMMANDS:\nls - List files\ncd <dir> - Change directory\ncat <file> - Read file\nmail - Check mail\nvim <file> - Edit file\ncompile <file> - Process 24XX scripts\n', owner: 'root', permissions: 'r-xr-xr-x', updatedAt: now },
+                    }
+                },
+                'dev': {
+                    name: 'dev', type: 'directory', parent: null, owner: 'root', permissions: 'rwxr-xr-x', updatedAt: now, children: {
+                        'null': { name: 'null', type: 'file', parent: null, content: '', owner: 'root', permissions: 'rw-rw-rw-', updatedAt: now },
+                        'zero': { name: 'zero', type: 'file', parent: null, content: '', owner: 'root', permissions: 'rw-rw-rw-', updatedAt: now },
+                        'tty': { name: 'tty', type: 'file', parent: null, content: '', owner: 'root', permissions: 'rw-rw-rw-', updatedAt: now },
+                    }
+                },
+                'etc': {
+                    name: 'etc', type: 'directory', parent: null, owner: 'root', permissions: 'rwxr-xr-x', updatedAt: now, children: {
+                        'config': { name: 'config', type: 'file', parent: null, content: 'SYSTEM CONFIGURATION\n--------------------\nMAX_THREADS=4\nTARGET_IP=UNRESOLVED\n\n[HINT]: NPCs will send encrypted coordinates. Use "vim" to write protocols and "compile" to decrypt.', owner: 'root', permissions: 'r--r--r--', updatedAt: now },
+                        'passwd': { name: 'passwd', type: 'file', parent: null, content: 'root:x:0:0:root:/root:/bin/bash\noperator:x:1000:1000:operator:/home/operator:/bin/bash', owner: 'root', permissions: 'r--r--r--', updatedAt: now },
                     }
                 },
                 'home': {
-                    name: 'home', type: 'directory', parent: null, owner: 'root', permissions: 'rwxr-xr-x', updatedAt: new Date().toISOString(), children: {
+                    name: 'home', type: 'directory', parent: null, owner: 'root', permissions: 'rwxr-xr-x', updatedAt: now, children: {
                         'operator': {
-                            name: 'operator', type: 'directory', parent: null, owner: 'operator', permissions: 'rwx------', updatedAt: new Date().toISOString(), children: {
-                                'mail': { name: 'mail', type: 'directory', parent: null, owner: 'operator', permissions: 'rwx------', updatedAt: new Date().toISOString(), children: {} },
-                                'notes.txt': { name: 'notes.txt', type: 'file', parent: null, content: 'System initialized. Awaiting NPCs.', owner: 'operator', permissions: 'rw-------', updatedAt: new Date().toISOString() },
+                            name: 'operator', type: 'directory', parent: null, owner: 'operator', permissions: 'rwx------', updatedAt: now, children: {
+                                'mail': { name: 'mail', type: 'directory', parent: null, owner: 'operator', permissions: 'rwx------', updatedAt: now, children: {} },
+                                'notes.txt': { name: 'notes.txt', type: 'file', parent: null, content: 'System initialized. Awaiting NPCs.', owner: 'operator', permissions: 'rw-------', updatedAt: now },
                             }
                         },
                     }
                 },
-                'etc': {
-                    name: 'etc', type: 'directory', parent: null, owner: 'root', permissions: 'rwxr-xr-x', updatedAt: new Date().toISOString(), children: {
-                        'config': { name: 'config', type: 'file', parent: null, content: 'SYSTEM CONFIGURATION\n--------------------\nMAX_THREADS=4\nTARGET_IP=UNRESOLVED\n\n[HINT]: NPCs will send encrypted coordinates. Use "vim" to write protocols and "compile" to decrypt.', owner: 'root', permissions: 'r--r--r--', updatedAt: new Date().toISOString() },
+                'lib': { name: 'lib', type: 'directory', parent: null, owner: 'root', permissions: 'rwxr-xr-x', updatedAt: now, children: {} },
+                'proc': { name: 'proc', type: 'directory', parent: null, owner: 'root', permissions: 'r-xr-xr-x', updatedAt: now, children: {} },
+                'root': { name: 'root', type: 'directory', parent: null, owner: 'root', permissions: 'rwx------', updatedAt: now, children: {} },
+                'tmp': { name: 'tmp', type: 'directory', parent: null, owner: 'root', permissions: 'rwxrwxrwt', updatedAt: now, children: {} },
+                'usr': {
+                    name: 'usr', type: 'directory', parent: null, owner: 'root', permissions: 'rwxr-xr-x', updatedAt: now, children: {
+                        'bin': { name: 'bin', type: 'directory', parent: null, owner: 'root', permissions: 'rwxr-xr-x', updatedAt: now, children: {} },
+                        'lib': { name: 'lib', type: 'directory', parent: null, owner: 'root', permissions: 'rwxr-xr-x', updatedAt: now, children: {} },
+                        'share': { name: 'share', type: 'directory', parent: null, owner: 'root', permissions: 'rwxr-xr-x', updatedAt: now, children: {} },
+                    }
+                },
+                'var': {
+                    name: 'var', type: 'directory', parent: null, owner: 'root', permissions: 'rwxr-xr-x', updatedAt: now, children: {
+                        'log': { name: 'log', type: 'directory', parent: null, owner: 'root', permissions: 'rwxr-xr-x', updatedAt: now, children: {} },
+                        'tmp': { name: 'tmp', type: 'directory', parent: null, owner: 'root', permissions: 'rwxrwxrwt', updatedAt: now, children: {} },
                     }
                 },
             },
             owner: 'root',
             permissions: 'rwxr-xr-x',
-            updatedAt: new Date().toISOString(),
+            updatedAt: now,
         };
+        return root;
     }
 
     private linkParents(node: FSNode, parent: FSNode | null) {

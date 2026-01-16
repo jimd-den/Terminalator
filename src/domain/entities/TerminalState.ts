@@ -11,6 +11,7 @@ export interface TerminalState {
     currentDirectory: string;
     history: string[];
     environment: Record<string, string>;
+    aliases: Record<string, string>;
     user: string;
     hostname: string;
     isLocked: boolean;
@@ -24,6 +25,10 @@ export const createInitialTerminalState = (): TerminalState => ({
         USER: 'operator',
         HOME: '/home/operator',
         TERM: 'xterm-256color',
+    },
+    aliases: {
+        'll': 'ls -l',
+        'la': 'ls -a'
     },
     user: 'operator',
     hostname: 'mainframe-01',

@@ -22,6 +22,8 @@ import { PwdCommand } from './commands/posix/PwdCommand';
 import { WhoamiCommand } from './commands/posix/WhoamiCommand';
 import { ClearCommand } from './commands/posix/ClearCommand';
 import { GrepCommand } from './commands/posix/GrepCommand';
+import { HelpCommand } from './commands/posix/HelpCommand';
+import { ManCommand, MoreCommand } from './commands/posix/ManMoreCommand';
 
 // POSIX Commands
 import { TouchCommand } from './commands/posix/TouchCommand';
@@ -45,7 +47,10 @@ import { EnvCommand } from './commands/posix/EnvCommand';
 import { SleepCommand } from './commands/posix/SleepCommand';
 import { TeeCommand } from './commands/posix/TeeCommand';
 import { CutCommand } from './commands/posix/CutCommand';
+import { PasteCommand } from './commands/posix/PasteCommand';
 import { TrCommand } from './commands/posix/TrCommand';
+import { AliasCommand, UnaliasCommand } from './commands/posix/AliasCommand';
+import { PsCommand, KillCommand } from './commands/posix/PsCommand';
 
 // Game Commands
 import { MailCommand } from './commands/game/MailCommand';
@@ -63,9 +68,14 @@ export class GameCommandExecutor extends ExecuteCommand {
         const mailSystem = new MailSystem(fs);
         const compiler = new CodeCompiler(fs);
 
-        // Instantiate all commands
-        const commands: ICommand[] = [
-            // Standard
+        const commands: ICommand[] = [];
+        const helpCommand = new HelpCommand(commands);
+        commands.push(
+            // Self-reference for Help
+            helpCommand,
+            new ManCommand(helpCommand),
+            new MoreCommand(new CatCommand(fs)),
+
             // Standard
             new LsCommand(fs),
             new CdCommand(fs),
@@ -87,6 +97,7 @@ export class GameCommandExecutor extends ExecuteCommand {
             new HeadCommand(fs),
             new TailCommand(fs),
             new CutCommand(fs),
+            new PasteCommand(fs),
             new TrCommand(),
             new ChmodCommand(fs),
             new ChownCommand(fs),
@@ -94,6 +105,10 @@ export class GameCommandExecutor extends ExecuteCommand {
             new SortCommand(fs),
             new UniqCommand(fs),
             new FindCommand(fs),
+            new AliasCommand(),
+            new UnaliasCommand(),
+            new PsCommand(),
+            new KillCommand(),
             new DateCommand(),
             new HistoryCommand(),
             new ExportCommand(),
@@ -105,7 +120,7 @@ export class GameCommandExecutor extends ExecuteCommand {
             new CheckCommsCommand(gameManager),
             new CompileCommand(compiler),
             new VimCommand()
-        ];
+        );
 
         super(fs, commands);
 
