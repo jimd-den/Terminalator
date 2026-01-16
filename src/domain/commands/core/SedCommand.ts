@@ -31,20 +31,9 @@ export class SedCommand implements ICommand {
         for (let i = 0; i < args.length; i++) {
             let arg = args[i];
 
-            // Strip quotes
-            if ((arg.startsWith('"') && arg.endsWith('"')) ||
-                (arg.startsWith("'") && arg.endsWith("'"))) {
-                arg = arg.substring(1, arg.length - 1);
-            }
-
             if (arg === '-e') {
                 if (i + 1 < args.length) {
                     script = args[++i];
-                    // Strip quotes again just in case handling
-                    if ((script.startsWith('"') && script.endsWith('"')) ||
-                        (script.startsWith("'") && script.endsWith("'"))) {
-                        script = script.substring(1, script.length - 1);
-                    }
                 }
             } else if (!script) {
                 // First non-flag arg is script

@@ -2,74 +2,42 @@
  * FileSystem Entity - Domain Layer
  * 
  * A simulated POSIX-compliant file system.
- * Supports a tree structure of files, directories, symlinks, and hard links.
  *
  * Pillar: The Four-Fold Shield (Strict Architecture) - Entities
- * Pillar: The Balanced Scale (SOLID / KISS) - Simple Tree Structure
+ * Pillar: The Balanced Scale (SOLID / KISS) - Facade Pattern
  *
  * Intent:
- * Provides the persistent state of the virtual world.
- * Allows commands to manipulate files and directories.
+ * Acts as a Facade coordinating `InodeTable` (Storage) and `PathResolver` (Logic).
+ * Maintains backward compatibility with the rest of the application.
  */
 
-// File Mode Constants (POSIX Standard)
-export const S_IFMT = 0o170000;
-export const S_IFSOCK = 0o140000;
-export const S_IFLNK = 0o120000;
-export const S_IFREG = 0o100000;
-export const S_IFBLK = 0o060000;
-export const S_IFDIR = 0o040000;
-export const S_IFCHR = 0o020000;
-export const S_IFIFO = 0o010000;
+import {
+    Inode, Dentry,
+    S_IFMT, S_IFSOCK, S_IFLNK, S_IFREG, S_IFBLK, S_IFDIR, S_IFCHR, S_IFIFO
+} from './filesystem/FileSystemTypes';
+import { InodeTable } from './filesystem/InodeTable';
+import { PathResolver } from '../services/filesystem/PathResolver';
 
 export type FileType = 'file' | 'directory' | 'symlink' | 'block' | 'char' | 'fifo' | 'socket';
-
-export interface Inode {
-    id: number;
-    mode: number;    // File type and mode (permissions)
-    uid: number;     // User ID
-    gid: number;     // Group ID
-    size: number;    // Size in bytes
-    atime: number;   // Access time (ms)
-    mtime: number;   // Modification time (ms)
-    ctime: number;   // Change time (ms)
-    links: number;   // Hard link count
-    content: any;    // string for files, Map<string, number> for dirs, null for devs
-    target?: string; // For symlinks
-}
-
-// Dentry represents a node in the directory tree.
-// It maps a name to an Inode.
-export interface Dentry {
-    name: string;
-    inodeId: number;
-    parent: Dentry | null;
-    children: Map<string, Dentry>; // Cache of children Dentries
-    mountedFS?: FileSystem; // For future mounting support
-}
+export { Inode, Dentry, S_IFDIR, S_IFLNK, S_IFMT, S_IFREG, S_IFBLK, S_IFCHR, S_IFIFO, S_IFSOCK }; // Re-export for compatibility
 
 export class FileSystem {
-    private inodes: Map<number, Inode> = new Map();
-    private nextInodeId: number = 1;
+    private inodeTable: InodeTable;
+    private pathResolver: PathResolver;
     private usedBytes: number = 0;
     root: Dentry;
 
     constructor() {
+        this.inodeTable = new InodeTable();
+        this.pathResolver = new PathResolver(this.inodeTable);
+
         // Create Root Inode (ID 1)
         const now = Date.now();
-        const rootInode: Inode = {
-            id: this.nextInodeId++,
-            mode: S_IFDIR | 0o755,
-            uid: 0,
-            gid: 0,
-            size: 4096,
-            atime: now,
-            mtime: now,
-            ctime: now,
-            links: 2, // . and ..
-            content: null
-        };
-        this.inodes.set(rootInode.id, rootInode);
+        // Manually create root inode to ensure ID 1 (though InodeTable starts at 1)
+        const rootInode = this.inodeTable.allocate(S_IFDIR | 0o755, 0, 0);
+        rootInode.size = 4096;
+        rootInode.links = 2; // . and ..
+
         this.usedBytes += 4096;
 
         // Create Root Dentry
@@ -89,10 +57,7 @@ export class FileSystem {
 
     /**
      * Traverses the file system to find a node by path.
-     * Follows symlinks by default.
-     *
-     * @param path - The absolute or relative path to the node.
-     * @returns The Dentry if found, otherwise null.
+     * Delegates to PathResolver.
      */
     getNode(path: string): Dentry | null {
         return this.resolve(path);
@@ -104,104 +69,22 @@ export class FileSystem {
     }
 
     resolve(path: string, cwd: string = '/', followSymlinks: boolean = true): Dentry | null {
-        if (!path) return null;
-        // this.log(`resolve(${path}, ${cwd})`); // Verbose
-
-        // Handle root special case
-        if (path === '/') return this.root;
-
-        let startNode: Dentry;
-        if (path.startsWith('/')) {
-            startNode = this.root;
-        } else {
-            // Recursive resolve of cwd should NOT follow symlinks indefinitely or cyclic? 
-            // CWD is typically resolved literal path in simulated shell, but here we resolve it.
-            const cwdPath = cwd === '/' ? '/' : (cwd.startsWith('/') ? cwd : '/' + cwd);
-            const cwdNode = this.resolve(cwdPath, '/', true);
-            if (!cwdNode) return null;
-            startNode = cwdNode;
-        }
-
-        const parts = path.split('/').filter(p => p.length > 0 && p !== '.');
-        let current = startNode;
-        let symlinkCount = 0;
-        const MAX_SYMLINKS = 40;
-
-        for (let i = 0; i < parts.length; i++) {
-            const part = parts[i];
-
-            if (part === '..') {
-                if (current.parent) {
-                    current = current.parent;
-                }
-            } else {
-                const next = current.children.get(part);
-                if (!next) {
-                    return null;
-                }
-
-                // Check if Symlink
-                const inode = this.getInode(next.inodeId);
-                // Only follow if requested AND it is a symlink
-                if (followSymlinks && inode && (inode.mode & S_IFLNK) && inode.target) {
-                    if (symlinkCount++ > MAX_SYMLINKS) throw new Error('Too many levels of symbolic links');
-
-                    const target = inode.target;
-                    let targetNode: Dentry | null;
-
-                    if (target.startsWith('/')) {
-                        targetNode = this.resolve(target, '/', true);
-                    } else {
-                        const currentAbs = this.getAbsolutePath(current);
-                        targetNode = this.resolve(target, currentAbs, true);
-                    }
-
-                    if (!targetNode) return null;
-                    current = targetNode;
-                } else {
-                    current = next;
-                }
-            }
-        }
-
-        return current;
+        return this.pathResolver.resolve(this.root, path, cwd, followSymlinks);
     }
 
     getAbsolutePath(dentry: Dentry): string {
-        const parts: string[] = [];
-        let current: Dentry | null = dentry;
-        while (current && current.parent) {
-            parts.unshift(current.name);
-            current = current.parent;
-        }
-        return parts.length === 0 ? '/' : '/' + parts.join('/');
+        return this.pathResolver.getAbsolutePath(dentry);
     }
 
     getInode(id: number): Inode | undefined {
-        return this.inodes.get(id);
+        return this.inodeTable.get(id);
     }
 
     createInode(mode: number, uid: number, gid: number): Inode {
-        const now = Date.now();
-        const inode: Inode = {
-            id: this.nextInodeId++,
-            mode: mode,
-            uid: uid,
-            gid: gid,
-            size: 0,
-            atime: now,
-            mtime: now,
-            ctime: now,
-            links: 1,
-            content: (mode & S_IFDIR) ? null : ''
-        };
-        // If Directory, default size 4096 (POSIX-like overhead)
+        const inode = this.inodeTable.allocate(mode, uid, gid);
         if (mode & S_IFDIR) {
-            inode.size = 4096;
             this.usedBytes += 4096;
         }
-
-        this.inodes.set(inode.id, inode);
         this.log(`createInode(${inode.id}, mode=${mode.toString(8)})`);
         return inode;
     }
@@ -386,7 +269,7 @@ export class FileSystem {
 
         if (inode.links <= 0) {
             this.usedBytes -= inode.size;
-            this.inodes.delete(inode.id);
+            this.inodeTable.free(inode.id);
         }
     }
 
