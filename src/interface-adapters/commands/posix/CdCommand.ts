@@ -1,9 +1,9 @@
-import { ICommand, CommandResponse } from '../../domain/entities/Command';
-import { FileSystem } from '../../domain/entities/FileSystem';
-import { ProcessContext } from '../../domain/entities/ProcessContext';
-import { TerminalState } from '../../domain/entities/TerminalState';
+import { ICommand, CommandResponse } from '../../../domain/entities/Command';
+import { FileSystem } from '../../../domain/entities/FileSystem';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { TerminalState } from '../../../domain/entities/TerminalState';
 
-export class CDCommand implements ICommand {
+export class CdCommand implements ICommand {
     name = 'cd';
     description = 'Change the shell working directory';
 

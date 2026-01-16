@@ -32,16 +32,10 @@ export class RmCommand implements ICommand {
         }
 
         try {
-            this.deleteNode(node);
+            this.fs.deleteNode(target, context.cwd);
             return { output: '', exitCode: 0 };
         } catch (e: any) {
             return { output: `rm: ${e.message}`, exitCode: 1 };
         }
-    }
-
-    private deleteNode(node: FSNode) {
-        if (!node.parent || !node.parent.children) return; // Cannot delete root or orphan
-        delete node.parent.children[node.name];
-        // Note: Graph references might still exist if other things point to it, but parent link is cut.
     }
 }

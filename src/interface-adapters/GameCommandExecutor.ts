@@ -13,18 +13,20 @@ import { GameManager } from './GameManager';
 import { ICommand } from '../domain/entities/Command';
 
 // Standard Commands
-import { LSCommand } from './commands/ls';
-import { CDCommand } from './commands/cd';
-import { MkdirCommand } from './commands/mkdir';
-import { CatCommand } from './commands/cat';
-import { PwdCommand } from './commands/pwd';
-import { WhoamiCommand } from './commands/whoami';
-import { ClearCommand } from './commands/clear';
-import { GrepCommand } from './commands/grep';
+// Standard / POSIX (Moved)
+import { LsCommand } from './commands/posix/LsCommand';
+import { CdCommand } from './commands/posix/CdCommand';
+import { MkdirCommand } from './commands/posix/MkdirCommand';
+import { CatCommand } from './commands/posix/CatCommand';
+import { PwdCommand } from './commands/posix/PwdCommand';
+import { WhoamiCommand } from './commands/posix/WhoamiCommand';
+import { ClearCommand } from './commands/posix/ClearCommand';
+import { GrepCommand } from './commands/posix/GrepCommand';
 
 // POSIX Commands
 import { TouchCommand } from './commands/posix/TouchCommand';
 import { RmCommand } from './commands/posix/RmCommand';
+import { RmdirCommand } from './commands/posix/RmdirCommand';
 import { CpCommand } from './commands/posix/CpCommand';
 import { MvCommand } from './commands/posix/MvCommand';
 import { EchoCommand } from './commands/posix/EchoCommand';
@@ -40,6 +42,10 @@ import { DateCommand } from './commands/posix/DateCommand';
 import { HistoryCommand } from './commands/posix/HistoryCommand';
 import { ExportCommand } from './commands/posix/ExportCommand';
 import { EnvCommand } from './commands/posix/EnvCommand';
+import { SleepCommand } from './commands/posix/SleepCommand';
+import { TeeCommand } from './commands/posix/TeeCommand';
+import { CutCommand } from './commands/posix/CutCommand';
+import { TrCommand } from './commands/posix/TrCommand';
 
 // Game Commands
 import { MailCommand } from './commands/game/MailCommand';
@@ -60,8 +66,9 @@ export class GameCommandExecutor extends ExecuteCommand {
         // Instantiate all commands
         const commands: ICommand[] = [
             // Standard
-            new LSCommand(fs),
-            new CDCommand(fs),
+            // Standard
+            new LsCommand(fs),
+            new CdCommand(fs),
             new MkdirCommand(fs),
             new CatCommand(fs),
             new PwdCommand(),
@@ -72,11 +79,15 @@ export class GameCommandExecutor extends ExecuteCommand {
             // POSIX
             new TouchCommand(fs),
             new RmCommand(fs),
+            new RmdirCommand(fs),
             new CpCommand(fs),
             new MvCommand(fs),
             new EchoCommand(),
+            new TeeCommand(fs),
             new HeadCommand(fs),
             new TailCommand(fs),
+            new CutCommand(fs),
+            new TrCommand(),
             new ChmodCommand(fs),
             new ChownCommand(fs),
             new WcCommand(fs),
@@ -87,6 +98,7 @@ export class GameCommandExecutor extends ExecuteCommand {
             new HistoryCommand(),
             new ExportCommand(),
             new EnvCommand(),
+            new SleepCommand(),
 
             // Game
             new MailCommand(mailSystem),

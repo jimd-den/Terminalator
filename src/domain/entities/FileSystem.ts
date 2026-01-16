@@ -231,4 +231,14 @@ export class FileSystem {
         node.owner = owner;
         node.updatedAt = new Date().toISOString();
     }
+    /**
+     * Deletes a node (file or directory)
+     */
+    deleteNode(path: string, cwd: string = '/'): void {
+        const node = this.resolveNode(path, cwd);
+        if (!node) throw new Error(`cannot remove '${path}': No such file or directory`);
+        if (!node.parent || !node.parent.children) throw new Error(`cannot remove root directory`);
+
+        delete node.parent.children[node.name];
+    }
 }

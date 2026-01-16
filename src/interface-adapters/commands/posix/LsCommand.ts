@@ -1,9 +1,9 @@
-import { ICommand, CommandResponse } from '../../domain/entities/Command';
-import { FileSystem, FSNode } from '../../domain/entities/FileSystem';
-import { ProcessContext } from '../../domain/entities/ProcessContext';
-import { TerminalState } from '../../domain/entities/TerminalState';
+import { ICommand, CommandResponse } from '../../../domain/entities/Command';
+import { FileSystem, FSNode } from '../../../domain/entities/FileSystem';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { TerminalState } from '../../../domain/entities/TerminalState';
 
-export class LSCommand implements ICommand {
+export class LsCommand implements ICommand {
     name = 'ls';
     description = 'List directory contents';
 

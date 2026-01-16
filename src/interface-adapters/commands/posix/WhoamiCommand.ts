@@ -1,6 +1,6 @@
-import { ICommand, CommandResponse } from '../../domain/entities/Command';
-import { ProcessContext } from '../../domain/entities/ProcessContext';
-import { TerminalState } from '../../domain/entities/TerminalState';
+import { ICommand, CommandResponse } from '../../../domain/entities/Command';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { TerminalState } from '../../../domain/entities/TerminalState';
 
 export class WhoamiCommand implements ICommand {
     name = 'whoami';
