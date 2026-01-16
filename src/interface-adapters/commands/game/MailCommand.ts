@@ -12,7 +12,7 @@ export class MailCommand implements ICommand {
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         // Simple list for now, could handle arguments later
         return {
-            output: this.mailSystem.listMail(),
+            output: this.mailSystem.listMail(context.fs),
             exitCode: 0,
             newState: state
         };

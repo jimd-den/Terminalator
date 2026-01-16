@@ -10,7 +10,7 @@ export class CheckCommsCommand implements ICommand {
     constructor(private gameManager: GameManager) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const mail = this.gameManager.spawnNPCEvent();
+        const mail = this.gameManager.spawnNPCEvent(context.fs);
         return {
             output: `[ SECURE CHANNEL ESTABLISHED ]\nIncoming transmission from ${mail.from}...\nMessage saved to /home/operator/mail/${mail.id}`,
             exitCode: 0,

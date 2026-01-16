@@ -25,7 +25,7 @@ export class GameManager {
     /**
      * Triggers a new transmission from a random NPC.
      */
-    spawnNPCEvent(): MailMessage {
+    spawnNPCEvent(fs?: FileSystem): MailMessage {
         return Logger.trace('GameManager.spawnNPCEvent', () => {
             const npc = NPCGenerator.generate();
             this.activeNPCs.push(npc);
@@ -35,7 +35,7 @@ export class GameManager {
             const subject = `MISSION: ${mission.type.toUpperCase()} - ${mission.target}`;
             const body = `Operator,\n\nI am ${npc.name}, a ${npc.career} from ${npc.origin}.\nMy goal is to ${npc.goal}.\n\nMISSION BRIEFING:\n${mission.description}\n\nREWARD: ${mission.reward}\n\nExecute protocol immediately.\n\nOver.`;
 
-            return this.mailSystem.sendMail(npc, subject, body);
+            return this.mailSystem.sendMail(npc, subject, body, fs);
         });
     }
 
