@@ -34,12 +34,8 @@ export class GrepCommand implements ICommand {
             };
         }
 
-        const patternRaw = cleanArgs[0];
-        // Strip quotes if present
-        let pattern = patternRaw;
-        if ((pattern.startsWith('"') && pattern.endsWith('"')) || (pattern.startsWith("'") && pattern.endsWith("'"))) {
-            pattern = pattern.substring(1, pattern.length - 1);
-        }
+        const pattern = cleanArgs[0];
+        // Note: ShellParser already handles quote removal.
 
         const targets = cleanArgs.slice(1);
 

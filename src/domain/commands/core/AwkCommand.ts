@@ -28,11 +28,7 @@ export class AwkCommand implements ICommand {
 
         if (args.length > 0) {
             program = args[0];
-            // Strip quotes
-            if ((program.startsWith("'") && program.endsWith("'")) ||
-                (program.startsWith('"') && program.endsWith('"'))) {
-                program = program.substring(1, program.length - 1);
-            }
+            // ShellParser handles quote removal
         }
 
         if (args.length > 1) {

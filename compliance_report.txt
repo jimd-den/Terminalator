@@ -1,4 +1,4 @@
-POSIX COMPLIANCE REPORT - 2026-01-16T18:58:46.689Z
+POSIX COMPLIANCE REPORT - 2026-01-16T21:30:20.863Z
 Standard: IEEE Std 1003.1-2024 (SUSv5)
 Target Level: Strict
 
@@ -126,7 +126,7 @@ Target Level: Strict
 [MISSING] asa
 [MISSING] at
 [PRESENT] awk
-[MISSING] basename
+[PRESENT] basename
 [MISSING] batch
 [MISSING] bc
 [MISSING] bg
@@ -151,12 +151,12 @@ Target Level: Strict
 [MISSING] ctags
 [MISSING] cut
 [MISSING] cxref
-[MISSING] date
+[PRESENT] date
 [MISSING] dd
 [MISSING] delta
 [PRESENT] df
 [MISSING] diff
-[MISSING] dirname
+[PRESENT] dirname
 [MISSING] .
 [PRESENT] du
 [PRESENT] echo
@@ -169,7 +169,7 @@ Target Level: Strict
 [MISSING] expand
 [MISSING] export
 [MISSING] expr
-[MISSING] false
+[PRESENT] false
 [MISSING] fc
 [MISSING] fg
 [MISSING] file
@@ -185,7 +185,7 @@ Target Level: Strict
 [MISSING] hash
 [PRESENT] head
 [MISSING] iconv
-[MISSING] id
+[PRESENT] id
 [MISSING] ipcrm
 [MISSING] ipcs
 [MISSING] jobs
@@ -260,9 +260,9 @@ Target Level: Strict
 [MISSING] tput
 [MISSING] tr
 [MISSING] trap
-[MISSING] true
+[PRESENT] true
 [MISSING] tsort
-[MISSING] tty
+[PRESENT] tty
 [MISSING] type
 [MISSING] ulimit
 [MISSING] umask
@@ -284,7 +284,7 @@ Target Level: Strict
 [MISSING] wait
 [PRESENT] wc
 [MISSING] what
-[MISSING] who
+[PRESENT] who
 [MISSING] write
 [PRESENT] xargs
 [MISSING] xgettext
@@ -295,4 +295,4 @@ Target Level: Strict
 SUMMARY:
 Tests Passed: 65
 Tests Failed: 0
-Utility Completeness: 13% (23/171)
+Utility Completeness: 18% (31/171)
