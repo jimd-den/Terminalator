@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { THEME } from '../../frameworks-drivers/ui/Theme';
 
 interface VirtualKeyboardProps {
@@ -20,14 +20,13 @@ export const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({ onKeyPress }) 
         <View style={styles.container}>
             <View style={styles.innerContainer}>
                 {KEYS.map((key) => (
-                    <TouchableOpacity
+                    <Pressable
                         key={key}
                         style={styles.key}
                         onPress={() => onKeyPress(key)}
-                        activeOpacity={0.7}
                     >
                         <Text style={styles.keyText}>{key}</Text>
-                    </TouchableOpacity>
+                    </Pressable>
                 ))}
             </View>
         </View>

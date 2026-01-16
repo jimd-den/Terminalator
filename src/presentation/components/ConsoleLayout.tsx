@@ -23,7 +23,7 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
     return (
         <SafeAreaView style={[styles.container, style]}>
             <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
                 style={styles.flex}
             >
                 <View style={styles.header}>

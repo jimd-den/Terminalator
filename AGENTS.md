@@ -17,7 +17,7 @@ The codebase follows a strict **Clean Architecture** implementation. Dependencie
 1.  **Entities (Domain)** (`src/domain/entities`)
     *   **Role:** Enterprise logic. Pure data structures and business rules.
     *   **Dependencies:** NONE. No external libraries.
-    *   **Key Files:** `FileSystem.ts` (Inode/Dentry tree), `TerminalState.ts`.
+    *   **Key Files:** `FileSystem.ts` (Inode/Dentry tree), `TerminalState.ts`, `EditorBuffer.ts`, `VimEngine.ts`.
 2.  **Use Cases (Application)** (`src/domain/usecases`)
     *   **Role:** Application logic. Orchestrates entities to achieve goals.
     *   **Dependencies:** Entities, Repositories (Interfaces).
@@ -53,6 +53,12 @@ The codebase follows a strict **Clean Architecture** implementation. Dependencie
     *   The `ExecuteCommand` use case handles pipe splitting (`|`).
     *   Output of `Command A` is passed as `input` argument to `Command B`.
     *   Commands MUST check `input` if no file arguments are provided (support stdin).
+
+### The Strategy Pattern (Syntax Highlighting)
+*   **Pattern:** Strategy Pattern.
+*   **Port:** `SyntaxHighlighter.ts` (Domain).
+*   **Implementer:** `TypescriptHighlighter.ts` (Interface Adapter).
+*   **Intent:** Allows adding new languages without modifying the editor core.
 
 ### The 8-Point GEMINI System (User Rules)
 1.  **Strict Architecture:** No bypassing layers.
@@ -101,7 +107,7 @@ src/
 │   │   └── CommandRegistry.ts
 │   ├── entities/            # Data structures (FileSystem, TerminalState)
 │   ├── usecases/            # Logic (ExecuteCommand)
-│   └── ports/               # Interfaces for I/O (Telemetry)
+│   └── ports/               # Interfaces for I/O (Telemetry, SyntaxHighlighter)
 ├── interface-adapters/      # ADAPTERS
 │   ├── GameManager.ts       # Main controller
 │   └── ...

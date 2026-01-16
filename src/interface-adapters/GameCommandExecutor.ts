@@ -21,6 +21,8 @@ import { MailCommand } from './commands/MailCommand';
 import { CheckCommsCommand } from './commands/CheckCommsCommand';
 import { CompileCommand } from './commands/CompileCommand';
 import { VimCommand } from './commands/VimCommand';
+import { SchemeCommand } from './commands/game/SchemeCommand';
+import { AsmCommand } from './commands/game/AsmCommand';
 
 export class GameCommandExecutor extends ExecuteCommand {
     private mailSystem: MailSystem;
@@ -47,6 +49,8 @@ export class GameCommandExecutor extends ExecuteCommand {
         registry.register('check-comms', new CheckCommsCommand(this.gameManager));
         registry.register('compile', new CompileCommand(this.compiler));
         registry.register('vim', new VimCommand());
+        registry.register('scheme', new SchemeCommand(this.fs));
+        registry.register('asm', new AsmCommand(this.fs));
     }
 
     // No need to override execute() anymore as the superclass uses the registry!

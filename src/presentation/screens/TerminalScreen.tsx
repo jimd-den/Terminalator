@@ -39,74 +39,78 @@ export const TerminalScreen: React.FC = () => {
         handleVimExit
     } = useTerminalViewModel(fs, commandExecutor, gameManager);
 
-    return (
-        <>
-            {activeApp.type === 'SHELL' ? (
-                <ConsoleLayout
-                    status="OPERATIONAL"
-                    topContent={
-                        <ScrollView
-                            contentContainerStyle={styles.scrollContent}
-                            ref={(ref) => ref?.scrollToEnd({ animated: true })}
-                            keyboardShouldPersistTaps="handled"
-                        >
-                            {outputLines.map((line, i) => (
-                                line.type === 'output' ? (
-                                    <GhostWriter
-                                        key={i}
-                                        text={line.text}
-                                        speed={10}
-                                        style={styles.outputText}
-                                    />
-                                ) : (
-                                    <Text key={i} style={styles.inputEchoText}>{line.text}</Text>
-                                )
-                            ))}
-                        </ScrollView>
-                    }
-                    middleContent={<VirtualKeyboard onKeyPress={handleKeyPress} />}
-                    bottomContent={
-                        <View style={styles.inputWrapper}>
-                            <Text style={styles.inputLabel}>
-                                INPUT // {state.user}@system
-                            </Text>
-                            <View style={styles.inputContainer}>
-                                <Text style={[styles.input, styles.ghostText]}>
-                                    <Text style={{ opacity: 0 }}>{input}</Text>
-                                    <Text style={{ opacity: 0.5 }}>{ghostText}</Text>
-                                </Text>
-                                <TextInput
-                                    style={styles.input}
-                                    value={input}
-                                    onChangeText={handleInputChange}
-                                    onSubmitEditing={handleCommand}
-                                    autoCapitalize="none"
-                                    autoCorrect={false}
-                                    autoFocus={true}
-                                    cursorColor={THEME.colors.primary}
-                                    placeholderTextColor={THEME.colors.text.dim}
-                                    placeholder=""
-                                />
-                            </View>
-                        </View>
-                    }
-                >
-                    {isTransitioning && <View style={styles.crtBlinkOverlay} />}
-                </ConsoleLayout>
-            ) : (
-                <VimContainer filename={activeApp.filename} onExit={handleVimExit} isTransitioning={isTransitioning} />
-            )}
-        </>
-    );
-};
+    const isShell = activeApp.type === 'SHELL';
+    const vimFilename = activeApp.type === 'VIM' ? activeApp.filename : '';
 
-// Wrapper component to isolate the Vim hook
-const VimContainer: React.FC<{ filename: string; onExit: () => void; isTransitioning: boolean }> = ({ filename, onExit, isTransitioning }) => {
-    const { topContent, middleContent, bottomContent } = useVimEditor(filename, onExit);
+    const vim = useVimEditor(vimFilename, handleVimExit);
+
+    const status = isShell ? "OPERATIONAL" : `EDITING: ${vimFilename}`;
+
+    const topContent = isShell ? (
+        <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            ref={(ref) => ref?.scrollToEnd({ animated: true })}
+            keyboardShouldPersistTaps="always"
+        >
+            {outputLines.map((line, i) => (
+                line.type === 'output' ? (
+                    <GhostWriter
+                        key={i}
+                        text={line.text}
+                        speed={10}
+                        style={styles.outputText}
+                    />
+                ) : (
+                    <Text key={i} style={styles.inputEchoText}>{line.text}</Text>
+                )
+            ))}
+        </ScrollView>
+    ) : vim.topContent;
+
+    const middleContent = isShell ? (
+        <VirtualKeyboard onKeyPress={handleKeyPress} />
+    ) : vim.middleContent;
+
+    const bottomContent = (
+        <View style={styles.inputWrapper}>
+            {!isShell ? (
+                vim.bottomContent
+            ) : (
+                <>
+                    <Text style={styles.inputLabel}>
+                        INPUT // {state.user}@system
+                    </Text>
+                    <View style={styles.inputContainer}>
+                        <Text style={[styles.input, styles.ghostText]}>
+                            <Text style={{ opacity: 0 }}>{input}</Text>
+                            <Text style={{ opacity: 0.5 }}>{ghostText}</Text>
+                        </Text>
+                        <TextInput
+                            style={styles.input}
+                            value={input}
+                            onChangeText={handleInputChange}
+                            onSubmitEditing={handleCommand}
+                            blurOnSubmit={false}
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                            autoFocus={true}
+                            cursorColor={THEME.colors.primary}
+                            placeholderTextColor={THEME.colors.text.dim}
+                            placeholder=""
+                        />
+                    </View>
+                </>
+            )}
+
+            {/* Always keep shell input in tree (but hidden) when in Vim to keep keyboard stable? 
+                Actually, focus swap is handled by refocus loops. 
+                Just ensures components are stable. */}
+        </View>
+    );
 
     return (
         <ConsoleLayout
-            status={`EDITING: ${filename}`}
+            status={status}
             topContent={topContent}
             middleContent={middleContent}
             bottomContent={bottomContent}
