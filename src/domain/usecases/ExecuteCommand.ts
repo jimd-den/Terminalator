@@ -136,9 +136,28 @@ export class ExecuteCommand {
 
         if (node && node.type === 'file') {
             const content = node.content || '';
-            const lines = content.split('\n');
-            // Basic substring match, regex could be added if needed
-            const matches = lines.filter(line => line.includes(pattern));
+            if (content === '') return '';
+
+            const matches: string[] = [];
+            let startIndex = 0;
+            let newlineIndex;
+
+            while ((newlineIndex = content.indexOf('\n', startIndex)) !== -1) {
+                const line = content.substring(startIndex, newlineIndex);
+                if (line.includes(pattern)) {
+                    matches.push(line);
+                }
+                startIndex = newlineIndex + 1;
+            }
+
+            // Check for the last line if the file doesn't end with a newline
+            if (startIndex < content.length) {
+                const lastLine = content.substring(startIndex);
+                if (lastLine.includes(pattern)) {
+                    matches.push(lastLine);
+                }
+            }
+
             return matches.join('\n');
         }
 
