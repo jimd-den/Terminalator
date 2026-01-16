@@ -10,7 +10,7 @@
  */
 
 import { NPC } from '../entities/NPC';
-import { FileSystem } from '../entities/FileSystem';
+import { FileSystem, S_IFREG } from '../entities/FileSystem';
 import { TelemetryPort } from '../ports/TelemetryPort';
 
 export interface MailMessage {
@@ -49,7 +49,7 @@ export class MailSystem {
             // Create a virtual file for the mail in the mail directory
             // Assuming /home/operator/mail exists
             try {
-                const targetFS = fs || this.fs;
+                const targetFS = this.fs;
                 const mailDir = '/home/operator/mail';
                 if (!targetFS.resolveNode(mailDir)) {
                     targetFS.mkdir(mailDir, 0o700, 1000, 1000, '/');
@@ -68,7 +68,11 @@ export class MailSystem {
                 targetFS.chown(mailPath, 1000, 1000, '/');
 
             } catch (e) {
-                Logger.error('MailSystem: Failed to create mail file', e);
+                if (this.telemetry) {
+                    this.telemetry.trace('MailSystem.error', () => { }, { error: e });
+                } else {
+                    console.error('MailSystem: Failed to create mail file', e);
+                }
             }
 
             return message;
@@ -88,12 +92,21 @@ export class MailSystem {
      * @returns A string representation of the mail list.
      */
     listMail(): string {
-        const mailDir = this.fs.root.children?.home.children?.operator.children?.mail;
-        if (mailDir && mailDir.children) {
-            return Object.values(mailDir.children)
-                .map(m => `${m.name} - ${m.updatedAt} - NPC Transmission`)
-                .join('\n');
+        const mailDirNode = this.fs.resolveNode('/home/operator/mail');
+        if (mailDirNode && this.fs.isDirectory(mailDirNode)) {
+            const lines: string[] = [];
+            mailDirNode.children.forEach((childNode) => {
+                const inode = this.fs.getInode(childNode.inodeId);
+                if (inode && (inode.mode & 0o170000) === S_IFREG) {
+                    // In a real mail command, we'd parse content. For now, list filenames/timestamps.
+                    // The filename is the ID.
+                    // We can use mtime from inode.
+                    const dateStr = new Date(inode.mtime).toISOString();
+                    lines.push(`${childNode.name} - ${dateStr} - NPC Transmission`);
+                }
+            });
+            return lines.length > 0 ? lines.join('\n') : 'No mail.';
         }
-        return 'No mail.';
+        return 'No mail directory.';
     }
 }

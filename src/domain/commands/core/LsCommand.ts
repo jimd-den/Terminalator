@@ -14,36 +14,31 @@ import { CommandResponse } from '../../usecases/ExecuteCommand';
 import { FileSystem } from '../../entities/FileSystem';
 
 export class LsCommand implements ICommand {
-    constructor(private fs: FileSystem) {}
+    constructor(private fs: FileSystem) { }
 
-    execute(args: string[], state: TerminalState): CommandResponse {
+    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
         const flags = args.filter(arg => arg.startsWith('-'));
         const targets = args.filter(arg => !arg.startsWith('-'));
 
         const showHidden = flags.some(f => f.includes('a'));
         const classify = flags.some(f => f.includes('F'));
 
-        const targetPath = targets.length > 0 ? targets[0] : state.currentDirectory;
+        const targetPath = targets.length > 0 ? targets[0] : '';
+        // If targetPath is empty, resolveNode(cwd) effectively lists cwd if we pass it as absolute, or we handle it.
+        // Better:
+        const pathToList = targetPath || state.currentDirectory;
 
-        // Resolve path (absolute or relative)
-        let resolvedPath = targetPath;
-        if (!targetPath.startsWith('/')) {
-            resolvedPath = state.currentDirectory === '/'
-                ? `/${targetPath}`
-                : `${state.currentDirectory}/${targetPath}`;
-        }
-
-        const node = this.fs.getNode(resolvedPath);
+        const node = this.fs.resolveNode(pathToList, state.currentDirectory);
 
         if (!node) {
             return {
-                output: `ls: cannot access '${targetPath}': No such file or directory`,
+                output: `ls: cannot access '${targetPath || '.'}': No such file or directory`,
                 newState: state,
-                exitCode: 1 // Standard error code
+                exitCode: 1
             };
         }
 
-        if (node.type === 'file') {
+        if (!this.fs.isDirectory(node)) {
             return {
                 output: node.name,
                 newState: state,
@@ -51,33 +46,25 @@ export class LsCommand implements ICommand {
             };
         }
 
-        if (node.type === 'directory' && node.children) {
-            let files = Object.values(node.children);
+        // Is directory
+        let files = Array.from(node.children.values());
 
-            if (!showHidden) {
-                files = files.filter(f => !f.name.startsWith('.'));
-            }
-
-            // Sort alphabetically
-            files.sort((a, b) => a.name.localeCompare(b.name));
-
-            const formattedNames = files.map(f => {
-                let name = f.name;
-                if (classify && f.type === 'directory') {
-                    name += '/';
-                }
-                return name;
-            });
-
-            return {
-                output: formattedNames.join('  '),
-                newState: state,
-                exitCode: 0
-            };
+        if (!showHidden) {
+            files = files.filter(f => !f.name.startsWith('.'));
         }
 
+        files.sort((a, b) => a.name.localeCompare(b.name));
+
+        const formattedNames = files.map(f => {
+            let name = f.name;
+            if (classify && this.fs.isDirectory(f)) {
+                name += '/';
+            }
+            return name;
+        });
+
         return {
-            output: '',
+            output: formattedNames.join('  '),
             newState: state,
             exitCode: 0
         };

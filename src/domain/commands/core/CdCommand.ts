@@ -19,7 +19,7 @@ import { CommandResponse } from '../../usecases/ExecuteCommand';
 import { FileSystem } from '../../entities/FileSystem';
 
 export class CdCommand implements ICommand {
-    constructor(private fs: FileSystem) {}
+    constructor(private fs: FileSystem) { }
 
     /**
      * Executes the 'cd' command.
@@ -27,7 +27,7 @@ export class CdCommand implements ICommand {
      * @param args - Arguments passed to cd (target directory).
      * @param state - Current terminal state.
      */
-    execute(args: string[], state: TerminalState): CommandResponse {
+    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
         const target = args.length > 0 ? args[0] : '~';
         let newPath = target;
 
@@ -47,29 +47,17 @@ export class CdCommand implements ICommand {
                 };
             }
         }
-        // Handle absolute path
-        else if (target.startsWith('/')) {
-            newPath = target;
-        }
-        // Handle relative path
-        else {
-            newPath = state.currentDirectory === '/'
-                ? `/${target}`
-                : `${state.currentDirectory}/${target}`;
-        }
 
-        // Normalize path (handle '..' and '.')
-        // We do this manually to simulate path resolution on the virtual FS
-        const normalizedPath = this.normalizePath(newPath, state.currentDirectory);
+        const node = this.fs.resolveNode(newPath, state.currentDirectory);
 
-        // Verify existence
-        const node = this.fs.getNode(normalizedPath);
-        if (node && node.type === 'directory') {
+        // This relies on FileSystem method which I should verify is public... yes it is
+        if (node && this.fs.isDirectory(node)) {
+            const absolutePath = this.fs.getAbsolutePath(node);
             return {
-                output: target === '-' ? normalizedPath : '', // 'cd -' prints the new directory
+                output: target === '-' ? absolutePath : '',
                 newState: {
                     ...state,
-                    currentDirectory: normalizedPath,
+                    currentDirectory: absolutePath,
                     environment: {
                         ...state.environment,
                         OLDPWD: state.currentDirectory
@@ -84,30 +72,5 @@ export class CdCommand implements ICommand {
             newState: state,
             exitCode: 1
         };
-    }
-
-    /**
-     * Normalizes a file path, resolving '..' and '.' segments.
-     *
-     * @param path - The path to normalize.
-     * @param currentDir - The current directory (used if we needed to resolve absolute from relative, but we already did that).
-     */
-    private normalizePath(path: string, currentDir: string): string {
-        // Simple normalization
-        const parts = path.split('/');
-        const stack: string[] = [];
-
-        for (const part of parts) {
-            if (part === '' || part === '.') continue;
-            if (part === '..') {
-                if (stack.length > 0) {
-                    stack.pop();
-                }
-            } else {
-                stack.push(part);
-            }
-        }
-
-        return '/' + stack.join('/');
     }
 }

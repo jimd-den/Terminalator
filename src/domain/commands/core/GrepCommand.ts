@@ -3,61 +3,138 @@
  *
  * Searches for patterns in files.
  *
- * Pillar: The Swift Stream (Performance & Purity)
- * Pillar: The Balanced Scale (SOLID / KISS)
+ * Pillar: The Four-Fold Shield (Strict Architecture)
+ * Pillar: The Swift Stream (Performance)
  * Pillar: The Storyteller’s Code (Literate Documentation)
  *
  * Intent:
- * Allows the operator to filter information and find specific data points.
+ * Allows operater to find text in files.
  */
 
 import { ICommand } from '../ICommand';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystem, Dentry, S_IFDIR } from '../../entities/FileSystem';
 
 export class GrepCommand implements ICommand {
-    constructor(private fs: FileSystem) {}
+    constructor(private fs: FileSystem) { }
 
-    execute(args: string[], state: TerminalState): CommandResponse {
-        if (args.length < 2) {
+    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
+        const flags = args.filter(arg => arg.startsWith('-'));
+        const cleanArgs = args.filter(arg => !arg.startsWith('-'));
+
+        const recursive = flags.some(f => f.includes('r') || f.includes('R'));
+        const caseInsensitive = flags.some(f => f.includes('i'));
+
+        if (cleanArgs.length < 1) {
             return {
-                output: 'usage: grep <pattern> <filename>',
+                output: 'usage: grep [-ri] <pattern> [file ...]',
                 newState: state,
                 exitCode: 2
             };
         }
 
-        const pattern = args[0];
-        const filename = args[1];
-        const path = state.currentDirectory === '/' ? `/${filename}` : `${state.currentDirectory}/${filename}`;
-
-        const node = this.fs.getNode(path);
-
-        if (!node || node.type !== 'file') {
-            return {
-                output: `grep: ${filename}: No such file or directory`,
-                newState: state,
-                exitCode: 2
-            };
+        const patternRaw = cleanArgs[0];
+        // Strip quotes if present
+        let pattern = patternRaw;
+        if ((pattern.startsWith('"') && pattern.endsWith('"')) || (pattern.startsWith("'") && pattern.endsWith("'"))) {
+            pattern = pattern.substring(1, pattern.length - 1);
         }
 
-        const content = node.content || '';
-        const lines = content.split('\n');
-        const matches = lines.filter(line => line.includes(pattern));
+        const targets = cleanArgs.slice(1);
 
-        if (matches.length > 0) {
-            return {
-                output: matches.join('\n'),
-                newState: state,
-                exitCode: 0
-            };
+        let output = '';
+        let exitCode = 1; // Default to 1 (no match)
+
+        const lineMatches = (line: string): boolean => {
+            if (caseInsensitive) {
+                return line.toLowerCase().includes(pattern.toLowerCase());
+            }
+            return line.includes(pattern);
+        };
+
+        if (targets.length === 0) {
+            // Check input
+            if (input !== undefined) {
+                const lines = input.split('\n');
+                for (const line of lines) {
+                    if (lineMatches(line)) {
+                        output += line + '\n';
+                        exitCode = 0;
+                    }
+                }
+            } else {
+                return { output: 'grep: missing input', newState: state, exitCode: 1 };
+            }
+        } else {
+            // Process targets
+            for (const target of targets) {
+                let path = target;
+                if (!path.startsWith('/')) {
+                    path = state.currentDirectory === '/'
+                        ? `/${target}`
+                        : `${state.currentDirectory}/${target}`;
+                }
+
+                const node = this.fs.resolveNode(path);
+
+                if (!node) {
+                    output += `grep: ${target}: No such file or directory\n`;
+                    // exitCode remains 1 if no matches found elsewhere? 
+                    // usually grep continues but reports error.
+                    continue;
+                }
+
+                const processNode = (currentNode: Dentry, currentPath: string, showFilename: boolean) => {
+                    const inode = this.fs.getInode(currentNode.inodeId);
+                    if (!inode) return;
+
+                    if (inode.mode & S_IFDIR) {
+                        if (recursive) {
+                            for (const [name, child] of currentNode.children) {
+                                const childPath = currentPath === '/' ? `/${name}` : `${currentPath}/${name}`;
+                                processNode(child, childPath, true);
+                            }
+                        } else {
+                            output += `grep: ${currentPath}: Is a directory\n`;
+                        }
+                    } else {
+                        // File
+                        try {
+                            const content = this.fs.readFile(currentPath);
+                            const lines = content.split('\n');
+                            for (const line of lines) {
+                                if (lineMatches(line)) {
+                                    exitCode = 0;
+                                    if (showFilename) {
+                                        output += `${currentPath}:${line}\n`;
+                                    } else {
+                                        output += `${line}\n`;
+                                    }
+                                }
+                            }
+                        } catch (e: any) {
+                            output += `grep: ${currentPath}: ${e.message}\n`;
+                        }
+                    }
+                };
+
+                // If checking multiple files (or recursive), usually show filename.
+                const showFilename = targets.length > 1 || recursive;
+                processNode(node, path, showFilename);
+            }
         }
+
+        // Remove trailing newline if it wasn't there?
+        // Standard grep outputs a newline after each match.
+        // So valid output ends with newline.
+        // We do NOT strip it.
+        // if (output.endsWith('\n')) output = output.slice(0, -1);
 
         return {
-            output: '',
+            output: output,
             newState: state,
-            exitCode: 1 // POSIX grep returns 1 if no lines selected
+            exitCode: exitCode
         };
     }
 }

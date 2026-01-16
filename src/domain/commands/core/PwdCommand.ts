@@ -17,9 +17,9 @@ import { CommandResponse } from '../../usecases/ExecuteCommand';
 import { FileSystem } from '../../entities/FileSystem';
 
 export class PwdCommand implements ICommand {
-    constructor(private fs: FileSystem) {}
+    constructor(private fs: FileSystem) { }
 
-    execute(args: string[], state: TerminalState): CommandResponse {
+    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
         return {
             output: state.currentDirectory,
             newState: state,

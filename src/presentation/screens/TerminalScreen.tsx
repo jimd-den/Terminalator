@@ -110,13 +110,13 @@ export const TerminalScreen: React.FC = () => {
         }
     };
 
-    const handleCommand = () => {
+    const handleCommand = async () => {
         const cmdToRun = input;
         if (!cmdToRun) return;
 
         // Execute via Domain Logic
-        const response = commandExecutor.execute(input, state);
-        const { output: cmdOutput, newState, navigationAction, uiAction } = response;
+        const response = await commandExecutor.execute(input, state);
+        const { output: cmdOutput, newState, navigationAction, uiAction, exitCode } = response;
 
         // Handle UI Actions
         if (uiAction === 'CLEAR') {
@@ -144,11 +144,21 @@ export const TerminalScreen: React.FC = () => {
         }
 
         // Update Shell Output
-        setOutputLines(prev => [
-            ...prev,
-            { text: `> ${input}`, type: 'input' },
-            { text: cmdOutput, type: 'output' }
-        ]);
+        setOutputLines(prev => {
+            const nextLines = [
+                ...prev,
+                { text: `> ${input}`, type: 'input' } as const
+            ];
+
+            if (cmdOutput) {
+                nextLines.push({ text: cmdOutput, type: 'output' } as const);
+            }
+
+            nextLines.push({ text: `[EXIT: ${exitCode}]`, type: 'output' } as const);
+
+            return nextLines;
+        });
+
         if (newState) {
             setState(prev => ({ ...prev, ...newState }));
         }

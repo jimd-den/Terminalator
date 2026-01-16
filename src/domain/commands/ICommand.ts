@@ -27,5 +27,5 @@ export interface ICommand {
      * @param state - The current terminal state.
      * @returns A promise resolving to the command response.
      */
-    execute(args: string[], state: TerminalState): Promise<CommandResponse> | CommandResponse;
+    execute(args: string[], state: TerminalState, input?: string): Promise<CommandResponse> | CommandResponse;
 }
