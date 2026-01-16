@@ -2,11 +2,13 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { FileSystem } from '../../domain/entities/FileSystem';
 import { GameManager } from '../../interface-adapters/GameManager';
 import { GameCommandExecutor } from '../../interface-adapters/GameCommandExecutor';
+import { ConsoleTelemetryAdapter } from '../../infrastructure/telemetry/ConsoleTelemetryAdapter';
 
 interface GameContextType {
     fs: FileSystem;
     gameManager: GameManager;
     commandExecutor: GameCommandExecutor;
+    telemetry: ConsoleTelemetryAdapter;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -14,11 +16,12 @@ const GameContext = createContext<GameContextType | undefined>(undefined);
 export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     // Initialize singletons once
     const [fs] = useState(new FileSystem());
-    const [gameManager] = useState(new GameManager(fs));
-    const [commandExecutor] = useState(new GameCommandExecutor(fs, gameManager));
+    const [telemetry] = useState(new ConsoleTelemetryAdapter());
+    const [gameManager] = useState(new GameManager(fs, telemetry));
+    const [commandExecutor] = useState(new GameCommandExecutor(fs, gameManager, telemetry));
 
     return (
-        <GameContext.Provider value={{ fs, gameManager, commandExecutor }}>
+        <GameContext.Provider value={{ fs, gameManager, commandExecutor, telemetry }}>
             {children}
         </GameContext.Provider>
     );

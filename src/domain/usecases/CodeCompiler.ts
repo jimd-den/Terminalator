@@ -3,9 +3,12 @@
  * 
  * Simulates a compiler for the "Terminalator" system.
  * Checks for "syntax errors" in 24XX scripts and "compiles" them.
+ *
+ * Pillar: The Four-Fold Shield (Strict Architecture)
+ * Pillar: The Watchman’s Log (Telemetry)
  */
 
-import { Logger } from '../../infrastructure/telemetry/Logger';
+import { TelemetryPort } from '../ports/TelemetryPort';
 import { FileSystem } from '../entities/FileSystem';
 import { Interpreter } from '../interpreters/Interpreter';
 import { LispInterpreter } from '../interpreters/LispInterpreter';
@@ -18,7 +21,7 @@ export interface CompilationResult {
 export class CodeCompiler {
     private interpreters: Record<string, Interpreter>;
 
-    constructor(private fs: FileSystem) {
+    constructor(private fs: FileSystem, private telemetry?: TelemetryPort) {
         this.interpreters = {
             'lisp': new LispInterpreter(),
             // Future interpreters (python, js, etc.) can be added here
@@ -26,7 +29,7 @@ export class CodeCompiler {
     }
 
     compile(path: string): CompilationResult {
-        return Logger.trace('CodeCompiler.compile', () => {
+        const compileLogic = () => {
             const node = this.fs.getNode(path);
             if (!node || node.type !== 'file') {
                 return { success: false, output: `Error: File ${path} not found.` };
@@ -64,6 +67,12 @@ export class CodeCompiler {
                     output: `SYNTAX ERROR: No valid 24XX protocols found in "${path}".\nPlease use LISP code (.lisp) or legacy protocols.`
                 };
             }
-        }, { path });
+        };
+
+        if (this.telemetry) {
+            return this.telemetry.trace('CodeCompiler.compile', compileLogic, { path });
+        }
+
+        return compileLogic();
     }
 }

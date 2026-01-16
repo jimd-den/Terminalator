@@ -3,13 +3,21 @@
 
 import { GameManager } from '../src/interface-adapters/GameManager';
 import { FileSystem } from '../src/domain/entities/FileSystem';
-import { Logger } from '../src/infrastructure/telemetry/Logger';
+import { ConsoleTelemetryAdapter } from '../src/infrastructure/telemetry/ConsoleTelemetryAdapter';
 
-// Mock Logger to avoid cluttering output
-Logger.trace = <T>(name: string, fn: () => T) => fn();
+// Mock Telemetry to avoid cluttering output or just use the adapter
+// Here we will use the real adapter but maybe suppress some logs if needed
+// Or we can create a MockAdapter
+class MockTelemetry extends ConsoleTelemetryAdapter {
+    trace<T>(fnName: string, fn: (...args: any[]) => T, ...args: any[]): T {
+        // Simple pass-through for verification script
+        return fn(...args);
+    }
+}
 
+const telemetry = new MockTelemetry();
 const fs = new FileSystem();
-const gameManager = new GameManager(fs);
+const gameManager = new GameManager(fs, telemetry);
 
 console.log('--- STARTING MISSION VERIFICATION ---\n');
 
