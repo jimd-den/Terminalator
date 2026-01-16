@@ -4,17 +4,20 @@
  * The core UI of the "Terminalator".
  * Features a high-contrast, two-box layout inspired by "Aliens" and Grid computers.
  * Follows Nintendo/Jack Dorsey principles: Large, intuitive, focused.
+ *
+ * Pillar: The Storyteller’s Code (Literate Documentation)
+ * Pillar: The Balanced Scale (KISS)
+ *
+ * Intent:
+ * Connects the user input to the domain logic (Command Executor).
+ * Renders the system state (output lines, ghost text, CRT effects).
  */
 
 import React, { useState } from 'react';
-import { View, StyleSheet, TextInput, ScrollView, Text, KeyboardAvoidingView, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, StyleSheet, TextInput, ScrollView, Text } from 'react-native';
 import { THEME } from '../../frameworks-drivers/ui/Theme';
 import { GhostWriter } from '../../frameworks-drivers/ui/GhostWriter';
-import { FileSystem } from '../../domain/entities/FileSystem';
 import { createInitialTerminalState } from '../../domain/entities/TerminalState';
-import { GameCommandExecutor } from '../../interface-adapters/GameCommandExecutor';
-import { GameManager } from '../../interface-adapters/GameManager';
 import { VirtualKeyboard } from '../components/VirtualKeyboard';
 import { ConsoleLayout } from '../components/ConsoleLayout';
 import { useGame } from '../context/GameContext';
@@ -25,24 +28,12 @@ type ActiveApp = { type: 'SHELL' } | { type: 'VIM', filename: string };
 
 export const TerminalScreen: React.FC = () => {
     const { fs, gameManager, commandExecutor } = useGame();
-    // Navigation still needed? Maybe for other features, but not for Vim anymore.
     const navigation = useNavigation();
 
-    // App State
+    // App State: Manages whether we are in the Shell or a sub-application like Vim
     const [activeApp, setActiveApp] = useState<ActiveApp>({ type: 'SHELL' });
 
-    // Vim Hook
-    // We conditionally use the hook? No, hooks must be unconditional.
-    // We can pass a dummy filename if not active? 
-    // Or we render a child component that uses the hook.
-    // Let's render the hook usage in a wrapper or just use null if not active.
-    // Actually, creating a sub-component for the Vim part is cleaner to avoid Hook rules issues with conditional rendering logic if we were to unmount it.
-    // But since we want to keep state, we should probably mount/unmount the Vim subsystem.
-
-    // Let's use a sub-component <VimContainer /> that takes filename.
-    // But we defined useVimEditor as a hook returning UI.
-    // So we need a component that calls this hook.
-
+    // Terminal State: Manages the shell environment and visual output
     const [state, setState] = useState(createInitialTerminalState());
     const [input, setInput] = useState('');
     const [outputLines, setOutputLines] = useState<{ text: string, type: 'input' | 'output' }[]>([
@@ -54,11 +45,11 @@ export const TerminalScreen: React.FC = () => {
     const [ghostText, setGhostText] = useState('');
     const [isTransitioning, setIsTransitioning] = useState(false);
 
+    // Autocomplete Logic
     const suggestions = ['help', 'ls', 'cd', 'cat', 'whoami', 'mail', 'check-comms', 'clear', 'vim', 'man', 'grep'];
 
     const getAutocompleteSuggestion = (inputText: string): string => {
         if (!inputText) return '';
-
         const parts = inputText.split(' ');
         const cmd = parts[0];
 
@@ -69,7 +60,6 @@ export const TerminalScreen: React.FC = () => {
         }
 
         // 2. File Autocomplete
-        // Helper to check if we are in a position to autocomplete a file
         let lookingForFile = false;
         let partialName = '';
 
@@ -82,20 +72,9 @@ export const TerminalScreen: React.FC = () => {
         }
 
         if (lookingForFile) {
-            // Get files in current directory
-            // We need to access the FS from the hook, so we assume fs is available in scope.
-            // NOTE: currentDirectory logic from ExecuteCommand does relative path resolution.
-            // For autocomplete, we will simplify to "files in current WD".
-            // Complex path completion (e.g. cd ../bin) is ommitted for simplicity as per requirement "context aware" usually implies "files available here".
-
-            // To be robust, we should match resolving logic, but we'll stick to listing current directory children.
-            let targetDir = state.currentDirectory;
-            // If the partial name actually looks like a path (starts with /), we might want to resolve it, 
-            // but let's stick to simple filename completion for now to satisfy "path autocompletion" in the common case.
-
-            // However, ExecuteCommand resolves currentDirectory relative to root if it doesnt start with /.
-            // In TerminalState, currentDirectory is likely absolute (e.g. /home/operator).
-
+            // Simplified relative path resolution for UI responsiveness
+            // In a real shell, we would use the Command Executor's resolution logic
+            const targetDir = state.currentDirectory;
             const node = fs.getNode(targetDir);
 
             if (node && node.children) {
@@ -104,7 +83,6 @@ export const TerminalScreen: React.FC = () => {
                 return match ? match.substring(partialName.length) : '';
             }
         }
-
         return '';
     };
 
@@ -118,22 +96,12 @@ export const TerminalScreen: React.FC = () => {
             if (ghostText) {
                 const fullCommand = input + ghostText;
                 setInput(fullCommand);
-                setGhostText(''); // Clear ghost text after accepting, or re-calculate?
-                // Re-calculation happens on next render or we can verify if more completion is available
-                // Usually we just append. If we appended a dir, maybe we want to continue? 
-                // For now just append.
+                setGhostText('');
             }
         } else if (key === 'ESC') {
             setInput('');
             setGhostText('');
         } else {
-            // VirtualKeyboard appends via this handler?? 
-            // Actually VirtualKeyboard calls this with a single char.
-            // But TextInput calls handleInputChange with full text.
-            // Wait, handleKeyPress logic for 'TAB'/'ESC' is separate from text input.
-            // If onKeyPress is for VirtualKeyboard, then we need to manually update input state?
-            // The existing code: setInput(prev => prev + key);
-            // Yes.
             setInput(prev => {
                 const next = prev + key;
                 setGhostText(getAutocompleteSuggestion(next));
@@ -143,12 +111,14 @@ export const TerminalScreen: React.FC = () => {
     };
 
     const handleCommand = () => {
-        const cmdToRun = input; // Strict input
+        const cmdToRun = input;
         if (!cmdToRun) return;
 
+        // Execute via Domain Logic
         const response = commandExecutor.execute(input, state);
         const { output: cmdOutput, newState, navigationAction, uiAction } = response;
 
+        // Handle UI Actions
         if (uiAction === 'CLEAR') {
             setOutputLines([]);
             setState(newState);
@@ -157,9 +127,9 @@ export const TerminalScreen: React.FC = () => {
             return;
         }
 
+        // Handle Navigation
         if (navigationAction && navigationAction.type === 'NAVIGATE') {
             if (navigationAction.target === 'Editor') {
-                // Trigger CRT Blink
                 setIsTransitioning(true);
                 setTimeout(() => {
                     setActiveApp({ type: 'VIM', filename: navigationAction.params.filename });
@@ -167,21 +137,21 @@ export const TerminalScreen: React.FC = () => {
                 }, 100);
                 return;
             }
-            // Other nav?
             (navigation.navigate as any)(navigationAction.target, navigationAction.params);
             return;
         }
 
+        // Update Shell Output
         setOutputLines(prev => [
             ...prev,
-            { text: `> ${input}`, type: 'input' }, // Simplified echo
+            { text: `> ${input}`, type: 'input' },
             { text: cmdOutput, type: 'output' }
         ]);
         setState(newState);
         setInput('');
         setGhostText('');
 
-        // Procedural event simulation after a few commands
+        // Simulate random procedural events
         if (outputLines.length > 5 && outputLines.length % 4 === 0) {
             const mail = gameManager.spawnNPCEvent();
             setOutputLines(prev => [...prev, { text: `[ NEW TRANSMISSION: ID ${mail.id} FROM ${mail.from} ]`, type: 'output' }]);
@@ -256,7 +226,7 @@ export const TerminalScreen: React.FC = () => {
     );
 };
 
-// Sub-component to safely use the hook
+// Wrapper component to isolate the Vim hook
 const VimContainer: React.FC<{ filename: string; onExit: () => void; isTransitioning: boolean }> = ({ filename, onExit, isTransitioning }) => {
     const { topContent, middleContent, bottomContent } = useVimEditor(filename, onExit);
 
@@ -271,8 +241,6 @@ const VimContainer: React.FC<{ filename: string; onExit: () => void; isTransitio
         </ConsoleLayout>
     );
 };
-
-
 
 const styles = StyleSheet.create({
     scrollContent: {
@@ -298,7 +266,7 @@ const styles = StyleSheet.create({
     inputLabel: {
         color: THEME.colors.secondary,
         fontFamily: THEME.typography.fontFamily,
-        fontSize: THEME.typography.fontSize.sm, // Smaller label
+        fontSize: THEME.typography.fontSize.sm,
         marginBottom: THEME.spacing.xs,
         opacity: 0.8,
         letterSpacing: 1,
@@ -307,9 +275,6 @@ const styles = StyleSheet.create({
         width: '100%',
         position: 'relative',
         justifyContent: 'center',
-        // Optional: Add a background or border to define the input area more clearly
-        // backgroundColor: 'rgba(0, 255, 65, 0.05)', 
-        // padding: THEME.spacing.xs,
     },
     input: {
         width: '100%',
@@ -317,7 +282,7 @@ const styles = StyleSheet.create({
         fontFamily: THEME.typography.fontFamily,
         fontSize: THEME.typography.fontSize.lg,
         padding: 0,
-        height: 30, // Fixed height to roughly match font size
+        height: 30,
     },
     ghostText: {
         position: 'absolute',
@@ -329,7 +294,7 @@ const styles = StyleSheet.create({
     },
     crtBlinkOverlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: THEME.colors.background, // Black out
-        zIndex: 999, // On top of everything
+        backgroundColor: THEME.colors.background,
+        zIndex: 999,
     }
 });

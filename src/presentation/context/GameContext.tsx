@@ -4,6 +4,16 @@ import { GameManager } from '../../interface-adapters/GameManager';
 import { GameCommandExecutor } from '../../interface-adapters/GameCommandExecutor';
 import { ConsoleTelemetryAdapter } from '../../infrastructure/telemetry/ConsoleTelemetryAdapter';
 
+/**
+ * GameContext - Presentation Layer
+ *
+ * Provides global access to the core game systems (FileSystem, GameManager, etc.).
+ * Adheres to "Dependency Minimalism" by exposing singletons.
+ *
+ * Pillar: The Four-Fold Shield (Strict Architecture)
+ * Pillar: The Balanced Scale (KISS)
+ */
+
 interface GameContextType {
     fs: FileSystem;
     gameManager: GameManager;
@@ -15,10 +25,11 @@ const GameContext = createContext<GameContextType | undefined>(undefined);
 
 export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     // Initialize singletons once
-    const [fs] = useState(new FileSystem());
-    const [telemetry] = useState(new ConsoleTelemetryAdapter());
-    const [gameManager] = useState(new GameManager(fs, telemetry));
-    const [commandExecutor] = useState(new GameCommandExecutor(fs, gameManager, telemetry));
+    // Using lazy initialization to ensure purity and performance
+    const [fs] = useState(() => new FileSystem());
+    const [telemetry] = useState(() => new ConsoleTelemetryAdapter());
+    const [gameManager] = useState(() => new GameManager(fs, telemetry));
+    const [commandExecutor] = useState(() => new GameCommandExecutor(fs, gameManager, telemetry));
 
     return (
         <GameContext.Provider value={{ fs, gameManager, commandExecutor, telemetry }}>

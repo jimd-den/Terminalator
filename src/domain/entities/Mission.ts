@@ -3,6 +3,13 @@
  * 
  * Represents a procedural mission generated for the player.
  * Missions are assigned by NPCs and provided via Mail.
+ *
+ * Pillar: The Storyteller’s Code (Literate Documentation)
+ * Pillar: The Swift Stream (Performance & Purity)
+ *
+ * Intent:
+ * Generates dynamic content to keep the gameplay loop engaging.
+ * Connects NPCs to actionable tasks for the player.
  */
 
 import { NPC } from './NPC';
@@ -35,6 +42,12 @@ export class MissionGenerator {
         'Safe Passage Code',
     ];
 
+    /**
+     * Generates a unique mission for a given NPC.
+     *
+     * @param npc - The NPC assigning the mission.
+     * @returns A populated Mission object.
+     */
     static generate(npc: NPC): Mission {
         const id = Math.random().toString(36).substring(2, 6).toUpperCase();
         const type = this.getRandomType();

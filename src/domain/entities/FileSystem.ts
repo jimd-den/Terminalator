@@ -3,6 +3,13 @@
  * 
  * A simulated POSIX-compliant file system.
  * Supports a tree structure of files and directories.
+ *
+ * Pillar: The Four-Fold Shield (Strict Architecture) - Entities
+ * Pillar: The Balanced Scale (SOLID / KISS) - Simple Tree Structure
+ *
+ * Intent:
+ * Provides the persistent state of the virtual world.
+ * Allows commands to manipulate files and directories.
  */
 
 export type FileType = 'file' | 'directory';
@@ -52,7 +59,12 @@ export class FileSystem {
         };
     }
 
-    // Simplified traversal to find a node by path
+    /**
+     * Traverses the file system to find a node by path.
+     *
+     * @param path - The absolute or relative path to the node.
+     * @returns The FSNode if found, otherwise null.
+     */
     getNode(path: string): FSNode | null {
         if (path === '/') return this.root;
         const parts = path.split('/').filter(p => p.length > 0);

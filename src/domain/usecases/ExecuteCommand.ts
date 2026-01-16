@@ -1,16 +1,27 @@
 /**
  * ExecuteCommand Use Case - Application Logic Layer
  * 
- * Parses and executes simulated terminal commands.
- * Adheres to POSIX-compliant behavior in a simulated environment.
+ * Parses and executes simulated terminal commands using the Command Pattern.
+ * Adheres to "The Four-Fold Shield" by relying on the Command Registry (domain service).
  *
  * Pillar: The Four-Fold Shield (Strict Architecture)
- * Pillar: The Swift Stream (Performance & Purity)
+ * Pillar: The Watchman’s Log (Telemetry)
+ * Pillar: The Storyteller’s Code (Literate Documentation)
+ *
+ * Intent:
+ * The central dispatch mechanism for user input. It interprets the string,
+ * finds the appropriate command, and delegates execution.
  */
 
-import { FileSystem, FSNode } from '../entities/FileSystem';
+import { FileSystem } from '../entities/FileSystem';
 import { TerminalState } from '../entities/TerminalState';
 import { TelemetryPort } from '../ports/TelemetryPort';
+import { CommandRegistry } from '../commands/CommandRegistry';
+import { LsCommand } from '../commands/core/LsCommand';
+import { CdCommand } from '../commands/core/CdCommand';
+import { PwdCommand } from '../commands/core/PwdCommand';
+import { CatCommand } from '../commands/core/CatCommand';
+import { GrepCommand } from '../commands/core/GrepCommand';
 
 export interface CommandResponse {
     output: string;
@@ -25,54 +36,84 @@ export interface CommandResponse {
 }
 
 export class ExecuteCommand {
-    constructor(protected fs: FileSystem, protected telemetry?: TelemetryPort) { }
+    private registry: CommandRegistry;
+
+    /**
+     * Initializes ExecuteCommand.
+     * Optionally accepts a registry. If not provided, initializes a default one
+     * with core commands (ls, cd, pwd, etc.).
+     *
+     * @param fs - The FileSystem entity.
+     * @param telemetry - The Telemetry port.
+     * @param registry - Optional CommandRegistry (for dependency injection/testing).
+     */
+    constructor(
+        protected fs: FileSystem,
+        protected telemetry?: TelemetryPort,
+        registry?: CommandRegistry
+    ) {
+        if (registry) {
+            this.registry = registry;
+        } else {
+            this.registry = new CommandRegistry();
+            this.registerCoreCommands();
+        }
+    }
+
+    private registerCoreCommands() {
+        this.registry.register('ls', new LsCommand(this.fs));
+        this.registry.register('cd', new CdCommand(this.fs));
+        this.registry.register('pwd', new PwdCommand(this.fs));
+        this.registry.register('cat', new CatCommand(this.fs));
+        this.registry.register('grep', new GrepCommand(this.fs));
+
+        // Inline clear command for simplicity, or could be a class
+        this.registry.register('clear', {
+            execute: (_args, state) => ({
+                output: '',
+                newState: state,
+                exitCode: 0,
+                uiAction: 'CLEAR'
+            })
+        });
+    }
+
+    /**
+     * Accessor for the registry, allowing adapters to register more commands.
+     */
+    getRegistry(): CommandRegistry {
+        return this.registry;
+    }
 
     execute(commandString: string, state: TerminalState): CommandResponse {
         const executeLogic = () => {
-            const parts = commandString.trim().split(/\s+/);
-            const command = parts[0];
-            const args = parts.slice(1);
-
-            let output = '';
-            let exitCode = 0;
-            let newState = { ...state };
-            let uiAction: 'CLEAR' | undefined;
-
-            switch (command) {
-                case 'ls':
-                    output = this.ls(newState.currentDirectory);
-                    break;
-                case 'cd':
-                    const cdResult = this.cd(args[0] || state.environment.HOME, state);
-                    output = cdResult.output;
-                    newState = cdResult.newState;
-                    exitCode = cdResult.exitCode;
-                    break;
-                case 'cat':
-                    output = this.cat(args[0], state.currentDirectory);
-                    break;
-                case 'grep':
-                    output = this.grep(args, state.currentDirectory);
-                    break;
-                case 'pwd':
-                    output = state.currentDirectory;
-                    break;
-                case 'whoami':
-                    output = state.user;
-                    break;
-                case 'clear':
-                    output = '';
-                    uiAction = 'CLEAR';
-                    break;
-                case '':
-                    output = '';
-                    break;
-                default:
-                    output = `sh: command not found: ${command}`;
-                    exitCode = 127;
+            if (!commandString.trim()) {
+                return { output: '', newState: state, exitCode: 0 };
             }
 
-            return { output, newState, exitCode, uiAction };
+            const parts = commandString.trim().split(/\s+/);
+            const commandName = parts[0];
+            const args = parts.slice(1);
+
+            const command = this.registry.get(commandName);
+
+            if (command) {
+                try {
+                    return command.execute(args, state);
+                } catch (error: any) {
+                    return {
+                        output: `sh: error executing ${commandName}: ${error.message}`,
+                        newState: state,
+                        exitCode: 1
+                    };
+                }
+            } else {
+                return {
+                    output: `sh: command not found: ${commandName}`,
+                    newState: state,
+                    exitCode: 127
+                };
+            }
         };
 
         if (this.telemetry) {
@@ -80,68 +121,5 @@ export class ExecuteCommand {
         }
 
         return executeLogic();
-    }
-
-    private ls(path: string): string {
-        const node = this.fs.getNode(path);
-        if (node && node.type === 'directory' && node.children) {
-            // Check for empty directory
-            const files = Object.keys(node.children);
-            if (files.length === 0) return '';
-            return files.join('  ');
-        }
-        return '';
-    }
-
-    private cd(target: string, state: TerminalState): { output: string; newState: TerminalState; exitCode: number } {
-        // Basic cd simulation
-        let newPath = target;
-        if (!target.startsWith('/')) {
-            newPath = state.currentDirectory === '/' ? `/${target}` : `${state.currentDirectory}/${target}`;
-        }
-
-        // Normalize path (handle .. etc, simplified for now)
-        if (target === '..') {
-            const parts = state.currentDirectory.split('/').filter(p => p.length > 0);
-            parts.pop();
-            newPath = parts.length === 0 ? '/' : '/' + parts.join('/');
-        } else if (target === '.') {
-            newPath = state.currentDirectory;
-        }
-
-        const node = this.fs.getNode(newPath);
-        if (node && node.type === 'directory') {
-            return { output: '', newState: { ...state, currentDirectory: newPath }, exitCode: 0 };
-        }
-        return { output: `cd: no such file or directory: ${target}`, newState: state, exitCode: 1 };
-    }
-
-    private cat(filename: string | undefined, currentDir: string): string {
-        if (!filename) return 'Usage: cat <filename>';
-        const path = currentDir === '/' ? `/${filename}` : `${currentDir}/${filename}`;
-        const node = this.fs.getNode(path);
-        if (node && node.type === 'file') {
-            return node.content || '';
-        }
-        return `cat: ${filename}: No such file or directory`;
-    }
-
-    private grep(args: string[], currentDir: string): string {
-        if (args.length < 2) return 'Usage: grep <pattern> <filename>';
-        const pattern = args[0];
-        const filename = args[1];
-
-        const path = currentDir === '/' ? `/${filename}` : `${currentDir}/${filename}`;
-        const node = this.fs.getNode(path);
-
-        if (node && node.type === 'file') {
-            const content = node.content || '';
-            const lines = content.split('\n');
-            // Basic substring match, regex could be added if needed
-            const matches = lines.filter(line => line.includes(pattern));
-            return matches.join('\n');
-        }
-
-        return `grep: ${filename}: No such file or directory`;
     }
 }

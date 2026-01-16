@@ -1,8 +1,12 @@
 /**
- * GameCommandDecorator - Application Logic / Interface Adapter
+ * GameCommandExecutor - Interface Adapter Layer
  * 
- * Extends the basic terminal commands with game-specific logic
- * like 'mail', 'vim', and 'compile'.
+ * Orchestrates terminal commands including game-specific logic.
+ * Registers game commands ('mail', 'check-comms', 'compile', 'vim')
+ * alongside core commands via the Registry.
+ *
+ * Pillar: The Four-Fold Shield (Strict Architecture)
+ * Pillar: The Master’s Tool (Pragmatic Design Patterns) - Command Pattern
  */
 
 import { ExecuteCommand, CommandResponse } from '../domain/usecases/ExecuteCommand';
@@ -14,74 +18,37 @@ import { TelemetryPort } from '../domain/ports/TelemetryPort';
 
 import { GameManager } from './GameManager';
 
+import { MailCommand } from './commands/MailCommand';
+import { CheckCommsCommand } from './commands/CheckCommsCommand';
+import { CompileCommand } from './commands/CompileCommand';
+import { VimCommand } from './commands/VimCommand';
+
 export class GameCommandExecutor extends ExecuteCommand {
     private mailSystem: MailSystem;
     private compiler: CodeCompiler;
     private gameManager: GameManager;
-    // private vimInstance: VimSimulator | null = null; // Removed in favor of EditorScreen
 
     constructor(fs: FileSystem, gameManager: GameManager, telemetry?: TelemetryPort) {
         super(fs, telemetry);
         this.mailSystem = new MailSystem(fs, telemetry);
         this.compiler = new CodeCompiler(fs, telemetry);
         this.gameManager = gameManager;
+
+        this.registerGameCommands();
     }
 
-    execute(commandString: string, state: TerminalState): CommandResponse {
-        const parts = commandString.trim().split(/\s+/);
-        const command = parts[0];
-        const args = parts.slice(1);
+    /**
+     * Registers game-specific commands into the registry.
+     * This decouples the execution logic from the specific command implementations.
+     */
+    private registerGameCommands() {
+        const registry = this.getRegistry();
 
-        // Vim handling moved to EditorScreen, this check is no longer needed in the main loop
-        // as the terminal screen won't be active or handling input for vim.
-        /*
-        if (this.vimInstance) {
-            ...
-        }
-        */
-
-        if (command === 'mail') {
-            return {
-                output: this.mailSystem.listMail(),
-                newState: state,
-                exitCode: 0,
-            };
-        }
-
-        if (command === 'check-comms') {
-            const mail = this.gameManager.spawnNPCEvent();
-            return {
-                output: `[ SECURE CHANNEL ESTABLISHED ]\nIncoming transmission from ${mail.from}...\nMessage saved to /home/operator/mail/${mail.id}`,
-                newState: state,
-                exitCode: 0,
-            };
-        }
-
-        if (command === 'compile') {
-            const res = this.compiler.compile(args[0] || '');
-            return {
-                output: res.output,
-                newState: state,
-                exitCode: res.success ? 0 : 1,
-            };
-        }
-
-        if (command === 'vim') {
-            const filename = args[0] || 'scratchpad.24xx';
-            // We do not lock the terminal here; the navigation will take the user away.
-            // When they return, they return to the terminal state.
-            return {
-                output: `Opening ${filename} in editor...`,
-                newState: state,
-                exitCode: 0,
-                navigationAction: {
-                    type: 'NAVIGATE',
-                    target: 'Editor',
-                    params: { filename }
-                }
-            };
-        }
-
-        return super.execute(commandString, state);
+        registry.register('mail', new MailCommand(this.mailSystem));
+        registry.register('check-comms', new CheckCommsCommand(this.gameManager));
+        registry.register('compile', new CompileCommand(this.compiler));
+        registry.register('vim', new VimCommand());
     }
+
+    // No need to override execute() anymore as the superclass uses the registry!
 }
