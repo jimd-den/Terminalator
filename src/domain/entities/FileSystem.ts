@@ -1,78 +1,156 @@
 /**
  * FileSystem Entity - Domain Layer
  * 
- * A simulated POSIX-compliant file system.
- * Supports a tree structure of files and directories with parent references for traversal.
+ * A simulated POSIX-compliant file system using Inode/Dentry architecture.
+ * Separates file metadata (Inode) from the directory tree structure (Dentry).
  */
 
-export type FileType = 'file' | 'directory';
+// File Type Constants (POSIX)
+export const S_IFMT = 0o170000; // Mask for file type
+export const S_IFSOCK = 0o140000; // Socket
+export const S_IFLNK = 0o120000; // Symbolic link
+export const S_IFREG = 0o100000; // Regular file
+export const S_IFBLK = 0o060000; // Block device
+export const S_IFDIR = 0o040000; // Directory
+export const S_IFCHR = 0o020000; // Character device
+export const S_IFIFO = 0o010000; // FIFO
 
-export interface FSNode {
+// Permission Constants
+export const S_ISUID = 0o4000;   // Set UID bit
+export const S_ISGID = 0o2000;   // Set-group-ID bit
+export const S_ISVTX = 0o1000;   // Sticky bit
+export const S_IRWXU = 0o0700;   // Owner mask
+export const S_IRUSR = 0o0400;   // Owner read
+export const S_IWUSR = 0o0200;   // Owner write
+export const S_IXUSR = 0o0100;   // Owner execute
+export const S_IRWXG = 0o0070;   // Group mask
+export const S_IRGRP = 0o0040;   // Group read
+export const S_IWGRP = 0o0020;   // Group write
+export const S_IXGRP = 0o0010;   // Group execute
+export const S_IRWXO = 0o0007;   // Other mask
+export const S_IROTH = 0o0004;   // Other read
+export const S_IWOTH = 0o0002;   // Other write
+export const S_IXOTH = 0o0001;   // Other execute
+
+export type FileType = 'file' | 'directory' | 'symlink' | 'block' | 'char' | 'fifo' | 'socket';
+
+export interface Inode {
+    id: number;
+    mode: number;    // File type and mode (permissions)
+    uid: number;     // User ID
+    gid: number;     // Group ID
+    size: number;    // Size in bytes
+    atime: number;   // Access time (ms)
+    mtime: number;   // Modification time (ms)
+    ctime: number;   // Change time (ms)
+    links: number;   // Hard link count
+    content: any;    // string for files, Map<string, number> for dirs (optional optimization), null for devs
+    target?: string; // For symlinks
+}
+
+// Dentry represents a node in the directory tree.
+// It maps a name to an Inode.
+export interface Dentry {
     name: string;
-    type: FileType;
-    parent: FSNode | null; // Added for '..' support
-    content?: string;
-    children?: Record<string, FSNode>;
-    owner: string;
-    permissions: string; // e.g., 'rwxr-xr-x'
-    updatedAt: string;
+    inodeId: number;
+    parent: Dentry | null;
+    children: Map<string, Dentry>; // Cache of children Dentries
+    mountedFS?: FileSystem; // For future mounting support
 }
 
 export class FileSystem {
-    root: FSNode;
+    private inodes: Map<number, Inode> = new Map();
+    private nextInodeId: number = 1;
+    root: Dentry;
 
     constructor() {
-        this.root = this.createInitialState();
-        this.linkParents(this.root, null);
+        // Create Root Inode (ID 1)
+        const now = Date.now();
+        const rootInode: Inode = {
+            id: this.nextInodeId++,
+            mode: S_IFDIR | 0o755,
+            uid: 0,
+            gid: 0,
+            size: 4096,
+            atime: now,
+            mtime: now,
+            ctime: now,
+            links: 2, // . and ..
+            content: null // For directories, content is technically the list of entries, but we manage via Dentries
+        };
+        this.inodes.set(rootInode.id, rootInode);
+
+        // Create Root Dentry
+        this.root = {
+            name: '/',
+            inodeId: rootInode.id,
+            parent: null,
+            children: new Map()
+        };
+        // Link parent of root to itself? Usually null or special handling. Kept null.
+
+        this.initializeDefaultStructure();
     }
 
+    // --- Inode Management ---
+
+    createInode(mode: number, uid: number = 0, gid: number = 0): Inode {
+        const inode: Inode = {
+            id: this.nextInodeId++,
+            mode: mode,
+            uid: uid,
+            gid: gid,
+            size: (mode & S_IFDIR) ? 4096 : 0,
+            atime: Date.now(),
+            mtime: Date.now(),
+            ctime: Date.now(),
+            links: 1,
+            content: (mode & S_IFDIR) ? null : ''
+        };
+        this.inodes.set(inode.id, inode);
+        return inode;
+    }
+
+    getInode(id: number): Inode | undefined {
+        return this.inodes.get(id);
+    }
+
+    // --- Path Resolution ---
+
     /**
-     * Resolves a path string to a FSNode.
-     * Handles absolute paths ('/etc'), relative paths ('bin'),
-     * parent references ('..'), and current directory references ('.').
+     * Resolves a path string to a Dentry.
      */
-    resolveNode(path: string, cwd: string = '/'): FSNode | null {
+    resolve(path: string, cwd: string = '/'): Dentry | null {
         if (!path) return null;
 
-        // 1. Determine starting point
-        let current: FSNode | null = path.startsWith('/') ? this.root : this.resolveNode(cwd, '/');
+        let current: Dentry = path.startsWith('/') ? this.root : (this.resolve(cwd) || this.root);
 
-        if (!current) return null; // Should not happen if cwd is valid, but safety check
-
-        // 2. Normalize path parts
         const parts = path.split('/').filter(p => p.length > 0 && p !== '.');
 
-        // 3. Traverse
         for (const part of parts) {
             if (part === '..') {
                 if (current.parent) {
                     current = current.parent;
                 }
-                // if no parent (root), stay at root
             } else {
-                if (current.type !== 'directory' || !current.children || !current.children[part]) {
+                let next = current.children.get(part);
+                if (!next) {
                     return null;
                 }
-                current = current.children[part];
+                current = next;
             }
         }
-
         return current;
     }
 
-    /**
-     * Legacy support wrapper for getNode
-     */
-    getNode(path: string): FSNode | null {
-        return this.resolveNode(path);
+    // Alias for compatibility/readability
+    resolveNode(path: string, cwd: string = '/'): Dentry | null {
+        return this.resolve(path, cwd);
     }
 
-    /**
-     * Helper to get absolute path of a node
-     */
-    getAbsolutePath(node: FSNode): string {
+    getAbsolutePath(dentry: Dentry): string {
         const parts: string[] = [];
-        let current: FSNode | null = node;
+        let current: Dentry | null = dentry;
         while (current && current.parent) {
             parts.unshift(current.name);
             current = current.parent;
@@ -80,192 +158,241 @@ export class FileSystem {
         return parts.length === 0 ? '/' : '/' + parts.join('/');
     }
 
-    private createInitialState(): FSNode {
-        const now = new Date().toISOString();
-        const root: FSNode = {
-            name: '/',
-            type: 'directory',
-            parent: null,
-            children: {
-                'bin': {
-                    name: 'bin', type: 'directory', parent: null, owner: 'root', permissions: 'rwxr-xr-x', updatedAt: now, children: {
-                        'help': { name: 'help', type: 'file', parent: null, content: 'AVAILABLE COMMANDS:\nls - List files\ncd <dir> - Change directory\ncat <file> - Read file\nmail - Check mail\nvim <file> - Edit file\ncompile <file> - Process 24XX scripts\n', owner: 'root', permissions: 'r-xr-xr-x', updatedAt: now },
-                    }
-                },
-                'dev': {
-                    name: 'dev', type: 'directory', parent: null, owner: 'root', permissions: 'rwxr-xr-x', updatedAt: now, children: {
-                        'null': { name: 'null', type: 'file', parent: null, content: '', owner: 'root', permissions: 'rw-rw-rw-', updatedAt: now },
-                        'zero': { name: 'zero', type: 'file', parent: null, content: '', owner: 'root', permissions: 'rw-rw-rw-', updatedAt: now },
-                        'tty': { name: 'tty', type: 'file', parent: null, content: '', owner: 'root', permissions: 'rw-rw-rw-', updatedAt: now },
-                    }
-                },
-                'etc': {
-                    name: 'etc', type: 'directory', parent: null, owner: 'root', permissions: 'rwxr-xr-x', updatedAt: now, children: {
-                        'config': { name: 'config', type: 'file', parent: null, content: 'SYSTEM CONFIGURATION\n--------------------\nMAX_THREADS=4\nTARGET_IP=UNRESOLVED\n\n[HINT]: NPCs will send encrypted coordinates. Use "vim" to write protocols and "compile" to decrypt.', owner: 'root', permissions: 'r--r--r--', updatedAt: now },
-                        'passwd': { name: 'passwd', type: 'file', parent: null, content: 'root:x:0:0:root:/root:/bin/bash\noperator:x:1000:1000:operator:/home/operator:/bin/bash', owner: 'root', permissions: 'r--r--r--', updatedAt: now },
-                    }
-                },
-                'home': {
-                    name: 'home', type: 'directory', parent: null, owner: 'root', permissions: 'rwxr-xr-x', updatedAt: now, children: {
-                        'operator': {
-                            name: 'operator', type: 'directory', parent: null, owner: 'operator', permissions: 'rwx------', updatedAt: now, children: {
-                                'mail': { name: 'mail', type: 'directory', parent: null, owner: 'operator', permissions: 'rwx------', updatedAt: now, children: {} },
-                                'notes.txt': { name: 'notes.txt', type: 'file', parent: null, content: 'System initialized. Awaiting NPCs.', owner: 'operator', permissions: 'rw-------', updatedAt: now },
-                            }
-                        },
-                    }
-                },
-                'lib': { name: 'lib', type: 'directory', parent: null, owner: 'root', permissions: 'rwxr-xr-x', updatedAt: now, children: {} },
-                'proc': { name: 'proc', type: 'directory', parent: null, owner: 'root', permissions: 'r-xr-xr-x', updatedAt: now, children: {} },
-                'root': { name: 'root', type: 'directory', parent: null, owner: 'root', permissions: 'rwx------', updatedAt: now, children: {} },
-                'tmp': { name: 'tmp', type: 'directory', parent: null, owner: 'root', permissions: 'rwxrwxrwt', updatedAt: now, children: {} },
-                'usr': {
-                    name: 'usr', type: 'directory', parent: null, owner: 'root', permissions: 'rwxr-xr-x', updatedAt: now, children: {
-                        'bin': { name: 'bin', type: 'directory', parent: null, owner: 'root', permissions: 'rwxr-xr-x', updatedAt: now, children: {} },
-                        'lib': { name: 'lib', type: 'directory', parent: null, owner: 'root', permissions: 'rwxr-xr-x', updatedAt: now, children: {} },
-                        'share': { name: 'share', type: 'directory', parent: null, owner: 'root', permissions: 'rwxr-xr-x', updatedAt: now, children: {} },
-                    }
-                },
-                'var': {
-                    name: 'var', type: 'directory', parent: null, owner: 'root', permissions: 'rwxr-xr-x', updatedAt: now, children: {
-                        'log': { name: 'log', type: 'directory', parent: null, owner: 'root', permissions: 'rwxr-xr-x', updatedAt: now, children: {} },
-                        'tmp': { name: 'tmp', type: 'directory', parent: null, owner: 'root', permissions: 'rwxrwxrwt', updatedAt: now, children: {} },
-                    }
-                },
-            },
-            owner: 'root',
-            permissions: 'rwxr-xr-x',
-            updatedAt: now,
-        };
-        return root;
-    }
+    // --- Operations ---
 
-    private linkParents(node: FSNode, parent: FSNode | null) {
-        node.parent = parent;
-        if (node.children) {
-            for (const key in node.children) {
-                this.linkParents(node.children[key], node);
-            }
-        }
-    }
+    mkdir(path: string, mode: number = 0o755, uid: number = 0, gid: number = 0, cwd: string = '/'): Dentry {
+        const parentPath = path.substring(0, path.lastIndexOf('/')) || (path.startsWith('/') ? '/' : cwd);
+        const name = path.substring(path.lastIndexOf('/') + 1);
 
-    /**
-     * Creates a new node (file or directory) at the specified path.
-     * Returns the created node or throws an error.
-     */
-    createNode(path: string, type: FileType, cwd: string = '/'): FSNode {
-        // 1. Split path into parent and new name
+        // Handle "mkdir foo" where foo is in cwd
+        // If path is "foo/bar" parent is "foo"
+        // Let's use robust split logic
         const parts = path.split('/');
-        const name = parts.pop();
-        if (!name) throw new Error('Invalid path');
+        const newName = parts.pop();
+        if (!newName) throw new Error('Invalid path');
 
-        // 2. Resolve parent
-        const parentPath = parts.length === 0 ? cwd : (path.startsWith('/') ? '/' + parts.join('/') : parts.join('/'));
-        // Special case: if path was just "filename", parent is cwd.
-        // If path was "/filename", parent is "/".
+        const parentStr = parts.length === 0 ? cwd : (path.startsWith('/') ? '/' + parts.join('/') : parts.join('/'));
+        // Fix for "/foo" -> parent "/", name "foo"
+        // Fix for "foo" -> parent cwd, name "foo"
 
-        // Let's rely on resolveNode for the parent directory
-        // Re-evaluating split logic for edge cases like "mkdir /foo" -> parent "/", name "foo"
+        // Actually, just resolve parent of full path
+        // Simplest: use createDentry logic
+        return this.createDentry(path, S_IFDIR | mode, uid, gid, cwd);
+    }
 
-        let parentNode: FSNode | null;
+    createFile(path: string, mode: number = 0o644, uid: number = 0, gid: number = 0, cwd: string = '/'): Dentry {
+        return this.createDentry(path, S_IFREG | mode, uid, gid, cwd);
+    }
 
-        if (path.startsWith('/')) {
-            const lastSlashIndex = path.lastIndexOf('/');
-            const parentStr = path.substring(0, lastSlashIndex) || '/';
-            parentNode = this.resolveNode(parentStr);
-        } else {
-            // Relative path
-            if (parts.length === 0) {
-                parentNode = this.resolveNode(cwd);
+    private createDentry(path: string, mode: number, uid: number, gid: number, cwd: string): Dentry {
+        // Resolve Parent
+        // Logic: "dirname" of path
+        let parent: Dentry | null;
+        let name: string;
+
+        if (path.includes('/')) {
+            const lastSlash = path.lastIndexOf('/');
+            const dirPart = path.substring(0, lastSlash);
+            name = path.substring(lastSlash + 1);
+            // If path was "/foo", dirPart is "", meaning root? No, "/" is root.
+            // If path is "/bin/ls", dirPart is "/bin".
+            // If path is "usr/bin", dirPart is "usr".
+
+            if (dirPart === '') {
+                // Path was "/name"
+                parent = this.root;
             } else {
-                parentNode = this.resolveNode(parts.join('/'), cwd);
+                parent = this.resolve(dirPart, cwd);
             }
+        } else {
+            name = path;
+            parent = this.resolve(cwd);
         }
 
-        if (!parentNode) {
-            throw new Error(`cannot create '${path}': No such file or directory`);
-        }
+        if (!parent) throw new Error(`Cannot create '${path}': Parent directory not found`);
+        const parentInode = this.getInode(parent.inodeId);
+        if (!parentInode || !(parentInode.mode & S_IFDIR)) throw new Error(`Cannot create '${path}': Parent is not a directory`);
 
-        if (parentNode.type !== 'directory') {
-            throw new Error(`cannot create '${path}': Not a directory`);
-        }
+        if (parent.children.has(name)) throw new Error(`Cannot create '${path}': File exists`);
 
-        if (parentNode.children && parentNode.children[name]) {
-            throw new Error(`cannot create '${path}': File exists`);
-        }
+        // Create Inode
+        const inode = this.createInode(mode, uid, gid);
 
-        // 3. Create Node
-        if (!parentNode.children) parentNode.children = {};
-
-        const newNode: FSNode = {
+        // Create Dentry
+        const dentry: Dentry = {
             name: name,
-            type: type,
-            parent: parentNode,
-            owner: 'operator', // Default owner
-            permissions: type === 'directory' ? 'rwxr-xr-x' : 'rw-r--r--',
-            updatedAt: new Date().toISOString(),
-            children: type === 'directory' ? {} : undefined
+            inodeId: inode.id,
+            parent: parent,
+            children: new Map()
         };
 
-        parentNode.children[name] = newNode;
-        return newNode;
+        // Link
+        parent.children.set(name, dentry);
+
+        // Update parent timestamps/links needed?
+        // In true FS, directories are just files. Here we update ref.
+        // Directory hard links = 2 + num_subdirs. 
+        // But for now, simple.
+
+        return dentry;
     }
 
-    /**
-     * Writes content to a file. Creates it if it doesn't exist.
-     * Mode: 'w' (overwrite) or 'a' (append)
-     */
-    writeFile(path: string, content: string, mode: 'w' | 'a' = 'w', cwd: string = '/'): FSNode {
-        // Check if file exists
-        const node = this.resolveNode(path, cwd);
+    writeFile(path: string, content: string, modeStr: 'w' | 'a' = 'w', cwd: string = '/'): Dentry {
+        let dentry = this.resolve(path, cwd);
+        let inode: Inode;
 
-        if (node) {
-            if (node.type === 'directory') {
-                throw new Error(`cannot write to '${path}': Is a directory`);
-            }
-            if (mode === 'w') {
-                node.content = content;
-            } else {
-                node.content = (node.content || '') + content;
-            }
-            node.updatedAt = new Date().toISOString();
-            return node;
+        if (!dentry) {
+            // Create
+            dentry = this.createFile(path, 0o644, 1000, 1000, cwd); // Default user 1000
+            inode = this.getInode(dentry.inodeId)!;
         } else {
-            // Create new file
-            // createNode throws if parent doesn't exist, which is correct
-            const newNode = this.createNode(path, 'file', cwd);
-            newNode.content = content;
-            return newNode;
+            inode = this.getInode(dentry.inodeId)!;
+            if (inode.mode & S_IFDIR) throw new Error(`Cannot write to '${path}': Is a directory`);
+        }
+
+        if (modeStr === 'w') {
+            inode.content = content;
+        } else {
+            inode.content = (inode.content || '') + content;
+        }
+        inode.size = inode.content.length;
+        inode.mtime = Date.now();
+        inode.ctime = Date.now();
+
+        return dentry;
+    }
+
+    readFile(path: string, cwd: string = '/'): string {
+        const dentry = this.resolve(path, cwd);
+        if (!dentry) throw new Error(`cat: ${path}: No such file or directory`);
+        const inode = this.getInode(dentry.inodeId);
+        if (!inode) throw new Error('Corrupt filesystem');
+        if (inode.mode & S_IFDIR) throw new Error(`cat: ${path}: Is a directory`);
+        return inode.content as string;
+    }
+
+    deleteNode(path: string, cwd: string = '/'): void {
+        const dentry = this.resolve(path, cwd);
+        if (!dentry) throw new Error(`rm: cannot remove '${path}': No such file or directory`);
+        if (!dentry.parent) throw new Error(`rm: cannot remove root`);
+
+        // Check if directory and not empty
+        const inode = this.getInode(dentry.inodeId)!;
+        if ((inode.mode & S_IFDIR) && dentry.children.size > 0) {
+            throw new Error(`rm: cannot remove '${path}': Directory not empty`);
+        }
+
+        dentry.parent.children.delete(dentry.name);
+        inode.links--;
+        // If links == 0, free inode (remove from map)
+        if (inode.links <= 0) {
+            this.inodes.delete(inode.id);
         }
     }
 
-    /**
-     * Change file mode (permissions)
-     */
-    chmod(path: string, mode: string, cwd: string = '/'): void {
-        const node = this.resolveNode(path, cwd);
-        if (!node) throw new Error(`chmod: cannot access '${path}': No such file or directory`);
-        node.permissions = mode;
-        node.updatedAt = new Date().toISOString();
+    chmod(path: string, mode: number, cwd: string = '/'): void {
+        const dentry = this.resolve(path, cwd);
+        if (!dentry) throw new Error(`chmod: cannot access '${path}': No such file or directory`);
+        const inode = this.getInode(dentry.inodeId)!;
+
+        // Keep file type bits, replace permission bits
+        const typeMask = S_IFMT;
+        const permMask = ~S_IFMT;
+        inode.mode = (inode.mode & typeMask) | (mode & permMask);
+        inode.ctime = Date.now();
     }
 
-    /**
-     * Change file owner
-     */
-    chown(path: string, owner: string, cwd: string = '/'): void {
-        const node = this.resolveNode(path, cwd);
-        if (!node) throw new Error(`chown: cannot access '${path}': No such file or directory`);
-        node.owner = owner;
-        node.updatedAt = new Date().toISOString();
+    chown(path: string, uid: number, gid: number, cwd: string = '/'): void {
+        const dentry = this.resolve(path, cwd);
+        if (!dentry) throw new Error(`chown: cannot access '${path}': No such file or directory`);
+        const inode = this.getInode(dentry.inodeId)!;
+        inode.uid = uid;
+        inode.gid = gid;
+        inode.ctime = Date.now();
     }
-    /**
-     * Deletes a node (file or directory)
-     */
-    deleteNode(path: string, cwd: string = '/'): void {
-        const node = this.resolveNode(path, cwd);
-        if (!node) throw new Error(`cannot remove '${path}': No such file or directory`);
-        if (!node.parent || !node.parent.children) throw new Error(`cannot remove root directory`);
 
-        delete node.parent.children[node.name];
+    rename(oldPath: string, newPath: string, cwd: string = '/'): void {
+        const oldDentry = this.resolve(oldPath, cwd);
+        if (!oldDentry) throw new Error(`rename: cannot access '${oldPath}': No such file or directory`);
+        if (!oldDentry.parent) throw new Error(`rename: cannot move root`);
+
+        // Check if newPath exists
+        const existing = this.resolve(newPath, cwd);
+        if (existing) {
+            // If existing is dir and old is file? Error? Or overwrite? 
+            // POSIX: if existing is dir and empty, overwrite? 
+            // Typically rename overwrites if types match.
+            // For now: throw if exists, unless caller handles it.
+            // Actually, simplest is:
+            this.deleteNode(newPath, cwd);
+        }
+
+        // Parent of newPath
+        // Resolve parent of newPath
+        let newParent: Dentry | null = null;
+        let newName: string;
+
+        if (newPath.includes('/')) {
+            const lastSlash = newPath.lastIndexOf('/');
+            const dirPart = newPath.substring(0, lastSlash);
+            newName = newPath.substring(lastSlash + 1);
+            newParent = dirPart === '' ? this.root : this.resolve(dirPart, cwd);
+        } else {
+            newName = newPath;
+            newParent = this.resolve(cwd);
+        }
+
+        if (!newParent) throw new Error(`rename: cannot move to '${newPath}': Parent not found`);
+        const parentInode = this.getInode(newParent.inodeId);
+        if (!parentInode || !(parentInode.mode & S_IFDIR)) throw new Error(`rename: '${newPath}': Parent not a directory`);
+
+        // Unlink from old
+        oldDentry.parent.children.delete(oldDentry.name);
+
+        // Link to new
+        oldDentry.parent = newParent;
+        oldDentry.name = newName;
+        newParent.children.set(newName, oldDentry);
+
+        // Update ctime of inode?
+        const inode = this.getInode(oldDentry.inodeId);
+        if (inode) inode.ctime = Date.now();
+    }
+
+    // --- Helpers ---
+
+    isDirectory(dentry: Dentry): boolean {
+        const inode = this.getInode(dentry.inodeId);
+        return !!(inode && (inode.mode & S_IFDIR));
+    }
+
+    // --- Initialization ---
+
+    private initializeDefaultStructure() {
+        // Root already serves as /
+        // Create standard dirs
+        const dirs = [
+            '/bin', '/dev', '/etc', '/home', '/home/operator',
+            '/lib', '/proc', '/root', '/tmp', '/usr', '/var',
+            '/usr/bin', '/usr/lib', '/var/log'
+        ];
+
+        for (const dir of dirs) {
+            // Check if exists first to avoid error
+            if (!this.resolve(dir)) {
+                this.mkdir(dir, 0o755, 0, 0);
+            }
+        }
+
+        // Create initial files
+        const now = Date.now();
+        // /etc/passwd
+        this.writeFile('/etc/passwd', 'root:x:0:0:root:/root:/bin/bash\noperator:x:1000:1000:operator:/home/operator:/bin/bash', 'w');
+        this.chmod('/etc/passwd', 0o644);
+
+        // /home/operator/notes.txt
+        this.writeFile('/home/operator/notes.txt', 'System initialized. Awaiting NPCs.', 'w');
+        this.chown('/home/operator/notes.txt', 1000, 1000);
+        this.chmod('/home/operator/notes.txt', 0o600);
     }
 }

@@ -1,5 +1,5 @@
 import { ICommand, CommandResponse } from '../../../domain/entities/Command';
-import { FileSystem, FSNode } from '../../../domain/entities/FileSystem';
+import { FileSystem } from '../../../domain/entities/FileSystem';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../../domain/entities/TerminalState';
 
@@ -37,7 +37,7 @@ export class GrepCommand implements ICommand {
     name = 'grep';
     description = 'Print lines matching a pattern';
 
-    constructor(private fs: FileSystem) { }
+    constructor() { }
 
     /**
      * Executes the grep command.
@@ -79,7 +79,7 @@ export class GrepCommand implements ICommand {
 
         if (options.files.length > 0) {
             for (const filePath of options.files) {
-                this.collectSources(filePath, options.recursive, context.cwd, sources);
+                this.collectSources(context.fs, filePath, options.recursive, context.cwd, sources);
             }
         }
 
@@ -162,25 +162,28 @@ export class GrepCommand implements ICommand {
      * @param cwd Current working directory for resolution.
      * @param accumulator Array to store found matching files.
      */
-    private collectSources(path: string, recursive: boolean, cwd: string, accumulator: { name: string, content: string }[]): void {
+    private collectSources(fs: FileSystem, path: string, recursive: boolean, cwd: string, accumulator: { name: string, content: string }[]): void {
         try {
-            const node = this.fs.resolveNode(path, cwd);
+            const node = fs.resolveNode(path, cwd);
             if (!node) return; // Skip non-existent
 
-            if (node.type === 'file') {
-                accumulator.push({ name: path, content: node.content || '' });
-            } else if (node.type === 'directory') {
+            if (!fs.isDirectory(node)) {
+                // It's a file
+                const inode = fs.getInode(node.inodeId);
+                if (inode && typeof inode.content === 'string') {
+                    accumulator.push({ name: path, content: inode.content });
+                }
+            } else {
+                // It's a directory
                 if (recursive) {
                     // Iterate children
-                    if (node.children) {
-                        for (const childName of Object.keys(node.children)) {
-                            // Construct correct relative path for recursion
-                            // Note: FSNode doesn't store full path, so we must build it.
-                            // If path was '.', child is just 'childName'.
-                            // If path was 'dir', child is 'dir/childName'.
-                            const nextPath = path === '.' || path === './' ? childName : `${path}/${childName}`.replace('//', '/');
-                            this.collectSources(nextPath, true, cwd, accumulator);
-                        }
+                    for (const childName of node.children.keys()) {
+                        // Construct correct relative path for recursion
+                        // Note: Dentry doesn't store full path, so we must build it.
+                        // If path was '.', child is just 'childName'.
+                        // If path was 'dir', child is 'dir/childName'.
+                        const nextPath = path === '.' || path === './' ? childName : `${path}/${childName}`.replace('//', '/');
+                        this.collectSources(fs, nextPath, true, cwd, accumulator);
                     }
                 } else {
                     // POSIX grep prints "Is a directory" if not recursive

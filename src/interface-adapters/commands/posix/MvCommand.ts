@@ -1,5 +1,5 @@
 import { ICommand, CommandResponse } from '../../../domain/entities/Command';
-import { FileSystem, FSNode } from '../../../domain/entities/FileSystem';
+import { FileSystem } from '../../../domain/entities/FileSystem';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../../domain/entities/TerminalState';
 
@@ -26,7 +26,7 @@ export class MvCommand implements ICommand {
     name = 'mv';
     description = 'Move (rename) files';
 
-    constructor(private fs: FileSystem) { }
+    constructor() { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         const options = this.parseArgs(args);
@@ -36,8 +36,8 @@ export class MvCommand implements ICommand {
         }
 
         const destPath = options.destination;
-        const destNode = this.fs.resolveNode(destPath, context.cwd);
-        const destIsDir = destNode?.type === 'directory';
+        const destNode = context.fs.resolveNode(destPath, context.cwd);
+        const destIsDir = destNode ? context.fs.isDirectory(destNode) : false;
 
         if (options.sources.length > 1 && !destIsDir) {
             return { output: `mv: target '${destPath}' is not a directory`, exitCode: 1 };
@@ -48,108 +48,32 @@ export class MvCommand implements ICommand {
 
         for (const sourcePath of options.sources) {
             try {
-                // 1. Resolve Source
-                const sourceNode = this.fs.resolveNode(sourcePath, context.cwd);
-                if (!sourceNode) {
-                    outputLines.push(`mv: cannot stat '${sourcePath}': No such file or directory`);
-                    exitCode = 1;
-                    continue;
-                }
-
-                // 2. Determine Destination Parent and Name
-                let targetParentNode: FSNode | null = null;
-                let targetName = '';
-
+                // Determine final destination path
+                let finalDest = destPath;
                 if (destIsDir) {
-                    // Moving into directory: Parent is destNode, name is source name
-                    targetParentNode = destNode;
-                    targetName = sourceNode.name;
-                } else {
-                    // Renaming/Moving to file path
-                    // Destination might exist (destNode) or not.
-                    if (destNode) {
-                        // Destination exists and is a file (since !destIsDir check above handles multi-source logic)
-                        // If we are here, we are moving 1 file to another existing file
-                        // Overwrite check (unless different inode? we don't have inodes)
-                        if (options.noClobber) {
-                            continue; // Silent skip? POSIX says silent 
+                    // Extract basename from source
+                    let sourceName = sourcePath;
+                    if (sourcePath.includes('/')) {
+                        const idx = sourcePath.lastIndexOf('/');
+                        sourceName = sourcePath.substring(idx + 1);
+                        if (!sourceName) {
+                            const prev = sourcePath.substring(0, idx);
+                            sourceName = prev.substring(prev.lastIndexOf('/') + 1);
                         }
-                        if (!options.force) {
-                            // Interactive check stub
-                        }
-
-                        // We will overwrite destNode. 
-                        // Implementation detail: Delete destNode then move source.
-                        targetParentNode = destNode.parent;
-                        targetName = destNode.name;
-
-                        // Delete destination first to make room
-                        if (targetParentNode && targetParentNode.children) {
-                            delete targetParentNode.children[targetName];
-                        }
-                    } else {
-                        // Destination does not exist.
-                        // Resolve parent of destination path.
-                        // We must parse destPath to find parent.
-                        // Using FileSystem helper would be nice, but we can do manual split.
-                        // Need strict relative/absolute parsing.
-                        const absDest = this.resolveAbsolutePath(destPath, context.cwd);
-                        const lastSlash = absDest.lastIndexOf('/');
-                        const parentPath = absDest.substring(0, lastSlash) || '/';
-                        targetName = absDest.substring(lastSlash + 1);
-
-                        targetParentNode = this.fs.resolveNode(parentPath);
                     }
+
+                    finalDest = destPath.endsWith('/') ? `${destPath}${sourceName}` : `${destPath}/${sourceName}`;
                 }
 
-                if (!targetParentNode) {
-                    outputLines.push(`mv: cannot move '${sourcePath}' to '${destPath}': No such file or directory`);
-                    exitCode = 1;
+                // Check no-clobber
+                if (options.noClobber && context.fs.resolveNode(finalDest, context.cwd)) {
                     continue;
                 }
 
-                if (targetParentNode.type !== 'directory') {
-                    outputLines.push(`mv: cannot overwrite non-directory '${destPath}' with directory '${sourcePath}'`); // generic error logic
-                    exitCode = 1;
-                    continue;
-                }
-
-                // 3. Perform Move (Reparenting)
-                // Remove from old parent
-                if (sourceNode.parent && sourceNode.parent.children) {
-                    delete sourceNode.parent.children[sourceNode.name];
-                }
-
-                // Verify no collision (should be cleared if overwrite enabled)
-                if (targetParentNode.children && targetParentNode.children[targetName]) {
-                    // Collision happened (e.g. race, or logic flaw above).
-                    // If we deleted destNode above, this suggests strict overwrite.
-                    // If -n, we skipped.
-                    // If directory collision?
-                    if (targetParentNode.children[targetName].type === 'directory') {
-                        // Cannot overwrite directory with file generally
-                        outputLines.push(`mv: cannot overwrite directory '${targetName}'`);
-                        exitCode = 1;
-                        // Restore source? (We deleted it from parent!)
-                        // Recovery is hard without transaction. 
-                        // Re-attach source to old parent.
-                        if (sourceNode.parent && sourceNode.parent.children) sourceNode.parent.children[sourceNode.name] = sourceNode;
-                        continue;
-                    }
-                    // Force overwrite
-                    // Remove collision
-                    delete targetParentNode.children[targetName];
-                }
-
-                // Attach to new parent
-                if (!targetParentNode.children) targetParentNode.children = {};
-                targetParentNode.children[targetName] = sourceNode;
-                sourceNode.parent = targetParentNode;
-                sourceNode.name = targetName;
-                sourceNode.updatedAt = new Date().toISOString();
+                context.fs.rename(sourcePath, finalDest, context.cwd);
 
                 if (options.verbose) {
-                    outputLines.push(`renamed '${sourcePath}' -> '${destPath}'`); // simplified output
+                    outputLines.push(`renamed '${sourcePath}' -> '${finalDest}'`);
                 }
 
             } catch (e: any) {

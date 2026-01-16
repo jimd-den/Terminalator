@@ -15,7 +15,7 @@ export class WcCommand implements ICommand {
     name = 'wc';
     description = 'Print newline, word, and byte counts for each file';
 
-    constructor(private fs: FileSystem) { }
+    constructor(/* private fs: FileSystem */) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         const options = this.parseArgs(args);
@@ -47,13 +47,13 @@ export class WcCommand implements ICommand {
             }
         } else {
             for (const file of options.files) {
-                const node = this.fs.resolveNode(file, context.cwd);
+                const node = context.fs.resolveNode(file, context.cwd);
                 if (!node) {
                     outputLines.push(`wc: ${file}: No such file or directory`);
                     exitCode = 1;
                     continue;
                 }
-                if (node.type === 'directory') {
+                if (context.fs.isDirectory(node)) {
                     outputLines.push(`wc: ${file}: Is a directory`);
                     // wc usually prints 0 0 0 for dir
                     outputLines.push(this.formatOutput({ lines: 0, words: 0, bytes: 0, chars: 0 }, file, options));
@@ -61,7 +61,8 @@ export class WcCommand implements ICommand {
                     continue;
                 }
 
-                const content = node.content || '';
+                const inode = context.fs.getInode(node.inodeId);
+                const content = (inode && typeof inode.content === 'string') ? inode.content : '';
                 const result = this.countStats(content);
 
                 totalLines += result.lines;
@@ -141,7 +142,8 @@ export class WcCommand implements ICommand {
             bytes = new TextEncoder().encode(content).length;
         } catch (e) {
             // Fallback for environment without TextEncoder
-            bytes = Buffer.byteLength(content, 'utf8');
+            // bytes = Buffer.byteLength(content, 'utf8');
+            bytes = chars; // Approximate fallback
         }
 
         return { lines, words, bytes, chars };

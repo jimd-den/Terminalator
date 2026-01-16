@@ -7,7 +7,7 @@ export class TeeCommand implements ICommand {
     name = 'tee';
     description = 'Read from standard input and write to standard output and files';
 
-    constructor(private fs: FileSystem) { }
+    constructor(/* private fs: FileSystem */) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         const content = context.stdin || '';
@@ -29,7 +29,7 @@ export class TeeCommand implements ICommand {
             try {
                 // Determine mode
                 const mode = append ? 'a' : 'w';
-                this.fs.writeFile(file, content, mode, context.cwd);
+                context.fs.writeFile(file, content, mode, context.cwd);
             } catch (e: any) {
                 // tee usually continues writing to other files even if one fails, but outputs error to stderr
                 // For now we'll just return error for simplicity or maybe log it

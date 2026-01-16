@@ -1,11 +1,18 @@
+import { FileSystem } from './FileSystem';
+
 /**
  * ProcessContext Entity - Domain Layer
  * 
  * Represents the execution context of a process/command.
- * Encapsulates environment variables, working directory, and I/O streams.
+ * Encapsulates environment variables, running file system, working directory, and I/O streams.
  */
 
 export interface ProcessContext {
+    /**
+     * FileSystem instance for this process (Local or Remote)
+     */
+    fs: FileSystem;
+
     /**
      * Environment variables for the process
      */

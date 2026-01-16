@@ -1,5 +1,5 @@
 import { ICommand, CommandResponse } from '../../../domain/entities/Command';
-import { FileSystem, FSNode } from '../../../domain/entities/FileSystem';
+import { FileSystem, Dentry, S_IFDIR } from '../../../domain/entities/FileSystem';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../../domain/entities/TerminalState';
 
@@ -27,7 +27,7 @@ export class LsCommand implements ICommand {
     name = 'ls';
     description = 'List directory contents';
 
-    constructor(private fs: FileSystem) { }
+    constructor() { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         const options = this.parseArgs(args);
@@ -48,18 +48,19 @@ export class LsCommand implements ICommand {
             const printHeader = options.targets.length > 1 || options.recursive;
 
             try {
-                const node = this.fs.resolveNode(targetPath, context.cwd);
+                const node = context.fs.resolveNode(targetPath, context.cwd);
                 if (!node) {
                     outputLines.push(`ls: cannot access '${targetPath}': No such file or directory`);
                     exitCode = 1;
                     continue;
                 }
 
-                if (node.type === 'file') {
-                    outputLines.push(this.formatItem(node, options));
-                } else if (node.type === 'directory') {
+                if (context.fs.isDirectory(node)) {
                     // List directory content
-                    this.listDirectory(node, targetPath, options, outputLines, printHeader);
+                    this.listDirectory(context.fs, node, targetPath, options, outputLines, printHeader);
+                } else {
+                    // File: list it directly
+                    outputLines.push(this.formatItem(context.fs, node, options));
                 }
 
             } catch (e: any) {
@@ -104,17 +105,16 @@ export class LsCommand implements ICommand {
         return options;
     }
 
-    private listDirectory(node: FSNode, path: string, options: LsOptions, outputLines: string[], printHeader: boolean) {
+    private listDirectory(fs: FileSystem, node: Dentry, path: string, options: LsOptions, outputLines: string[], printHeader: boolean) {
         if (printHeader) {
-            // Add newline separator if not first output, except logic is hard to track purely line-based.
-            // Simple approach: Always print header for dir if multiple or recursive
             if (outputLines.length > 0) outputLines.push('');
             outputLines.push(`${path}:`);
         }
 
-        if (!node.children) return;
+        const inode = fs.getInode(node.inodeId);
+        if (!inode) return;
 
-        let files = Object.values(node.children);
+        let files: Dentry[] = Array.from(node.children.values());
 
         // Filter hidden
         if (!options.all) {
@@ -128,20 +128,16 @@ export class LsCommand implements ICommand {
 
         if (options.longFormat) {
             for (const file of files) {
-                outputLines.push(this.formatDetail(file, options));
+                outputLines.push(this.formatDetail(fs, file, options));
             }
         } else {
-            // Default list format (columns or one per line)
-            // For simple terminal, one per line or space separated?
-            // "ls" usually does columns. "ls -1" does one per line.
-            // Let's do space separated for standard, newline for -1
             if (options.oneLine) {
                 for (const file of files) {
-                    outputLines.push(this.formatItem(file, options));
+                    outputLines.push(this.formatItem(fs, file, options));
                 }
             } else {
                 // Space separated
-                const items = files.map(f => this.formatItem(f, options));
+                const items = files.map(f => this.formatItem(fs, f, options));
                 outputLines.push(items.join('  '));
             }
         }
@@ -149,42 +145,58 @@ export class LsCommand implements ICommand {
         // Recursive: Process subdirectories
         if (options.recursive) {
             for (const file of files) {
-                if (file.type === 'directory') {
+                if (fs.isDirectory(file)) {
                     const subPath = path.endsWith('/') ? `${path}${file.name}` : `${path}/${file.name}`;
-                    // Recursive call
-                    // Skip implicit '.' and '..' if we were to implement them as children (we don't here)
                     if (file.name !== '.' && file.name !== '..') {
-                        this.listDirectory(file, subPath, options, outputLines, true);
+                        this.listDirectory(fs, file, subPath, options, outputLines, true);
                     }
                 }
             }
         }
     }
 
-    private formatDetail(node: FSNode, options: LsOptions): string {
-        const typeChar = node.type === 'directory' ? 'd' : '-';
-        const size = node.content ? node.content.length : 0;
-        const links = 1; // Stub
-        const date = node.updatedAt.substring(0, 16).replace('T', ' '); // YYYY-MM-DD HH:MM
+    private formatDetail(fs: FileSystem, node: Dentry, options: LsOptions): string {
+        const inode = fs.getInode(node.inodeId);
+        if (!inode) return `? ? ? ${node.name}`;
+
+        const isDir = (inode.mode & S_IFDIR) !== 0;
+        const typeChar = isDir ? 'd' : '-';
+        const size = inode.size.toString().padStart(4);
+        const date = new Date(inode.mtime).toISOString().substring(0, 16).replace('T', ' '); // YYYY-MM-DD HH:MM
+
+        let permissions = '';
+        // Decode mode to rwx string
+        const perms = inode.mode & 0o777;
+        permissions += (perms & 0o400) ? 'r' : '-';
+        permissions += (perms & 0o200) ? 'w' : '-';
+        permissions += (perms & 0o100) ? 'x' : '-';
+        permissions += (perms & 0o040) ? 'r' : '-';
+        permissions += (perms & 0o020) ? 'w' : '-';
+        permissions += (perms & 0o010) ? 'x' : '-';
+        permissions += (perms & 0o004) ? 'r' : '-';
+        permissions += (perms & 0o002) ? 'w' : '-';
+        permissions += (perms & 0o001) ? 'x' : '-';
+
+        // Helper to get owner name from uid lookup? For now assuming fixed names or raw ID
+        const owner = inode.uid === 0 ? 'root' : 'operator';
 
         let name = node.name;
         if (options.classify) {
-            if (node.type === 'directory') name += '/';
-            else if (node.permissions.includes('x')) name += '*';
+            if (isDir) name += '/';
+            else if (inode.mode & 0o111) name += '*';
         }
 
-        return `${typeChar}${node.permissions} ${links} ${node.owner} ${size.toString().padStart(4)} ${date} ${name}`;
+        return `${typeChar}${permissions} ${inode.links} ${owner} ${size} ${date} ${name}`;
     }
 
-    /**
-     * Formats a single item name with optional classifier.
-     */
-    private formatItem(node: FSNode, options: LsOptions): string {
+    private formatItem(fs: FileSystem, node: Dentry, options: LsOptions): string {
         let name = node.name;
         if (options.classify) {
-            if (node.type === 'directory') name += '/';
-            // Executable check simplistic: if file and permissions contains x
-            else if (node.permissions.includes('x')) name += '*';
+            const inode = fs.getInode(node.inodeId);
+            if (inode) {
+                if (inode.mode & S_IFDIR) name += '/';
+                else if (inode.mode & 0o111) name += '*';
+            }
         }
         return name;
     }

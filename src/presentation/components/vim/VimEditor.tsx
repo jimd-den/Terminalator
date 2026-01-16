@@ -43,9 +43,10 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
 
         // Load file
         const path = filename.startsWith('/') ? filename : `/home/operator/${filename}`;
-        const node = fs.getNode(path);
-        if (node && node.type === 'file') {
-            const content = node.content || '';
+        const node = fs.resolveNode(path);
+        if (node && !fs.isDirectory(node)) {
+            const inode = fs.getInode(node.inodeId);
+            const content = (inode && typeof inode.content === 'string') ? inode.content : '';
             state.current.lines = content.split('\n');
         } else {
             state.current.lines = [''];
@@ -288,16 +289,8 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
         const fullPath = filename.startsWith('/') ? filename : `/home/operator/${filename}`;
         const content = state.current.lines.join('\n');
         try {
-            const existingNode = fs.getNode(fullPath);
-            if (existingNode && existingNode.type === 'file') {
-                existingNode.content = content;
-                existingNode.updatedAt = new Date().toISOString();
-                setStatusMessage(`"${filename}" written`);
-            } else {
-                const newNode = fs.createNode(fullPath, 'file');
-                newNode.content = content;
-                setStatusMessage(`"${filename}" [New] written`);
-            }
+            fs.writeFile(fullPath, content, 'w');
+            setStatusMessage(`"${filename}" written`);
         } catch (e: any) {
             setStatusMessage(`Error: ${e.message}`);
         }

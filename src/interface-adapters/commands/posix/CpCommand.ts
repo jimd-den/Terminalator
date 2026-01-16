@@ -1,5 +1,5 @@
 import { ICommand, CommandResponse } from '../../../domain/entities/Command';
-import { FileSystem, FSNode } from '../../../domain/entities/FileSystem';
+import { FileSystem, Dentry } from '../../../domain/entities/FileSystem';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../../domain/entities/TerminalState';
 
@@ -23,7 +23,7 @@ export class CpCommand implements ICommand {
     name = 'cp';
     description = 'Copy files and directories';
 
-    constructor(private fs: FileSystem) { }
+    constructor() { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         const options = this.parseArgs(args);
@@ -33,12 +33,8 @@ export class CpCommand implements ICommand {
         }
 
         const destPath = options.destination;
-
-        // Resolve destination
-        // Note: Destination might not exist (if copying file to new file name).
-        // If copying multiple sources, destination MUST be an existing directory.
-        const destNode = this.fs.resolveNode(destPath, context.cwd);
-        const destIsDir = destNode?.type === 'directory';
+        const destNode = context.fs.resolveNode(destPath, context.cwd);
+        const destIsDir = destNode ? context.fs.isDirectory(destNode) : false;
 
         if (options.sources.length > 1 && !destIsDir) {
             return { output: `cp: target '${destPath}' is not a directory`, exitCode: 1 };
@@ -49,14 +45,14 @@ export class CpCommand implements ICommand {
 
         for (const sourcePath of options.sources) {
             try {
-                const sourceNode = this.fs.resolveNode(sourcePath, context.cwd);
+                const sourceNode = context.fs.resolveNode(sourcePath, context.cwd);
                 if (!sourceNode) {
                     outputLines.push(`cp: cannot stat '${sourcePath}': No such file or directory`);
                     exitCode = 1;
                     continue;
                 }
 
-                if (sourceNode.type === 'directory' && !options.recursive) {
+                if (context.fs.isDirectory(sourceNode) && !options.recursive) {
                     outputLines.push(`cp: -r not specified; omitting directory '${sourcePath}'`);
                     exitCode = 1;
                     continue;
@@ -74,7 +70,7 @@ export class CpCommand implements ICommand {
                     }
                 }
 
-                this.copyNode(sourceNode, finalDestPath, context.cwd, options.recursive);
+                this.copyNode(context.fs, sourceNode, finalDestPath, context.cwd, options.recursive);
 
             } catch (e: any) {
                 outputLines.push(`cp: ${e.message}`);
@@ -111,56 +107,45 @@ export class CpCommand implements ICommand {
         }
 
         if (operands.length > 0) {
-            options.destination = operands.pop()!; // Last operand is destination
+            options.destination = operands.pop()!;
             options.sources = operands;
         }
 
         return options;
     }
 
-    /**
-     * Recursively copies a node to a destination path.
-     */
-    private copyNode(node: FSNode, destPath: string, cwd: string, recursive: boolean) {
-        if (node.type === 'file') {
-            // Write file (create or overwrite)
-            this.fs.writeFile(destPath, node.content || '', 'w', cwd);
-        } else if (node.type === 'directory') {
+    private copyNode(fs: FileSystem, node: Dentry, destPath: string, cwd: string, recursive: boolean) {
+        if (fs.isDirectory(node)) {
             if (!recursive) {
-                // Should be caught earlier, but safety:
                 throw new Error(`-r not specified; omitting directory '${node.name}'`);
             }
 
-            // Create directory
-            // We might need to ensure parent exists first? 
-            // writeFile creates file, createNode creates node.
-            // If destPath is 'a/b/c', and 'b' doesn't exist?
-            // createNode expects parent to exist.
-            // But we handled structure creation.
-            // Wait, if we act like `cp -R dir1 dir2` and dir2 doesn't exist, we create dir2.
-
-            // Try to create directory
-            // We cannot easily check existence here via resolveNode because we might be in the middle of creation.
-            // Helper `mkdir -p` logic would be useful.
-            // For now, assume simplified copy: target parent exists.
-
+            // Create Directory
+            // We ignore "File exists" if it's a directory
             try {
-                this.fs.createNode(destPath, 'directory', cwd);
+                fs.mkdir(destPath, 0o755, 1000, 1000, cwd);
             } catch (e: any) {
-                // If exists (and is dir), ignore. If error, rethrow.
+                // If it exists and is a directory (implicit), standard cp merges.
+                // Our mkdir throws if exists.
+                // We should check if it exists first?
+                // Or just ignore if exists.
                 if (!e.message.includes('File exists')) {
-                    // actually if it exists we just merge into it
+                    throw e;
                 }
             }
 
             // Recurse children
-            if (node.children) {
-                for (const childName of Object.keys(node.children)) {
-                    const childNode = node.children[childName];
-                    const childDestPath = destPath.endsWith('/') ? `${destPath}${childName}` : `${destPath}/${childName}`;
-                    this.copyNode(childNode, childDestPath, cwd, recursive);
-                }
+            for (const childName of node.children.keys()) {
+                const childNode = node.children.get(childName)!;
+                const childDestPath = destPath.endsWith('/') ? `${destPath}${childName}` : `${destPath}/${childName}`;
+                this.copyNode(fs, childNode, childDestPath, cwd, recursive);
             }
+
+        } else {
+            // File
+            const inode = fs.getInode(node.inodeId);
+            const content = inode ? inode.content : '';
+            fs.writeFile(destPath, content || '', 'w', cwd);
         }
     }
 }

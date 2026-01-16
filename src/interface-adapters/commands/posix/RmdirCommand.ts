@@ -7,7 +7,7 @@ export class RmdirCommand implements ICommand {
     name = 'rmdir';
     description = 'Remove empty directories';
 
-    constructor(private fs: FileSystem) { }
+    constructor(/* private fs: FileSystem */) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         if (args.length === 0) {
@@ -18,7 +18,7 @@ export class RmdirCommand implements ICommand {
         }
 
         const target = args[0];
-        const node = this.fs.resolveNode(target, context.cwd);
+        const node = context.fs.resolveNode(target, context.cwd);
 
         if (!node) {
             return {
@@ -27,7 +27,7 @@ export class RmdirCommand implements ICommand {
             };
         }
 
-        if (node.type !== 'directory') {
+        if (!context.fs.isDirectory(node)) {
             return {
                 output: `rmdir: failed to remove '${target}': Not a directory`,
                 exitCode: 1
@@ -35,7 +35,7 @@ export class RmdirCommand implements ICommand {
         }
 
         // Check if directory is empty
-        if (node.children && Object.keys(node.children).length > 0) {
+        if (node.children.size > 0) {
             return {
                 output: `rmdir: failed to remove '${target}': Directory not empty`,
                 exitCode: 1
@@ -43,16 +43,10 @@ export class RmdirCommand implements ICommand {
         }
 
         try {
-            this.fs.deleteNode(target, context.cwd);
-            return {
-                output: '',
-                exitCode: 0
-            };
+            context.fs.deleteNode(target, context.cwd);
+            return { output: '', exitCode: 0 };
         } catch (error: any) {
-            return {
-                output: `rmdir: ${error.message}`,
-                exitCode: 1
-            };
+            return { output: `rmdir: ${error.message}`, exitCode: 1 };
         }
     }
 }

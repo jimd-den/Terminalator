@@ -13,7 +13,7 @@ export class TailCommand implements ICommand {
     name = 'tail';
     description = 'Output the last part of files';
 
-    constructor(private fs: FileSystem) { }
+    constructor(/* private fs: FileSystem */) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         const options = this.parseArgs(args);
@@ -35,14 +35,21 @@ export class TailCommand implements ICommand {
                     outputLines.push(`==> ${file} <==`);
                 }
 
-                const node = this.fs.resolveNode(file, context.cwd);
+                const node = context.fs.resolveNode(file, context.cwd);
                 if (!node) {
                     outputLines.push(`tail: cannot open '${file}' for reading: No such file or directory`);
                     exitCode = 1;
                     continue;
                 }
 
-                const content = node.content || '';
+                if (context.fs.isDirectory(node)) {
+                    outputLines.push(`tail: error reading '${file}': Is a directory`);
+                    exitCode = 1;
+                    continue;
+                }
+
+                const inode = context.fs.getInode(node.inodeId);
+                const content = (inode && typeof inode.content === 'string') ? inode.content : '';
                 const lines = content.split('\n');
                 const start = Math.max(0, lines.length - options.lines);
                 outputLines.push(...lines.slice(start));

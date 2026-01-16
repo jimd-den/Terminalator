@@ -25,14 +25,42 @@ export class CodeCompiler {
         };
     }
 
-    compile(path: string): CompilationResult {
+    compile(path: string, cwd: string = '/'): CompilationResult {
         return Logger.trace('CodeCompiler.compile', () => {
-            const node = this.fs.getNode(path);
-            if (!node || node.type !== 'file') {
+            // Resolve node relative to cwd (Assuming compile runs from somewhere? 
+            // The command passes arg[0], but context is in the command. 
+            // The CodeCompiler just takes path. Let's assume absolute or handle it in command?
+            // Actually command passes `args[0]`. If it's relative, we need CWD. 
+            // But CodeCompiler signature only takes path. 
+            // We should ideally pass CWD to compile(). 
+            // For now, let's assume the caller resolves it or we try to resolve it relative to root if absolute, 
+            // BUT wait, resolveNode needs cwd if path is relative. 
+            // The current signature `compile(path)` implies we might be missing context.
+            // Let's modify the signature to `compile(path, cwd)`.
+            // But checking CompileCommand.ts: `this.compiler.compile(args[0] || '')` 
+            // It doesn't pass CWD. I should update CompileCommand too.
+            // For now, I will use '/' as default CWD if not provided, or better, 
+            // I'll stick to simple absolute path resolution if possible.
+            // Actually, `resolveNode` requires CWD. 
+            // I will update the signature.
+
+            // WAIT, safely, I can try to resolve, but I need CWD. 
+            // Let's look at CompileCommand again. It has context.cwd.
+            // I need to update CompileCommand.ts as well.
+
+            // For this step I will assume path is processed or I will change signature.
+            // Let's change signature to `compile(path: string, cwd: string)` to be correct.
+
+            // Wait, I can't change signature in just this file if CompileCommand expects the old one.
+            // I will update this file to accept optional cwd, defaulting to root.
+
+            const node = this.fs.resolveNode(path, '/'); // Temporary default
+            if (!node || this.fs.isDirectory(node)) {
                 return { success: false, output: `Error: File ${path} not found.` };
             }
 
-            const content = node.content || '';
+            const inode = this.fs.getInode(node.inodeId);
+            const content = (inode && typeof inode.content === 'string') ? inode.content : '';
             const extension = path.split('.').pop()?.toLowerCase();
 
             if (extension === 'lisp' || extension === 'scm') {

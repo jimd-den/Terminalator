@@ -8,7 +8,7 @@ export class PasteCommand implements ICommand {
     name = 'paste';
     description = 'Merge lines of files';
 
-    constructor(private fs: FileSystem) { }
+    constructor(/* private fs: FileSystem */) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         let delimiter = '\t';
@@ -37,14 +37,14 @@ export class PasteCommand implements ICommand {
                 // Stdin
                 fileContents.push((context.stdin || '').split('\n'));
             } else {
-                const node = this.fs.resolveNode(file, context.cwd);
-                if (!node || node.type !== 'file') {
-                    fileContents.push([]); // Treat missing/dir as empty? POSIX says error usually, but paste checks all inputs.
-                    // For sim, let's just warn and treat as empty or fail?
-                    // paste usually fails if file not found.
+                const node = context.fs.resolveNode(file, context.cwd);
+                if (!node || context.fs.isDirectory(node)) {
+                    fileContents.push([]);
                     return { output: `paste: ${file}: No such file or directory`, exitCode: 1 };
                 }
-                fileContents.push((node.content || '').split('\n'));
+                const inode = context.fs.getInode(node.inodeId);
+                const content = (inode && typeof inode.content === 'string') ? inode.content : '';
+                fileContents.push(content.split('\n'));
             }
         }
 

@@ -12,6 +12,7 @@ import { CodeCompiler } from '../domain/usecases/CodeCompiler';
 import { GameManager } from './GameManager';
 import { ProcessManager } from '../domain/usecases/ProcessManager';
 import { ICommand } from '../domain/entities/Command';
+import { NetworkMap } from '../domain/services/NetworkMap';
 
 // Standard / POSIX (Moved)
 import { LsCommand } from './commands/posix/LsCommand';
@@ -57,17 +58,21 @@ import { MailCommand } from './commands/game/MailCommand';
 import { CheckCommsCommand } from './commands/game/CheckCommsCommand';
 import { CompileCommand } from './commands/game/CompileCommand';
 import { VimCommand } from './commands/game/VimCommand';
+import { ConnectCommand } from './commands/game/ConnectCommand';
+import { TerminalState } from '../domain/entities/TerminalState';
 
 export class GameCommandExecutor extends ExecuteCommand {
     private mailSystem: MailSystem;
     private compiler: CodeCompiler;
     private gameManager: GameManager;
+    private networkMap: NetworkMap;
 
     constructor(fs: FileSystem, gameManager: GameManager) {
         // Initialize dependencies
         const mailSystem = new MailSystem(fs);
         const compiler = new CodeCompiler(fs);
         const processManager = new ProcessManager(); // Singleton instance for this session
+        const networkMap = new NetworkMap();
 
         const commands: ICommand[] = [];
         const helpCommand = new HelpCommand(commands);
@@ -76,37 +81,37 @@ export class GameCommandExecutor extends ExecuteCommand {
             // Self-reference for Help
             helpCommand,
             new ManCommand(helpCommand),
-            new MoreCommand(new CatCommand(fs)),
+            new MoreCommand(new CatCommand()),
 
             // Standard
-            new LsCommand(fs),
-            new CdCommand(fs),
-            new MkdirCommand(fs),
-            new CatCommand(fs),
+            new LsCommand(),
+            new CdCommand(),
+            new MkdirCommand(),
+            new CatCommand(),
             new PwdCommand(),
             new WhoamiCommand(),
             new ClearCommand(),
-            new GrepCommand(fs),
+            new GrepCommand(),
 
             // POSIX
-            new TouchCommand(fs),
-            new RmCommand(fs),
-            new RmdirCommand(fs),
-            new CpCommand(fs),
-            new MvCommand(fs),
+            new TouchCommand(),
+            new RmCommand(),
+            new RmdirCommand(),
+            new CpCommand(),
+            new MvCommand(),
             new EchoCommand(),
-            new TeeCommand(fs),
-            new HeadCommand(fs),
-            new TailCommand(fs),
-            new CutCommand(fs),
-            new PasteCommand(fs),
+            new TeeCommand(),
+            new HeadCommand(),
+            new TailCommand(),
+            new CutCommand(),
+            new PasteCommand(),
             new TrCommand(),
-            new ChmodCommand(fs),
-            new ChownCommand(fs),
-            new WcCommand(fs),
-            new SortCommand(fs),
-            new UniqCommand(fs),
-            new FindCommand(fs),
+            new ChmodCommand(),
+            new ChownCommand(),
+            new WcCommand(),
+            new SortCommand(),
+            new UniqCommand(),
+            new FindCommand(),
             new AliasCommand(),
             new UnaliasCommand(),
             new PsCommand(processManager),
@@ -121,7 +126,8 @@ export class GameCommandExecutor extends ExecuteCommand {
             new MailCommand(mailSystem),
             new CheckCommsCommand(gameManager),
             new CompileCommand(compiler),
-            new VimCommand()
+            new VimCommand(),
+            new ConnectCommand(networkMap)
         );
 
         super(fs, commands, processManager);
@@ -129,5 +135,14 @@ export class GameCommandExecutor extends ExecuteCommand {
         this.mailSystem = mailSystem;
         this.compiler = compiler;
         this.gameManager = gameManager;
+        this.networkMap = networkMap;
+    }
+
+    protected getFileSystem(state: TerminalState): FileSystem {
+        if (state.hostname && state.hostname !== 'localhost' && state.hostname !== 'test') {
+            const remoteFS = this.networkMap.getSystem(state.hostname);
+            if (remoteFS) return remoteFS;
+        }
+        return this.fs;
     }
 }

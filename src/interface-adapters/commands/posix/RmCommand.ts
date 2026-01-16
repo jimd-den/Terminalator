@@ -30,7 +30,7 @@ export class RmCommand implements ICommand {
     name = 'rm';
     description = 'Remove files or directories';
 
-    constructor(private fs: FileSystem) { }
+    constructor(/* private fs: FileSystem */) { }
 
     /**
      * Executes the rm command.
@@ -48,7 +48,7 @@ export class RmCommand implements ICommand {
         for (const target of options.files) {
             try {
                 // Check existence first to handle -f logic or directory check
-                const node = this.fs.resolveNode(target, context.cwd);
+                const node = context.fs.resolveNode(target, context.cwd);
 
                 if (!node) {
                     if (!options.force) {
@@ -58,7 +58,7 @@ export class RmCommand implements ICommand {
                     continue;
                 }
 
-                if (node.type === 'directory' && !options.recursive) {
+                if (context.fs.isDirectory(node) && !options.recursive) {
                     outputLines.push(`rm: cannot remove '${target}': Is a directory`);
                     exitCode = 1;
                     continue;
@@ -71,9 +71,7 @@ export class RmCommand implements ICommand {
                 }
 
                 // Execute Deletion
-                // Note: interactive check would go here. keeping non-interactive for now as per architecture constraints.
-
-                this.fs.deleteNode(target, context.cwd);
+                context.fs.deleteNode(target, context.cwd);
 
                 if (options.verbose) {
                     outputLines.push(`removed '${target}'`);

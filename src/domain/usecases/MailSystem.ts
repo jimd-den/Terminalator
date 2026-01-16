@@ -34,14 +34,20 @@ export class MailSystem {
             };
 
             // Create a virtual file for the mail in the mail directory
-            // We use createNode to ensure parent linkage is correct
-            // Assuming /home/operator/mail exists as per initial state
+            // Assuming /home/operator/mail exists
             try {
                 const mailPath = `/home/operator/mail/${id}`;
-                const fileNode = this.fs.createNode(mailPath, 'file');
-                fileNode.content = `From: ${npc.name}\nSubject: ${subject}\nDate: ${message.timestamp}\n\n${body}`;
-                fileNode.updatedAt = message.timestamp;
-                fileNode.permissions = 'rw-------';
+                const content = `From: ${npc.name}\nSubject: ${subject}\nDate: ${message.timestamp}\n\n${body}`;
+
+                // Write file (this handles creation and content)
+                this.fs.writeFile(mailPath, content, 'w', '/');
+                // Set permissions to rw------- (600)
+                this.fs.chmod(mailPath, 0o600, '/');
+
+                // We assume ownership is handled by context usually, but here system is writing.
+                // Could chown to operator (1000:1000)
+                this.fs.chown(mailPath, 1000, 1000, '/');
+
             } catch (e) {
                 Logger.error('MailSystem: Failed to create mail file', e);
             }
@@ -51,11 +57,18 @@ export class MailSystem {
     }
 
     listMail(): string {
-        const mailDir = this.fs.root.children?.home.children?.operator.children?.mail;
-        if (mailDir && mailDir.children) {
-            return Object.values(mailDir.children)
-                .map(m => `${m.name} - ${m.updatedAt} - NPC Transmission`)
-                .join('\n');
+        // Resolve mail directory
+        const mailDirNode = this.fs.resolveNode('/home/operator/mail');
+        if (mailDirNode && this.fs.isDirectory(mailDirNode)) {
+            const messages: string[] = [];
+            for (const [name, childNode] of mailDirNode.children) {
+                const inode = this.fs.getInode(childNode.inodeId);
+                // Format: ID - Date - From (extracted from content?) or just generic
+                // For now, let's keep it simple as before
+                const dateStr = inode ? new Date(inode.mtime).toISOString() : 'Unknown';
+                messages.push(`${name} - ${dateStr} - NPC Transmission`);
+            }
+            if (messages.length > 0) return messages.join('\n');
         }
         return 'No mail.';
     }

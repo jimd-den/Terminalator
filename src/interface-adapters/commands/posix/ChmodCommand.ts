@@ -7,7 +7,7 @@ export class ChmodCommand implements ICommand {
     name = 'chmod';
     description = 'Change file mode bits';
 
-    constructor(private fs: FileSystem) { }
+    constructor(/* private fs: FileSystem */) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         if (args.length < 2) {
@@ -18,13 +18,18 @@ export class ChmodCommand implements ICommand {
         const target = args[1];
 
         try {
-            // Ideally we'd validate 'mode' (e.g. 777 or +x) 
-            // For now, we accept the raw string as the simulation allows flexible permission strings.
-            // If we want to simulate "777" -> "rwxrwxrwx", we'd add a converter helper.
-            this.fs.chmod(target, mode, context.cwd);
+            // Parse octal mode
+            // We assume input is like "755" or "0755"
+            // We do not support +x symbolic modes yet in this lower level adapter.
+            const octalMode = parseInt(mode, 8);
+            if (isNaN(octalMode)) {
+                return { output: `chmod: invalid mode: '${mode}'`, exitCode: 1 };
+            }
+
+            context.fs.chmod(target, octalMode, context.cwd);
             return { output: '', exitCode: 0 };
         } catch (e: any) {
-            return { output: `${e.message}`, exitCode: 1 }; // e.message already has prefix
+            return { output: `chmod: ${e.message}`, exitCode: 1 };
         }
     }
 }

@@ -96,6 +96,10 @@ export class ExecuteCommand {
         });
     }
 
+    protected getFileSystem(state: TerminalState): FileSystem {
+        return this.fs;
+    }
+
     private async executeSingleCommand(commandString: string, state: TerminalState, stdin?: string): Promise<CommandResponse> {
         // Expand variables before parsing args
         const expandedCommand = this.expandVariables(commandString, state.environment);
@@ -132,11 +136,13 @@ export class ExecuteCommand {
             };
         }
 
+        const fs = this.getFileSystem(state);
         const context: ProcessContext = {
             env: state.environment,
             cwd: state.currentDirectory,
             user: state.user,
-            stdin: stdin
+            stdin: stdin,
+            fs: fs
         };
 
         // Spawn Process (Ephemeral)

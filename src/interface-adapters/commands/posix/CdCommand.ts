@@ -7,11 +7,11 @@ export class CdCommand implements ICommand {
     name = 'cd';
     description = 'Change the shell working directory';
 
-    constructor(private fs: FileSystem) { }
+    constructor(/* private fs: FileSystem */) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         const target = args[0] || state.environment.HOME || '/';
-        const node = this.fs.resolveNode(target, context.cwd);
+        const node = context.fs.resolveNode(target, context.cwd);
 
         if (!node) {
             return {
@@ -20,14 +20,14 @@ export class CdCommand implements ICommand {
             };
         }
 
-        if (node.type !== 'directory') {
+        if (!context.fs.isDirectory(node)) {
             return {
                 output: `cd: not a directory: ${target}`,
                 exitCode: 1
             };
         }
 
-        const newPath = this.fs.getAbsolutePath(node);
+        const newPath = context.fs.getAbsolutePath(node);
         return {
             output: `Changed directory to ${newPath}`,
             exitCode: 0,

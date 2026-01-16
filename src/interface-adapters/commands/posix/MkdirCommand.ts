@@ -22,7 +22,7 @@ export class MkdirCommand implements ICommand {
     name = 'mkdir';
     description = 'Create directories';
 
-    constructor(private fs: FileSystem) { }
+    constructor(/* private fs: FileSystem */) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         const options = this.parseArgs(args);
@@ -37,19 +37,15 @@ export class MkdirCommand implements ICommand {
         for (const dirPath of options.directories) {
             try {
                 if (options.parents) {
-                    this.createParents(dirPath, context.cwd);
+                    this.createParents(context.fs, dirPath, context.cwd);
                 } else {
-                    this.fs.createNode(dirPath, 'directory', context.cwd);
-                    // POSIX mkdir is silent on success usually, only -v is verbose (not standard in older posix but common in GNU)
-                    // But current implementation prints "Directory created". We should probably align with silent success for standard.
-                    // But for user feedback in this game/terminal emulation, keeping feedback might be nice. 
-                    // However, standard unix tools are silent. I'll stay silent on success to match 'grep', 'rm', 'cp' updates.
+                    context.fs.mkdir(dirPath, 0o755, 1000, 1000, context.cwd);
                 }
             } catch (e: any) {
                 // If -p is specified, no error if existing directory
                 if (options.parents && e.message.includes('File exists')) {
-                    const node = this.fs.resolveNode(dirPath, context.cwd);
-                    if (node && node.type === 'directory') {
+                    const node = context.fs.resolveNode(dirPath, context.cwd);
+                    if (node && context.fs.isDirectory(node)) {
                         continue; // No error
                     }
                 }
@@ -86,7 +82,7 @@ export class MkdirCommand implements ICommand {
     /**
      * Creates directory and its parents if -p is specified.
      */
-    private createParents(path: string, cwd: string): void {
+    private createParents(fs: FileSystem, path: string, cwd: string): void {
         // Resolve absolute path parts
         // If path is relative, prepend cwd
         let absolutePath = path.startsWith('/') ? path : (cwd === '/' ? `/${path}` : `${cwd}/${path}`);
@@ -99,16 +95,16 @@ export class MkdirCommand implements ICommand {
             currentPath += `/${part}`;
 
             // Check if exists
-            const node = this.fs.resolveNode(currentPath);
+            const node = fs.resolveNode(currentPath);
             if (node) {
-                if (node.type !== 'directory') {
+                if (!fs.isDirectory(node)) {
                     throw new Error(`cannot create directory '${path}': File exists`);
                 }
                 // already exists, continue
             } else {
                 // Create
                 // Use root as cwd for absolute path creation chunks
-                this.fs.createNode(currentPath, 'directory', '/');
+                fs.mkdir(currentPath, 0o755, 1000, 1000, '/');
             }
         }
     }

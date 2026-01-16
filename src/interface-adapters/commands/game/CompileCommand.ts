@@ -10,7 +10,7 @@ export class CompileCommand implements ICommand {
     constructor(private compiler: CodeCompiler) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const res = this.compiler.compile(args[0] || '');
+        const res = this.compiler.compile(args[0] || '', context.cwd);
         return {
             output: res.output,
             exitCode: res.success ? 0 : 1,

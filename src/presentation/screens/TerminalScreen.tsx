@@ -96,10 +96,10 @@ export const TerminalScreen: React.FC = () => {
             // However, ExecuteCommand resolves currentDirectory relative to root if it doesnt start with /.
             // In TerminalState, currentDirectory is likely absolute (e.g. /home/operator).
 
-            const node = fs.getNode(targetDir);
+            const node = fs.resolveNode(targetDir);
 
-            if (node && node.children) {
-                const files = Object.keys(node.children);
+            if (node && fs.isDirectory(node)) {
+                const files = Array.from(node.children.keys());
                 const match = files.find(f => f.startsWith(partialName) && f !== partialName);
                 return match ? match.substring(partialName.length) : '';
             }

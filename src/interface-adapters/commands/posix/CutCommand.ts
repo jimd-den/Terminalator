@@ -7,7 +7,7 @@ export class CutCommand implements ICommand {
     name = 'cut';
     description = 'Remove sections from each line of files';
 
-    constructor(private fs: FileSystem) { }
+    constructor(/* private fs: FileSystem */) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         let delimiter = '\t';
@@ -45,13 +45,14 @@ export class CutCommand implements ICommand {
         } else {
             // Read all files
             for (const file of files) {
-                const node = this.fs.resolveNode(file, context.cwd);
-                if (!node || node.type !== 'file') {
+                const node = context.fs.resolveNode(file, context.cwd);
+                if (!node || context.fs.isDirectory(node)) {
                     // For simplicity, just append error or skip
                     // cut usually prints error
                     continue;
                 }
-                content += (node.content || '') + '\n';
+                const inode = context.fs.getInode(node.inodeId);
+                content += ((inode && typeof inode.content === 'string') ? inode.content : '') + '\n';
             }
             // remove last newline if added from loop
             if (content.endsWith('\n')) content = content.slice(0, -1);
