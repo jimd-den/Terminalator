@@ -1,148 +1,53 @@
 /**
- * GameCommandExecutor - Application Logic / Interface Adapter
+ * GameCommandExecutor - Interface Adapter Layer
  * 
- * Composition Root for all Terminal Commands.
- * Extends ExecuteCommand to register both Standard, POSIX, and Game-specific commands.
+ * Orchestrates terminal commands including game-specific logic.
+ * Registers game commands ('mail', 'check-comms', 'compile', 'vim')
+ * alongside core commands via the Registry.
+ *
+ * Pillar: The Four-Fold Shield (Strict Architecture)
+ * Pillar: The Master’s Tool (Pragmatic Design Patterns) - Command Pattern
  */
 
 import { ExecuteCommand } from '../domain/usecases/ExecuteCommand';
 import { MailSystem } from '../domain/usecases/MailSystem';
 import { FileSystem } from '../domain/entities/FileSystem';
 import { CodeCompiler } from '../domain/usecases/CodeCompiler';
+import { TelemetryPort } from '../domain/ports/TelemetryPort';
+
 import { GameManager } from './GameManager';
-import { ProcessManager } from '../domain/usecases/ProcessManager';
-import { ICommand } from '../domain/entities/Command';
-import { NetworkMap } from '../domain/services/NetworkMap';
 
-// Standard / POSIX (Moved)
-import { LsCommand } from './commands/posix/LsCommand';
-import { CdCommand } from './commands/posix/CdCommand';
-import { MkdirCommand } from './commands/posix/MkdirCommand';
-import { CatCommand } from './commands/posix/CatCommand';
-import { PwdCommand } from './commands/posix/PwdCommand';
-import { WhoamiCommand } from './commands/posix/WhoamiCommand';
-import { ClearCommand } from './commands/posix/ClearCommand';
-import { GrepCommand } from './commands/posix/GrepCommand';
-import { HelpCommand } from './commands/posix/HelpCommand';
-import { ManCommand, MoreCommand } from './commands/posix/ManMoreCommand';
-
-// POSIX Commands
-import { TouchCommand } from './commands/posix/TouchCommand';
-import { RmCommand } from './commands/posix/RmCommand';
-import { RmdirCommand } from './commands/posix/RmdirCommand';
-import { CpCommand } from './commands/posix/CpCommand';
-import { MvCommand } from './commands/posix/MvCommand';
-import { EchoCommand } from './commands/posix/EchoCommand';
-import { HeadCommand } from './commands/posix/HeadCommand';
-import { TailCommand } from './commands/posix/TailCommand';
-import { ChmodCommand } from './commands/posix/ChmodCommand';
-import { ChownCommand } from './commands/posix/ChownCommand';
-import { WcCommand } from './commands/posix/WcCommand';
-import { SortCommand } from './commands/posix/SortCommand';
-import { UniqCommand } from './commands/posix/UniqCommand';
-import { FindCommand } from './commands/posix/FindCommand';
-import { DateCommand } from './commands/posix/DateCommand';
-import { HistoryCommand } from './commands/posix/HistoryCommand';
-import { ExportCommand } from './commands/posix/ExportCommand';
-import { EnvCommand } from './commands/posix/EnvCommand';
-import { SleepCommand } from './commands/posix/SleepCommand';
-import { TeeCommand } from './commands/posix/TeeCommand';
-import { CutCommand } from './commands/posix/CutCommand';
-import { PasteCommand } from './commands/posix/PasteCommand';
-import { TrCommand } from './commands/posix/TrCommand';
-import { AliasCommand, UnaliasCommand } from './commands/posix/AliasCommand';
-import { PsCommand, KillCommand } from './commands/posix/PsCommand';
-
-// Game Commands
-import { MailCommand } from './commands/game/MailCommand';
-import { CheckCommsCommand } from './commands/game/CheckCommsCommand';
-import { CompileCommand } from './commands/game/CompileCommand';
-import { VimCommand } from './commands/game/VimCommand';
-import { ConnectCommand } from './commands/game/ConnectCommand';
-import { TerminalState } from '../domain/entities/TerminalState';
+import { MailCommand } from './commands/MailCommand';
+import { CheckCommsCommand } from './commands/CheckCommsCommand';
+import { CompileCommand } from './commands/CompileCommand';
+import { VimCommand } from './commands/VimCommand';
 
 export class GameCommandExecutor extends ExecuteCommand {
     private mailSystem: MailSystem;
     private compiler: CodeCompiler;
     private gameManager: GameManager;
-    private networkMap: NetworkMap;
 
-    constructor(fs: FileSystem, gameManager: GameManager) {
-        // Initialize dependencies
-        const mailSystem = new MailSystem(fs);
-        const compiler = new CodeCompiler(fs);
-        const processManager = new ProcessManager(); // Singleton instance for this session
-        const networkMap = new NetworkMap();
-
-        const commands: ICommand[] = [];
-        const helpCommand = new HelpCommand(commands);
-
-        commands.push(
-            // Self-reference for Help
-            helpCommand,
-            new ManCommand(helpCommand),
-            new MoreCommand(new CatCommand()),
-
-            // Standard
-            new LsCommand(),
-            new CdCommand(),
-            new MkdirCommand(),
-            new CatCommand(),
-            new PwdCommand(),
-            new WhoamiCommand(),
-            new ClearCommand(),
-            new GrepCommand(),
-
-            // POSIX
-            new TouchCommand(),
-            new RmCommand(),
-            new RmdirCommand(),
-            new CpCommand(),
-            new MvCommand(),
-            new EchoCommand(),
-            new TeeCommand(),
-            new HeadCommand(),
-            new TailCommand(),
-            new CutCommand(),
-            new PasteCommand(),
-            new TrCommand(),
-            new ChmodCommand(),
-            new ChownCommand(),
-            new WcCommand(),
-            new SortCommand(),
-            new UniqCommand(),
-            new FindCommand(),
-            new AliasCommand(),
-            new UnaliasCommand(),
-            new PsCommand(processManager),
-            new KillCommand(processManager),
-            new DateCommand(),
-            new HistoryCommand(),
-            new ExportCommand(),
-            new EnvCommand(),
-            new SleepCommand(),
-
-            // Game
-            new MailCommand(mailSystem),
-            new CheckCommsCommand(gameManager),
-            new CompileCommand(compiler),
-            new VimCommand(),
-            new ConnectCommand(networkMap)
-        );
-
-        super(fs, commands, processManager);
-
-        this.mailSystem = mailSystem;
-        this.compiler = compiler;
+    constructor(fs: FileSystem, gameManager: GameManager, telemetry?: TelemetryPort) {
+        super(fs, telemetry);
+        this.mailSystem = new MailSystem(fs, telemetry);
+        this.compiler = new CodeCompiler(fs, telemetry);
         this.gameManager = gameManager;
-        this.networkMap = networkMap;
+
+        this.registerGameCommands();
     }
 
-    protected getFileSystem(state: TerminalState): FileSystem {
-        if (state.hostname && state.hostname !== 'localhost' && state.hostname !== 'test') {
-            const remoteFS = this.networkMap.getSystem(state.hostname);
-            if (remoteFS) return remoteFS;
-        }
-        return this.fs;
+    /**
+     * Registers game-specific commands into the registry.
+     * This decouples the execution logic from the specific command implementations.
+     */
+    private registerGameCommands() {
+        const registry = this.getRegistry();
+
+        registry.register('mail', new MailCommand(this.mailSystem));
+        registry.register('check-comms', new CheckCommsCommand(this.gameManager));
+        registry.register('compile', new CompileCommand(this.compiler));
+        registry.register('vim', new VimCommand());
     }
+
+    // No need to override execute() anymore as the superclass uses the registry!
 }

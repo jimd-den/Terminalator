@@ -1,36 +1,16 @@
 /**
  * FileSystem Entity - Domain Layer
  * 
- * A simulated POSIX-compliant file system using Inode/Dentry architecture.
- * Separates file metadata (Inode) from the directory tree structure (Dentry).
+ * A simulated POSIX-compliant file system.
+ * Supports a tree structure of files and directories.
+ *
+ * Pillar: The Four-Fold Shield (Strict Architecture) - Entities
+ * Pillar: The Balanced Scale (SOLID / KISS) - Simple Tree Structure
+ *
+ * Intent:
+ * Provides the persistent state of the virtual world.
+ * Allows commands to manipulate files and directories.
  */
-
-// File Type Constants (POSIX)
-export const S_IFMT = 0o170000; // Mask for file type
-export const S_IFSOCK = 0o140000; // Socket
-export const S_IFLNK = 0o120000; // Symbolic link
-export const S_IFREG = 0o100000; // Regular file
-export const S_IFBLK = 0o060000; // Block device
-export const S_IFDIR = 0o040000; // Directory
-export const S_IFCHR = 0o020000; // Character device
-export const S_IFIFO = 0o010000; // FIFO
-
-// Permission Constants
-export const S_ISUID = 0o4000;   // Set UID bit
-export const S_ISGID = 0o2000;   // Set-group-ID bit
-export const S_ISVTX = 0o1000;   // Sticky bit
-export const S_IRWXU = 0o0700;   // Owner mask
-export const S_IRUSR = 0o0400;   // Owner read
-export const S_IWUSR = 0o0200;   // Owner write
-export const S_IXUSR = 0o0100;   // Owner execute
-export const S_IRWXG = 0o0070;   // Group mask
-export const S_IRGRP = 0o0040;   // Group read
-export const S_IWGRP = 0o0020;   // Group write
-export const S_IXGRP = 0o0010;   // Group execute
-export const S_IRWXO = 0o0007;   // Other mask
-export const S_IROTH = 0o0004;   // Other read
-export const S_IWOTH = 0o0002;   // Other write
-export const S_IXOTH = 0o0001;   // Other execute
 
 export type FileType = 'file' | 'directory' | 'symlink' | 'block' | 'char' | 'fifo' | 'socket';
 
@@ -83,49 +63,45 @@ export class FileSystem {
         // Create Root Dentry
         this.root = {
             name: '/',
-            inodeId: rootInode.id,
-            parent: null,
-            children: new Map()
+            type: 'directory',
+            children: {
+                'bin': {
+                    name: 'bin', type: 'directory', owner: 'root', permissions: 'rwxr-xr-x', updatedAt: new Date().toISOString(), children: {
+                        'help': { name: 'help', type: 'file', content: 'AVAILABLE COMMANDS:\nls - List files\ncd <dir> - Change directory\ncat <file> - Read file\nmail - Check mail\nvim <file> - Edit file\ncompile <file> - Process 24XX scripts\n', owner: 'root', permissions: 'r-xr-xr-x', updatedAt: new Date().toISOString() },
+                    }
+                },
+                'home': {
+                    name: 'home', type: 'directory', owner: 'root', permissions: 'rwxr-xr-x', updatedAt: new Date().toISOString(), children: {
+                        'operator': {
+                            name: 'operator', type: 'directory', owner: 'operator', permissions: 'rwx------', updatedAt: new Date().toISOString(), children: {
+                                'mail': { name: 'mail', type: 'directory', owner: 'operator', permissions: 'rwx------', updatedAt: new Date().toISOString(), children: {} },
+                                'notes.txt': { name: 'notes.txt', type: 'file', content: 'System initialized. Awaiting NPCs.', owner: 'operator', permissions: 'rw-------', updatedAt: new Date().toISOString() },
+                            }
+                        },
+                    }
+                },
+                'etc': {
+                    name: 'etc', type: 'directory', owner: 'root', permissions: 'rwxr-xr-x', updatedAt: new Date().toISOString(), children: {
+                        'config': { name: 'config', type: 'file', content: 'SYSTEM CONFIGURATION\n--------------------\nMAX_THREADS=4\nTARGET_IP=UNRESOLVED\n\n[HINT]: NPCs will send encrypted coordinates. Use "vim" to write protocols and "compile" to decrypt.', owner: 'root', permissions: 'r--r--r--', updatedAt: new Date().toISOString() },
+                    }
+                },
+            },
+            owner: 'root',
+            permissions: 'rwxr-xr-x',
+            updatedAt: new Date().toISOString(),
         };
-        // Link parent of root to itself? Usually null or special handling. Kept null.
-
-        this.initializeDefaultStructure();
     }
-
-    // --- Inode Management ---
-
-    createInode(mode: number, uid: number = 0, gid: number = 0): Inode {
-        const inode: Inode = {
-            id: this.nextInodeId++,
-            mode: mode,
-            uid: uid,
-            gid: gid,
-            size: (mode & S_IFDIR) ? 4096 : 0,
-            atime: Date.now(),
-            mtime: Date.now(),
-            ctime: Date.now(),
-            links: 1,
-            content: (mode & S_IFDIR) ? null : ''
-        };
-        this.inodes.set(inode.id, inode);
-        return inode;
-    }
-
-    getInode(id: number): Inode | undefined {
-        return this.inodes.get(id);
-    }
-
-    // --- Path Resolution ---
 
     /**
-     * Resolves a path string to a Dentry.
+     * Traverses the file system to find a node by path.
+     *
+     * @param path - The absolute or relative path to the node.
+     * @returns The FSNode if found, otherwise null.
      */
-    resolve(path: string, cwd: string = '/'): Dentry | null {
-        if (!path) return null;
-
-        let current: Dentry = path.startsWith('/') ? this.root : (this.resolve(cwd) || this.root);
-
-        const parts = path.split('/').filter(p => p.length > 0 && p !== '.');
+    getNode(path: string): FSNode | null {
+        if (path === '/') return this.root;
+        const parts = path.split('/').filter(p => p.length > 0);
+        let current = this.root;
 
         for (const part of parts) {
             if (part === '..') {

@@ -3,9 +3,12 @@
  * 
  * Simulates a compiler for the "Terminalator" system.
  * Checks for "syntax errors" in 24XX scripts and "compiles" them.
+ *
+ * Pillar: The Four-Fold Shield (Strict Architecture)
+ * Pillar: The Watchman’s Log (Telemetry)
  */
 
-import { Logger } from '../../infrastructure/telemetry/Logger';
+import { TelemetryPort } from '../ports/TelemetryPort';
 import { FileSystem } from '../entities/FileSystem';
 import { Interpreter } from '../interpreters/Interpreter';
 import { LispInterpreter } from '../interpreters/LispInterpreter';
@@ -18,44 +21,17 @@ export interface CompilationResult {
 export class CodeCompiler {
     private interpreters: Record<string, Interpreter>;
 
-    constructor(private fs: FileSystem) {
+    constructor(private fs: FileSystem, private telemetry?: TelemetryPort) {
         this.interpreters = {
             'lisp': new LispInterpreter(),
             // Future interpreters (python, js, etc.) can be added here
         };
     }
 
-    compile(path: string, cwd: string = '/'): CompilationResult {
-        return Logger.trace('CodeCompiler.compile', () => {
-            // Resolve node relative to cwd (Assuming compile runs from somewhere? 
-            // The command passes arg[0], but context is in the command. 
-            // The CodeCompiler just takes path. Let's assume absolute or handle it in command?
-            // Actually command passes `args[0]`. If it's relative, we need CWD. 
-            // But CodeCompiler signature only takes path. 
-            // We should ideally pass CWD to compile(). 
-            // For now, let's assume the caller resolves it or we try to resolve it relative to root if absolute, 
-            // BUT wait, resolveNode needs cwd if path is relative. 
-            // The current signature `compile(path)` implies we might be missing context.
-            // Let's modify the signature to `compile(path, cwd)`.
-            // But checking CompileCommand.ts: `this.compiler.compile(args[0] || '')` 
-            // It doesn't pass CWD. I should update CompileCommand too.
-            // For now, I will use '/' as default CWD if not provided, or better, 
-            // I'll stick to simple absolute path resolution if possible.
-            // Actually, `resolveNode` requires CWD. 
-            // I will update the signature.
-
-            // WAIT, safely, I can try to resolve, but I need CWD. 
-            // Let's look at CompileCommand again. It has context.cwd.
-            // I need to update CompileCommand.ts as well.
-
-            // For this step I will assume path is processed or I will change signature.
-            // Let's change signature to `compile(path: string, cwd: string)` to be correct.
-
-            // Wait, I can't change signature in just this file if CompileCommand expects the old one.
-            // I will update this file to accept optional cwd, defaulting to root.
-
-            const node = this.fs.resolveNode(path, '/'); // Temporary default
-            if (!node || this.fs.isDirectory(node)) {
+    compile(path: string): CompilationResult {
+        const compileLogic = () => {
+            const node = this.fs.getNode(path);
+            if (!node || node.type !== 'file') {
                 return { success: false, output: `Error: File ${path} not found.` };
             }
 
@@ -92,6 +68,12 @@ export class CodeCompiler {
                     output: `SYNTAX ERROR: No valid 24XX protocols found in "${path}".\nPlease use LISP code (.lisp) or legacy protocols.`
                 };
             }
-        }, { path });
+        };
+
+        if (this.telemetry) {
+            return this.telemetry.trace('CodeCompiler.compile', compileLogic, { path });
+        }
+
+        return compileLogic();
     }
 }

@@ -3,6 +3,13 @@
  * 
  * Simulates a vanilla Vim environment for mobile typing tasks.
  * Supports basic modes (Normal, Insert) and command-line mode.
+ *
+ * Pillar: The Storyteller’s Code (Literate Documentation)
+ * Pillar: The Four-Fold Shield (Strict Architecture)
+ *
+ * Intent:
+ * Provides a familiar editing environment for users to write code and notes.
+ * Keeps logic separate from the React UI components.
  */
 
 export type VimMode = 'NORMAL' | 'INSERT' | 'COMMAND';
@@ -18,6 +25,12 @@ export class VimSimulator {
         this.buffer = content.split('\n');
     }
 
+    /**
+     * Processes input characters based on the current Vim mode.
+     *
+     * @param input - The character or key code entered.
+     * @returns The updated display buffer and mode.
+     */
     handleInput(input: string): { output: string[], mode: VimMode } {
         if (this.mode === 'NORMAL') {
             if (input === 'i') {

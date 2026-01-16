@@ -4,6 +4,13 @@
  * A minimalistic Lisp interpreter.
  * Supports S-expressions, basic arithmetic, and string manipulation.
  * Used by players to solve terminal tasks.
+ *
+ * Pillar: The Swift Stream (Performance & Purity)
+ * Pillar: The Storyteller’s Code (Literate Documentation)
+ *
+ * Intent:
+ * Provides a programmable interface for the game world. Players use Lisp
+ * to hack systems, automate tasks, and decrypt messages.
  */
 
 import { Interpreter } from './Interpreter';
@@ -14,6 +21,7 @@ export class LispInterpreter implements Interpreter {
     private globalEnv: Record<string, Function>;
 
     constructor() {
+        // Pure functions for standard library
         this.globalEnv = {
             '+': (args: number[]) => args.reduce((a, b) => a + b, 0),
             '-': (args: number[]) => args.length === 1 ? -args[0] : args.reduce((a, b) => a - b),
@@ -26,6 +34,12 @@ export class LispInterpreter implements Interpreter {
         };
     }
 
+    /**
+     * Evaluates a string of Lisp code.
+     *
+     * @param code - The Lisp source code.
+     * @returns The result of the evaluation or an error message.
+     */
     evaluate(code: string): string {
         try {
             const tokens = this.tokenize(code);
@@ -96,7 +110,6 @@ export class LispInterpreter implements Interpreter {
             if (ast.length === 0) return null;
 
             const [symbol, ...args] = ast;
-            // Handle special forms like 'define' here if needed
 
             const fn = this.evalAst(symbol, env);
             if (typeof fn === 'function') {

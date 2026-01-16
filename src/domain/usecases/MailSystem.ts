@@ -3,11 +3,15 @@
  * 
  * Manages the "unix mail" simulation.
  * NPCs send mail to the operator to initiate tasks.
+ *
+ * Pillar: The Four-Fold Shield (Strict Architecture)
+ * Pillar: The Watchman’s Log (Telemetry)
+ * Pillar: The Storyteller’s Code (Literate Documentation)
  */
 
 import { NPC } from '../entities/NPC';
 import { FileSystem } from '../entities/FileSystem';
-import { Logger } from '../../infrastructure/telemetry/Logger';
+import { TelemetryPort } from '../ports/TelemetryPort';
 
 export interface MailMessage {
     id: string;
@@ -19,10 +23,19 @@ export interface MailMessage {
 }
 
 export class MailSystem {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystem, private telemetry?: TelemetryPort) { }
 
-    sendMail(npc: NPC, subject: string, body: string, fs?: FileSystem): MailMessage {
-        return Logger.trace('MailSystem.sendMail', () => {
+    /**
+     * Sends a mail message from an NPC to the operator.
+     * Creates a file in the simulated filesystem.
+     *
+     * @param npc - The NPC sending the message.
+     * @param subject - The subject line of the email.
+     * @param body - The body content of the email.
+     * @returns The created MailMessage object.
+     */
+    sendMail(npc: NPC, subject: string, body: string): MailMessage {
+        const sendLogic = () => {
             const id = Math.random().toString(36).substring(2, 6);
             const message: MailMessage = {
                 id,
@@ -59,23 +72,27 @@ export class MailSystem {
             }
 
             return message;
-        }, { npc: npc.name, subject });
+        };
+
+        if (this.telemetry) {
+            // Passing context arguments clearly to trace
+            return this.telemetry.trace('MailSystem.sendMail', sendLogic, { npc: npc.name, subject });
+        }
+
+        return sendLogic();
     }
 
-    listMail(fs?: FileSystem): string {
-        const targetFS = fs || this.fs;
-        // Resolve mail directory
-        const mailDirNode = targetFS.resolveNode('/home/operator/mail');
-        if (mailDirNode && targetFS.isDirectory(mailDirNode)) {
-            const messages: string[] = [];
-            for (const [name, childNode] of mailDirNode.children) {
-                const inode = targetFS.getInode(childNode.inodeId);
-                // Format: ID - Date - From (extracted from content?) or just generic
-                // For now, let's keep it simple as before
-                const dateStr = inode ? new Date(inode.mtime).toISOString() : 'Unknown';
-                messages.push(`${name} - ${dateStr} - NPC Transmission`);
-            }
-            if (messages.length > 0) return messages.join('\n');
+    /**
+     * Lists all mail messages available in the operator's mail directory.
+     *
+     * @returns A string representation of the mail list.
+     */
+    listMail(): string {
+        const mailDir = this.fs.root.children?.home.children?.operator.children?.mail;
+        if (mailDir && mailDir.children) {
+            return Object.values(mailDir.children)
+                .map(m => `${m.name} - ${m.updatedAt} - NPC Transmission`)
+                .join('\n');
         }
         return 'No mail.';
     }

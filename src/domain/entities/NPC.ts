@@ -4,6 +4,14 @@
  * Represents a procedurally generated character in the 24XX system.
  * Characters are randomly generated NPCs that the terminal operator (player)
  * assists or manages.
+ *
+ * Pillar: The Storyteller’s Code (Literate Documentation)
+ * Pillar: The Swift Stream (Performance & Purity)
+ *
+ * Intent:
+ * The NPC system drives the narrative engine. Each NPC is a discrete entity
+ * with motivations (goals) and backgrounds (origin/career). The randomness
+ * ensures replayability and variety in missions.
  */
 
 export interface NPC {
@@ -23,6 +31,12 @@ export class NPCGenerator {
     private static careers = ['Data Courier', 'Scav Tech', 'Void Pilot', 'Black-Ops Medic'];
     private static goals = ['Recover lost data', 'Extract biological sample', 'Sabotage rival server', 'Espionage'];
 
+    /**
+     * Generates a new random NPC.
+     * Uses Math.random for procedural generation.
+     *
+     * @returns A new NPC object with randomized attributes.
+     */
     static generate(): NPC {
         const id = Math.random().toString(36).substring(2, 9).toUpperCase();
         return {
