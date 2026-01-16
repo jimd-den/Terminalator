@@ -2,24 +2,33 @@
 import { ICommand, CommandResponse } from '../../../domain/entities/Command';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../../domain/entities/TerminalState';
+import { ProcessManager } from '../../../domain/usecases/ProcessManager';
 
 export class PsCommand implements ICommand {
     name = 'ps';
     description = 'Report a snapshot of the current processes';
 
-    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        // Mock output
-        // PID TTY          TIME CMD
-        // 1   ?        00:00:01 init
-        // 100 pts/0    00:00:00 sh
-        // 101 pts/0    00:00:00 ps (self)
+    constructor(private processManager: ProcessManager) { }
 
-        const lines = [
-            '  PID TTY          TIME CMD',
-            '    1 ?        00:00:01 init',
-            '  100 pts/0    00:00:00 sh',
-            '  101 pts/0    00:00:00 ps'
-        ];
+    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const processes = this.processManager.list();
+
+        // Header
+        const lines = ['  PID TTY          TIME CMD'];
+
+        for (const proc of processes) {
+            // Format: PID (5) TTY (8) TIME (8) CMD
+            const pid = proc.pid.toString().padStart(5);
+            const tty = (proc.tty || '?').padEnd(8);
+
+            // Time calculation (simplified)
+            const now = new Date();
+            const diff = now.getTime() - proc.startTime.getTime();
+            const seconds = Math.floor(diff / 1000);
+            const timeStr = new Date(seconds * 1000).toISOString().substr(11, 8); // HH:mm:ss
+
+            lines.push(`${pid} ${tty} ${timeStr} ${proc.command}`);
+        }
 
         return {
             output: lines.join('\n'),
@@ -32,36 +41,36 @@ export class KillCommand implements ICommand {
     name = 'kill';
     description = 'Send a signal to a process';
 
+    constructor(private processManager: ProcessManager) { }
+
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         if (args.length === 0) {
             return { output: 'kill: usage: kill [-s signal_name] pid ...', exitCode: 1 };
         }
 
-        // Just check if PID is valid in our mock world
-        // PIDs: 1, 100, 101
-        // If we kill 100 (sh), we might want to say "Terminated" but not actually kill the shell (that would be bad UX here)
-        // If we kill 1 (init), "Operation not permitted"
+        const pidStr = args[args.length - 1];
+        const pid = parseInt(pidStr, 10);
 
-        const pid = args[args.length - 1]; // Last arg is usually PID
-        // Basic check
-        if (pid === '1') {
-            return { output: 'kill: (1) - Operation not permitted', exitCode: 1 };
+        if (isNaN(pid)) {
+            return { output: `kill: ${pidStr}: arguments must be process or job IDs`, exitCode: 1 };
         }
-        if (pid === '100') {
-            // Mock kill sh
+
+        // Try to kill via manager
+        // Manager's kill returns boolean
+        if (pid === 1) {
+            return { output: `kill: (${pid}) - Operation not permitted`, exitCode: 1 };
+        }
+
+        const success = this.processManager.kill(pid);
+
+        if (success) {
+            // Success. Typically silent, but "Terminated" is friendly.
+            // POSIX is silent unless verbose or interactive usually.
+            // But for this game, feedback is nice.
+            // "Terminated" implies the process was running and stopped.
             return { output: 'Terminated', exitCode: 0 };
+        } else {
+            return { output: `kill: (${pid}) - No such process`, exitCode: 1 };
         }
-        if (pid === '101') {
-            // Mock kill self?
-            return { output: '', exitCode: 0 };
-        }
-
-        // Random PID -> Not found
-        // Allow killing arbitrary numbers just to say "No such process"
-        if (!/^\d+$/.test(pid)) {
-            return { output: `kill: ${pid}: arguments must be process or job IDs`, exitCode: 1 };
-        }
-
-        return { output: `kill: (${pid}) - No such process`, exitCode: 1 };
     }
 }

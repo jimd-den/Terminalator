@@ -11,13 +11,16 @@ import { TerminalState } from '../entities/TerminalState';
 import { Logger } from '../../infrastructure/telemetry/Logger';
 import { ICommand, CommandResponse } from '../entities/Command';
 import { ProcessContext } from '../entities/ProcessContext';
+import { ProcessManager } from './ProcessManager';
 
 export class ExecuteCommand {
     protected registry: Map<string, ICommand>;
+    protected processManager: ProcessManager;
 
-    constructor(protected fs: FileSystem, commands: ICommand[] = []) {
+    constructor(protected fs: FileSystem, commands: ICommand[] = [], processManager?: ProcessManager) {
         this.registry = new Map();
         commands.forEach(cmd => this.register(cmd));
+        this.processManager = processManager || new ProcessManager();
     }
 
     protected register(command: ICommand) {
@@ -136,9 +139,19 @@ export class ExecuteCommand {
             stdin: stdin
         };
 
+        // Spawn Process (Ephemeral)
+        // Standard shell paradigm: shell forks/execs. Here we just track it.
+        const process = this.processManager.spawn(commandName, args, state.user, 100); // Parent 100 (sh)
+
         try {
-            return await command.execute(args, context, state);
+            const response = await command.execute(args, context, state);
+
+            // Terminate Process after execution
+            this.processManager.kill(process.pid);
+
+            return response;
         } catch (error: any) {
+            this.processManager.kill(process.pid);
             return {
                 output: `sh: execution error: ${error.message}`,
                 exitCode: 1

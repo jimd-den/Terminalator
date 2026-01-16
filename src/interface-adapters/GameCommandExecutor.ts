@@ -10,9 +10,9 @@ import { MailSystem } from '../domain/usecases/MailSystem';
 import { FileSystem } from '../domain/entities/FileSystem';
 import { CodeCompiler } from '../domain/usecases/CodeCompiler';
 import { GameManager } from './GameManager';
+import { ProcessManager } from '../domain/usecases/ProcessManager';
 import { ICommand } from '../domain/entities/Command';
 
-// Standard Commands
 // Standard / POSIX (Moved)
 import { LsCommand } from './commands/posix/LsCommand';
 import { CdCommand } from './commands/posix/CdCommand';
@@ -67,9 +67,11 @@ export class GameCommandExecutor extends ExecuteCommand {
         // Initialize dependencies
         const mailSystem = new MailSystem(fs);
         const compiler = new CodeCompiler(fs);
+        const processManager = new ProcessManager(); // Singleton instance for this session
 
         const commands: ICommand[] = [];
         const helpCommand = new HelpCommand(commands);
+
         commands.push(
             // Self-reference for Help
             helpCommand,
@@ -107,8 +109,8 @@ export class GameCommandExecutor extends ExecuteCommand {
             new FindCommand(fs),
             new AliasCommand(),
             new UnaliasCommand(),
-            new PsCommand(),
-            new KillCommand(),
+            new PsCommand(processManager),
+            new KillCommand(processManager),
             new DateCommand(),
             new HistoryCommand(),
             new ExportCommand(),
@@ -122,7 +124,7 @@ export class GameCommandExecutor extends ExecuteCommand {
             new VimCommand()
         );
 
-        super(fs, commands);
+        super(fs, commands, processManager);
 
         this.mailSystem = mailSystem;
         this.compiler = compiler;
