@@ -16,12 +16,14 @@
 import { FileSystem } from '../domain/entities/FileSystem';
 import { EditorBuffer } from '../domain/entities/EditorBuffer';
 import { VimEngine, VimState } from '../domain/entities/VimEngine';
+import { CheckerRegistry } from './vim/CheckerRegistry';
 
 export class VimSimulator {
     private engine: VimEngine;
     private buffer: EditorBuffer;
     private fs: FileSystem;
     private filename: string;
+    private checkerRegistry = new CheckerRegistry();
 
     constructor(fs: FileSystem, filename: string) {
         this.fs = fs;
@@ -40,6 +42,9 @@ export class VimSimulator {
         // Initialize Domain Entities
         this.buffer = new EditorBuffer(filename, content);
         this.engine = new VimEngine(this.buffer);
+
+        // Initial lint
+        this.lint();
     }
 
     /**
@@ -47,6 +52,7 @@ export class VimSimulator {
      */
     handleInput(key: string): VimState & { lines: string[] } {
         this.engine.handleInput(key);
+        this.lint();
         return this.getSnapshot();
     }
 
@@ -69,6 +75,17 @@ export class VimSimulator {
         }
 
         return { exit: false, message: `E492: Not an editor command: ${command}` };
+    }
+
+    private lint(): void {
+        const ext = this.filename.split('.').pop() || '';
+        const checker = this.checkerRegistry.getCheckerForExtension(ext);
+        if (checker) {
+            const errors = checker.check(this.buffer.toString());
+            this.engine.setLintErrors(errors);
+        } else {
+            this.engine.setLintErrors([]);
+        }
     }
 
     private save(): void {

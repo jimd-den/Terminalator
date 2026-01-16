@@ -24,6 +24,7 @@ export type ActiveApp = { type: 'SHELL' } | { type: 'VIM', filename: string };
 export interface TerminalOutputLine {
     text: string;
     type: 'input' | 'output';
+    exitCode?: number;
 }
 
 export const useTerminalViewModel = (
@@ -144,14 +145,12 @@ export const useTerminalViewModel = (
         setOutputLines(prev => {
             const nextLines = [
                 ...prev,
-                { text: `> ${input}`, type: 'input' } as const
+                { text: `> ${input}`, type: 'input', exitCode } as const
             ];
 
             if (cmdOutput) {
                 nextLines.push({ text: cmdOutput, type: 'output' } as const);
             }
-
-            nextLines.push({ text: `[EXIT: ${exitCode}]`, type: 'output' } as const);
 
             return nextLines;
         });

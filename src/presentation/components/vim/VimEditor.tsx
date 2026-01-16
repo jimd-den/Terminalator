@@ -27,52 +27,171 @@ interface VimEditorProps {
 
 const highlighterRegistry = new HighlighterRegistry();
 
+import { useTheme } from '../../context/ThemeContext';
+
 export const useVimEditor = (filename: string, onExit: () => void) => {
     const { fs } = useGame();
+    const { theme, settings } = useTheme();
+    const colors = theme.colors;
 
     // -- Permanent Logic Controller --
-    const simulator = useMemo(() => new VimSimulator(fs, filename), [filename, fs]);
+    const validator = useMemo(() => new VimSimulator(fs, filename), [filename, fs]);
+    const simulator = validator; // Alias to keep old code working
     const highlighter = useMemo(() => highlighterRegistry.getHighlighterForFile(filename), [filename]);
 
-    // -- React State (for Rendering) --
     const [state, setState] = useState(simulator.getSnapshot());
     const [commandInput, setCommandInput] = useState('');
     const [isMounting, setIsMounting] = useState(true);
 
-    // -- Refs for UI interaction --
     const hiddenInputRef = useRef<TextInput>(null);
-    const commandInputRef = useRef<TextInput>(null);
 
     // -- Initialization --
     useEffect(() => {
         setIsMounting(true);
-        const timer = setTimeout(() => setIsMounting(false), 50);
+        const timer = setTimeout(() => setIsMounting(false), 150);
         return () => clearTimeout(timer);
     }, [filename]);
 
-    // -- Focus Management --
-    const refocus = () => {
-        // Always focus the hidden input, regardless of mode
-        hiddenInputRef.current?.focus();
+    const dynamicStyles = StyleSheet.create({
+        editorContainer: {
+            flex: 1,
+            backgroundColor: colors.surface,
+        },
+        hiddenInput: {
+            position: 'absolute',
+            width: 1,
+            height: 1,
+            opacity: 0,
+        },
+        contentArea: {
+            flex: 1,
+            padding: THEME.spacing.sm,
+        },
+        scrollContent: {
+            paddingBottom: THEME.spacing.xl,
+        },
+        lineWrapper: {
+            flexDirection: 'row',
+            paddingHorizontal: THEME.spacing.xs,
+        },
+        lineText: {
+            color: colors.text.primary,
+            fontFamily: settings.fontFamily,
+            fontSize: THEME.typography.fontSize.md,
+            lineHeight: 24,
+        },
+        errorLine: {
+            backgroundColor: 'rgba(255, 0, 0, 0.15)',
+            borderLeftWidth: 3,
+            borderLeftColor: colors.error,
+        },
+        cursorBlock: {
+            backgroundColor: colors.primary,
+            display: 'flex',
+        },
+        cursorInsert: {
+            borderLeftWidth: 2,
+            borderLeftColor: colors.primary,
+        },
+        cursorText: {
+            color: colors.background,
+            fontFamily: settings.fontFamily,
+            fontSize: THEME.typography.fontSize.md,
+        },
+        footer: {
+            justifyContent: 'center',
+            padding: THEME.spacing.sm,
+        },
+        statusBar: {
+            backgroundColor: colors.background,
+            paddingVertical: THEME.spacing.sm,
+            paddingHorizontal: THEME.spacing.md,
+            borderTopWidth: 1,
+            borderTopColor: colors.primary,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+        },
+        statusText: {
+            color: colors.primary,
+            fontWeight: 'bold',
+            fontFamily: settings.fontFamily,
+        },
+        errorStatusText: {
+            color: colors.error,
+        },
+        commandRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: colors.background,
+            paddingHorizontal: THEME.spacing.sm,
+            height: 40,
+        },
+        commandText: {
+            color: colors.text.primary,
+            fontFamily: settings.fontFamily,
+            fontSize: THEME.typography.fontSize.md,
+        },
+        commandCursor: {
+            width: 10,
+            height: 20,
+            backgroundColor: colors.primary,
+            marginLeft: 2,
+        },
+        buttonRow: {
+            flexDirection: 'row',
+            gap: 8,
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+        },
+        hintButton: {
+            borderWidth: 1,
+            borderColor: colors.border,
+            paddingHorizontal: 8,
+            paddingVertical: 4,
+            backgroundColor: 'rgba(0, 255, 65, 0.05)',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minWidth: 40,
+        },
+        hintText: {
+            color: colors.text.primary,
+            fontFamily: settings.fontFamily,
+            fontSize: THEME.typography.fontSize.sm,
+            textAlign: 'center',
+        },
+        crtBlinkOverlay: {
+            ...StyleSheet.absoluteFillObject,
+            backgroundColor: colors.background,
+            zIndex: 999,
+        }
+    });
+
+    const getTokenColor = (type: string) => {
+        switch (type) {
+            case 'keyword': return colors.secondary;
+            case 'string': return '#CE9178';
+            case 'comment': return colors.text.dim;
+            case 'number': return '#B5CEA8';
+            case 'operator': return '#D4D4D4';
+            default: return colors.text.primary;
+        }
     };
 
+    const refocus = () => { hiddenInputRef.current?.focus(); };
     useEffect(() => {
         const interval = setInterval(refocus, 500);
         refocus();
         return () => clearInterval(interval);
     }, []);
 
-    // -- Input Handling --
     const [inputValue, setInputValue] = useState(' ');
 
     const handleHiddenInput = (text: string) => {
-        // Detect Backspace
         if (text.length === 0) {
             if (state.mode === 'COMMAND') {
                 if (commandInput.length > 1) {
                     setCommandInput(prev => prev.slice(0, -1));
                 } else {
-                    // Backspace on ':' exits command mode
                     simulator.handleInput('ESC');
                     setState(simulator.getSnapshot());
                     setCommandInput('');
@@ -84,37 +203,37 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
             return;
         }
 
-        let newContent = text;
-        if (text.startsWith(' ')) {
-            newContent = text.slice(1);
-        }
-
+        const newContent = text.startsWith(' ') ? text.slice(1) : text;
         if (newContent.length === 0) {
             setInputValue(' ');
             return;
         }
 
-        // Process characters
+        // Process characters sequentially
+        let shouldRefreshSnapshot = true;
         for (const char of newContent) {
             if (char === '\n') {
                 if (state.mode === 'COMMAND') {
                     handleCommandSubmit();
+                    shouldRefreshSnapshot = false; // handleCommandSubmit handles state
                 } else {
-                    setState(simulator.handleInput('ENTER'));
+                    simulator.handleInput('ENTER');
                 }
             } else {
                 if (state.mode === 'COMMAND') {
                     setCommandInput(prev => prev + char);
                 } else {
-                    // Start command mode if ':' pressed
                     if (state.mode === 'NORMAL' && char === ':') {
                         setCommandInput(':');
                     }
-                    setState(simulator.handleInput(char));
+                    simulator.handleInput(char);
                 }
             }
         }
 
+        if (shouldRefreshSnapshot) {
+            setState(simulator.getSnapshot());
+        }
         setInputValue(' ');
     };
 
@@ -123,7 +242,6 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
             handleHiddenInput('');
             return;
         }
-
         if (state.mode === 'COMMAND') {
             if (key === 'ESC') {
                 simulator.handleInput('ESC');
@@ -135,21 +253,16 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
                 handleCommandSubmit();
                 return;
             }
-            // Other virtual keys like UP/DOWN or specific chars
-            if (key.length === 1) {
-                setCommandInput(prev => prev + key);
-            }
+            if (key.length === 1) setCommandInput(prev => prev + key);
             return;
         }
-
         setState(simulator.handleInput(key));
     };
 
     const handleCommandSubmit = () => {
         const { exit, message } = simulator.executeCommand(commandInput);
-        if (exit) {
-            onExit();
-        } else {
+        if (exit) onExit();
+        else {
             const nextState = simulator.getSnapshot();
             nextState.statusMessage = message;
             setState(nextState);
@@ -157,105 +270,72 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
         }
     };
 
-    const handleInput = (text: string) => {
-        if (state.mode === 'COMMAND') {
-            // In COMMAND mode, hiddenInput acts as the command pipe
-            // But we already have a separate TextInput for Command mode in the UI?
-            // No, let's merge them.
-            return;
-        }
-        handleHiddenInput(text);
-    };
-
-    // -- Render Helpers --
     const renderLine = (lineContent: string, lineIdx: number) => {
         const isCurrentLine = lineIdx === state.cursor.line;
-        const tokens = highlighter.highlight(lineContent || ' ');
+        const lineError = state.lintErrors.find(e => e.line === lineIdx + 1);
+        const tokens = highlighter.highlight(lineContent);
+        let cursorRendered = false;
 
         return (
-            <Text key={lineIdx} style={styles.lineText}>
-                {tokens.map((token, tokenIdx) => {
-                    // For current line, we might need to "break" a token to insert the cursor
-                    // but for simplicity (KISS), we use an absolute cursor overlay if possible?
-                    // No, let's just highlight the token and handle cursor separately.
+            <View key={lineIdx} style={[dynamicStyles.lineWrapper, lineError && dynamicStyles.errorLine]}>
+                <Text style={dynamicStyles.lineText} numberOfLines={1}>
+                    {tokens.map((token, tokenIdx) => {
+                        const tokenColor = getTokenColor(token.type);
+                        if (isCurrentLine && !cursorRendered) {
+                            let offsetBefore = tokens.slice(0, tokenIdx).reduce((acc, t) => acc + t.text.length, 0);
+                            const cursorInToken = state.cursor.col >= offsetBefore && state.cursor.col < offsetBefore + token.text.length;
 
-                    const tokenColor = getTokenColor(token.type);
+                            if (cursorInToken) {
+                                cursorRendered = true;
+                                const cursorRelPos = state.cursor.col - offsetBefore;
+                                const head = token.text.slice(0, cursorRelPos);
+                                const char = token.text[cursorRelPos];
+                                const tail = token.text.slice(cursorRelPos + 1);
 
-                    if (isCurrentLine) {
-                        // Find if cursor is within this token
-                        let offsetBefore = tokens.slice(0, tokenIdx).reduce((acc, t) => acc + t.text.length, 0);
-                        const cursorInToken = state.cursor.col >= offsetBefore && state.cursor.col < offsetBefore + token.text.length;
-
-                        if (cursorInToken) {
-                            const cursorRelPos = state.cursor.col - offsetBefore;
-                            const head = token.text.slice(0, cursorRelPos);
-                            const char = token.text[cursorRelPos] || ' ';
-                            const tail = token.text.slice(cursorRelPos + 1);
-
-                            return (
-                                <Text key={tokenIdx} style={{ color: tokenColor }}>
-                                    {head}
-                                    <View style={state.mode === 'INSERT' ? styles.cursorInsert : styles.cursorBlock}>
-                                        <Text style={state.mode === 'INSERT' ? { color: tokenColor } : styles.cursorText}>
+                                return (
+                                    <Text key={tokenIdx} style={{ color: tokenColor }}>
+                                        {head}
+                                        {state.mode === 'INSERT' && (
+                                            <View style={{ width: 2, height: 18, backgroundColor: colors.primary, transform: [{ translateY: 4 }] }} />
+                                        )}
+                                        <Text style={state.mode === 'NORMAL' ? { backgroundColor: colors.primary, color: colors.background } : {}}>
                                             {char}
                                         </Text>
-                                    </View>
-                                    {tail}
-                                </Text>
-                            );
+                                        {tail}
+                                    </Text>
+                                );
+                            }
                         }
-                    }
-
-                    return (
-                        <Text key={tokenIdx} style={{ color: tokenColor }}>
-                            {token.text}
-                        </Text>
-                    );
-                })}
-                {/* Handle cursor at the end of line */}
-                {isCurrentLine && state.cursor.col >= lineContent.length && (
-                    <View style={state.mode === 'INSERT' ? styles.cursorInsert : styles.cursorBlock}>
-                        <Text style={styles.cursorText}> </Text>
-                    </View>
-                )}
-            </Text>
+                        return <Text key={tokenIdx} style={{ color: tokenColor }}>{token.text}</Text>;
+                    })}
+                    {isCurrentLine && !cursorRendered && (
+                        <View style={state.mode === 'INSERT'
+                            ? { width: 2, height: 18, backgroundColor: colors.primary, transform: [{ translateY: 4 }] }
+                            : { backgroundColor: colors.primary, height: 20, justifyContent: 'center', transform: [{ translateY: 2 }] }
+                        }>
+                            <Text style={{ color: colors.background, fontSize: THEME.typography.fontSize.md, opacity: state.mode === 'INSERT' ? 0 : 1 }}> </Text>
+                        </View>
+                    )}
+                </Text>
+            </View>
         );
     };
 
-    const getTokenColor = (type: string) => {
-        switch (type) {
-            case 'keyword': return THEME.colors.secondary;
-            case 'string': return '#CE9178'; // Muted orange/rust
-            case 'comment': return THEME.colors.text.dim;
-            case 'number': return '#B5CEA8'; // Pale green
-            case 'operator': return '#D4D4D4';
-            default: return THEME.colors.text.primary;
-        }
-    };
-
     const topContent = (
-        <View style={styles.editorContainer}>
-            {isMounting && <View style={styles.crtBlinkOverlay} />}
+        <View style={dynamicStyles.editorContainer}>
+            {isMounting && <View style={dynamicStyles.crtBlinkOverlay} />}
             <TextInput
                 ref={hiddenInputRef}
-                style={styles.hiddenInput}
+                style={dynamicStyles.hiddenInput}
                 value={inputValue}
                 onChangeText={handleHiddenInput}
-                autoCapitalize="none"
-                autoCorrect={false}
-                spellCheck={false}
-                blurOnSubmit={false}
-                multiline={true}
-                editable={true}
-                caretHidden={true}
-                autoFocus={true}
+                autoCapitalize="none" autoCorrect={false} spellCheck={false} blurOnSubmit={false} multiline={true} editable={true} caretHidden={true} autoFocus={true}
             />
             <ScrollView
-                style={styles.contentArea}
-                contentContainerStyle={styles.scrollContent}
+                style={dynamicStyles.contentArea}
+                contentContainerStyle={dynamicStyles.scrollContent}
                 keyboardShouldPersistTaps="always"
                 ref={(ref: ScrollView | null) => {
-                    // Auto-scroll to current line
                     if (ref) {
                         const lineHeight = 24;
                         ref.scrollTo({ y: state.cursor.line * lineHeight - 100, animated: true });
@@ -266,51 +346,33 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
                     {state.lines.map((line, idx) => renderLine(line, idx))}
                 </Pressable>
             </ScrollView>
-            <View style={styles.statusBar}>
-                <Text style={styles.statusText}>
-                    {state.statusMessage || (state.mode === 'NORMAL' ? '-- NORMAL --' : `-- ${state.mode} --`)}
+            <View style={dynamicStyles.statusBar}>
+                <Text style={[dynamicStyles.statusText, !!state.lintErrors.find(e => e.line === state.cursor.line + 1) && dynamicStyles.errorStatusText]}>
+                    {state.lintErrors.find(e => e.line === state.cursor.line + 1)?.message || (state.statusMessage || (state.mode === 'NORMAL' ? '-- NORMAL --' : `-- ${state.mode} --`))}
                 </Text>
-                <Text style={styles.statusText}>
+                <Text style={dynamicStyles.statusText}>
                     {highlighter.language.toUpperCase()} | Ln {state.cursor.line + 1}, Col {state.cursor.col + 1}
                 </Text>
             </View>
         </View>
     );
 
-    const middleContent = (
-        <VirtualKeyboard onKeyPress={handleVirtualKey} />
-    );
+    const middleContent = <VirtualKeyboard onKeyPress={handleVirtualKey} />;
 
     const bottomContent = (
-        <View style={styles.footer}>
+        <View style={dynamicStyles.footer}>
             {state.mode === 'COMMAND' ? (
-                <View style={styles.commandRow}>
-                    <Text style={styles.commandText}>{commandInput}</Text>
-                    <View style={styles.commandCursor} />
+                <View style={dynamicStyles.commandRow}>
+                    <Text style={dynamicStyles.commandText}>{commandInput}</Text>
+                    <View style={dynamicStyles.commandCursor} />
                 </View>
             ) : (
-                <View style={styles.buttonRow}>
-                    <Pressable style={styles.hintButton} onPress={() => handleVirtualKey('i')}>
-                        <Text style={styles.hintText}>[I]</Text>
-                    </Pressable>
-                    <Pressable style={styles.hintButton} onPress={() => handleVirtualKey(':')}>
-                        <Text style={styles.hintText}>[:]</Text>
-                    </Pressable>
-                    <Pressable style={styles.hintButton} onPress={() => handleVirtualKey('ESC')}>
-                        <Text style={styles.hintText}>[ESC]</Text>
-                    </Pressable>
-                    <Pressable style={styles.hintButton} onPress={() => handleVirtualKey('h')}>
-                        <Text style={styles.hintText}>[H]</Text>
-                    </Pressable>
-                    <Pressable style={styles.hintButton} onPress={() => handleVirtualKey('j')}>
-                        <Text style={styles.hintText}>[J]</Text>
-                    </Pressable>
-                    <Pressable style={styles.hintButton} onPress={() => handleVirtualKey('k')}>
-                        <Text style={styles.hintText}>[K]</Text>
-                    </Pressable>
-                    <Pressable style={styles.hintButton} onPress={() => handleVirtualKey('l')}>
-                        <Text style={styles.hintText}>[L]</Text>
-                    </Pressable>
+                <View style={dynamicStyles.buttonRow}>
+                    {['i', ':', 'ESC', 'h', 'j', 'k', 'l'].map(k => (
+                        <Pressable key={k} style={dynamicStyles.hintButton} onPress={() => handleVirtualKey(k)}>
+                            <Text style={dynamicStyles.hintText}>[{k.toUpperCase()}]</Text>
+                        </Pressable>
+                    ))}
                 </View>
             )}
         </View>
@@ -318,111 +380,3 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
 
     return { topContent, middleContent, bottomContent };
 };
-
-const styles = StyleSheet.create({
-    editorContainer: {
-        flex: 1,
-        backgroundColor: THEME.colors.surface,
-    },
-    hiddenInput: {
-        position: 'absolute',
-        width: 1,
-        height: 1,
-        opacity: 0,
-    },
-    contentArea: {
-        flex: 1,
-        padding: THEME.spacing.sm,
-    },
-    scrollContent: {
-        paddingBottom: THEME.spacing.xl,
-    },
-    lineText: {
-        color: THEME.colors.text.primary,
-        fontFamily: THEME.typography.fontFamily,
-        fontSize: THEME.typography.fontSize.md,
-        lineHeight: 24,
-    },
-    cursorBlock: {
-        backgroundColor: THEME.colors.primary,
-        display: 'flex',
-    },
-    cursorInsert: {
-        borderLeftWidth: 2,
-        borderLeftColor: THEME.colors.primary,
-    },
-    cursorText: {
-        color: THEME.colors.background,
-        fontFamily: THEME.typography.fontFamily,
-        fontSize: THEME.typography.fontSize.md,
-    },
-    footer: {
-        justifyContent: 'center',
-        padding: THEME.spacing.sm,
-    },
-    statusBar: {
-        backgroundColor: THEME.colors.background,
-        paddingVertical: THEME.spacing.xs,
-        paddingHorizontal: THEME.spacing.sm,
-        borderTopWidth: 1,
-        borderTopColor: THEME.colors.primary,
-        marginTop: 'auto',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-    statusText: {
-        color: THEME.colors.primary,
-        fontWeight: 'bold',
-        fontFamily: THEME.typography.fontFamily,
-    },
-    commandRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: THEME.colors.background,
-        paddingHorizontal: THEME.spacing.sm,
-        height: 40,
-    },
-    commandPrefix: {
-        color: THEME.colors.primary,
-        fontFamily: THEME.typography.fontFamily,
-        fontSize: THEME.typography.fontSize.md,
-    },
-    commandText: {
-        color: THEME.colors.text.primary,
-        fontFamily: THEME.typography.fontFamily,
-        fontSize: THEME.typography.fontSize.md,
-    },
-    commandCursor: {
-        width: 10,
-        height: 20,
-        backgroundColor: THEME.colors.primary,
-        marginLeft: 2,
-    },
-    buttonRow: {
-        flexDirection: 'row',
-        gap: 8,
-        justifyContent: 'center',
-        flexWrap: 'wrap',
-    },
-    hintButton: {
-        borderWidth: 1,
-        borderColor: THEME.colors.border,
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        backgroundColor: 'rgba(0, 255, 65, 0.05)',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minWidth: 40,
-    },
-    hintText: {
-        color: THEME.colors.text.primary,
-        fontFamily: THEME.typography.fontFamily,
-        fontSize: THEME.typography.fontSize.sm,
-        textAlign: 'center',
-    },
-    crtBlinkOverlay: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: THEME.colors.background,
-        zIndex: 999,
-    }
-});

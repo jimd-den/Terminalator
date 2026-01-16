@@ -21,11 +21,19 @@ export interface VimCursor {
     col: number;
 }
 
+export interface SyntaxError {
+    readonly line: number;
+    readonly column: number;
+    readonly message: string;
+    readonly severity: 'error' | 'warning';
+}
+
 export interface VimState {
     mode: VimMode;
     cursor: VimCursor;
     pendingAction: string | null;
     statusMessage: string;
+    lintErrors: SyntaxError[];
 }
 
 export class VimEngine {
@@ -38,7 +46,8 @@ export class VimEngine {
             mode: 'NORMAL',
             cursor: { line: 0, col: 0 },
             pendingAction: null,
-            statusMessage: ''
+            statusMessage: '',
+            lintErrors: []
         };
     }
 
@@ -192,5 +201,9 @@ export class VimEngine {
 
     setStatusMessage(msg: string): void {
         this.state.statusMessage = msg;
+    }
+
+    setLintErrors(errors: SyntaxError[]): void {
+        this.state.lintErrors = errors;
     }
 }

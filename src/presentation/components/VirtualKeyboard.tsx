@@ -9,6 +9,8 @@ import React from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { THEME } from '../../frameworks-drivers/ui/Theme';
 
+import { useTheme } from '../context/ThemeContext';
+
 interface VirtualKeyboardProps {
     onKeyPress: (key: string) => void;
 }
@@ -16,53 +18,56 @@ interface VirtualKeyboardProps {
 const KEYS = ['TAB', 'ESC', '/', '-', 'CTRL', 'UP', 'DOWN'];
 
 export const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({ onKeyPress }) => {
+    const { theme, settings } = useTheme();
+    const colors = theme.colors;
+
+    const dynamicStyles = StyleSheet.create({
+        container: {
+            backgroundColor: colors.background,
+            paddingHorizontal: THEME.spacing.md,
+            paddingBottom: THEME.spacing.sm,
+        },
+        innerContainer: {
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+            borderWidth: THEME.borders.width,
+            borderColor: colors.primary,
+            padding: 4,
+            backgroundColor: colors.surface,
+        },
+        key: {
+            paddingHorizontal: 12,
+            paddingVertical: 8,
+            margin: 4,
+            borderWidth: 1,
+            borderColor: colors.primary,
+            backgroundColor: colors.background,
+            minWidth: 44,
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+        keyText: {
+            color: colors.primary,
+            fontFamily: settings.fontFamily,
+            fontSize: THEME.typography.fontSize.sm,
+            fontWeight: 'bold',
+        },
+    });
+
     return (
-        <View style={styles.container}>
-            <View style={styles.innerContainer}>
+        <View style={dynamicStyles.container}>
+            <View style={dynamicStyles.innerContainer}>
                 {KEYS.map((key) => (
                     <Pressable
                         key={key}
-                        style={styles.key}
+                        style={dynamicStyles.key}
                         onPress={() => onKeyPress(key)}
                     >
-                        <Text style={styles.keyText}>{key}</Text>
+                        <Text style={dynamicStyles.keyText}>{key}</Text>
                     </Pressable>
                 ))}
             </View>
         </View>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        backgroundColor: THEME.colors.background,
-        paddingHorizontal: THEME.spacing.md,
-        paddingBottom: THEME.spacing.sm,
-    },
-    innerContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'center',
-        borderWidth: THEME.borders.width,
-        borderColor: THEME.colors.primary,
-        padding: 4,
-        backgroundColor: THEME.colors.surface,
-    },
-    key: {
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        margin: 4,
-        borderWidth: 1,
-        borderColor: THEME.colors.primary,
-        backgroundColor: THEME.colors.background,
-        minWidth: 44,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    keyText: {
-        color: THEME.colors.primary,
-        fontFamily: THEME.typography.fontFamily,
-        fontSize: THEME.typography.fontSize.sm,
-        fontWeight: 'bold',
-    },
-});
