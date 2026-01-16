@@ -94,6 +94,8 @@ export class ExecuteCommand {
             let finalExitCode = 0;
             let finalUiAction: 'CLEAR' | undefined = undefined;
 
+            let finalNavigationAction: any = undefined;
+
             for (const step of pipeline) {
                 const commandName = step.command;
                 const args = step.args;
@@ -116,6 +118,7 @@ export class ExecuteCommand {
                     currentState = response.newState;
                     finalExitCode = response.exitCode;
                     if (response.uiAction) finalUiAction = response.uiAction;
+                    if (response.navigationAction) finalNavigationAction = response.navigationAction;
 
                 } catch (error: any) {
                     return {
@@ -130,7 +133,8 @@ export class ExecuteCommand {
                 output: previousOutput || '',
                 newState: currentState,
                 exitCode: finalExitCode,
-                uiAction: finalUiAction
+                uiAction: finalUiAction,
+                navigationAction: finalNavigationAction
             };
         };
 
