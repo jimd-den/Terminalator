@@ -8,6 +8,7 @@ node_modules/
 dist/
 web-build/
 expo-env.d.ts
+susv5_full_dump.md
 
 # Native
 .kotlin/
@@ -40,4 +41,4 @@ yarn-error.*
 /ios
 /android
 susv5-html/
-/susv5_full_dump.md
+
