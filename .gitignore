@@ -8,6 +8,7 @@ node_modules/
 dist/
 web-build/
 expo-env.d.ts
+susv5_full_dump.md
 
 # Native
 .kotlin/
@@ -39,3 +40,5 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+susv5-html/
+

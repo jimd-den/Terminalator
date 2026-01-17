@@ -1,52 +1,110 @@
 /**
  * VimSimulator - Interface Adapter Layer
  * 
- * Simulates a vanilla Vim environment for mobile typing tasks.
- * Supports basic modes (Normal, Insert) and command-line mode.
+ * Orchestrates a Vim editing session by connecting the domain logic (VimEngine)
+ * with infrastructure (FileSystem) and presentation.
+ *
+ * Pillar: THE FOUR-FOLD SHIELD (Strict Architecture)
+ * Pillar: THE MASTER’S TOOL (Pragmatic Design Patterns)
+ * Pillar: THE STORYTELLER’S CODE (Literate Documentation)
+ *
+ * Intent:
+ * Acts as the authoritative controller for a file being edited.
+ * Handles I/O operations (Load/Save) and delegates key processing to the engine.
  */
 
-export type VimMode = 'NORMAL' | 'INSERT' | 'COMMAND';
+import { FileSystem } from '../domain/entities/FileSystem';
+import { EditorBuffer } from '../domain/entities/EditorBuffer';
+import { VimEngine, VimState } from '../domain/entities/VimEngine';
+import { CheckerRegistry } from './vim/CheckerRegistry';
 
 export class VimSimulator {
-    private buffer: string[] = [];
-    private mode: VimMode = 'NORMAL';
-    private cursor: { x: number; y: number } = { x: 0, y: 0 };
-    private currentFile: string = '';
+    private engine: VimEngine;
+    private buffer: EditorBuffer;
+    private fs: FileSystem;
+    private filename: string;
+    private checkerRegistry = new CheckerRegistry();
 
-    constructor(filename: string, content: string = '') {
-        this.currentFile = filename;
-        this.buffer = content.split('\n');
-    }
+    constructor(fs: FileSystem, filename: string) {
+        this.fs = fs;
+        this.filename = filename;
 
-    handleInput(input: string): { output: string[], mode: VimMode } {
-        if (this.mode === 'NORMAL') {
-            if (input === 'i') {
-                this.mode = 'INSERT';
-            } else if (input === ':') {
-                this.mode = 'COMMAND';
-            }
-        } else if (this.mode === 'INSERT') {
-            if (input === 'ESC') {
-                this.mode = 'NORMAL';
-            } else {
-                // Simple append to current line for simulation
-                this.buffer[this.cursor.y] = (this.buffer[this.cursor.y] || '') + input;
-            }
-        } else if (this.mode === 'COMMAND') {
-            if (input === 'q') return { output: ['Vim closed'], mode: 'NORMAL' };
-            if (input === 'wq') return { output: ['File saved', 'Vim closed'], mode: 'NORMAL' };
-            this.mode = 'NORMAL';
+        // Load content from FileSystem
+        const path = filename.startsWith('/') ? filename : `/home/operator/${filename}`;
+        const node = fs.resolveNode(path);
+        let content = '';
+
+        if (node && !fs.isDirectory(node)) {
+            const inode = fs.getInode(node.inodeId);
+            content = (inode && typeof inode.content === 'string') ? inode.content : '';
         }
 
-        return { output: this.getDisplayBuffer(), mode: this.mode };
+        // Initialize Domain Entities
+        this.buffer = new EditorBuffer(filename, content);
+        this.engine = new VimEngine(this.buffer);
+
+        // Initial lint
+        this.lint();
     }
 
-    private getDisplayBuffer(): string[] {
-        const statusLine = `[${this.mode}] ${this.currentFile}  L:${this.cursor.y + 1} C:${this.cursor.x + 1}`;
-        return [...this.buffer, '---', statusLine];
+    /**
+     * Processes a key input and returns the current state for the UI to render.
+     */
+    handleInput(key: string): VimState & { lines: string[] } {
+        this.engine.handleInput(key);
+        this.lint();
+        return this.getSnapshot();
     }
 
-    getMode(): VimMode {
-        return this.mode;
+    /**
+     * Executes a command-line mode command (e.g., :w, :q).
+     */
+    executeCommand(cmd: string): { exit: boolean; message: string } {
+        const command = cmd.trim();
+
+        if (command === ':w') {
+            this.save();
+            return { exit: false, message: `"${this.filename}" written` };
+        } else if (command === ':q') {
+            return { exit: true, message: '' };
+        } else if (command === ':wq') {
+            this.save();
+            return { exit: true, message: '' };
+        } else if (command === ':q!') {
+            return { exit: true, message: '' };
+        }
+
+        return { exit: false, message: `E492: Not an editor command: ${command}` };
+    }
+
+    private lint(): void {
+        const ext = this.filename.split('.').pop() || '';
+        const checker = this.checkerRegistry.getCheckerForExtension(ext);
+        if (checker) {
+            const errors = checker.check(this.buffer.toString());
+            this.engine.setLintErrors(errors);
+        } else {
+            this.engine.setLintErrors([]);
+        }
+    }
+
+    private save(): void {
+        const path = this.filename.startsWith('/') ? this.filename : `/home/operator/${this.filename}`;
+        const content = this.buffer.toString();
+        this.fs.writeFile(path, content, 'w');
+    }
+
+    /**
+     * Returns a snapshot of the current session state.
+     */
+    getSnapshot(): VimState & { lines: string[] } {
+        return {
+            ...this.engine.getState(),
+            lines: this.buffer.getState().lines
+        };
+    }
+
+    getFilename(): string {
+        return this.filename;
     }
 }

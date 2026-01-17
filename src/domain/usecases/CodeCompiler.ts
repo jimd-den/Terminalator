@@ -9,7 +9,7 @@
  */
 
 import { TelemetryPort } from '../ports/TelemetryPort';
-import { FileSystem } from '../entities/FileSystem';
+import { FileSystem, S_IFREG, S_IFMT } from '../entities/FileSystem';
 import { Interpreter } from '../interpreters/Interpreter';
 import { LispInterpreter } from '../interpreters/LispInterpreter';
 
@@ -30,12 +30,17 @@ export class CodeCompiler {
 
     compile(path: string): CompilationResult {
         const compileLogic = () => {
-            const node = this.fs.getNode(path);
-            if (!node || node.type !== 'file') {
+            const node = this.fs.resolveNode(path);
+            if (!node) {
                 return { success: false, output: `Error: File ${path} not found.` };
             }
 
-            const content = node.content || '';
+            const inode = this.fs.getInode(node.inodeId);
+            if (!inode || (inode.mode & S_IFMT) !== S_IFREG) {
+                return { success: false, output: `Error: ${path} is not a file.` };
+            }
+
+            const content = (typeof inode.content === 'string') ? inode.content : '';
             const extension = path.split('.').pop()?.toLowerCase();
 
             if (extension === 'lisp' || extension === 'scm') {

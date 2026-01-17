@@ -1,16 +1,27 @@
 /**
  * ExecuteCommand Use Case - Application Logic Layer
  * 
- * Parses and executes simulated terminal commands.
- * Adheres to POSIX-compliant behavior in a simulated environment.
+ * Parses and executes simulated terminal commands using the Command Pattern.
+ * Adheres to "The Four-Fold Shield" by relying on the Command Registry (domain service)
+ * and "ShellParser" (domain service) for text interpretation.
  *
  * Pillar: The Four-Fold Shield (Strict Architecture)
- * Pillar: The Swift Stream (Performance & Purity)
+ * Pillar: The Watchman’s Log (Telemetry)
+ * Pillar: The Storyteller’s Code (Literate Documentation)
+ *
+ * Intent:
+ * The central dispatch mechanism for user input. It interprets the string
+ * using the ShellParser, finds the appropriate command in the Registry,
+ * and delegates execution.
  */
 
-import { FileSystem, FSNode } from '../entities/FileSystem';
+import { FileSystem } from '../entities/FileSystem';
 import { TerminalState } from '../entities/TerminalState';
 import { TelemetryPort } from '../ports/TelemetryPort';
+import { CommandRegistry } from '../commands/CommandRegistry';
+import { ShellParser } from '../services/ShellParser';
+import { CoreUtilsModule } from '../modules/CoreUtilsModule';
+import { SystemUtilsModule } from '../modules/SystemUtilsModule';
 
 export interface CommandResponse {
     output: string;
@@ -25,123 +36,112 @@ export interface CommandResponse {
 }
 
 export class ExecuteCommand {
-    constructor(protected fs: FileSystem, protected telemetry?: TelemetryPort) { }
+    private registry: CommandRegistry;
+    private parser: ShellParser;
 
-    execute(commandString: string, state: TerminalState): CommandResponse {
-        const executeLogic = () => {
-            const parts = commandString.trim().split(/\s+/);
-            const command = parts[0];
-            const args = parts.slice(1);
+    /**
+     * Initializes ExecuteCommand.
+     * Optionally accepts a registry. If not provided, initializes a default one
+     * with core commands (ls, cd, pwd, etc.).
+     *
+     * @param fs - The FileSystem entity.
+     * @param telemetry - The Telemetry port.
+     * @param registry - Optional CommandRegistry (for dependency injection/testing).
+     */
+    constructor(
+        protected fs: FileSystem,
+        protected telemetry?: TelemetryPort,
+        registry?: CommandRegistry
+    ) {
+        this.parser = new ShellParser();
 
-            let output = '';
-            let exitCode = 0;
-            let newState = { ...state };
-            let uiAction: 'CLEAR' | undefined;
+        if (registry) {
+            this.registry = registry;
+        } else {
+            this.registry = new CommandRegistry();
+            this.registerCoreCommands();
+        }
+    }
 
-            switch (command) {
-                case 'ls':
-                    output = this.ls(newState.currentDirectory);
-                    break;
-                case 'cd':
-                    const cdResult = this.cd(args[0] || state.environment.HOME, state);
-                    output = cdResult.output;
-                    newState = cdResult.newState;
-                    exitCode = cdResult.exitCode;
-                    break;
-                case 'cat':
-                    output = this.cat(args[0], state.currentDirectory);
-                    break;
-                case 'grep':
-                    output = this.grep(args, state.currentDirectory);
-                    break;
-                case 'pwd':
-                    output = state.currentDirectory;
-                    break;
-                case 'whoami':
-                    output = state.user;
-                    break;
-                case 'clear':
-                    output = '';
-                    uiAction = 'CLEAR';
-                    break;
-                case '':
-                    output = '';
-                    break;
-                default:
-                    output = `sh: command not found: ${command}`;
-                    exitCode = 127;
+    private registerCoreCommands() {
+        // Use the CoreUtilsModule to register all standard commands
+        const coreModule = new CoreUtilsModule(this.fs);
+        coreModule.register(this.registry);
+
+        // Register System Utilities
+        const systemModule = new SystemUtilsModule();
+        systemModule.register(this.registry);
+    }
+
+    /**
+     * Accessor for the registry, allowing adapters to register more commands.
+     */
+    getRegistry(): CommandRegistry {
+        return this.registry;
+    }
+
+    async execute(input: string, state: TerminalState): Promise<CommandResponse> {
+        const executeLogic = async (): Promise<CommandResponse> => {
+            if (!input.trim()) {
+                return { output: '', newState: state, exitCode: 0 };
             }
 
-            return { output, newState, exitCode, uiAction };
+            // Use the ShellParser Service to tokenize the input
+            const pipeline = this.parser.parse(input);
+
+            let currentState = state;
+            let previousOutput: string | undefined = undefined;
+            let finalExitCode = 0;
+            let finalUiAction: 'CLEAR' | undefined = undefined;
+
+            let finalNavigationAction: any = undefined;
+
+            for (const step of pipeline) {
+                const commandName = step.command;
+                const args = step.args;
+
+                const command = this.registry.get(commandName);
+
+                if (!command) {
+                    return {
+                        output: `sh: command not found: ${commandName}`,
+                        newState: currentState,
+                        exitCode: 127
+                    };
+                }
+
+                try {
+                    // Execute with input from previous command (if any)
+                    const response = await command.execute(args, currentState, previousOutput);
+
+                    previousOutput = response.output;
+                    currentState = response.newState;
+                    finalExitCode = response.exitCode;
+                    if (response.uiAction) finalUiAction = response.uiAction;
+                    if (response.navigationAction) finalNavigationAction = response.navigationAction;
+
+                } catch (error: any) {
+                    return {
+                        output: `sh: error executing ${commandName}: ${error.message}`,
+                        newState: currentState,
+                        exitCode: 1
+                    };
+                }
+            }
+
+            return {
+                output: previousOutput || '',
+                newState: currentState,
+                exitCode: finalExitCode,
+                uiAction: finalUiAction,
+                navigationAction: finalNavigationAction
+            };
         };
 
         if (this.telemetry) {
-            return this.telemetry.trace('ExecuteCommand.execute', executeLogic, commandString, state.currentDirectory);
+            return this.telemetry.trace('ExecuteCommand.execute', executeLogic, input, state.currentDirectory);
         }
 
         return executeLogic();
-    }
-
-    private ls(path: string): string {
-        const node = this.fs.getNode(path);
-        if (node && node.type === 'directory' && node.children) {
-            // Check for empty directory
-            const files = Object.keys(node.children);
-            if (files.length === 0) return '';
-            return files.join('  ');
-        }
-        return '';
-    }
-
-    private cd(target: string, state: TerminalState): { output: string; newState: TerminalState; exitCode: number } {
-        // Basic cd simulation
-        let newPath = target;
-        if (!target.startsWith('/')) {
-            newPath = state.currentDirectory === '/' ? `/${target}` : `${state.currentDirectory}/${target}`;
-        }
-
-        // Normalize path (handle .. etc, simplified for now)
-        if (target === '..') {
-            const parts = state.currentDirectory.split('/').filter(p => p.length > 0);
-            parts.pop();
-            newPath = parts.length === 0 ? '/' : '/' + parts.join('/');
-        } else if (target === '.') {
-            newPath = state.currentDirectory;
-        }
-
-        const node = this.fs.getNode(newPath);
-        if (node && node.type === 'directory') {
-            return { output: '', newState: { ...state, currentDirectory: newPath }, exitCode: 0 };
-        }
-        return { output: `cd: no such file or directory: ${target}`, newState: state, exitCode: 1 };
-    }
-
-    private cat(filename: string | undefined, currentDir: string): string {
-        if (!filename) return 'Usage: cat <filename>';
-        const path = currentDir === '/' ? `/${filename}` : `${currentDir}/${filename}`;
-        const node = this.fs.getNode(path);
-        if (node && node.type === 'file') {
-            return node.content || '';
-        }
-        return `cat: ${filename}: No such file or directory`;
-    }
-
-    private grep(args: string[], currentDir: string): string {
-        if (args.length < 2) return 'Usage: grep <pattern> <filename>';
-        const pattern = args[0];
-        const filename = args[1];
-
-        const path = currentDir === '/' ? `/${filename}` : `${currentDir}/${filename}`;
-        const node = this.fs.getNode(path);
-
-        if (node && node.type === 'file') {
-            const content = node.content || '';
-            const lines = content.split('\n');
-            // Basic substring match, regex could be added if needed
-            const matches = lines.filter(line => line.includes(pattern));
-            return matches.join('\n');
-        }
-
-        return `grep: ${filename}: No such file or directory`;
     }
 }

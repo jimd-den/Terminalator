@@ -16,13 +16,29 @@ interface GhostWriterProps {
     onComplete?: () => void;
 }
 
+import { useTheme } from '../../presentation/context/ThemeContext';
+
 export const GhostWriter: React.FC<GhostWriterProps> = ({
     text,
     speed = 30,
     style,
     onComplete
 }) => {
+    const { theme, settings } = useTheme();
+    const colors = theme.colors;
     const [displayedText, setDisplayedText] = useState('');
+
+    const dynamicStyles = StyleSheet.create({
+        text: {
+            color: colors.primary,
+            fontFamily: settings.fontFamily,
+            fontSize: THEME.typography.fontSize.md,
+        },
+        cursor: {
+            color: colors.primary,
+            opacity: 0.8,
+        },
+    });
 
     useEffect(() => {
         let currentIdx = 0;
@@ -30,7 +46,6 @@ export const GhostWriter: React.FC<GhostWriterProps> = ({
 
         const intervalId = setInterval(() => {
             if (currentIdx < text.length) {
-                // Use slice guarantees we never append 'undefined' and always show valid prefix
                 setDisplayedText(text.slice(0, currentIdx + 1));
                 currentIdx++;
             } else {
@@ -43,21 +58,9 @@ export const GhostWriter: React.FC<GhostWriterProps> = ({
     }, [text, speed, onComplete]);
 
     return (
-        <Text style={[styles.text, style]}>
+        <Text style={[dynamicStyles.text, style]}>
             {displayedText}
-            <Text style={styles.cursor}>_</Text>
+            <Text style={dynamicStyles.cursor}>_</Text>
         </Text>
     );
 };
-
-const styles = StyleSheet.create({
-    text: {
-        color: THEME.colors.primary,
-        fontFamily: THEME.typography.fontFamily,
-        fontSize: THEME.typography.fontSize.md,
-    },
-    cursor: {
-        color: THEME.colors.primary,
-        opacity: 0.8,
-    },
-});

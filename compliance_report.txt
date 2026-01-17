@@ -1,0 +1,298 @@
+POSIX COMPLIANCE REPORT - 2026-01-16T22:38:37.927Z
+Standard: IEEE Std 1003.1-2024 (SUSv5)
+Target Level: Strict
+
+### SUITE: FILESYSTEM
+[PASS] Root directory parent is root (Ref: Vol 1, Base Defs, 4.13 Pathname Resolution)
+[PASS] Path normalization (ignoring redundant slashes) (Ref: Vol 1, Base Defs, 4.13 Pathname Resolution)
+[PASS] Cannot cd into a file (Ref: Vol 3, Shell & Utils, cd)
+
+### SUITE: LS
+[PASS] ls lists current directory content (Ref: Vol 3, Shell & Utils, ls)
+[PASS] ls -a matches hidden files (Ref: Vol 3, Shell & Utils, ls -a)
+[PASS] ls exit code >0 on missing file (Ref: Vol 3, Shell & Utils, ls DIAGNOSTICS)
+
+### SUITE: CD
+[PASS] cd changes working directory (Ref: Vol 3, Shell & Utils, cd)
+[PASS] cd exit code >0 on failure (Ref: Vol 3, Shell & Utils, cd)
+
+### SUITE: PWD
+[PASS] pwd writes absolute path of current directory (Ref: Vol 3, Shell & Utils, pwd)
+
+### SUITE: CAT
+[PASS] cat reads file content (Ref: Vol 3, Shell & Utils, cat)
+[PASS] cat fails on directory (Ref: Vol 3, Shell & Utils, cat)
+
+### SUITE: GREP
+[PASS] grep finds matches strictly (Ref: Vol 3, Shell & Utils, grep)
+[PASS] grep -i ignores case (Ref: Vol 3, Shell & Utils, grep)
+[PASS] grep -r recursive format (Ref: Vol 3, Shell & Utils, grep)
+
+### SUITE: CLEAR
+[PASS] clear command exists (Ref: User Interface Extension (legacy))
+
+### SUITE: MKDIR
+[PASS] mkdir creates directory (Ref: Vol 3, Utils, mkdir)
+[PASS] mkdir fails if exists (Ref: Vol 3, Utils, mkdir)
+[PASS] mkdir fails if parent missing (Ref: Vol 3, Utils, mkdir)
+[PASS] mkdir -p creates parents (Ref: Vol 3, Utils, mkdir)
+
+### SUITE: TOUCH
+[PASS] touch creates new empty file (Ref: Vol 3, Utils, touch)
+[PASS] touch updates existing file (no error) (Ref: Vol 3, Utils, touch)
+[PASS] touch fails if parent missing (Ref: Vol 3, Utils, touch)
+
+### SUITE: RM
+[PASS] rm removes a file (Ref: Vol 3, Utils, rm)
+[PASS] rm fails on directory without -r (Ref: Vol 3, Utils, rm)
+[PASS] rm -r removes directory (Ref: Vol 3, Utils, rm)
+[PASS] rm -rf does not error on missing (Ref: Vol 3, Utils, rm)
+
+### SUITE: CP
+[PASS] cp copies a file (Ref: Vol 3, Utils, cp)
+[PASS] cp copies file into directory (Ref: Vol 3, Utils, cp)
+[PASS] cp fails on directory without -r (Ref: Vol 3, Utils, cp)
+[PASS] cp -r copies directory (Ref: Vol 3, Utils, cp)
+
+### SUITE: MV
+[PASS] mv renames a file (Ref: Vol 3, Utils, mv)
+[PASS] mv moves file into directory (Ref: Vol 3, Utils, mv)
+[PASS] mv fails if source missing (Ref: Vol 3, Utils, mv)
+
+### SUITE: ECHO
+[PASS] echo prints arguments (Ref: Vol 3, Utils, echo)
+[PASS] echo prints empty line (Ref: Vol 3, Utils, echo)
+
+### SUITE: HEAD
+[PASS] head prints first 10 lines by default (Ref: Vol 3, Utils, head)
+[PASS] head -n 2 prints first 2 lines (Ref: Vol 3, Utils, head)
+[PASS] head fails on missing file (Ref: Vol 3, Utils, head)
+
+### SUITE: TAIL
+[PASS] tail prints last 10 lines by default (Ref: Vol 3, Utils, tail)
+[PASS] tail -n 3 prints last 3 lines (Ref: Vol 3, Utils, tail)
+
+### SUITE: WC
+[PASS] wc counts lines words bytes (Ref: Vol 3, Utils, wc)
+[PASS] wc -l counts lines only (Ref: Vol 3, Utils, wc)
+[PASS] wc -w counts words only (Ref: Vol 3, Utils, wc)
+[PASS] wc -c counts bytes only (Ref: Vol 3, Utils, wc)
+
+### SUITE: CHMOD
+[PASS] chmod changes permissions (octal) (Ref: Vol 3, Utils, chmod)
+[PASS] chmod fails on invalid mode (Ref: Vol 3, Utils, chmod)
+[PASS] chmod fails on missing file (Ref: Vol 3, Utils, chmod)
+
+### SUITE: CHOWN
+[PASS] chown changes uid and gid (Ref: Vol 3, Utils, chown)
+[PASS] chown changes uid only (Ref: Vol 3, Utils, chown)
+[PASS] chown fails on missing file (Ref: Vol 3, Utils, chown)
+
+### SUITE: DU
+[PASS] du reports file size in blocks (Ref: Vol 3, Utils, du)
+[PASS] du reports directory size recursively (Ref: Vol 3, Utils, du)
+
+### SUITE: LN
+[PASS] ln creates hard link (Ref: Vol 3, Utils, ln)
+[PASS] ln -s creates symlink (Ref: Vol 3, Utils, ln)
+[PASS] ln fails if target exists (Ref: Vol 3, Utils, ln)
+
+### SUITE: DF
+[PASS] df report filesystem usage (Ref: Vol 3, Utils, df)
+
+### SUITE: FIND
+[PASS] find finds matching files by name (Ref: Vol 3, Utils, find)
+[PASS] find filters by type directory (Ref: Vol 3, Utils, find)
+
+### SUITE: SED
+[PASS] sed substitutes text in file (Ref: Vol 3, Utils, sed)
+[PASS] sed substitutes text from stdin (Ref: Vol 3, Utils, sed)
+
+### SUITE: AWK
+[PASS] awk default action print lines (Ref: Vol 3, Utils, awk)
+[PASS] awk print specific column (Ref: Vol 3, Utils, awk)
+
+### SUITE: XARGS
+[PASS] xargs echoes args by default (concept check) (Ref: Vol 3, Utils, xargs)
+
+### SUITE: PIPE
+[PASS] pipe passes output to next command (Ref: Shell Command Language, Pipelines)
+[PASS] pipe chain multiple (Ref: Shell Command Language, Pipelines)
+
+### COMPLIANCE GAP ANALYSIS
+[MISSING] admin
+[MISSING] alias
+[MISSING] ar
+[MISSING] asa
+[MISSING] at
+[PRESENT] awk
+[PRESENT] basename
+[MISSING] batch
+[MISSING] bc
+[MISSING] bg
+[MISSING] break
+[MISSING] c17
+[MISSING] cal
+[PRESENT] cat
+[PRESENT] cd
+[MISSING] cflow
+[MISSING] chgrp
+[PRESENT] chmod
+[PRESENT] chown
+[MISSING] cksum
+[MISSING] cmp
+[MISSING] comm
+[MISSING] command
+[MISSING] compress
+[MISSING] continue
+[PRESENT] cp
+[MISSING] crontab
+[MISSING] csplit
+[MISSING] ctags
+[MISSING] cut
+[MISSING] cxref
+[PRESENT] date
+[MISSING] dd
+[MISSING] delta
+[PRESENT] df
+[MISSING] diff
+[PRESENT] dirname
+[MISSING] .
+[PRESENT] du
+[PRESENT] echo
+[MISSING] ed
+[MISSING] env
+[MISSING] eval
+[MISSING] ex
+[MISSING] exec
+[MISSING] exit
+[MISSING] expand
+[MISSING] export
+[MISSING] expr
+[PRESENT] false
+[MISSING] fc
+[MISSING] fg
+[MISSING] file
+[PRESENT] find
+[MISSING] fold
+[MISSING] fuser
+[MISSING] gencat
+[MISSING] get
+[MISSING] getconf
+[MISSING] getopts
+[MISSING] gettext
+[PRESENT] grep
+[MISSING] hash
+[PRESENT] head
+[MISSING] iconv
+[PRESENT] id
+[MISSING] ipcrm
+[MISSING] ipcs
+[MISSING] jobs
+[MISSING] join
+[MISSING] kill
+[MISSING] lex
+[MISSING] link
+[PRESENT] ln
+[MISSING] locale
+[MISSING] localedef
+[MISSING] logger
+[MISSING] logname
+[MISSING] lp
+[PRESENT] ls
+[MISSING] m4
+[MISSING] mailx
+[MISSING] make
+[MISSING] man
+[MISSING] mesg
+[PRESENT] mkdir
+[MISSING] mkfifo
+[MISSING] more
+[MISSING] msgfmt
+[PRESENT] mv
+[MISSING] newgrp
+[MISSING] ngettext
+[MISSING] nice
+[MISSING] nl
+[MISSING] nm
+[MISSING] nohup
+[MISSING] od
+[MISSING] paste
+[MISSING] patch
+[MISSING] pathchk
+[MISSING] pax
+[MISSING] pr
+[MISSING] printf
+[MISSING] prs
+[MISSING] ps
+[PRESENT] pwd
+[MISSING] read
+[MISSING] readlink
+[MISSING] readonly
+[MISSING] realpath
+[MISSING] renice
+[MISSING] return
+[PRESENT] rm
+[MISSING] rmdel
+[MISSING] rmdir
+[MISSING] sact
+[MISSING] sccs
+[PRESENT] sed
+[MISSING] set
+[MISSING] sh
+[MISSING] shift
+[MISSING] sleep
+[MISSING] sort
+[MISSING] split
+[MISSING] strings
+[MISSING] strip
+[MISSING] stty
+[MISSING] tabs
+[PRESENT] tail
+[MISSING] talk
+[MISSING] tee
+[MISSING] test
+[MISSING] [
+[MISSING] time
+[MISSING] timeout
+[MISSING] times
+[PRESENT] touch
+[MISSING] tput
+[MISSING] tr
+[MISSING] trap
+[PRESENT] true
+[MISSING] tsort
+[PRESENT] tty
+[MISSING] type
+[MISSING] ulimit
+[MISSING] umask
+[MISSING] unalias
+[MISSING] uname
+[MISSING] uncompress
+[MISSING] unexpand
+[MISSING] unget
+[MISSING] uniq
+[MISSING] unlink
+[MISSING] unset
+[MISSING] uucp
+[MISSING] uudecode
+[MISSING] uuencode
+[MISSING] uustat
+[MISSING] uux
+[MISSING] val
+[MISSING] vi
+[MISSING] wait
+[PRESENT] wc
+[MISSING] what
+[PRESENT] who
+[MISSING] write
+[PRESENT] xargs
+[MISSING] xgettext
+[MISSING] yacc
+[MISSING] zcat
+[MISSING] :
+
+SUMMARY:
+Tests Passed: 65
+Tests Failed: 0
+Utility Completeness: 18% (31/171)

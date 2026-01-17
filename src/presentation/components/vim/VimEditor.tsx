@@ -1,209 +1,378 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, StyleSheet } from 'react-native';
+/**
+ * VimEditor - Presentation Layer
+ * 
+ * A high-performance, high-contrast Vim-like text editor for the terminal.
+ * 
+ * Pillar: THE STORYTELLER’S CODE (Literate Documentation)
+ * Pillar: THE FOUR-FOLD SHIELD (Clean Architecture)
+ * Pillar: THE BALANCED SCALE (KISS)
+ * 
+ * Intent:
+ * Renders the state provided by the VimSimulator.
+ * Minimal logic remains here; most operations are delegated to the domain layer via adapters.
+ */
+
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { View, Text, TextInput, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { THEME } from '../../../frameworks-drivers/ui/Theme';
 import { useGame } from '../../context/GameContext';
 import { VirtualKeyboard } from '../VirtualKeyboard';
+import { VimSimulator } from '../../../interface-adapters/VimSimulator';
+import { HighlighterRegistry } from '../../../interface-adapters/vim/HighlighterRegistry';
 
 interface VimEditorProps {
     filename: string;
     onExit: () => void;
 }
 
+const highlighterRegistry = new HighlighterRegistry();
 
+import { useTheme } from '../../context/ThemeContext';
 
-// Wait, standard FC cannot return an object.
-// We must use a Hook!
 export const useVimEditor = (filename: string, onExit: () => void) => {
     const { fs } = useGame();
+    const { theme, settings } = useTheme();
+    const colors = theme.colors;
 
-    // ... all state logic ...
-    const [content, setContent] = useState('');
-    const [mode, setMode] = useState<'NORMAL' | 'INSERT' | 'COMMAND'>('NORMAL');
+    // -- Permanent Logic Controller --
+    const validator = useMemo(() => new VimSimulator(fs, filename), [filename, fs]);
+    const simulator = validator; // Alias to keep old code working
+    const highlighter = useMemo(() => highlighterRegistry.getHighlighterForFile(filename), [filename]);
+
+    const [state, setState] = useState(simulator.getSnapshot());
     const [commandInput, setCommandInput] = useState('');
-    const [statusMessage, setStatusMessage] = useState('');
     const [isMounting, setIsMounting] = useState(true);
 
-    const contentInputRef = useRef<TextInput>(null);
-    const commandInputRef = useRef<TextInput>(null);
     const hiddenInputRef = useRef<TextInput>(null);
 
+    // -- Initialization --
     useEffect(() => {
         setIsMounting(true);
-        const timer = setTimeout(() => setIsMounting(false), 50);
+        const timer = setTimeout(() => setIsMounting(false), 150);
         return () => clearTimeout(timer);
-    }, [filename]); // Reset on filename change
+    }, [filename]);
 
-    // Keep keyboard up for Normal mode
-    // Keep keyboard up for Normal mode
-    useEffect(() => {
-        // Small timeout to ensure component is ready and prevent racing
-        const timeoutId = setTimeout(() => {
-            if (mode === 'NORMAL') {
-                commandInputRef.current?.blur();
-                contentInputRef.current?.blur();
-                hiddenInputRef.current?.focus();
-            } else if (mode === 'INSERT') {
-                hiddenInputRef.current?.blur();
-                commandInputRef.current?.blur();
-                contentInputRef.current?.focus();
-            } else if (mode === 'COMMAND') {
-                hiddenInputRef.current?.blur();
-                contentInputRef.current?.blur();
-                commandInputRef.current?.focus();
-            }
-        }, 50);
-        return () => clearTimeout(timeoutId);
-    }, [mode]);
-
-    const handleHiddenInput = (text: string) => {
-        if (!text) return;
-        const char = text.charAt(text.length - 1).toLowerCase();
-
-        if (char === 'i') {
-            setMode('INSERT');
-        } else if (char === ':') {
-            setMode('COMMAND');
-            setCommandInput(':');
+    const dynamicStyles = StyleSheet.create({
+        editorContainer: {
+            flex: 1,
+            backgroundColor: colors.surface,
+        },
+        hiddenInput: {
+            position: 'absolute',
+            width: 1,
+            height: 1,
+            opacity: 0,
+        },
+        contentArea: {
+            flex: 1,
+            padding: THEME.spacing.sm,
+        },
+        scrollContent: {
+            paddingBottom: THEME.spacing.xl,
+        },
+        lineWrapper: {
+            flexDirection: 'row',
+            paddingHorizontal: THEME.spacing.xs,
+        },
+        lineText: {
+            color: colors.text.primary,
+            fontFamily: settings.fontFamily,
+            fontSize: THEME.typography.fontSize.md,
+            lineHeight: 24,
+        },
+        errorLine: {
+            backgroundColor: 'rgba(255, 0, 0, 0.15)',
+            borderLeftWidth: 3,
+            borderLeftColor: colors.error,
+        },
+        cursorBlock: {
+            backgroundColor: colors.primary,
+            display: 'flex',
+        },
+        cursorInsert: {
+            borderLeftWidth: 2,
+            borderLeftColor: colors.primary,
+        },
+        cursorText: {
+            color: colors.background,
+            fontFamily: settings.fontFamily,
+            fontSize: THEME.typography.fontSize.md,
+        },
+        footer: {
+            justifyContent: 'center',
+            padding: THEME.spacing.sm,
+        },
+        statusBar: {
+            backgroundColor: colors.background,
+            paddingVertical: THEME.spacing.sm,
+            paddingHorizontal: THEME.spacing.md,
+            borderTopWidth: 1,
+            borderTopColor: colors.primary,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+        },
+        statusText: {
+            color: colors.primary,
+            fontWeight: 'bold',
+            fontFamily: settings.fontFamily,
+        },
+        errorStatusText: {
+            color: colors.error,
+        },
+        commandRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: colors.background,
+            paddingHorizontal: THEME.spacing.sm,
+            height: 40,
+        },
+        commandText: {
+            color: colors.text.primary,
+            fontFamily: settings.fontFamily,
+            fontSize: THEME.typography.fontSize.md,
+        },
+        commandCursor: {
+            width: 10,
+            height: 20,
+            backgroundColor: colors.primary,
+            marginLeft: 2,
+        },
+        buttonRow: {
+            flexDirection: 'row',
+            gap: 8,
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+        },
+        hintButton: {
+            borderWidth: 1,
+            borderColor: colors.border,
+            paddingHorizontal: 8,
+            paddingVertical: 4,
+            backgroundColor: 'rgba(0, 255, 65, 0.05)',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minWidth: 40,
+        },
+        hintText: {
+            color: colors.text.primary,
+            fontFamily: settings.fontFamily,
+            fontSize: THEME.typography.fontSize.sm,
+            textAlign: 'center',
+        },
+        crtBlinkOverlay: {
+            ...StyleSheet.absoluteFillObject,
+            backgroundColor: colors.background,
+            zIndex: 999,
         }
-        hiddenInputRef.current?.clear();
+    });
+
+    const getTokenColor = (type: string) => {
+        switch (type) {
+            case 'keyword': return colors.secondary;
+            case 'string': return '#CE9178';
+            case 'comment': return colors.text.dim;
+            case 'number': return '#B5CEA8';
+            case 'operator': return '#D4D4D4';
+            default: return colors.text.primary;
+        }
     };
 
+    const refocus = () => { hiddenInputRef.current?.focus(); };
     useEffect(() => {
-        const path = filename.startsWith('/') ? filename : `/home/operator/${filename}`;
-        const node = fs.getNode(path);
-        if (node && node.type === 'file') {
-            setContent(node.content || '');
-        } else {
-            setContent('');
-            setStatusMessage(' [New File] ');
-        }
-    }, [filename, fs]);
+        const interval = setInterval(refocus, 500);
+        refocus();
+        return () => clearInterval(interval);
+    }, []);
 
-    const handleSave = () => {
-        const targetDir = fs.root.children?.['home']?.children?.['operator'];
-        if (targetDir && targetDir.children) {
-            targetDir.children[filename] = {
-                name: filename,
-                type: 'file',
-                content: content,
-                owner: 'operator',
-                permissions: 'rw-------',
-                updatedAt: new Date().toISOString()
-            };
-            setStatusMessage(`"${filename}" written`);
-        } else {
-            setStatusMessage('Error: Could not save file.');
+    const [inputValue, setInputValue] = useState(' ');
+
+    const handleHiddenInput = (text: string) => {
+        if (text.length === 0) {
+            if (state.mode === 'COMMAND') {
+                if (commandInput.length > 1) {
+                    setCommandInput(prev => prev.slice(0, -1));
+                } else {
+                    simulator.handleInput('ESC');
+                    setState(simulator.getSnapshot());
+                    setCommandInput('');
+                }
+            } else {
+                setState(simulator.handleInput('BACKSPACE'));
+            }
+            setInputValue(' ');
+            return;
         }
+
+        const newContent = text.startsWith(' ') ? text.slice(1) : text;
+        if (newContent.length === 0) {
+            setInputValue(' ');
+            return;
+        }
+
+        // Process characters sequentially
+        let shouldRefreshSnapshot = true;
+        for (const char of newContent) {
+            if (char === '\n') {
+                if (state.mode === 'COMMAND') {
+                    handleCommandSubmit();
+                    shouldRefreshSnapshot = false; // handleCommandSubmit handles state
+                } else {
+                    simulator.handleInput('ENTER');
+                }
+            } else {
+                if (state.mode === 'COMMAND') {
+                    setCommandInput(prev => prev + char);
+                } else {
+                    if (state.mode === 'NORMAL' && char === ':') {
+                        setCommandInput(':');
+                    }
+                    simulator.handleInput(char);
+                }
+            }
+        }
+
+        if (shouldRefreshSnapshot) {
+            setState(simulator.getSnapshot());
+        }
+        setInputValue(' ');
+    };
+
+    const handleVirtualKey = (key: string) => {
+        if (key === 'BACKSPACE') {
+            handleHiddenInput('');
+            return;
+        }
+        if (state.mode === 'COMMAND') {
+            if (key === 'ESC') {
+                simulator.handleInput('ESC');
+                setState(simulator.getSnapshot());
+                setCommandInput('');
+                return;
+            }
+            if (key === 'ENTER') {
+                handleCommandSubmit();
+                return;
+            }
+            if (key.length === 1) setCommandInput(prev => prev + key);
+            return;
+        }
+        setState(simulator.handleInput(key));
     };
 
     const handleCommandSubmit = () => {
-        const cmd = commandInput.trim();
-        if (cmd === ':w') {
-            handleSave();
-            setMode('NORMAL');
-        } else if (cmd === ':q') {
-            onExit();
-        } else if (cmd === ':wq') {
-            handleSave();
-            onExit();
-        } else {
-            setStatusMessage(`E492: Not an editor command: ${cmd}`);
-            setMode('NORMAL');
+        const { exit, message } = simulator.executeCommand(commandInput);
+        if (exit) onExit();
+        else {
+            const nextState = simulator.getSnapshot();
+            nextState.statusMessage = message;
+            setState(nextState);
+            setCommandInput('');
         }
-        setCommandInput('');
+    };
+
+    const renderLine = (lineContent: string, lineIdx: number) => {
+        const isCurrentLine = lineIdx === state.cursor.line;
+        const lineError = state.lintErrors.find(e => e.line === lineIdx + 1);
+        const tokens = highlighter.highlight(lineContent);
+        let cursorRendered = false;
+
+        return (
+            <View key={lineIdx} style={[dynamicStyles.lineWrapper, lineError && dynamicStyles.errorLine]}>
+                <Text style={dynamicStyles.lineText} numberOfLines={1}>
+                    {tokens.map((token, tokenIdx) => {
+                        const tokenColor = getTokenColor(token.type);
+                        if (isCurrentLine && !cursorRendered) {
+                            let offsetBefore = tokens.slice(0, tokenIdx).reduce((acc, t) => acc + t.text.length, 0);
+                            const cursorInToken = state.cursor.col >= offsetBefore && state.cursor.col < offsetBefore + token.text.length;
+
+                            if (cursorInToken) {
+                                cursorRendered = true;
+                                const cursorRelPos = state.cursor.col - offsetBefore;
+                                const head = token.text.slice(0, cursorRelPos);
+                                const char = token.text[cursorRelPos];
+                                const tail = token.text.slice(cursorRelPos + 1);
+
+                                return (
+                                    <Text key={tokenIdx} style={{ color: tokenColor }}>
+                                        {head}
+                                        {state.mode === 'INSERT' && (
+                                            <View style={{ width: 2, height: 18, backgroundColor: colors.primary, transform: [{ translateY: 4 }] }} />
+                                        )}
+                                        <Text style={state.mode === 'NORMAL' ? { backgroundColor: colors.primary, color: colors.background } : {}}>
+                                            {char}
+                                        </Text>
+                                        {tail}
+                                    </Text>
+                                );
+                            }
+                        }
+                        return <Text key={tokenIdx} style={{ color: tokenColor }}>{token.text}</Text>;
+                    })}
+                    {isCurrentLine && !cursorRendered && (
+                        <View style={state.mode === 'INSERT'
+                            ? { width: 2, height: 18, backgroundColor: colors.primary, transform: [{ translateY: 4 }] }
+                            : { backgroundColor: colors.primary, height: 20, justifyContent: 'center', transform: [{ translateY: 2 }] }
+                        }>
+                            <Text style={{ color: colors.background, fontSize: THEME.typography.fontSize.md, opacity: state.mode === 'INSERT' ? 0 : 1 }}> </Text>
+                        </View>
+                    )}
+                </Text>
+            </View>
+        );
     };
 
     const topContent = (
-        <View style={styles.editorContainer}>
-            {isMounting && <View style={styles.crtBlinkOverlay} />}
+        <View style={dynamicStyles.editorContainer}>
+            {isMounting && <View style={dynamicStyles.crtBlinkOverlay} />}
             <TextInput
                 ref={hiddenInputRef}
-                style={styles.hiddenInput}
+                style={dynamicStyles.hiddenInput}
+                value={inputValue}
                 onChangeText={handleHiddenInput}
-                autoCapitalize="none"
-                autoCorrect={false}
+                autoCapitalize="none" autoCorrect={false} spellCheck={false} blurOnSubmit={false} multiline={true} editable={true} caretHidden={true} autoFocus={true}
             />
-            <TextInput
-                ref={contentInputRef}
-                style={styles.contentInput}
-                multiline
-                value={content}
-                onChangeText={setContent}
-                editable={mode === 'INSERT'}
-                autoCapitalize="none"
-                autoCorrect={false}
-                textAlignVertical="top"
-            />
-            <View style={styles.statusBar}>
-                <Text style={styles.statusText}>
-                    {mode === 'NORMAL' ? '-- NORMAL --' :
-                        mode === 'INSERT' ? '-- INSERT --' :
-                            '-- COMMAND --'}
-                    {' '}{statusMessage}
+            <ScrollView
+                style={dynamicStyles.contentArea}
+                contentContainerStyle={dynamicStyles.scrollContent}
+                keyboardShouldPersistTaps="always"
+                ref={(ref: ScrollView | null) => {
+                    if (ref) {
+                        const lineHeight = 24;
+                        ref.scrollTo({ y: state.cursor.line * lineHeight - 100, animated: true });
+                    }
+                }}
+            >
+                <Pressable style={{ flex: 1 }} onPress={() => { refocus(); }}>
+                    {state.lines.map((line, idx) => renderLine(line, idx))}
+                </Pressable>
+            </ScrollView>
+            <View style={dynamicStyles.statusBar}>
+                <Text style={[dynamicStyles.statusText, !!state.lintErrors.find(e => e.line === state.cursor.line + 1) && dynamicStyles.errorStatusText]}>
+                    {state.lintErrors.find(e => e.line === state.cursor.line + 1)?.message || (state.statusMessage || (state.mode === 'NORMAL' ? '-- NORMAL --' : `-- ${state.mode} --`))}
+                </Text>
+                <Text style={dynamicStyles.statusText}>
+                    {highlighter.language.toUpperCase()} | Ln {state.cursor.line + 1}, Col {state.cursor.col + 1}
                 </Text>
             </View>
         </View>
     );
 
-    const middleContent = (
-        <VirtualKeyboard onKeyPress={(key) => {
-            // Control Keys acting as Commands
-            if (key === 'ESC') {
-                setMode('NORMAL');
-                return;
-            }
-
-            // Navigation Keys (Block text insertion for now, or implement future cursor move)
-            if (['UP', 'DOWN', 'LEFT', 'RIGHT'].includes(key)) {
-                return;
-            }
-
-            if (mode === 'INSERT') {
-                // Indentation
-                if (key === 'TAB') {
-                    setContent(prev => prev + '    ');
-                    return;
-                }
-
-                // Standard Typing
-                setContent(prev => prev + key);
-            }
-        }} />
-    );
+    const middleContent = <VirtualKeyboard onKeyPress={handleVirtualKey} />;
 
     const bottomContent = (
-        <View style={styles.footer}>
-
-
-            {mode === 'COMMAND' ? (
-                <TextInput
-                    ref={commandInputRef}
-                    style={styles.commandInput}
-                    value={commandInput}
-                    onChangeText={setCommandInput}
-                    onSubmitEditing={handleCommandSubmit}
-                    placeholder=":"
-                    placeholderTextColor={THEME.colors.secondary}
-                />
+        <View style={dynamicStyles.footer}>
+            {state.mode === 'COMMAND' ? (
+                <View style={dynamicStyles.commandRow}>
+                    <Text style={dynamicStyles.commandText}>{commandInput}</Text>
+                    <View style={dynamicStyles.commandCursor} />
+                </View>
             ) : (
-                <View style={styles.buttonRow}>
-                    <Text
-                        style={styles.hintText}
-                        onPress={() => { setMode('INSERT'); contentInputRef.current?.focus(); }}>
-                        [i] INSERT
-                    </Text>
-                    <Text
-                        style={styles.hintText}
-                        onPress={() => { setMode('COMMAND'); setCommandInput(':'); setTimeout(() => commandInputRef.current?.focus(), 100); }}>
-                        [:] CMD
-                    </Text>
-                    {mode === 'INSERT' && (
-                        <Text
-                            style={styles.hintText}
-                            onPress={() => { setMode('NORMAL'); }}>
-                            [ESC]
-                        </Text>
-                    )}
+                <View style={dynamicStyles.buttonRow}>
+                    {['i', ':', 'ESC', 'h', 'j', 'k', 'l'].map(k => (
+                        <Pressable key={k} style={dynamicStyles.hintButton} onPress={() => handleVirtualKey(k)}>
+                            <Text style={dynamicStyles.hintText}>[{k.toUpperCase()}]</Text>
+                        </Pressable>
+                    ))}
                 </View>
             )}
         </View>
@@ -211,61 +380,3 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
 
     return { topContent, middleContent, bottomContent };
 };
-
-const styles = StyleSheet.create({
-    editorContainer: {
-        flex: 1,
-    },
-    contentInput: {
-        flex: 1,
-        color: THEME.colors.text.primary,
-        fontFamily: THEME.typography.fontFamily,
-        fontSize: THEME.typography.fontSize.md,
-        lineHeight: 24,
-    },
-    footer: {
-        flex: 1,
-        justifyContent: 'center',
-    },
-    statusBar: {
-        backgroundColor: THEME.colors.background, // Ensure high contrast over overlay if needed, or match bg
-        paddingVertical: THEME.spacing.xs,
-        borderTopWidth: 1,
-        borderTopColor: THEME.colors.primary,
-        marginTop: 'auto', // Push to bottom of Top Content
-    },
-    statusText: {
-        color: THEME.colors.primary,
-        fontWeight: 'bold',
-        fontFamily: THEME.typography.fontFamily,
-    },
-    commandInput: {
-        color: THEME.colors.text.primary,
-        fontFamily: THEME.typography.fontFamily,
-        fontSize: THEME.typography.fontSize.md,
-        height: 40,
-    },
-    buttonRow: {
-        flexDirection: 'row',
-        gap: 20,
-    },
-    hintText: {
-        color: THEME.colors.text.dim,
-        fontFamily: THEME.typography.fontFamily,
-        borderWidth: 1,
-        borderColor: THEME.colors.border,
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-    },
-    hiddenInput: {
-        position: 'absolute',
-        width: 1,
-        height: 1,
-        opacity: 0,
-    },
-    crtBlinkOverlay: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: THEME.colors.background,
-        zIndex: 999,
-    }
-});
