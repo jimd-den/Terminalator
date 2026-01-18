@@ -37,6 +37,7 @@ import { CutCommand } from '../commands/core/CutCommand';
 import { TrCommand } from '../commands/core/TrCommand';
 import { UniqCommand } from '../commands/core/UniqCommand';
 import { SortCommand } from '../commands/core/SortCommand';
+import { EdCommand } from '../commands/core/EdCommand';
 
 export class CoreUtilsModule implements CommandModule {
     constructor(private fs: FileSystem) {}
@@ -70,6 +71,7 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('tr', new TrCommand(fs));
         registry.register('uniq', new UniqCommand(fs));
         registry.register('sort', new SortCommand(fs));
+        registry.register('ed', new EdCommand(fs));
 
         // Factory-like registration for Xargs to avoid circular dependency in constructor
         registry.register('xargs', new XargsCommand(fs, (name) => registry.get(name)));

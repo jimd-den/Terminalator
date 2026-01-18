@@ -90,7 +90,9 @@ async function runTests() {
     await runTest('cut fails without list', async () => {
         const res = await cut.execute([], state, 'input');
         assert.equal(res.exitCode, 1);
-        assert.ok(res.output.includes('must be specified'));
+        if (!res.output.includes('specify a list')) {
+            throw new Error(`Expected output to include "specify a list", got: "${res.output}"`);
+        }
     });
 
     await runTest('cut fails with both -b and -f', async () => {

@@ -1,4 +1,4 @@
-POSIX COMPLIANCE REPORT - 2026-01-18T13:07:31.847Z
+POSIX COMPLIANCE REPORT - 2026-01-18T13:25:55.363Z
 Standard: IEEE Std 1003.1-2024 (SUSv5)
 Target Level: Strict
 
@@ -160,7 +160,7 @@ Target Level: Strict
 [MISSING] .
 [PRESENT] du
 [PRESENT] echo
-[MISSING] ed
+[PRESENT] ed
 [MISSING] env
 [MISSING] eval
 [MISSING] ex
@@ -295,4 +295,4 @@ Target Level: Strict
 SUMMARY:
 Tests Passed: 65
 Tests Failed: 0
-Utility Completeness: 20% (35/171)
+Utility Completeness: 21% (36/171)
