@@ -53,6 +53,21 @@ import { StringsCommand } from '../commands/core/StringsCommand';
 import { ExpandCommand } from '../commands/core/ExpandCommand';
 import { UnexpandCommand } from '../commands/core/UnexpandCommand';
 import { TsortCommand } from '../commands/core/TsortCommand';
+import { RmdirCommand } from '../commands/core/RmdirCommand';
+import { LinkCommand } from '../commands/core/LinkCommand';
+import { UnlinkCommand } from '../commands/core/UnlinkCommand';
+import { ReadlinkCommand } from '../commands/core/ReadlinkCommand';
+import { RealpathCommand } from '../commands/core/RealpathCommand';
+import { SleepCommand } from '../commands/core/SleepCommand';
+import { UnameCommand } from '../commands/core/UnameCommand';
+import { LognameCommand } from '../commands/core/LognameCommand';
+import { EnvCommand } from '../commands/core/EnvCommand';
+import { CalCommand } from '../commands/core/CalCommand';
+import { ExprCommand } from '../commands/core/ExprCommand';
+import { TestCommand } from '../commands/core/TestCommand';
+import { OdCommand } from '../commands/core/OdCommand';
+import { UuencodeCommand } from '../commands/core/UuencodeCommand';
+import { UudecodeCommand } from '../commands/core/UudecodeCommand';
 
 export class CoreUtilsModule implements CommandModule {
     constructor(private fs: FileSystem) {}
@@ -102,6 +117,22 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('expand', new ExpandCommand(fs));
         registry.register('unexpand', new UnexpandCommand(fs));
         registry.register('tsort', new TsortCommand(fs));
+        registry.register('rmdir', new RmdirCommand(fs));
+        registry.register('link', new LinkCommand(fs));
+        registry.register('unlink', new UnlinkCommand(fs));
+        registry.register('readlink', new ReadlinkCommand(fs));
+        registry.register('realpath', new RealpathCommand(fs));
+        registry.register('sleep', new SleepCommand(fs));
+        registry.register('uname', new UnameCommand(fs));
+        registry.register('logname', new LognameCommand(fs));
+        registry.register('env', new EnvCommand(fs));
+        registry.register('cal', new CalCommand(fs));
+        registry.register('expr', new ExprCommand(fs));
+        registry.register('test', new TestCommand(fs)); // Often aliased as [
+        registry.register('[', new TestCommand(fs));
+        registry.register('od', new OdCommand(fs));
+        registry.register('uuencode', new UuencodeCommand(fs));
+        registry.register('uudecode', new UudecodeCommand(fs));
 
         // Factory-like registration for Xargs to avoid circular dependency in constructor
         registry.register('xargs', new XargsCommand(fs, (name) => registry.get(name)));

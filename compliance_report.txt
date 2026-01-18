@@ -1,4 +1,4 @@
-POSIX COMPLIANCE REPORT - 2026-01-18T17:47:07.204Z
+POSIX COMPLIANCE REPORT - 2026-01-18T19:19:33.019Z
 Standard: IEEE Std 1003.1-2024 (SUSv5)
 Target Level: Strict
 
@@ -132,7 +132,7 @@ Target Level: Strict
 [MISSING] bg
 [MISSING] break
 [MISSING] c17
-[MISSING] cal
+[PRESENT] cal
 [PRESENT] cat
 [PRESENT] cd
 [MISSING] cflow
@@ -161,14 +161,14 @@ Target Level: Strict
 [PRESENT] du
 [PRESENT] echo
 [PRESENT] ed
-[MISSING] env
+[PRESENT] env
 [MISSING] eval
 [MISSING] ex
 [MISSING] exec
 [MISSING] exit
 [PRESENT] expand
 [MISSING] export
-[MISSING] expr
+[PRESENT] expr
 [PRESENT] false
 [MISSING] fc
 [MISSING] fg
@@ -192,12 +192,12 @@ Target Level: Strict
 [PRESENT] join
 [MISSING] kill
 [MISSING] lex
-[MISSING] link
+[PRESENT] link
 [PRESENT] ln
 [MISSING] locale
 [MISSING] localedef
 [MISSING] logger
-[MISSING] logname
+[PRESENT] logname
 [MISSING] lp
 [PRESENT] ls
 [MISSING] m4
@@ -216,7 +216,7 @@ Target Level: Strict
 [PRESENT] nl
 [MISSING] nm
 [MISSING] nohup
-[MISSING] od
+[PRESENT] od
 [PRESENT] paste
 [MISSING] patch
 [MISSING] pathchk
@@ -227,21 +227,21 @@ Target Level: Strict
 [MISSING] ps
 [PRESENT] pwd
 [MISSING] read
-[MISSING] readlink
+[PRESENT] readlink
 [MISSING] readonly
-[MISSING] realpath
+[PRESENT] realpath
 [MISSING] renice
 [MISSING] return
 [PRESENT] rm
 [MISSING] rmdel
-[MISSING] rmdir
+[PRESENT] rmdir
 [MISSING] sact
 [MISSING] sccs
 [PRESENT] sed
 [MISSING] set
 [MISSING] sh
 [MISSING] shift
-[MISSING] sleep
+[PRESENT] sleep
 [PRESENT] sort
 [PRESENT] split
 [PRESENT] strings
@@ -251,8 +251,8 @@ Target Level: Strict
 [PRESENT] tail
 [MISSING] talk
 [PRESENT] tee
-[MISSING] test
-[MISSING] [
+[PRESENT] test
+[PRESENT] [
 [MISSING] time
 [MISSING] timeout
 [MISSING] times
@@ -267,16 +267,16 @@ Target Level: Strict
 [MISSING] ulimit
 [MISSING] umask
 [MISSING] unalias
-[MISSING] uname
+[PRESENT] uname
 [MISSING] uncompress
 [PRESENT] unexpand
 [MISSING] unget
 [PRESENT] uniq
-[MISSING] unlink
+[PRESENT] unlink
 [MISSING] unset
 [MISSING] uucp
-[MISSING] uudecode
-[MISSING] uuencode
+[PRESENT] uudecode
+[PRESENT] uuencode
 [MISSING] uustat
 [MISSING] uux
 [MISSING] val
@@ -295,4 +295,4 @@ Target Level: Strict
 SUMMARY:
 Tests Passed: 65
 Tests Failed: 0
-Utility Completeness: 30% (51/171)
+Utility Completeness: 39% (67/171)
