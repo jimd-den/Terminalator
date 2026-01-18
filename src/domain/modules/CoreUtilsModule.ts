@@ -38,6 +38,11 @@ import { TrCommand } from '../commands/core/TrCommand';
 import { UniqCommand } from '../commands/core/UniqCommand';
 import { SortCommand } from '../commands/core/SortCommand';
 import { EdCommand } from '../commands/core/EdCommand';
+import { CmpCommand } from '../commands/core/CmpCommand';
+import { CommCommand } from '../commands/core/CommCommand';
+import { DiffCommand } from '../commands/core/DiffCommand';
+import { PasteCommand } from '../commands/core/PasteCommand';
+import { TeeCommand } from '../commands/core/TeeCommand';
 
 export class CoreUtilsModule implements CommandModule {
     constructor(private fs: FileSystem) {}
@@ -72,6 +77,11 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('uniq', new UniqCommand(fs));
         registry.register('sort', new SortCommand(fs));
         registry.register('ed', new EdCommand(fs));
+        registry.register('cmp', new CmpCommand(fs));
+        registry.register('comm', new CommCommand(fs));
+        registry.register('diff', new DiffCommand(fs));
+        registry.register('paste', new PasteCommand(fs));
+        registry.register('tee', new TeeCommand(fs));
 
         // Factory-like registration for Xargs to avoid circular dependency in constructor
         registry.register('xargs', new XargsCommand(fs, (name) => registry.get(name)));

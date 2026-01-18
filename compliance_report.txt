@@ -1,4 +1,4 @@
-POSIX COMPLIANCE REPORT - 2026-01-18T13:25:55.363Z
+POSIX COMPLIANCE REPORT - 2026-01-18T16:11:41.826Z
 Standard: IEEE Std 1003.1-2024 (SUSv5)
 Target Level: Strict
 
@@ -140,8 +140,8 @@ Target Level: Strict
 [PRESENT] chmod
 [PRESENT] chown
 [MISSING] cksum
-[MISSING] cmp
-[MISSING] comm
+[PRESENT] cmp
+[PRESENT] comm
 [MISSING] command
 [MISSING] compress
 [MISSING] continue
@@ -155,7 +155,7 @@ Target Level: Strict
 [MISSING] dd
 [MISSING] delta
 [PRESENT] df
-[MISSING] diff
+[PRESENT] diff
 [PRESENT] dirname
 [MISSING] .
 [PRESENT] du
@@ -217,7 +217,7 @@ Target Level: Strict
 [MISSING] nm
 [MISSING] nohup
 [MISSING] od
-[MISSING] paste
+[PRESENT] paste
 [MISSING] patch
 [MISSING] pathchk
 [MISSING] pax
@@ -250,7 +250,7 @@ Target Level: Strict
 [MISSING] tabs
 [PRESENT] tail
 [MISSING] talk
-[MISSING] tee
+[PRESENT] tee
 [MISSING] test
 [MISSING] [
 [MISSING] time
@@ -295,4 +295,4 @@ Target Level: Strict
 SUMMARY:
 Tests Passed: 65
 Tests Failed: 0
-Utility Completeness: 21% (36/171)
+Utility Completeness: 24% (41/171)
