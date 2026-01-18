@@ -91,12 +91,12 @@ export const useTerminalViewModel = (
         setGhostText(getAutocompleteSuggestion(text));
     }, [getAutocompleteSuggestion]);
 
-    const handleCommand = useCallback(async () => {
-        const cmdToRun = input;
+    const handleCommand = useCallback(async (manualCommand?: string) => {
+        const cmdToRun = manualCommand !== undefined ? manualCommand : input;
         if (!cmdToRun) return;
 
         // Execute via Domain Logic
-        const response: CommandResponse = await commandExecutor.execute(input, state);
+        const response: CommandResponse = await commandExecutor.execute(cmdToRun, state);
         const { output: cmdOutput, newState, navigationAction, uiAction, exitCode } = response;
 
         // Handle UI Actions
@@ -126,7 +126,7 @@ export const useTerminalViewModel = (
         setOutputLines(prev => {
             const nextLines = [
                 ...prev,
-                { text: `> ${input}`, type: 'input', exitCode } as const
+                { text: `> ${cmdToRun}`, type: 'input', exitCode } as const
             ];
 
             if (cmdOutput) {
@@ -148,6 +148,45 @@ export const useTerminalViewModel = (
     }, [input, state, commandExecutor, navigation, gameManager, outputLines.length]);
 
     const handleKeyPress = useCallback((key: string) => {
+        // -- 1. TUTOR INTERCEPTION --
+        if (gameManager.tutorEngine.isActive()) {
+            const lesson = gameManager.tutorEngine.getCurrentLesson();
+            if (lesson && lesson.type === 'SHELL') {
+                if (key.length === 1) {
+                    gameManager.tutorEngine.handleInput(key);
+
+                    // Check if lesson just finished (active went false)
+                    if (!gameManager.tutorEngine.isActive()) {
+                        const fullCmd = lesson.text;
+                        setInput(fullCmd);
+                        setGhostText('');
+
+                        // Auto-execute command
+                        handleCommand(fullCmd);
+                        return;
+                    }
+
+                    // Update UI state to reflect Tutor progress
+                    const completed = gameManager.tutorEngine.getCompletedText();
+                    const remaining = gameManager.tutorEngine.getGhostText();
+
+                    setInput(completed);
+                    setGhostText(remaining);
+                    return; // Consumed by Tutor
+                }
+                // Allow BACKSPACE to maybe "undo" manually if we wanted, but our mechanics are auto-regression.
+                // Allow ENTER only if lesson complete?
+                // Actually, if lesson complete, TutorEngine emits COMPLETE.
+
+                // If user types ENTER and lesson is not done, maybe warn?
+                if (key === 'ENTER') {
+                    // Ignore or warn?
+                    return;
+                }
+            }
+        }
+
+        // -- 2. STANDARD SHELL LOGIC --
         if (key === 'TAB') {
             if (ghostText) {
                 const fullCommand = input + ghostText;
@@ -175,7 +214,7 @@ export const useTerminalViewModel = (
                 });
             }
         }
-    }, [input, ghostText, getAutocompleteSuggestion, handleCommand]);
+    }, [input, ghostText, getAutocompleteSuggestion, handleCommand, gameManager]);
 
     const handleVimExit = useCallback(() => {
         setIsTransitioning(true);

@@ -54,7 +54,35 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
         }
     }, [commandInput, onExit, simulator]);
 
+    const { gameManager } = useGame(); // Need gameManager to access TutorEngine
+
     const handleVirtualKey = React.useCallback((key: string) => {
+        // -- TUTOR INTERCEPTION --
+        if (gameManager.tutorEngine.isActive()) {
+            const lesson = gameManager.tutorEngine.getCurrentLesson();
+            // Only intercept if we are in a VIM lesson type, OR if we are transitioning?
+            // If lesson is SHELL, Vim shouldn't be active anyway.
+            // If lesson is VIM_INSERT or VIM_COMMAND, we track.
+            if (lesson && (lesson.type === 'VIM_INSERT' || lesson.type === 'VIM_COMMAND' || lesson.type === 'SHELL')) {
+                // Note: 'SHELL' lesson might use 'vim filename' to enter vim. 
+                // If we are in Vim but lesson is SHELL, it means we just entered. 
+                // We might need to advance lesson to 'VIM_BASICS'? 
+                // Ideally TutorEngine handles this transition logic.
+
+                // For now, if Tutor is active, pass input to it?
+                // But Vim is complex. Tutor needs to know if we typed 'i' to enter insert mode.
+                // TutorEngine.handleInput just matches string.
+                // If lesson text is "iHello<ESC>", handling 'i' advances it.
+                // We still need to letting VimSimulator process it so the UI updates!
+
+                // 1. Pass to Tutor (non-blocking, just scoring)
+                gameManager.tutorEngine.handleInput(key);
+
+                // 2. Pass to Simulator (Visuals)
+                // We always pass to simulator so user sees what they type.
+            }
+        }
+
         if (key === 'BACKSPACE') {
             if (state.mode === 'COMMAND') {
                 if (commandInput.length > 0) {
@@ -88,13 +116,10 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
         // Special handling for Entering Command Mode
         if (state.mode === 'NORMAL' && key === ':') {
             setCommandInput(':');
-            // Just set local state, but also need to tell simulator we are in command mode?
-            // Simulator handles ':' by switching to keys... wait.
-            // Simulator.handleInput(':') probably switches mode.
         }
 
         setState(simulator.handleInput(key));
-    }, [state.mode, commandInput, simulator, handleCommandSubmit]);
+    }, [state.mode, commandInput, simulator, handleCommandSubmit, gameManager]);
 
     const { setOnInput, setOnKeyPress, refocus } = useInput();
 
@@ -287,10 +312,64 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
         );
     };
 
+    // We will re-use the existing renderLine for the file content.
+    // Main renderLine logic is above at line 264.
+
+
+    // We will re-use the existing renderLine for the file content.
+    // But we add an Overlay to topContent.
+
+    const [tutorState, setTutorState] = useState<{ active: boolean, text: string, completed: string }>({ active: false, text: '', completed: '' });
+
+    // Poll tutor state for UI? Or subscribe?
+    // Let's use a quick poll in useEffect or just rely on re-renders if gameManager triggers update?
+    // Since TutorEngine is outside React, we need to force update or use a hook.
+    // For now, simply reading it during render might lag if no state change happens.
+    // Better: Subscribe in useEffect.
+
+    useEffect(() => {
+        if (!gameManager.tutorEngine.isActive()) {
+            setTutorState({ active: false, text: '', completed: '' });
+            return;
+        }
+
+        const updateTutor = () => {
+            setTutorState({
+                active: gameManager.tutorEngine.isActive(),
+                text: gameManager.tutorEngine.getGhostText(),
+                completed: gameManager.tutorEngine.getCompletedText()
+            });
+        };
+
+        // Initial sync
+        updateTutor();
+
+        // Subscribe
+        const unsubscribe = gameManager.tutorEngine.subscribe(() => {
+            updateTutor();
+        });
+
+        return unsubscribe;
+    }, [gameManager.tutorEngine]);
+
     const topContent = (
         <View style={dynamicStyles.editorContainer}>
+            {tutorState.active && (
+                <View style={{
+                    position: 'absolute', top: 0, left: 0, right: 0,
+                    backgroundColor: 'rgba(0,0,0,0.8)', padding: 10, zIndex: 100,
+                    borderBottomWidth: 1, borderColor: colors.primary
+                }}>
+                    <Text style={{ color: colors.primary, fontWeight: 'bold' }}>TUTOR PROTOCOL ACTIVE</Text>
+                    <Text style={{ color: colors.text.primary, fontFamily: settings.fontFamily }}>
+                        TARGET: <Text style={{ color: colors.secondary }}>{tutorState.completed}</Text>
+                        <Text style={{ color: colors.text.dim }}>{tutorState.text}</Text>
+                    </Text>
+                </View>
+            )}
+
             {isMounting && <View style={dynamicStyles.crtBlinkOverlay} />}
-            {/* TextInput removed - provided by GlobalInputHandler */}
+            {/* ... rest of ScrollView ... */}
             <ScrollView
                 style={dynamicStyles.contentArea}
                 contentContainerStyle={dynamicStyles.scrollContent}
