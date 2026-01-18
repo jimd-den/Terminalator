@@ -1,4 +1,4 @@
-POSIX COMPLIANCE REPORT - 2026-01-16T22:38:37.927Z
+POSIX COMPLIANCE REPORT - 2026-01-18T13:07:31.847Z
 Standard: IEEE Std 1003.1-2024 (SUSv5)
 Target Level: Strict
 
@@ -149,7 +149,7 @@ Target Level: Strict
 [MISSING] crontab
 [MISSING] csplit
 [MISSING] ctags
-[MISSING] cut
+[PRESENT] cut
 [MISSING] cxref
 [PRESENT] date
 [MISSING] dd
@@ -242,7 +242,7 @@ Target Level: Strict
 [MISSING] sh
 [MISSING] shift
 [MISSING] sleep
-[MISSING] sort
+[PRESENT] sort
 [MISSING] split
 [MISSING] strings
 [MISSING] strip
@@ -258,7 +258,7 @@ Target Level: Strict
 [MISSING] times
 [PRESENT] touch
 [MISSING] tput
-[MISSING] tr
+[PRESENT] tr
 [MISSING] trap
 [PRESENT] true
 [MISSING] tsort
@@ -271,7 +271,7 @@ Target Level: Strict
 [MISSING] uncompress
 [MISSING] unexpand
 [MISSING] unget
-[MISSING] uniq
+[PRESENT] uniq
 [MISSING] unlink
 [MISSING] unset
 [MISSING] uucp
@@ -295,4 +295,4 @@ Target Level: Strict
 SUMMARY:
 Tests Passed: 65
 Tests Failed: 0
-Utility Completeness: 18% (31/171)
+Utility Completeness: 20% (35/171)

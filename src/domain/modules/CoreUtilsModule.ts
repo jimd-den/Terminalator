@@ -33,6 +33,10 @@ import { FindCommand } from '../commands/core/FindCommand';
 import { SedCommand } from '../commands/core/SedCommand';
 import { AwkCommand } from '../commands/core/AwkCommand';
 import { XargsCommand } from '../commands/core/XargsCommand';
+import { CutCommand } from '../commands/core/CutCommand';
+import { TrCommand } from '../commands/core/TrCommand';
+import { UniqCommand } from '../commands/core/UniqCommand';
+import { SortCommand } from '../commands/core/SortCommand';
 
 export class CoreUtilsModule implements CommandModule {
     constructor(private fs: FileSystem) {}
@@ -62,6 +66,10 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('find', new FindCommand(fs));
         registry.register('sed', new SedCommand(fs));
         registry.register('awk', new AwkCommand(fs));
+        registry.register('cut', new CutCommand(fs));
+        registry.register('tr', new TrCommand(fs));
+        registry.register('uniq', new UniqCommand(fs));
+        registry.register('sort', new SortCommand(fs));
 
         // Factory-like registration for Xargs to avoid circular dependency in constructor
         registry.register('xargs', new XargsCommand(fs, (name) => registry.get(name)));
