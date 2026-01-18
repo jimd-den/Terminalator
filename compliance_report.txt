@@ -1,4 +1,4 @@
-POSIX COMPLIANCE REPORT - 2026-01-18T16:11:41.826Z
+POSIX COMPLIANCE REPORT - 2026-01-18T17:47:07.204Z
 Standard: IEEE Std 1003.1-2024 (SUSv5)
 Target Level: Strict
 
@@ -139,7 +139,7 @@ Target Level: Strict
 [MISSING] chgrp
 [PRESENT] chmod
 [PRESENT] chown
-[MISSING] cksum
+[PRESENT] cksum
 [PRESENT] cmp
 [PRESENT] comm
 [MISSING] command
@@ -166,7 +166,7 @@ Target Level: Strict
 [MISSING] ex
 [MISSING] exec
 [MISSING] exit
-[MISSING] expand
+[PRESENT] expand
 [MISSING] export
 [MISSING] expr
 [PRESENT] false
@@ -174,7 +174,7 @@ Target Level: Strict
 [MISSING] fg
 [MISSING] file
 [PRESENT] find
-[MISSING] fold
+[PRESENT] fold
 [MISSING] fuser
 [MISSING] gencat
 [MISSING] get
@@ -189,7 +189,7 @@ Target Level: Strict
 [MISSING] ipcrm
 [MISSING] ipcs
 [MISSING] jobs
-[MISSING] join
+[PRESENT] join
 [MISSING] kill
 [MISSING] lex
 [MISSING] link
@@ -213,7 +213,7 @@ Target Level: Strict
 [MISSING] newgrp
 [MISSING] ngettext
 [MISSING] nice
-[MISSING] nl
+[PRESENT] nl
 [MISSING] nm
 [MISSING] nohup
 [MISSING] od
@@ -222,7 +222,7 @@ Target Level: Strict
 [MISSING] pathchk
 [MISSING] pax
 [MISSING] pr
-[MISSING] printf
+[PRESENT] printf
 [MISSING] prs
 [MISSING] ps
 [PRESENT] pwd
@@ -243,8 +243,8 @@ Target Level: Strict
 [MISSING] shift
 [MISSING] sleep
 [PRESENT] sort
-[MISSING] split
-[MISSING] strings
+[PRESENT] split
+[PRESENT] strings
 [MISSING] strip
 [MISSING] stty
 [MISSING] tabs
@@ -261,7 +261,7 @@ Target Level: Strict
 [PRESENT] tr
 [MISSING] trap
 [PRESENT] true
-[MISSING] tsort
+[PRESENT] tsort
 [PRESENT] tty
 [MISSING] type
 [MISSING] ulimit
@@ -269,7 +269,7 @@ Target Level: Strict
 [MISSING] unalias
 [MISSING] uname
 [MISSING] uncompress
-[MISSING] unexpand
+[PRESENT] unexpand
 [MISSING] unget
 [PRESENT] uniq
 [MISSING] unlink
@@ -295,4 +295,4 @@ Target Level: Strict
 SUMMARY:
 Tests Passed: 65
 Tests Failed: 0
-Utility Completeness: 24% (41/171)
+Utility Completeness: 30% (51/171)

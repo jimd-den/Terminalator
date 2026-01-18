@@ -43,6 +43,16 @@ import { CommCommand } from '../commands/core/CommCommand';
 import { DiffCommand } from '../commands/core/DiffCommand';
 import { PasteCommand } from '../commands/core/PasteCommand';
 import { TeeCommand } from '../commands/core/TeeCommand';
+import { CksumCommand } from '../commands/core/CksumCommand';
+import { FoldCommand } from '../commands/core/FoldCommand';
+import { JoinCommand } from '../commands/core/JoinCommand';
+import { NlCommand } from '../commands/core/NlCommand';
+import { PrintfCommand } from '../commands/core/PrintfCommand';
+import { SplitCommand } from '../commands/core/SplitCommand';
+import { StringsCommand } from '../commands/core/StringsCommand';
+import { ExpandCommand } from '../commands/core/ExpandCommand';
+import { UnexpandCommand } from '../commands/core/UnexpandCommand';
+import { TsortCommand } from '../commands/core/TsortCommand';
 
 export class CoreUtilsModule implements CommandModule {
     constructor(private fs: FileSystem) {}
@@ -82,6 +92,16 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('diff', new DiffCommand(fs));
         registry.register('paste', new PasteCommand(fs));
         registry.register('tee', new TeeCommand(fs));
+        registry.register('cksum', new CksumCommand(fs));
+        registry.register('fold', new FoldCommand(fs));
+        registry.register('join', new JoinCommand(fs));
+        registry.register('nl', new NlCommand(fs));
+        registry.register('printf', new PrintfCommand(fs));
+        registry.register('split', new SplitCommand(fs));
+        registry.register('strings', new StringsCommand(fs));
+        registry.register('expand', new ExpandCommand(fs));
+        registry.register('unexpand', new UnexpandCommand(fs));
+        registry.register('tsort', new TsortCommand(fs));
 
         // Factory-like registration for Xargs to avoid circular dependency in constructor
         registry.register('xargs', new XargsCommand(fs, (name) => registry.get(name)));
