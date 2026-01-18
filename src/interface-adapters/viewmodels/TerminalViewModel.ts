@@ -91,25 +91,6 @@ export const useTerminalViewModel = (
         setGhostText(getAutocompleteSuggestion(text));
     }, [getAutocompleteSuggestion]);
 
-    const handleKeyPress = useCallback((key: string) => {
-        if (key === 'TAB') {
-            if (ghostText) {
-                const fullCommand = input + ghostText;
-                setInput(fullCommand);
-                setGhostText('');
-            }
-        } else if (key === 'ESC') {
-            setInput('');
-            setGhostText('');
-        } else {
-            setInput(prev => {
-                const next = prev + key;
-                setGhostText(getAutocompleteSuggestion(next));
-                return next;
-            });
-        }
-    }, [input, ghostText, getAutocompleteSuggestion]);
-
     const handleCommand = useCallback(async () => {
         const cmdToRun = input;
         if (!cmdToRun) return;
@@ -165,6 +146,36 @@ export const useTerminalViewModel = (
             setOutputLines(prev => [...prev, { text: `[ NEW TRANSMISSION: ID ${mail.id} FROM ${mail.from} ]`, type: 'output' }]);
         }
     }, [input, state, commandExecutor, navigation, gameManager, outputLines.length]);
+
+    const handleKeyPress = useCallback((key: string) => {
+        if (key === 'TAB') {
+            if (ghostText) {
+                const fullCommand = input + ghostText;
+                setInput(fullCommand);
+                setGhostText('');
+            }
+        } else if (key === 'ESC') {
+            setInput('');
+            setGhostText('');
+        } else if (key === 'BACKSPACE') {
+            setInput(prev => {
+                const next = prev.slice(0, -1);
+                setGhostText(getAutocompleteSuggestion(next));
+                return next;
+            });
+        } else if (key === 'ENTER') {
+            handleCommand();
+        } else {
+            // Filter out control characters if any permeate through
+            if (key.length === 1) {
+                setInput(prev => {
+                    const next = prev + key;
+                    setGhostText(getAutocompleteSuggestion(next));
+                    return next;
+                });
+            }
+        }
+    }, [input, ghostText, getAutocompleteSuggestion, handleCommand]);
 
     const handleVimExit = useCallback(() => {
         setIsTransitioning(true);

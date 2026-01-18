@@ -12,13 +12,15 @@
  * Minimal logic remains here; most operations are delegated to the domain layer via adapters.
  */
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { View, Text, TextInput, StyleSheet, Pressable, ScrollView } from 'react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { useInput } from '../../context/InputContext';
 import { THEME } from '../../../frameworks-drivers/ui/Theme';
 import { useGame } from '../../context/GameContext';
 import { VirtualKeyboard } from '../VirtualKeyboard';
 import { VimSimulator } from '../../../interface-adapters/VimSimulator';
 import { HighlighterRegistry } from '../../../interface-adapters/vim/HighlighterRegistry';
+import { useTheme } from '../../context/ThemeContext';
 
 interface VimEditorProps {
     filename: string;
@@ -26,8 +28,6 @@ interface VimEditorProps {
 }
 
 const highlighterRegistry = new HighlighterRegistry();
-
-import { useTheme } from '../../context/ThemeContext';
 
 export const useVimEditor = (filename: string, onExit: () => void) => {
     const { fs } = useGame();
@@ -43,7 +43,74 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
     const [commandInput, setCommandInput] = useState('');
     const [isMounting, setIsMounting] = useState(true);
 
-    const hiddenInputRef = useRef<TextInput>(null);
+    const handleCommandSubmit = React.useCallback(() => {
+        const { exit, message } = simulator.executeCommand(commandInput);
+        if (exit) onExit();
+        else {
+            const nextState = simulator.getSnapshot();
+            nextState.statusMessage = message;
+            setState(nextState);
+            setCommandInput('');
+        }
+    }, [commandInput, onExit, simulator]);
+
+    const handleVirtualKey = React.useCallback((key: string) => {
+        if (key === 'BACKSPACE') {
+            if (state.mode === 'COMMAND') {
+                if (commandInput.length > 0) {
+                    setCommandInput(prev => prev.slice(0, -1));
+                } else if (commandInput.length === 0) {
+                    // Exit command mode if backspace on empty
+                    simulator.handleInput('ESC');
+                    setState(simulator.getSnapshot());
+                }
+                return;
+            }
+            setState(simulator.handleInput('BACKSPACE'));
+            return;
+        }
+
+        if (state.mode === 'COMMAND') {
+            if (key === 'ESC') {
+                simulator.handleInput('ESC');
+                setState(simulator.getSnapshot());
+                setCommandInput('');
+                return;
+            }
+            if (key === 'ENTER') {
+                handleCommandSubmit();
+                return;
+            }
+            if (key.length === 1) setCommandInput(prev => prev + key);
+            return;
+        }
+
+        // Special handling for Entering Command Mode
+        if (state.mode === 'NORMAL' && key === ':') {
+            setCommandInput(':');
+            // Just set local state, but also need to tell simulator we are in command mode?
+            // Simulator handles ':' by switching to keys... wait.
+            // Simulator.handleInput(':') probably switches mode.
+        }
+
+        setState(simulator.handleInput(key));
+    }, [state.mode, commandInput, simulator, handleCommandSubmit]);
+
+    const { setOnInput, setOnKeyPress, refocus } = useInput();
+
+    React.useEffect(() => {
+        // Wire up global input
+        setOnInput((text) => {
+            // Handle pasted text or fast typing
+            for (const char of text) {
+                if (char === '\n') handleVirtualKey('ENTER');
+                else handleVirtualKey(char);
+            }
+        });
+        setOnKeyPress((key) => {
+            handleVirtualKey(key);
+        });
+    }, [handleVirtualKey, setOnInput, setOnKeyPress]);
 
     // -- Initialization --
     useEffect(() => {
@@ -52,16 +119,17 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
         return () => clearTimeout(timer);
     }, [filename]);
 
+    // Force focus when mounting this "active app"
+    useEffect(() => {
+        refocus();
+        const interval = setInterval(refocus, 2000);
+        return () => clearInterval(interval);
+    }, [refocus]);
+
     const dynamicStyles = StyleSheet.create({
         editorContainer: {
             flex: 1,
             backgroundColor: colors.surface,
-        },
-        hiddenInput: {
-            position: 'absolute',
-            width: 1,
-            height: 1,
-            opacity: 0,
         },
         contentArea: {
             flex: 1,
@@ -88,15 +156,6 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
         cursorBlock: {
             backgroundColor: colors.primary,
             display: 'flex',
-        },
-        cursorInsert: {
-            borderLeftWidth: 2,
-            borderLeftColor: colors.primary,
-        },
-        cursorText: {
-            color: colors.background,
-            fontFamily: settings.fontFamily,
-            fontSize: THEME.typography.fontSize.md,
         },
         footer: {
             justifyContent: 'center',
@@ -177,99 +236,6 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
         }
     };
 
-    const refocus = () => { hiddenInputRef.current?.focus(); };
-    useEffect(() => {
-        const interval = setInterval(refocus, 500);
-        refocus();
-        return () => clearInterval(interval);
-    }, []);
-
-    const [inputValue, setInputValue] = useState(' ');
-
-    const handleHiddenInput = (text: string) => {
-        if (text.length === 0) {
-            if (state.mode === 'COMMAND') {
-                if (commandInput.length > 1) {
-                    setCommandInput(prev => prev.slice(0, -1));
-                } else {
-                    simulator.handleInput('ESC');
-                    setState(simulator.getSnapshot());
-                    setCommandInput('');
-                }
-            } else {
-                setState(simulator.handleInput('BACKSPACE'));
-            }
-            setInputValue(' ');
-            return;
-        }
-
-        const newContent = text.startsWith(' ') ? text.slice(1) : text;
-        if (newContent.length === 0) {
-            setInputValue(' ');
-            return;
-        }
-
-        // Process characters sequentially
-        let shouldRefreshSnapshot = true;
-        for (const char of newContent) {
-            if (char === '\n') {
-                if (state.mode === 'COMMAND') {
-                    handleCommandSubmit();
-                    shouldRefreshSnapshot = false; // handleCommandSubmit handles state
-                } else {
-                    simulator.handleInput('ENTER');
-                }
-            } else {
-                if (state.mode === 'COMMAND') {
-                    setCommandInput(prev => prev + char);
-                } else {
-                    if (state.mode === 'NORMAL' && char === ':') {
-                        setCommandInput(':');
-                    }
-                    simulator.handleInput(char);
-                }
-            }
-        }
-
-        if (shouldRefreshSnapshot) {
-            setState(simulator.getSnapshot());
-        }
-        setInputValue(' ');
-    };
-
-    const handleVirtualKey = (key: string) => {
-        if (key === 'BACKSPACE') {
-            handleHiddenInput('');
-            return;
-        }
-        if (state.mode === 'COMMAND') {
-            if (key === 'ESC') {
-                simulator.handleInput('ESC');
-                setState(simulator.getSnapshot());
-                setCommandInput('');
-                return;
-            }
-            if (key === 'ENTER') {
-                handleCommandSubmit();
-                return;
-            }
-            if (key.length === 1) setCommandInput(prev => prev + key);
-            return;
-        }
-        setState(simulator.handleInput(key));
-    };
-
-    const handleCommandSubmit = () => {
-        const { exit, message } = simulator.executeCommand(commandInput);
-        if (exit) onExit();
-        else {
-            const nextState = simulator.getSnapshot();
-            nextState.statusMessage = message;
-            setState(nextState);
-            setCommandInput('');
-        }
-    };
-
     const renderLine = (lineContent: string, lineIdx: number) => {
         const isCurrentLine = lineIdx === state.cursor.line;
         const lineError = state.lintErrors.find(e => e.line === lineIdx + 1);
@@ -324,13 +290,7 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
     const topContent = (
         <View style={dynamicStyles.editorContainer}>
             {isMounting && <View style={dynamicStyles.crtBlinkOverlay} />}
-            <TextInput
-                ref={hiddenInputRef}
-                style={dynamicStyles.hiddenInput}
-                value={inputValue}
-                onChangeText={handleHiddenInput}
-                autoCapitalize="none" autoCorrect={false} spellCheck={false} blurOnSubmit={false} multiline={true} editable={true} caretHidden={true} autoFocus={true}
-            />
+            {/* TextInput removed - provided by GlobalInputHandler */}
             <ScrollView
                 style={dynamicStyles.contentArea}
                 contentContainerStyle={dynamicStyles.scrollContent}
