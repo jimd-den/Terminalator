@@ -1,4 +1,4 @@
-POSIX COMPLIANCE REPORT - 2026-01-18T19:19:33.019Z
+POSIX COMPLIANCE REPORT - 2026-01-18T20:59:45.378Z
 Standard: IEEE Std 1003.1-2024 (SUSv5)
 Target Level: Strict
 
@@ -121,14 +121,14 @@ Target Level: Strict
 
 ### COMPLIANCE GAP ANALYSIS
 [MISSING] admin
-[MISSING] alias
+[PRESENT] alias
 [MISSING] ar
-[MISSING] asa
-[MISSING] at
+[PRESENT] asa
+[PRESENT] at
 [PRESENT] awk
 [PRESENT] basename
-[MISSING] batch
-[MISSING] bc
+[PRESENT] batch
+[PRESENT] bc
 [MISSING] bg
 [MISSING] break
 [MISSING] c17
@@ -136,23 +136,23 @@ Target Level: Strict
 [PRESENT] cat
 [PRESENT] cd
 [MISSING] cflow
-[MISSING] chgrp
+[PRESENT] chgrp
 [PRESENT] chmod
 [PRESENT] chown
 [PRESENT] cksum
 [PRESENT] cmp
 [PRESENT] comm
 [MISSING] command
-[MISSING] compress
+[PRESENT] compress
 [MISSING] continue
 [PRESENT] cp
-[MISSING] crontab
+[PRESENT] crontab
 [MISSING] csplit
 [MISSING] ctags
 [PRESENT] cut
 [MISSING] cxref
 [PRESENT] date
-[MISSING] dd
+[PRESENT] dd
 [MISSING] delta
 [PRESENT] df
 [PRESENT] diff
@@ -178,33 +178,33 @@ Target Level: Strict
 [MISSING] fuser
 [MISSING] gencat
 [MISSING] get
-[MISSING] getconf
+[PRESENT] getconf
 [MISSING] getopts
 [MISSING] gettext
 [PRESENT] grep
 [MISSING] hash
 [PRESENT] head
-[MISSING] iconv
+[PRESENT] iconv
 [PRESENT] id
 [MISSING] ipcrm
 [MISSING] ipcs
-[MISSING] jobs
+[PRESENT] jobs
 [PRESENT] join
-[MISSING] kill
+[PRESENT] kill
 [MISSING] lex
 [PRESENT] link
 [PRESENT] ln
 [MISSING] locale
 [MISSING] localedef
-[MISSING] logger
+[PRESENT] logger
 [PRESENT] logname
 [MISSING] lp
 [PRESENT] ls
 [MISSING] m4
-[MISSING] mailx
+[PRESENT] mailx
 [MISSING] make
-[MISSING] man
-[MISSING] mesg
+[PRESENT] man
+[PRESENT] mesg
 [PRESENT] mkdir
 [MISSING] mkfifo
 [MISSING] more
@@ -212,19 +212,19 @@ Target Level: Strict
 [PRESENT] mv
 [MISSING] newgrp
 [MISSING] ngettext
-[MISSING] nice
+[PRESENT] nice
 [PRESENT] nl
 [MISSING] nm
 [MISSING] nohup
 [PRESENT] od
 [PRESENT] paste
 [MISSING] patch
-[MISSING] pathchk
+[PRESENT] pathchk
 [MISSING] pax
-[MISSING] pr
+[PRESENT] pr
 [PRESENT] printf
 [MISSING] prs
-[MISSING] ps
+[PRESENT] ps
 [PRESENT] pwd
 [MISSING] read
 [PRESENT] readlink
@@ -247,28 +247,28 @@ Target Level: Strict
 [PRESENT] strings
 [MISSING] strip
 [MISSING] stty
-[MISSING] tabs
+[PRESENT] tabs
 [PRESENT] tail
-[MISSING] talk
+[PRESENT] talk
 [PRESENT] tee
 [PRESENT] test
 [PRESENT] [
-[MISSING] time
+[PRESENT] time
 [MISSING] timeout
 [MISSING] times
 [PRESENT] touch
-[MISSING] tput
+[PRESENT] tput
 [PRESENT] tr
 [MISSING] trap
 [PRESENT] true
 [PRESENT] tsort
 [PRESENT] tty
-[MISSING] type
+[PRESENT] type
 [MISSING] ulimit
 [MISSING] umask
-[MISSING] unalias
+[PRESENT] unalias
 [PRESENT] uname
-[MISSING] uncompress
+[PRESENT] uncompress
 [PRESENT] unexpand
 [MISSING] unget
 [PRESENT] uniq
@@ -281,18 +281,18 @@ Target Level: Strict
 [MISSING] uux
 [MISSING] val
 [MISSING] vi
-[MISSING] wait
+[PRESENT] wait
 [PRESENT] wc
 [MISSING] what
 [PRESENT] who
-[MISSING] write
+[PRESENT] write
 [PRESENT] xargs
 [MISSING] xgettext
 [MISSING] yacc
-[MISSING] zcat
+[PRESENT] zcat
 [MISSING] :
 
 SUMMARY:
 Tests Passed: 65
 Tests Failed: 0
-Utility Completeness: 39% (67/171)
+Utility Completeness: 57% (98/171)
