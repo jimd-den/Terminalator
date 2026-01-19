@@ -20,7 +20,16 @@ export class CatCommand implements ICommand {
     constructor(private fs: FileSystem) { }
 
     execute(args: string[], state: TerminalState, input?: string): CommandResponse {
-        const files = args.filter(arg => !arg.startsWith('-')); // Ignore flags if any
+        const files: string[] = [];
+
+        // Manual arg parsing to handle '-' mixed with files
+        for (const arg of args) {
+            if (arg.startsWith('-') && arg !== '-') {
+                // Ignore flags for now (e.g. -u)
+            } else {
+                files.push(arg);
+            }
+        }
 
         let output = '';
 
@@ -32,6 +41,11 @@ export class CatCommand implements ICommand {
             }
         } else {
             for (const filename of files) {
+                if (filename === '-') {
+                    output += input || '';
+                    continue;
+                }
+
                 let path = filename;
                 if (!path.startsWith('/')) {
                     path = state.currentDirectory === '/'

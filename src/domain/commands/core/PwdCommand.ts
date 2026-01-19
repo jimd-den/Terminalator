@@ -21,7 +21,7 @@ export class PwdCommand implements ICommand {
 
     execute(args: string[], state: TerminalState, input?: string): CommandResponse {
         return {
-            output: state.currentDirectory,
+            output: state.currentDirectory + '\n',
             newState: state,
             exitCode: 0
         };

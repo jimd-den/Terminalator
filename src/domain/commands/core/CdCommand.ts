@@ -50,25 +50,32 @@ export class CdCommand implements ICommand {
 
         const node = this.fs.resolveNode(newPath, state.currentDirectory);
 
-        // This relies on FileSystem method which I should verify is public... yes it is
-        if (node && this.fs.isDirectory(node)) {
-            const absolutePath = this.fs.getAbsolutePath(node);
-            return {
-                output: target === '-' ? absolutePath : '',
-                newState: {
-                    ...state,
-                    currentDirectory: absolutePath,
-                    environment: {
-                        ...state.environment,
-                        OLDPWD: state.currentDirectory
-                    }
-                },
-                exitCode: 0
-            };
+        if (node) {
+            if (this.fs.isDirectory(node)) {
+                const absolutePath = this.fs.getAbsolutePath(node);
+                return {
+                    output: target === '-' ? absolutePath : '',
+                    newState: {
+                        ...state,
+                        currentDirectory: absolutePath,
+                        environment: {
+                            ...state.environment,
+                            OLDPWD: state.currentDirectory
+                        }
+                    },
+                    exitCode: 0
+                };
+            } else {
+                return {
+                    output: `cd: ${target}: Not a directory`,
+                    newState: state,
+                    exitCode: 1
+                };
+            }
         }
 
         return {
-            output: `cd: ${target}: no such file or directory`,
+            output: `cd: ${target}: No such file or directory`,
             newState: state,
             exitCode: 1
         };

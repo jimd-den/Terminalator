@@ -60,34 +60,27 @@ export class MvCommand implements ICommand {
                 };
             }
 
-            try {
-                // Determine target
-                // fs.rename(old, new)
-                // logic in fs.rename handles "renaming to foo in cwd" or "moving to exists"
-                // But fs.rename implementation I saw earlier does:
-                // if existing, delete it (overwrite).
-                // It also handles moving /src to /dest/src if /dest is dir? 
-                // Let's re-verify FS.rename logic.
-                // FS.rename(302):
-                // If existing (newPath), deletes it.
-                // It does NOT auto-calculate "into directory" if newPath is a dir. 
-                // It just deletes existing and moves there.
-                // Wait. If I `mv file /dir`, and `/dir` exists, FS.rename will delete `/dir` and put `file` at `/dir`?
-                // That is destructive and WRONG for posix "move into directory".
-                // I must handle "into directory" logic here.
+            // Check if source is directory and dest is file (FAIL)
+            // If dest doesn't exist but is treated as file (not ending in /) -> renaming dir to file is valid?
+            // "mv dir file" -> rename dir to file. Valid.
+            // "mv dir existing_file" -> fail (cannot overwrite file with dir).
+            if (this.fs.isDirectory(srcNode) && destNode && !this.fs.isDirectory(destNode)) {
+                 return {
+                     output: `mv: cannot overwrite non-directory '${destination}' with directory '${source}'`,
+                     newState: state,
+                     exitCode: 1
+                 };
+            }
 
+            try {
                 let finalDest = destPath;
                 if (destIsDir) {
                     finalDest = destPath === '/' ? `/${srcNode.name}` : `${destPath}/${srcNode.name}`;
                 }
 
-                // If finalDest is same as srcPath, do nothing or fail?
+                // If finalDest is same as srcPath, do nothing and return 0
                 if (srcPath === finalDest) {
-                    return {
-                        output: `mv: '${source}' and '${destination}' are the same file`,
-                        newState: state,
-                        exitCode: 1
-                    };
+                    continue; // No-op, exit code 0 implied for this item
                 }
 
                 this.fs.rename(srcPath, finalDest);
