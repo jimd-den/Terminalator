@@ -32,6 +32,9 @@ export class MkdirCommand implements ICommand {
             };
         }
 
+        let exitCode = 0;
+        let outputString = '';
+
         for (const target of targets) {
             // Resolve path absolute or relative
             let path = target;
@@ -47,11 +50,9 @@ export class MkdirCommand implements ICommand {
                 if (createParents && this.fs.isDirectory(existing)) {
                     continue; // -p suppresses error if dir exists
                 }
-                return {
-                    output: `mkdir: cannot create directory '${target}': File exists`,
-                    newState: state,
-                    exitCode: 1
-                };
+                outputString += `mkdir: cannot create directory '${target}': File exists\n`;
+                exitCode = 1;
+                continue;
             }
 
             try {
@@ -66,27 +67,24 @@ export class MkdirCommand implements ICommand {
 
                     const parent = this.fs.resolveNode(parentPath);
                     if (!parent || !this.fs.isDirectory(parent)) {
-                        return {
-                            output: `mkdir: cannot create directory '${target}': No such file or directory`,
-                            newState: state,
-                            exitCode: 1
-                        };
+                        outputString += `mkdir: cannot create directory '${target}': No such file or directory\n`;
+                        exitCode = 1;
+                        continue;
                     }
                     this.fs.mkdir(path, 0o755);
                 }
             } catch (e: any) {
-                return {
-                    output: `mkdir: cannot create directory '${target}': ${e.message}`,
-                    newState: state,
-                    exitCode: 1
-                };
+                outputString += `mkdir: cannot create directory '${target}': ${e.message}\n`;
+                exitCode = 1;
             }
         }
 
+        if (outputString.endsWith('\n')) outputString = outputString.slice(0, -1);
+
         return {
-            output: '',
+            output: outputString,
             newState: state,
-            exitCode: 0
+            exitCode: exitCode
         };
     }
 

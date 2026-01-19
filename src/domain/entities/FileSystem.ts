@@ -47,6 +47,7 @@ export class FileSystem {
             parent: null,
             children: new Map(),
         };
+        this.attachDentryHelpers(this.root);
 
         this.initializeDefaultStructure();
     }
@@ -204,6 +205,7 @@ export class FileSystem {
             parent: parent,
             children: new Map()
         };
+        this.attachDentryHelpers(dentry);
 
         parent.children.set(name, dentry);
 
@@ -215,6 +217,31 @@ export class FileSystem {
         parentInode.ctime = Date.now();
 
         return dentry;
+    }
+
+    private attachDentryHelpers(dentry: Dentry) {
+        // Attach helper properties for test suite compatibility and ease of use
+        Object.defineProperty(dentry, 'isDirectory', {
+            get: () => {
+                const inode = this.inodeTable.get(dentry.inodeId);
+                return !!(inode && (inode.mode & S_IFDIR));
+            },
+            configurable: true
+        });
+        Object.defineProperty(dentry, 'inode', {
+            get: () => {
+                const inode = this.inodeTable.get(dentry.inodeId);
+                // Attach isDirectory to inode as well if needed by test suite
+                if (inode) {
+                     Object.defineProperty(inode, 'isDirectory', {
+                        get: () => !!(inode.mode & S_IFDIR),
+                        configurable: true
+                     });
+                }
+                return inode;
+            },
+            configurable: true
+        });
     }
 
     writeFile(path: string, content: string, modeStr: 'w' | 'a' = 'w', cwd: string = '/'): Dentry {

@@ -1,0 +1,37 @@
+Okay, I have a clear picture now.
+`posix_suite.ts` shows 1 failure in PIPE and 100% utility existence.
+`posix_comprehensive_suite.ts` shows 58.9% compliance with 714 failures out of 1750 tests.
+The user wants "100 percent implementation coverage". This implies fixing the 714 failures in the comprehensive suite.
+
+The "Eight Pillars of the Craft" instructions are crucial.
+Structure: Clean Architecture.
+Docs: Literate Documentation.
+Minimalism: Standard lib.
+Telemetry: Log inputs/outputs.
+Performance: O(1)/O(n).
+Readability: Semantic naming.
+Patterns: Explicit naming.
+SOLID/KISS.
+
+Since there are 172 tools and 714 failures, I cannot possibly fix all of them in a single turn or even a few turns. I need to prioritize.
+However, the user asked to "implement each all the utilities for 100 percent implementation coverage".
+The "Tool Coverage" is 101.2% (172/170). This means the tools exist. But the compliance is 58.9%.
+So the task is to fix the *implementations* of these tools to pass the tests.
+
+Given the scale, I should pick a set of failing utilities and improve them.
+Let's look at the summary again.
+`awk`: 20%
+`sed`: 40%
+`mkdir`: 40%
+`grep`: 100% (Passed)
+`ls`: 50%
+`cat`: 90%
+`xargs`: 40%
+`return`: 0%
+
+I will start by reading the code for some of the failing utilities to understand their current state. I'll pick `mkdir`, `ls`, `sed`, `awk` as high impact targets.
+
+I will also read `src/domain/commands/CommandRegistry.ts` (or similar) to see how commands are structured and registered.
+And I'll check `src/domain/entities/FileSystem.ts` as it's the core of many operations.
+
+I'll start by listing the command files.
