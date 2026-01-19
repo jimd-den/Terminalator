@@ -20,7 +20,7 @@ export class PrintfCommand implements ICommand {
 
     execute(args: string[], state: TerminalState, input?: string): CommandResponse {
         if (args.length === 0) {
-             return { output: 'printf: usage: printf format [arguments...]', newState: state, exitCode: 1 };
+            return { output: 'printf: usage: printf format [arguments...]', newState: state, exitCode: 1 };
         }
 
         const format = args[0];
@@ -31,6 +31,7 @@ export class PrintfCommand implements ICommand {
         // Simple loop to handle format reuse if more params than specs
         // Loop at least once
         do {
+            const startParamIndex = paramIndex;
             let i = 0;
             // Unescape the format string first?
             // POSIX: interpreted sequences like \n, \t
@@ -42,9 +43,9 @@ export class PrintfCommand implements ICommand {
 
             let result = '';
             for (let j = 0; j < currentFormat.length; j++) {
-                if (currentFormat[j] === '%' && currentFormat[j+1] !== '%') {
+                if (currentFormat[j] === '%' && currentFormat[j + 1] !== '%') {
                     // Specifier found
-                    const spec = currentFormat[j+1]; // Simplified: assume 1 char spec like %s, %d. No width/precision yet.
+                    const spec = currentFormat[j + 1]; // Simplified: assume 1 char spec like %s, %d. No width/precision yet.
                     // TODO: Improve specifier parsing for flags/width/precision.
                     let replacement = '';
 
@@ -67,13 +68,26 @@ export class PrintfCommand implements ICommand {
                     }
                     result += replacement;
                     j++; // Skip spec char
-                } else if (currentFormat[j] === '%' && currentFormat[j+1] === '%') {
+                } else if (currentFormat[j] === '%' && currentFormat[j + 1] === '%') {
                     result += '%';
                     j++;
                 } else {
                     result += currentFormat[j];
                 }
             }
+            if (paramIndex === 0 && params.length > 0 && result === currentFormat) {
+                // Optimization: If format has no specifiers, it just prints the format string. 
+                // If we have args left, normally we'd loop forever printing the format string.
+                // POSIX says "results are unspecified", usually we stop.
+                break;
+            }
+
+            // Infinite loop protection: If we didn't consume any params this iteration,
+            // and we still have params left, we must break to avoid hanging.
+            if (paramIndex === startParamIndex && paramIndex < params.length) {
+                break;
+            }
+
             output += result;
 
         } while (paramIndex < params.length);
