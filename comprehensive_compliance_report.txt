@@ -150,29 +150,13 @@ UTILITY: grep
 [PASS] GREP_01
 [PASS] GREP_02
 [PASS] GREP_03
-[FAIL] GREP_04: Invert match -v
-       -> Stdout Regex Mismatch.
-   Expected: /b/
-   Got: "a\n"
-[FAIL] GREP_05: Count lines -c
-       -> Stdout Regex Mismatch.
-   Expected: /2/
-   Got: "a\na\n"
-[FAIL] GREP_06: Line numbers -n
-       -> Stdout Regex Mismatch.
-   Expected: /2:b/
-   Got: "b\n"
-[FAIL] GREP_07: List files -l
-       -> Stdout Regex Mismatch.
-   Expected: /f/
-   Got: "a\n"
+[PASS] GREP_04
+[PASS] GREP_05
+[PASS] GREP_06
+[PASS] GREP_07
 [PASS] GREP_08
 [PASS] GREP_09
-[FAIL] GREP_10: Regex support
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /hello/
-   Got: ""
+[PASS] GREP_10
 UTILITY: head
 [PASS] HEAD_01
 [PASS] HEAD_02
@@ -218,18 +202,13 @@ UTILITY: wc
    Got: "1 /f"
 [PASS] WC_03
 [PASS] WC_04
-[PASS] WC_05
-[FAIL] WC_06: Multiple files total
-       -> Stdout Regex Mismatch.
-   Expected: /total/i
-   Got: "0 1 1 /1\n0 1 1 /2"
-[FAIL] WC_07: Fail missing
-       -> Exit Code: Expected 1, got 0
-[PASS] WC_08
-[FAIL] WC_09: Stdin stub
+[FAIL] WC_05: Chars -m
        -> Exit Code: Expected 0, got 1
-[FAIL] WC_10: Fail on dir
-       -> Exit Code: Expected 1, got 0
+[PASS] WC_06
+[PASS] WC_07
+[PASS] WC_08
+[PASS] WC_09
+[PASS] WC_10
 UTILITY: chmod
 [PASS] CHMOD_01
 [PASS] CHMOD_02
@@ -331,7 +310,7 @@ UTILITY: date
 [FAIL] DATE_06: Complex format
        -> Stdout Regex Mismatch.
    Expected: /Year: 20../
-   Got: "Mon Jan 19 2026 16:08:32 GMT+0000 (Coordinated Universal Time)"
+   Got: "Mon Jan 19 2026 19:50:02 GMT+0000 (Coordinated Universal Time)"
 [PASS] DATE_07
 [FAIL] DATE_08: Set date (fail/stub)
        -> Exit Code: Expected 1, got 0
@@ -3075,10 +3054,10 @@ mv            |    10 |    7 |    3 |     70.0%
 echo          |    10 |    9 |    1 |     90.0%
 cat           |    10 |    9 |    1 |     90.0%
 pwd           |    10 |    9 |    1 |     90.0%
-grep          |    10 |    5 |    5 |     50.0%
+grep          |    10 |   10 |    0 |    100.0%
 head          |    10 |    8 |    2 |     80.0%
 tail          |    10 |    7 |    3 |     70.0%
-wc            |    10 |    4 |    6 |     40.0%
+wc            |    10 |    7 |    3 |     70.0%
 chmod         |    10 |    7 |    3 |     70.0%
 awk           |    10 |    2 |    8 |     20.0%
 sed           |    10 |    4 |    6 |     40.0%
@@ -3241,7 +3220,7 @@ uustat        |    10 |    9 |    1 |     90.0%
 uux           |    10 |    2 |    8 |     20.0%
 xgettext      |    10 |    6 |    4 |     60.0%
 
-TOTAL COMPLIANCE: 58.5% (1023/1750)
+TOTAL COMPLIANCE: 58.9% (1031/1750)
 
 === MISSING UTILITIES (Implemented but failing) ===
 None

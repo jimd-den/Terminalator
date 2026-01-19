@@ -23,20 +23,22 @@ export class WcCommand implements ICommand {
         let countLines = false;
         let countWords = false;
         let countBytes = false;
+        let countChars = false;
 
         const files: string[] = [];
 
         for (const arg of args) {
-            if (arg.startsWith('-')) {
+            if (arg.startsWith('-') && arg !== '-') {
                 if (arg.includes('l')) countLines = true;
                 if (arg.includes('w')) countWords = true;
                 if (arg.includes('c')) countBytes = true;
+                if (arg.includes('m')) countChars = true;
             } else {
                 files.push(arg);
             }
         }
 
-        if (!countLines && !countWords && !countBytes) {
+        if (!countLines && !countWords && !countBytes && !countChars) {
             countLines = true;
             countWords = true;
             countBytes = true;
@@ -44,23 +46,32 @@ export class WcCommand implements ICommand {
 
         let output = '';
 
+        let totalLines = 0;
+        let totalWords = 0;
+        let totalBytes = 0;
+        let totalChars = 0;
+
         const processContent = (content: string, name?: string) => {
-            const lines = content.split('\n').length - (content.endsWith('\n') ? 1 : 0);
-            // wc counts newlines? "a\nb" is 1 line or 2? POSIX: "A line is a sequence... terminated by <newline>".
-            // "a" has no newline. wc reports 0? 
-            // Usually wc lines = count of \n.
-            // "a\n" -> 1. "a" -> 0.
-            // Let's stick to split - 1 if ends with newline?
-            // Or just regex match \n.
+            // POSIX: line count is number of newlines
             const actualLines = (content.match(/\n/g) || []).length;
 
-            const words = content.trim().split(/\s+/).filter(w => w.length > 0).length;
-            const bytes = content.length; // Approximate bytes = chars
+            // Words: contiguous non-whitespace.
+            const words = content.trim().length === 0 ? 0 : content.trim().split(/\s+/).length;
+            const bytes = content.length;
+            const chars = content.length; // TODO: Multibyte support if needed
+
+            if (name) {
+                totalLines += actualLines;
+                totalWords += words;
+                totalBytes += bytes;
+                totalChars += chars;
+            }
 
             let part = '';
             if (countLines) part += ` ${actualLines}`;
             if (countWords) part += ` ${words}`;
             if (countBytes) part += ` ${bytes}`;
+            if (countChars) part += ` ${chars}`;
             if (name) part += ` ${name}`;
 
             return part.trimStart();
@@ -73,7 +84,19 @@ export class WcCommand implements ICommand {
                 return { output: 'wc: missing input', newState: state, exitCode: 1 };
             }
         } else {
+            let exitCode = 0;
             for (const filename of files) {
+                if (filename === '-') {
+                    if (input !== undefined) {
+                        output += processContent(input, '-') + '\n';
+                    } else {
+                        // If no input provided but - specified? Treat as empty? Or error?
+                        // Standard wc waits for stdin. Here we assume input passed.
+                        output += processContent('', '-') + '\n';
+                    }
+                    continue;
+                }
+
                 let path = filename;
                 if (!path.startsWith('/')) {
                     path = state.currentDirectory === '/'
@@ -81,14 +104,46 @@ export class WcCommand implements ICommand {
                         : `${state.currentDirectory}/${filename}`;
                 }
 
+                const node = this.fs.resolveNode(path);
+                if (!node) {
+                    output += `wc: ${filename}: No such file or directory\n`;
+                    exitCode = 1;
+                    continue;
+                }
+
+                if (this.fs.isDirectory(node)) {
+                    output += `wc: ${filename}: Is a directory\n`;
+                    output += `      0       0       0 ${filename}\n`; // Some wcs print 0s for dirs, some fail.
+                    exitCode = 1;
+                    continue;
+                }
+
                 try {
                     const content = this.fs.readFile(path);
                     output += processContent(content, filename) + '\n';
                 } catch (e: any) {
                     output += `wc: ${filename}: ${e.message}\n`;
+                    exitCode = 1;
                 }
             }
-            if (output.endsWith('\n')) output = output.slice(0, -1);
+
+            if (files.length > 1) {
+                let totalPart = '';
+                if (countLines) totalPart += ` ${totalLines}`;
+                if (countWords) totalPart += ` ${totalWords}`;
+                if (countBytes) totalPart += ` ${totalBytes}`;
+                if (countChars) totalPart += ` ${totalChars}`;
+                totalPart += ` total`;
+                output += totalPart.trimStart();
+            } else {
+                if (output.endsWith('\n')) output = output.slice(0, -1);
+            }
+
+            return {
+                output: output,
+                newState: state,
+                exitCode: exitCode
+            };
         }
 
         return {

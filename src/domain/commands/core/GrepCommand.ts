@@ -25,6 +25,10 @@ export class GrepCommand implements ICommand {
 
         const recursive = flags.some(f => f.includes('r') || f.includes('R'));
         const caseInsensitive = flags.some(f => f.includes('i'));
+        const invert = flags.some(f => f.includes('v'));
+        const count = flags.some(f => f.includes('c'));
+        const lineNum = flags.some(f => f.includes('n'));
+        const listFiles = flags.some(f => f.includes('l'));
 
         if (cleanArgs.length < 1) {
             return {
@@ -42,23 +46,64 @@ export class GrepCommand implements ICommand {
         let output = '';
         let exitCode = 1; // Default to 1 (no match)
 
+        let regex: RegExp;
+        try {
+            regex = new RegExp(pattern, caseInsensitive ? 'i' : '');
+        } catch (e) {
+            return {
+                output: `grep: invalid pattern: ${pattern}`,
+                newState: state,
+                exitCode: 2
+            };
+        }
+
         const lineMatches = (line: string): boolean => {
-            if (caseInsensitive) {
-                return line.toLowerCase().includes(pattern.toLowerCase());
-            }
-            return line.includes(pattern);
+            const match = regex.test(line);
+            return invert ? !match : match;
+        };
+
+        const processContent = (content: string, filename: string | undefined, showLabel: boolean) => {
+             const lines = content.split('\n');
+             let matchCount = 0;
+             let matchedAny = false;
+
+             for (let i = 0; i < lines.length; i++) {
+                 const line = lines[i];
+                 if (i === lines.length - 1 && line === '' && content.endsWith('\n')) continue;
+
+                 if (lineMatches(line)) {
+                     matchedAny = true;
+                     exitCode = 0;
+                     matchCount++;
+
+                     if (listFiles) {
+                         output += `${filename || '(standard input)'}\n`;
+                         return;
+                     }
+
+                     if (!count) {
+                         let prefix = '';
+                         if (showLabel && filename) prefix += `${filename}:`;
+                         if (lineNum) prefix += `${i + 1}:`;
+
+                         output += `${prefix}${line}\n`;
+                     }
+                 }
+             }
+
+             if (count && !listFiles) {
+                 if (showLabel && filename) {
+                     output += `${filename}:${matchCount}\n`;
+                 } else {
+                     output += `${matchCount}\n`;
+                 }
+             }
         };
 
         if (targets.length === 0) {
             // Check input
             if (input !== undefined) {
-                const lines = input.split('\n');
-                for (const line of lines) {
-                    if (lineMatches(line)) {
-                        output += line + '\n';
-                        exitCode = 0;
-                    }
-                }
+                processContent(input, undefined, false);
             } else {
                 return { output: 'grep: missing input', newState: state, exitCode: 1 };
             }
@@ -76,8 +121,8 @@ export class GrepCommand implements ICommand {
 
                 if (!node) {
                     output += `grep: ${target}: No such file or directory\n`;
-                    // exitCode remains 1 if no matches found elsewhere? 
-                    // usually grep continues but reports error.
+                    // If error, exit code 2 usually, but POSIX says >1.
+                    // Let's keep 1 if no match found, 2 if syntax/error.
                     continue;
                 }
 
@@ -98,34 +143,21 @@ export class GrepCommand implements ICommand {
                         // File
                         try {
                             const content = this.fs.readFile(currentPath);
-                            const lines = content.split('\n');
-                            for (const line of lines) {
-                                if (lineMatches(line)) {
-                                    exitCode = 0;
-                                    if (showFilename) {
-                                        output += `${currentPath}:${line}\n`;
-                                    } else {
-                                        output += `${line}\n`;
-                                    }
-                                }
-                            }
+                            // We pass currentPath as filename.
+                            // showFilename determines if we PREFIX output with it.
+                            processContent(content, currentPath, showFilename);
                         } catch (e: any) {
                             output += `grep: ${currentPath}: ${e.message}\n`;
                         }
                     }
                 };
 
-                // If checking multiple files (or recursive), usually show filename.
                 const showFilename = targets.length > 1 || recursive;
                 processNode(node, path, showFilename);
             }
         }
 
-        // Remove trailing newline if it wasn't there?
-        // Standard grep outputs a newline after each match.
-        // So valid output ends with newline.
-        // We do NOT strip it.
-        // if (output.endsWith('\n')) output = output.slice(0, -1);
+        if (output.endsWith('\n')) output = output.slice(0, -1);
 
         return {
             output: output,
