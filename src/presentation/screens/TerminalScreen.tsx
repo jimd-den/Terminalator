@@ -14,13 +14,14 @@
  */
 
 import React from 'react';
-import { View, StyleSheet, TextInput, ScrollView, Text } from 'react-native';
+import { View, StyleSheet, ScrollView, Text, Pressable } from 'react-native';
 import { THEME } from '../../frameworks-drivers/ui/Theme';
 import { GhostWriter } from '../../frameworks-drivers/ui/GhostWriter';
 import { VirtualKeyboard } from '../components/VirtualKeyboard';
 import { ConsoleLayout } from '../components/ConsoleLayout';
 import { useGame } from '../context/GameContext';
 import { useVimEditor } from '../components/vim/VimEditor';
+import { useInput } from '../context/InputContext';
 import { useTerminalViewModel } from '../../interface-adapters/viewmodels/TerminalViewModel';
 
 import { useTheme } from '../context/ThemeContext';
@@ -147,6 +148,21 @@ export const TerminalScreen: React.FC = () => {
         <VirtualKeyboard onKeyPress={handleKeyPress} />
     ) : vim.middleContent;
 
+    const { setOnInput, setOnKeyPress, refocus } = useInput();
+
+    React.useEffect(() => {
+        if (isShell) {
+            setOnInput((text) => {
+                for (const char of text) {
+                    handleKeyPress(char);
+                }
+            });
+            setOnKeyPress((key) => {
+                handleKeyPress(key);
+            });
+        }
+    }, [isShell, handleKeyPress, setOnInput, setOnKeyPress]);
+
     const bottomContent = (
         <View style={dynamicStyles.inputWrapper}>
             {!isShell ? (
@@ -156,25 +172,13 @@ export const TerminalScreen: React.FC = () => {
                     <Text style={dynamicStyles.inputLabel}>
                         INPUT // {state.user}@system
                     </Text>
-                    <View style={dynamicStyles.inputContainer}>
-                        <Text style={[dynamicStyles.input, dynamicStyles.ghostText]}>
-                            <Text style={{ opacity: 0 }}>{input}</Text>
-                            <Text style={{ opacity: 0.5 }}>{ghostText}</Text>
+                    <Pressable style={dynamicStyles.inputContainer} onPress={refocus}>
+                        <Text style={dynamicStyles.input}>
+                            {input}
+                            <View style={{ width: 10, height: 20, backgroundColor: colors.primary, transform: [{ translateY: 4 }] }} />
+                            <Text style={{ color: colors.text.dim }}>{ghostText}</Text>
                         </Text>
-                        <TextInput
-                            style={dynamicStyles.input}
-                            value={input}
-                            onChangeText={handleInputChange}
-                            onSubmitEditing={handleCommand}
-                            blurOnSubmit={false}
-                            autoCapitalize="none"
-                            autoCorrect={false}
-                            autoFocus={true}
-                            cursorColor={colors.primary}
-                            placeholderTextColor={colors.text.dim}
-                            placeholder=""
-                        />
-                    </View>
+                    </Pressable>
                 </>
             )}
         </View>

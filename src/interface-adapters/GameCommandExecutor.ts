@@ -25,6 +25,8 @@ import { SchemeCommand } from './commands/game/SchemeCommand';
 import { AsmCommand } from './commands/game/AsmCommand';
 import { SettingsCommand } from './commands/game/SettingsCommand';
 
+import { TutorCommand } from './commands/game/TutorCommand';
+
 export class GameCommandExecutor extends ExecuteCommand {
     private mailSystem: MailSystem;
     private compiler: CodeCompiler;
@@ -54,6 +56,9 @@ export class GameCommandExecutor extends ExecuteCommand {
         registry.register('asm', new AsmCommand(this.fs));
         registry.register('options', new SettingsCommand());
         registry.register('settings', new SettingsCommand());
+
+        // Register Tutor
+        registry.register('tutor', new TutorCommand(this.gameManager));
     }
 
     // No need to override execute() anymore as the superclass uses the registry!

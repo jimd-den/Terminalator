@@ -1,7 +1,8 @@
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ViewStyle } from 'react-native';
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ViewStyle, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { THEME } from '../../frameworks-drivers/ui/Theme';
 import { useTheme } from '../context/ThemeContext';
+import { useInput } from '../context/InputContext';
 
 interface ConsoleLayoutProps {
     status?: string;
@@ -22,6 +23,7 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
 }) => {
     const { theme, settings } = useTheme();
     const colors = theme.colors;
+    const { refocus } = useInput();
 
     const dynamicStyles = StyleSheet.create({
         container: {
@@ -34,6 +36,7 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
         header: {
             flexDirection: 'row',
             justifyContent: 'space-between',
+            alignItems: 'center',
             padding: THEME.spacing.md,
             borderBottomWidth: 1,
             borderBottomColor: colors.border,
@@ -42,6 +45,18 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
             color: colors.text.dim,
             fontFamily: settings.fontFamily,
             fontSize: THEME.typography.fontSize.sm,
+        },
+        keyboardBtn: {
+            borderWidth: 1,
+            borderColor: colors.primary,
+            paddingHorizontal: 8,
+            paddingVertical: 2,
+        },
+        keyboardBtnText: {
+            color: colors.primary,
+            fontFamily: settings.fontFamily,
+            fontSize: THEME.typography.fontSize.sm,
+            fontWeight: 'bold',
         },
         topBox: {
             flex: 2,
@@ -72,7 +87,9 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
             >
                 <View style={dynamicStyles.header}>
                     <Text style={dynamicStyles.headerText}>[ STATUS: {status} ]</Text>
-                    <Text style={dynamicStyles.headerText}>{new Date().toLocaleTimeString()}</Text>
+                    <Pressable style={dynamicStyles.keyboardBtn} onPress={refocus}>
+                        <Text style={dynamicStyles.keyboardBtnText}>KEYBOARD</Text>
+                    </Pressable>
                 </View>
 
                 {/* TOP BOX: Output/Environment/Buffer */}

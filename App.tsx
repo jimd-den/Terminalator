@@ -17,6 +17,7 @@ import { UbuntuMono_400Regular } from '@expo-google-fonts/ubuntu-mono';
 import { NavigationContainer } from '@react-navigation/native';
 import { GameProvider } from './src/presentation/context/GameContext';
 import { ThemeProvider } from './src/presentation/context/ThemeContext';
+import { InputProvider } from './src/presentation/context/InputContext';
 import { AppNavigator } from './src/presentation/navigation/AppNavigator';
 
 export default function App() {
@@ -37,9 +38,11 @@ export default function App() {
       <StatusBar style="light" />
       <GameProvider>
         <ThemeProvider>
-          <NavigationContainer>
-            <AppNavigator />
-          </NavigationContainer>
+          <InputProvider>
+            <NavigationContainer>
+              <AppNavigator />
+            </NavigationContainer>
+          </InputProvider>
         </ThemeProvider>
       </GameProvider>
     </SafeAreaProvider>

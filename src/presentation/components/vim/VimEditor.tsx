@@ -12,13 +12,15 @@
  * Minimal logic remains here; most operations are delegated to the domain layer via adapters.
  */
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { View, Text, TextInput, StyleSheet, Pressable, ScrollView } from 'react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { useInput } from '../../context/InputContext';
 import { THEME } from '../../../frameworks-drivers/ui/Theme';
 import { useGame } from '../../context/GameContext';
 import { VirtualKeyboard } from '../VirtualKeyboard';
 import { VimSimulator } from '../../../interface-adapters/VimSimulator';
 import { HighlighterRegistry } from '../../../interface-adapters/vim/HighlighterRegistry';
+import { useTheme } from '../../context/ThemeContext';
 
 interface VimEditorProps {
     filename: string;
@@ -26,8 +28,6 @@ interface VimEditorProps {
 }
 
 const highlighterRegistry = new HighlighterRegistry();
-
-import { useTheme } from '../../context/ThemeContext';
 
 export const useVimEditor = (filename: string, onExit: () => void) => {
     const { fs } = useGame();
@@ -43,7 +43,99 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
     const [commandInput, setCommandInput] = useState('');
     const [isMounting, setIsMounting] = useState(true);
 
-    const hiddenInputRef = useRef<TextInput>(null);
+    const handleCommandSubmit = React.useCallback(() => {
+        const { exit, message } = simulator.executeCommand(commandInput);
+        if (exit) onExit();
+        else {
+            const nextState = simulator.getSnapshot();
+            nextState.statusMessage = message;
+            setState(nextState);
+            setCommandInput('');
+        }
+    }, [commandInput, onExit, simulator]);
+
+    const { gameManager } = useGame(); // Need gameManager to access TutorEngine
+
+    const handleVirtualKey = React.useCallback((key: string) => {
+        // -- TUTOR INTERCEPTION --
+        if (gameManager.tutorEngine.isActive()) {
+            const lesson = gameManager.tutorEngine.getCurrentLesson();
+            // Only intercept if we are in a VIM lesson type, OR if we are transitioning?
+            // If lesson is SHELL, Vim shouldn't be active anyway.
+            // If lesson is VIM_INSERT or VIM_COMMAND, we track.
+            if (lesson && (lesson.type === 'VIM_INSERT' || lesson.type === 'VIM_COMMAND' || lesson.type === 'SHELL')) {
+                // Note: 'SHELL' lesson might use 'vim filename' to enter vim. 
+                // If we are in Vim but lesson is SHELL, it means we just entered. 
+                // We might need to advance lesson to 'VIM_BASICS'? 
+                // Ideally TutorEngine handles this transition logic.
+
+                // For now, if Tutor is active, pass input to it?
+                // But Vim is complex. Tutor needs to know if we typed 'i' to enter insert mode.
+                // TutorEngine.handleInput just matches string.
+                // If lesson text is "iHello<ESC>", handling 'i' advances it.
+                // We still need to letting VimSimulator process it so the UI updates!
+
+                // 1. Pass to Tutor (non-blocking, just scoring)
+                gameManager.tutorEngine.handleInput(key);
+
+                // 2. Pass to Simulator (Visuals)
+                // We always pass to simulator so user sees what they type.
+            }
+        }
+
+        if (key === 'BACKSPACE') {
+            if (state.mode === 'COMMAND') {
+                if (commandInput.length > 0) {
+                    setCommandInput(prev => prev.slice(0, -1));
+                } else if (commandInput.length === 0) {
+                    // Exit command mode if backspace on empty
+                    simulator.handleInput('ESC');
+                    setState(simulator.getSnapshot());
+                }
+                return;
+            }
+            setState(simulator.handleInput('BACKSPACE'));
+            return;
+        }
+
+        if (state.mode === 'COMMAND') {
+            if (key === 'ESC') {
+                simulator.handleInput('ESC');
+                setState(simulator.getSnapshot());
+                setCommandInput('');
+                return;
+            }
+            if (key === 'ENTER') {
+                handleCommandSubmit();
+                return;
+            }
+            if (key.length === 1) setCommandInput(prev => prev + key);
+            return;
+        }
+
+        // Special handling for Entering Command Mode
+        if (state.mode === 'NORMAL' && key === ':') {
+            setCommandInput(':');
+        }
+
+        setState(simulator.handleInput(key));
+    }, [state.mode, commandInput, simulator, handleCommandSubmit, gameManager]);
+
+    const { setOnInput, setOnKeyPress, refocus } = useInput();
+
+    React.useEffect(() => {
+        // Wire up global input
+        setOnInput((text) => {
+            // Handle pasted text or fast typing
+            for (const char of text) {
+                if (char === '\n') handleVirtualKey('ENTER');
+                else handleVirtualKey(char);
+            }
+        });
+        setOnKeyPress((key) => {
+            handleVirtualKey(key);
+        });
+    }, [handleVirtualKey, setOnInput, setOnKeyPress]);
 
     // -- Initialization --
     useEffect(() => {
@@ -52,16 +144,17 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
         return () => clearTimeout(timer);
     }, [filename]);
 
+    // Force focus when mounting this "active app"
+    useEffect(() => {
+        refocus();
+        const interval = setInterval(refocus, 2000);
+        return () => clearInterval(interval);
+    }, [refocus]);
+
     const dynamicStyles = StyleSheet.create({
         editorContainer: {
             flex: 1,
             backgroundColor: colors.surface,
-        },
-        hiddenInput: {
-            position: 'absolute',
-            width: 1,
-            height: 1,
-            opacity: 0,
         },
         contentArea: {
             flex: 1,
@@ -88,15 +181,6 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
         cursorBlock: {
             backgroundColor: colors.primary,
             display: 'flex',
-        },
-        cursorInsert: {
-            borderLeftWidth: 2,
-            borderLeftColor: colors.primary,
-        },
-        cursorText: {
-            color: colors.background,
-            fontFamily: settings.fontFamily,
-            fontSize: THEME.typography.fontSize.md,
         },
         footer: {
             justifyContent: 'center',
@@ -177,99 +261,6 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
         }
     };
 
-    const refocus = () => { hiddenInputRef.current?.focus(); };
-    useEffect(() => {
-        const interval = setInterval(refocus, 500);
-        refocus();
-        return () => clearInterval(interval);
-    }, []);
-
-    const [inputValue, setInputValue] = useState(' ');
-
-    const handleHiddenInput = (text: string) => {
-        if (text.length === 0) {
-            if (state.mode === 'COMMAND') {
-                if (commandInput.length > 1) {
-                    setCommandInput(prev => prev.slice(0, -1));
-                } else {
-                    simulator.handleInput('ESC');
-                    setState(simulator.getSnapshot());
-                    setCommandInput('');
-                }
-            } else {
-                setState(simulator.handleInput('BACKSPACE'));
-            }
-            setInputValue(' ');
-            return;
-        }
-
-        const newContent = text.startsWith(' ') ? text.slice(1) : text;
-        if (newContent.length === 0) {
-            setInputValue(' ');
-            return;
-        }
-
-        // Process characters sequentially
-        let shouldRefreshSnapshot = true;
-        for (const char of newContent) {
-            if (char === '\n') {
-                if (state.mode === 'COMMAND') {
-                    handleCommandSubmit();
-                    shouldRefreshSnapshot = false; // handleCommandSubmit handles state
-                } else {
-                    simulator.handleInput('ENTER');
-                }
-            } else {
-                if (state.mode === 'COMMAND') {
-                    setCommandInput(prev => prev + char);
-                } else {
-                    if (state.mode === 'NORMAL' && char === ':') {
-                        setCommandInput(':');
-                    }
-                    simulator.handleInput(char);
-                }
-            }
-        }
-
-        if (shouldRefreshSnapshot) {
-            setState(simulator.getSnapshot());
-        }
-        setInputValue(' ');
-    };
-
-    const handleVirtualKey = (key: string) => {
-        if (key === 'BACKSPACE') {
-            handleHiddenInput('');
-            return;
-        }
-        if (state.mode === 'COMMAND') {
-            if (key === 'ESC') {
-                simulator.handleInput('ESC');
-                setState(simulator.getSnapshot());
-                setCommandInput('');
-                return;
-            }
-            if (key === 'ENTER') {
-                handleCommandSubmit();
-                return;
-            }
-            if (key.length === 1) setCommandInput(prev => prev + key);
-            return;
-        }
-        setState(simulator.handleInput(key));
-    };
-
-    const handleCommandSubmit = () => {
-        const { exit, message } = simulator.executeCommand(commandInput);
-        if (exit) onExit();
-        else {
-            const nextState = simulator.getSnapshot();
-            nextState.statusMessage = message;
-            setState(nextState);
-            setCommandInput('');
-        }
-    };
-
     const renderLine = (lineContent: string, lineIdx: number) => {
         const isCurrentLine = lineIdx === state.cursor.line;
         const lineError = state.lintErrors.find(e => e.line === lineIdx + 1);
@@ -321,16 +312,64 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
         );
     };
 
+    // We will re-use the existing renderLine for the file content.
+    // Main renderLine logic is above at line 264.
+
+
+    // We will re-use the existing renderLine for the file content.
+    // But we add an Overlay to topContent.
+
+    const [tutorState, setTutorState] = useState<{ active: boolean, text: string, completed: string }>({ active: false, text: '', completed: '' });
+
+    // Poll tutor state for UI? Or subscribe?
+    // Let's use a quick poll in useEffect or just rely on re-renders if gameManager triggers update?
+    // Since TutorEngine is outside React, we need to force update or use a hook.
+    // For now, simply reading it during render might lag if no state change happens.
+    // Better: Subscribe in useEffect.
+
+    useEffect(() => {
+        if (!gameManager.tutorEngine.isActive()) {
+            setTutorState({ active: false, text: '', completed: '' });
+            return;
+        }
+
+        const updateTutor = () => {
+            setTutorState({
+                active: gameManager.tutorEngine.isActive(),
+                text: gameManager.tutorEngine.getGhostText(),
+                completed: gameManager.tutorEngine.getCompletedText()
+            });
+        };
+
+        // Initial sync
+        updateTutor();
+
+        // Subscribe
+        const unsubscribe = gameManager.tutorEngine.subscribe(() => {
+            updateTutor();
+        });
+
+        return unsubscribe;
+    }, [gameManager.tutorEngine]);
+
     const topContent = (
         <View style={dynamicStyles.editorContainer}>
+            {tutorState.active && (
+                <View style={{
+                    position: 'absolute', top: 0, left: 0, right: 0,
+                    backgroundColor: 'rgba(0,0,0,0.8)', padding: 10, zIndex: 100,
+                    borderBottomWidth: 1, borderColor: colors.primary
+                }}>
+                    <Text style={{ color: colors.primary, fontWeight: 'bold' }}>TUTOR PROTOCOL ACTIVE</Text>
+                    <Text style={{ color: colors.text.primary, fontFamily: settings.fontFamily }}>
+                        TARGET: <Text style={{ color: colors.secondary }}>{tutorState.completed}</Text>
+                        <Text style={{ color: colors.text.dim }}>{tutorState.text}</Text>
+                    </Text>
+                </View>
+            )}
+
             {isMounting && <View style={dynamicStyles.crtBlinkOverlay} />}
-            <TextInput
-                ref={hiddenInputRef}
-                style={dynamicStyles.hiddenInput}
-                value={inputValue}
-                onChangeText={handleHiddenInput}
-                autoCapitalize="none" autoCorrect={false} spellCheck={false} blurOnSubmit={false} multiline={true} editable={true} caretHidden={true} autoFocus={true}
-            />
+            {/* ... rest of ScrollView ... */}
             <ScrollView
                 style={dynamicStyles.contentArea}
                 contentContainerStyle={dynamicStyles.scrollContent}
