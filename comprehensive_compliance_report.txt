@@ -14,10 +14,7 @@ UTILITY: cd
 [PASS] CD_03
 [PASS] CD_04
 [PASS] CD_05
-[FAIL] CD_06: Fail if target is a file
-       -> Stdout Regex Mismatch.
-   Expected: /Not a directory/i
-   Got: "cd: /file: no such file or directory"
+[PASS] CD_06
 [PASS] CD_07
 [PASS] CD_08
 [PASS] CD_09
@@ -33,7 +30,7 @@ UTILITY: ls
 [FAIL] LS_08: Recursive listing -R
        -> Stdout Regex Mismatch.
    Expected: /\/sub/
-   Got: "mail  notes.txt\n\n/home/operator/mail:"
+   Got: ".:\nmail  notes.txt\n\n./mail:"
 [PASS] LS_09
 [PASS] LS_10
 UTILITY: touch
@@ -45,8 +42,7 @@ UTILITY: touch
 [PASS] TOUCH_06
 [PASS] TOUCH_07
 [PASS] TOUCH_08
-[FAIL] TOUCH_09: Slash in name (fail)
-       -> Exit Code: Expected 1, got 0
+[PASS] TOUCH_09
 [PASS] TOUCH_10
 UTILITY: rm
 [PASS] RM_01
@@ -79,10 +75,8 @@ UTILITY: mv
 [PASS] MV_06
 [PASS] MV_07
 [PASS] MV_08
-[FAIL] MV_09: Fail if source is dir and dest is file
-       -> Exit Code: Expected 1, got 0
-[FAIL] MV_10: No-op move (self)
-       -> Exit Code: Expected 0, got 1
+[PASS] MV_09
+[PASS] MV_10
 UTILITY: echo
 [PASS] ECHO_01
 [PASS] ECHO_02
@@ -105,8 +99,7 @@ UTILITY: cat
 [PASS] CAT_05
 [PASS] CAT_06
 [PASS] CAT_07
-[FAIL] CAT_08: Dash operand (stdin stub)
-       -> Exit Code: Expected 0, got 1
+[PASS] CAT_08
 [PASS] CAT_09
 [PASS] CAT_10
 UTILITY: pwd
@@ -114,10 +107,7 @@ UTILITY: pwd
 [PASS] PWD_02
 [PASS] PWD_03
 [PASS] PWD_04
-[FAIL] PWD_05: Verify newline
-       -> Stdout Regex Mismatch.
-   Expected: /\n$/
-   Got: "/home/operator"
+[PASS] PWD_05
 [PASS] PWD_06
 [PASS] PWD_07
 [PASS] PWD_08
@@ -229,7 +219,7 @@ UTILITY: date
 [FAIL] DATE_06: Complex format
        -> Stdout Regex Mismatch.
    Expected: /Year: 20../
-   Got: "Mon Jan 19 2026 22:22:33 GMT+0000 (Coordinated Universal Time)"
+   Got: "Mon Jan 19 2026 22:51:40 GMT+0000 (Coordinated Universal Time)"
 [PASS] DATE_07
 [FAIL] DATE_08: Set date (fail/stub)
        -> Exit Code: Expected 1, got 0
@@ -2935,15 +2925,15 @@ UTILITY: xgettext
 UTILITY       | TESTS | PASS | FAIL | COMPLIANCE
 --------------|-------|------|------|-----------
 mkdir         |    10 |    9 |    0 |     90.0%
-cd            |    10 |    9 |    1 |     90.0%
+cd            |    10 |   10 |    0 |    100.0%
 ls            |    10 |    9 |    1 |     90.0%
-touch         |    10 |    9 |    1 |     90.0%
+touch         |    10 |   10 |    0 |    100.0%
 rm            |    10 |   10 |    0 |    100.0%
 cp            |    10 |   10 |    0 |    100.0%
-mv            |    10 |    8 |    2 |     80.0%
+mv            |    10 |   10 |    0 |    100.0%
 echo          |    10 |    9 |    1 |     90.0%
-cat           |    10 |    9 |    1 |     90.0%
-pwd           |    10 |    9 |    1 |     90.0%
+cat           |    10 |   10 |    0 |    100.0%
+pwd           |    10 |   10 |    0 |    100.0%
 grep          |    10 |   10 |    0 |    100.0%
 head          |    10 |   10 |    0 |    100.0%
 tail          |    10 |   10 |    0 |    100.0%
@@ -3110,7 +3100,7 @@ uustat        |    10 |    9 |    1 |     90.0%
 uux           |    10 |    2 |    8 |     20.0%
 xgettext      |    10 |    6 |    4 |     60.0%
 
-TOTAL COMPLIANCE: 61.3% (1073/1750)
+TOTAL COMPLIANCE: 61.7% (1079/1750)
 
 === MISSING UTILITIES (Implemented but failing) ===
 None
