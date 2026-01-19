@@ -1,4 +1,4 @@
-POSIX COMPLIANCE REPORT - 2026-01-18T20:59:45.378Z
+POSIX COMPLIANCE REPORT - 2026-01-19T14:08:37.733Z
 Standard: IEEE Std 1003.1-2024 (SUSv5)
 Target Level: Strict
 
@@ -172,7 +172,7 @@ Target Level: Strict
 [PRESENT] false
 [MISSING] fc
 [MISSING] fg
-[MISSING] file
+[PRESENT] file
 [PRESENT] find
 [PRESENT] fold
 [MISSING] fuser
@@ -206,7 +206,7 @@ Target Level: Strict
 [PRESENT] man
 [PRESENT] mesg
 [PRESENT] mkdir
-[MISSING] mkfifo
+[PRESENT] mkfifo
 [MISSING] more
 [MISSING] msgfmt
 [PRESENT] mv
@@ -215,7 +215,7 @@ Target Level: Strict
 [PRESENT] nice
 [PRESENT] nl
 [MISSING] nm
-[MISSING] nohup
+[PRESENT] nohup
 [PRESENT] od
 [PRESENT] paste
 [MISSING] patch
@@ -254,7 +254,7 @@ Target Level: Strict
 [PRESENT] test
 [PRESENT] [
 [PRESENT] time
-[MISSING] timeout
+[PRESENT] timeout
 [MISSING] times
 [PRESENT] touch
 [PRESENT] tput
@@ -295,4 +295,4 @@ Target Level: Strict
 SUMMARY:
 Tests Passed: 65
 Tests Failed: 0
-Utility Completeness: 57% (98/171)
+Utility Completeness: 60% (102/171)
