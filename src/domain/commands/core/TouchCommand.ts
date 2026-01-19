@@ -20,9 +20,19 @@ export class TouchCommand implements ICommand {
     constructor(private fs: FileSystem) { }
 
     execute(args: string[], state: TerminalState, input?: string): CommandResponse {
-        // Simple arg parsing. Ignore flags like -c or -a for now unless strict suite demands it.
-        // Suite didn't strictly require -c yet.
-        const targets = args.filter(arg => !arg.startsWith('-'));
+        // Parse flags
+        let noCreate = false; // -c
+        const targets: string[] = [];
+
+        for (const arg of args) {
+            if (arg === '-c') {
+                noCreate = true;
+            } else if (arg.startsWith('-')) {
+                // Ignore other flags
+            } else {
+                targets.push(arg);
+            }
+        }
 
         if (targets.length === 0) {
             return {
@@ -32,12 +42,20 @@ export class TouchCommand implements ICommand {
             };
         }
 
+        let exitCode = 0;
+        let output = '';
+
         for (const target of targets) {
             let path = target;
             if (!target.startsWith('/')) {
                 path = state.currentDirectory === '/'
                     ? `/${target}`
                     : `${state.currentDirectory}/${target}`;
+            }
+
+            // Remove trailing slash if present (unless it is root) to correctly identify parent
+            if (path.length > 1 && path.endsWith('/')) {
+                path = path.slice(0, -1);
             }
 
             const existing = this.fs.resolveNode(path);
@@ -49,39 +67,40 @@ export class TouchCommand implements ICommand {
                     const now = Date.now();
                     inode.mtime = now;
                     inode.atime = now;
-                    // ctime should also update?
                     inode.ctime = now;
                 }
             } else {
+                // If -c is set, do NOT create file if it doesn't exist
+                if (noCreate) {
+                    continue;
+                }
+
                 // Create new empty file
                 // We need to verify parent exists
-                const parentPath = path.substring(0, path.lastIndexOf('/')) || '/';
+                const lastSlashIndex = path.lastIndexOf('/');
+                const parentPath = lastSlashIndex === 0 ? '/' : path.substring(0, lastSlashIndex);
+
                 const parent = this.fs.resolveNode(parentPath);
 
                 if (!parent || !this.fs.isDirectory(parent)) {
-                    return {
-                        output: `touch: cannot touch '${target}': No such file or directory`,
-                        newState: state,
-                        exitCode: 1
-                    };
+                    output += `touch: cannot touch '${target}': No such file or directory\n`;
+                    exitCode = 1;
+                    continue;
                 }
 
                 try {
                     this.fs.writeFile(path, '', 'w');
                 } catch (e: any) {
-                    return {
-                        output: `touch: cannot touch '${target}': ${e.message}`,
-                        newState: state,
-                        exitCode: 1
-                    };
+                    output += `touch: cannot touch '${target}': ${e.message}\n`;
+                    exitCode = 1;
                 }
             }
         }
 
         return {
-            output: '',
+            output: output.trim(),
             newState: state,
-            exitCode: 0
+            exitCode: exitCode
         };
     }
 }

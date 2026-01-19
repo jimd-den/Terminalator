@@ -31,28 +31,86 @@ export class TailCommand implements ICommand {
             }
         }
 
-        const operands = args.filter(arg => !arg.startsWith('-') && arg !== linesToPrint.toString());
-        // Logic above is flawed if filename is number.
-        // Better: parse properly.
-        // But for update:
-        const targets = [];
+        // Improved parsing to avoid filtering out numeric filenames
+        const targets: string[] = [];
         let skipNext = false;
+
         for (let i = 0; i < args.length; i++) {
-            if (skipNext) { skipNext = false; continue; }
-            if (args[i] === '-n') {
-                skipNext = true;
+            if (skipNext) {
+                skipNext = false;
                 continue;
             }
-            targets.push(args[i]);
+
+            if (args[i] === '-n') {
+                if (i + 1 < args.length) {
+                    linesToPrint = parseInt(args[i + 1]);
+                    skipNext = true;
+                } else {
+                    return {
+                        output: 'tail: option requires an argument -- n',
+                        newState: state,
+                        exitCode: 1
+                    };
+                }
+            } else if (args[i].startsWith('-') && args[i] !== '-') {
+                 // ignore other flags
+            } else {
+                targets.push(args[i]);
+            }
         }
 
         const getTail = (content: string): string => {
+            // Split by newline.
+            // If the file ends with \n, split gives ["line1", "line2", ""].
+            // Tail should return the last N lines.
+            // If we just use split('\n'), we get the empty string at end.
             const lines = content.split('\n');
-            // Handle trailing newline effect split?
-            if (lines.length > 0 && lines[lines.length - 1] === '') lines.pop(); // Remove last empty from split
 
-            const snippet = lines.slice(-linesToPrint);
-            return snippet.join('\n');
+            // If the last element is empty (caused by trailing newline), we generally preserve it in output
+            // effectively, "tail -n 1" on "a\n" should output "a\n".
+            // split gives ["a", ""]. slice(-1) gives [""]. join gives "". Wrong.
+            // slice(-2) gives ["a", ""]. join gives "a\n". Correct.
+
+            // Actually, let's treat lines properly.
+            // If content is empty, lines is [""] -> output "" (correct)
+            // If content "a", lines ["a"] -> output "a" (correct)
+            // If content "a\n", lines ["a", ""] -> tail -n 1 should be "a\n".
+            // "a\n" is 1 line technically? No, it's 1 line ending in newline.
+            // wc -l "a\n" says 1.
+            // wc -l "a" says 0 (in some POSIX) or 1?
+            // In this project, `wc` says "a\n" is 1 line.
+
+            // Let's rely on slice logic.
+            // If we have trailing empty string, it means the last line ended with \n.
+            // We want the last N lines.
+
+            // If we have ["a", "b", ""], that's 2 lines: "a" and "b".
+            // If N=1, we want "b\n".
+            // If we take slice(-1) of ["a", "b", ""], we get [""].
+
+            // We should ignore the last empty element for counting, but include it in result?
+
+            let effectiveLines = lines;
+            let hasTrailing = false;
+            if (lines.length > 0 && lines[lines.length - 1] === '') {
+                effectiveLines = lines.slice(0, -1);
+                hasTrailing = true;
+            }
+
+            const snippet = effectiveLines.slice(-linesToPrint);
+
+            // Re-add trailing newline if it existed and we picked the last line?
+            // Or simpler: join with \n.
+
+            let output = snippet.join('\n');
+            if (hasTrailing && snippet.length > 0) {
+                 // If we picked lines from the end, and the original had a trailing newline,
+                 // we should probably append it back if the last line we picked was indeed the last line of file.
+                 // Since we are tailing, we ARE picking the last lines.
+                 output += '\n';
+            }
+
+            return output;
         };
 
         if (targets.length === 0) {
