@@ -101,6 +101,11 @@ export class FileSystem {
         return this.createDentry(path, S_IFREG | mode, uid, gid, cwd);
     }
 
+    mkfifo(path: string, mode: number = 0o644, uid: number = 0, gid: number = 0, cwd: string = '/'): Dentry {
+        this.log(`mkfifo(${path})`);
+        return this.createDentry(path, S_IFIFO | mode, uid, gid, cwd);
+    }
+
     symlink(target: string, linkPath: string, uid: number = 0, gid: number = 0, cwd: string = '/'): Dentry {
         this.log(`symlink(${target} -> ${linkPath})`);
         const dentry = this.createDentry(linkPath, S_IFLNK | 0o777, uid, gid, cwd);

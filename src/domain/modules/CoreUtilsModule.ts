@@ -107,6 +107,9 @@ import { LoggerCommand } from '../commands/core/LoggerCommand';
 import { ManCommand } from '../commands/core/ManCommand';
 import { TabsCommand } from '../commands/core/TabsCommand';
 import { TputCommand } from '../commands/core/TputCommand';
+import { MkfifoCommand } from '../commands/core/MkfifoCommand';
+import { FileCommand } from '../commands/core/FileCommand';
+import { TimeoutCommand } from '../commands/core/TimeoutCommand';
 
 export class CoreUtilsModule implements CommandModule {
     constructor(private fs: FileSystem) {}
@@ -184,6 +187,9 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('time', new TimeCommand(fs, (name) => registry.get(name)));
         registry.register('nohup', new NohupCommand(fs, (name) => registry.get(name)));
         registry.register('nice', new NiceCommand(fs, (name) => registry.get(name)));
+        registry.register('mkfifo', new MkfifoCommand(fs));
+        registry.register('file', new FileCommand(fs));
+        registry.register('timeout', new TimeoutCommand(fs, (name) => registry.get(name)));
         registry.register('chgrp', new ChgrpCommand(fs));
         registry.register('alias', new AliasCommand(fs));
         registry.register('unalias', new UnaliasCommand(fs));

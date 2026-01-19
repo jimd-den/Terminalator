@@ -23,7 +23,7 @@ export class NohupCommand implements ICommand {
 
     async execute(args: string[], state: TerminalState, input?: string): Promise<CommandResponse> {
         if (args.length === 0) {
-             return { output: 'nohup: missing operand', newState: state, exitCode: 127 };
+             return { output: 'nohup: missing operand', newState: state, exitCode: 1 };
         }
 
         const cmdName = args[0];
