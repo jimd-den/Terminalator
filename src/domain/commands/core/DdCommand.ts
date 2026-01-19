@@ -1,68 +1,37 @@
 /**
- * DdCommand - Core Command
- *
- * Convert and copy a file.
- *
- * Pillar: The Four-Fold Shield (Strict Architecture)
- * Pillar: The Swift Stream (Performance)
- *
- * Intent:
- * Block-level copying.
+ * @file DdCommand.ts
+ * @description The 'dd' command. Convert and copy a file.
  */
-
-import { ICommand } from '../ICommand';
+import { ICommand, CommandResponse } from '../ICommand';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem } from '../../entities/FileSystem';
 
 export class DdCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
-
-    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
-        let inFile = '';
-        let outFile = '';
-        // dd operands: if=file of=file count=n bs=n ...
+    async execute(args: string[], state: TerminalState, _input?: string): Promise<CommandResponse> {
+        let inputFile = '';
+        let outputFile = '';
 
         for (const arg of args) {
-            if (arg.startsWith('if=')) inFile = arg.slice(3);
-            else if (arg.startsWith('of=')) outFile = arg.slice(3);
+            if (arg.startsWith('if=')) inputFile = arg.substring(3);
+            else if (arg.startsWith('of=')) outputFile = arg.substring(3);
         }
 
-        let content = '';
-        if (inFile) {
-            try {
-                content = this.fs.readFile(this.resolvePath(inFile, state));
-            } catch (e) {
-                return { output: `dd: failed to open '${inFile}': No such file`, newState: state, exitCode: 1 };
+        const fs = state.fs;
+        let content = _input || '';
+
+        if (inputFile) {
+            const node = fs.resolveNode(inputFile, state.currentDirectory);
+            if (!node || fs.isDirectory(node)) {
+                 return { output: `dd: ${inputFile}: No such file`, newState: state, exitCode: 1 };
             }
-        } else if (input) {
-            content = input;
+            content = fs.readFile(fs.getAbsolutePath(node));
         }
 
-        // Processing (bs, count, skip, seek, conv) skipped for simplified MVP.
-        // Identity copy.
-
-        if (outFile) {
-            try {
-                this.fs.writeFile(this.resolvePath(outFile, state), content, 'w');
-            } catch (e) {
-                return { output: `dd: failed to write to '${outFile}'`, newState: state, exitCode: 1 };
-            }
+        if (outputFile) {
+            fs.writeFile(outputFile, content, 'w', state.currentDirectory);
         } else {
             return { output: content, newState: state, exitCode: 0 };
         }
 
-        // Standard dd outputs stats to stderr.
-        // "0+1 records in\n0+1 records out"
-        return {
-            output: '', // silent to stdout, stats to stderr (not separate here) or output stats?
-            newState: state,
-            exitCode: 0
-        };
-    }
-
-    private resolvePath(path: string, state: TerminalState): string {
-        if (path.startsWith('/')) return path;
-        return state.currentDirectory === '/' ? `/${path}` : `${state.currentDirectory}/${path}`;
+        return { output: '', newState: state, exitCode: 0 };
     }
 }
