@@ -31,14 +31,21 @@ export class TeeCommand implements ICommand {
         }
 
         const content = input || '';
+        let exitCode = 0;
 
         // Write to files
         for (const file of files) {
             try {
                 const path = this.resolvePath(file, state);
+
+                // Check parent dir
+                const parentPath = path.substring(0, path.lastIndexOf('/')) || '/';
+                const parent = this.fs.resolveNode(parentPath);
+                if (!parent || !this.fs.isDirectory(parent)) {
+                     throw new Error('No such directory');
+                }
+
                 if (append) {
-                    // Primitive append support in FS?
-                    // FS facade might not have appendFile. Read+Write.
                     let existing = '';
                     try {
                         existing = this.fs.readFile(path);
@@ -50,20 +57,15 @@ export class TeeCommand implements ICommand {
                     this.fs.writeFile(path, content, 'w');
                 }
             } catch (e) {
-                // tee continues even if write fails for one?
-                // POSIX: "If the file ... cannot be opened ... tee shall write a diagnostic ... and continue..."
-                // We'll simplisticly fail or continue?
-                // Return exit code >0 but continue?
-                // Let's just log diagnostic in output?
-                // But we must return pass-through output.
-                // For now, we swallow error or print to stderr (not separated).
+                // tee writes diagnostic and continues
+                exitCode = 1;
             }
         }
 
         return {
             output: content,
             newState: state,
-            exitCode: 0
+            exitCode: exitCode
         };
     }
 

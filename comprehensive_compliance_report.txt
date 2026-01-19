@@ -139,44 +139,26 @@ UTILITY: head
 [PASS] HEAD_02
 [PASS] HEAD_03
 [PASS] HEAD_04
-[FAIL] HEAD_05: Multiple files
-       -> Stdout Regex Mismatch.
-   Expected: /==> \/1 <==[\s\S]*==> \/2 <==/
-   Got: "x"
+[PASS] HEAD_05
 [PASS] HEAD_06
 [PASS] HEAD_07
 [PASS] HEAD_08
 [PASS] HEAD_09
-[FAIL] HEAD_10: Stdin stub
-       -> Exit Code: Expected 0, got 1
+[PASS] HEAD_10
 UTILITY: tail
 [PASS] TAIL_01
 [PASS] TAIL_02
 [PASS] TAIL_03
 [PASS] TAIL_04
 [PASS] TAIL_05
-[FAIL] TAIL_06: Multiple files
-       -> Stdout Regex Mismatch.
-   Expected: /==> \/1 <==[\s\S]*==> \/2 <==/
-   Got: "x"
-[FAIL] TAIL_07: Bytes -c
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /45/
-   Got: "tail: cannot open '2' for reading: No such file or directory"
+[PASS] TAIL_06
+[PASS] TAIL_07
 [PASS] TAIL_08
 [PASS] TAIL_09
-[FAIL] TAIL_10: Stdin stub
-       -> Exit Code: Expected 0, got 1
+[PASS] TAIL_10
 UTILITY: wc
-[FAIL] WC_01: All counts
-       -> Stdout Regex Mismatch.
-   Expected: /1\s+2\s+3/
-   Got: "0 2 3 /f"
-[FAIL] WC_02: Lines only -l
-       -> Stdout Regex Mismatch.
-   Expected: /2\s/
-   Got: "1 /f"
+[PASS] WC_01
+[PASS] WC_02
 [PASS] WC_03
 [PASS] WC_04
 [FAIL] WC_05: Chars -m
@@ -205,42 +187,26 @@ UTILITY: awk
 [PASS] AWK_02
 [PASS] AWK_03
 [PASS] AWK_04
-[FAIL] AWK_05: BEGIN block
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /start/
-   Got: "awk: no input"
-[FAIL] AWK_06: END block
-       -> Exit Code: Expected 0, got 1
-[FAIL] AWK_07: Regex pattern
-       -> Exit Code: Expected 0, got 1
-[FAIL] AWK_08: Arithmetic
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /2/
-   Got: "awk: no input"
+[PASS] AWK_05
+[PASS] AWK_06
+[PASS] AWK_07
+[PASS] AWK_08
 [FAIL] AWK_09: Custom FS
-       -> Exit Code: Expected 0, got 1
        -> Stdout Regex Mismatch.
    Expected: /b/
-   Got: "awk: cannot open {print $2}: /home/operator/{print $2}: No such file or directory"
-[FAIL] AWK_10: Multiple files
-       -> Stdout Regex Mismatch.
-   Expected: /a\nb/
-   Got: "a"
+   Got: "$2"
+[PASS] AWK_10
 UTILITY: sed
 [PASS] SED_01
 [PASS] SED_02
 [PASS] SED_03
 [PASS] SED_04
 [PASS] SED_05
-[PASS] SED_06
+[FAIL] SED_06: Multiple commands -e
+       -> Exit Code: Expected 0, got 1
 [PASS] SED_07
 [PASS] SED_08
-[FAIL] SED_09: Backreference \1 (stub)
-       -> Stdout Regex Mismatch.
-   Expected: /aa/
-   Got: "a"
+[PASS] SED_09
 [PASS] SED_10
 UTILITY: find
 [PASS] FIND_01
@@ -263,7 +229,7 @@ UTILITY: date
 [FAIL] DATE_06: Complex format
        -> Stdout Regex Mismatch.
    Expected: /Year: 20../
-   Got: "Mon Jan 19 2026 21:11:03 GMT+0000 (Coordinated Universal Time)"
+   Got: "Mon Jan 19 2026 22:22:33 GMT+0000 (Coordinated Universal Time)"
 [PASS] DATE_07
 [FAIL] DATE_08: Set date (fail/stub)
        -> Exit Code: Expected 1, got 0
@@ -295,17 +261,10 @@ UTILITY: sort
 [PASS] SORT_02
 [PASS] SORT_03
 [PASS] SORT_04
-[FAIL] SORT_05: Output file -o
-       -> Exit Code: Expected 0, got 1
-       -> Missing File: Expected /out to be created.
-[FAIL] SORT_06: Sort keys -k (stub)
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /b 1\na 2/
-   Got: "sort: 2: No such file or directory"
+[PASS] SORT_05
+[PASS] SORT_06
 [PASS] SORT_07
-[FAIL] SORT_08: Check -c
-       -> Exit Code: Expected 1, got 0
+[PASS] SORT_08
 [PASS] SORT_09
 [PASS] SORT_10
 UTILITY: uniq
@@ -313,24 +272,12 @@ UTILITY: uniq
 [PASS] UNIQ_02
 [PASS] UNIQ_03
 [PASS] UNIQ_04
-[FAIL] UNIQ_05: Skip fields -f (stub)
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /1 a/
-   Got: "uniq: 1: No such file or directory"
-[FAIL] UNIQ_06: Skip chars -s (stub)
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /xa/
-   Got: "uniq: 1: No such file or directory"
-[FAIL] UNIQ_07: Output file
-       -> Missing File: Expected /out to be created.
+[PASS] UNIQ_05
+[PASS] UNIQ_06
+[PASS] UNIQ_07
 [PASS] UNIQ_08
 [PASS] UNIQ_09
-[FAIL] UNIQ_10: Case ignore -i (Ext)
-       -> Stdout Regex Mismatch.
-   Expected: /^a$/
-   Got: "a\nA"
+[PASS] UNIQ_10
 UTILITY: tr
 [PASS] TR_01
 [PASS] TR_02
@@ -338,18 +285,12 @@ UTILITY: tr
 [FAIL] TR_04: Complement -c
        -> Stdout Regex Mismatch.
    Expected: /xexxox/
-   Got: "hxxxo"
-[FAIL] TR_05: Range support
-       -> Stdout Regex Mismatch.
-   Expected: /HELLO/
-   Got: "hello"
+   Got: "xellx"
+[PASS] TR_05
 [PASS] TR_06
 [FAIL] TR_07: Fail one arg (delete needs -d)
        -> Exit Code: Expected 1, got 0
-[FAIL] TR_08: Delete range
-       -> Stdout Regex Mismatch.
-   Expected: /^\s*$/
-   Got: "123"
+[PASS] TR_08
 [PASS] TR_09
 [PASS] TR_10
 UTILITY: cut
@@ -358,10 +299,7 @@ UTILITY: cut
 [PASS] CUT_03
 [PASS] CUT_04
 [PASS] CUT_05
-[FAIL] CUT_06: Multiple files
-       -> Stdout Regex Mismatch.
-   Expected: /a\nb/
-   Got: "a"
+[PASS] CUT_06
 [PASS] CUT_07
 [PASS] CUT_08
 [PASS] CUT_09
@@ -371,8 +309,7 @@ UTILITY: tee
 [PASS] TEE_02
 [PASS] TEE_03
 [PASS] TEE_04
-[FAIL] TEE_05: Fail dir
-       -> Exit Code: Expected 1, got 0
+[PASS] TEE_05
 [PASS] TEE_06
 [PASS] TEE_07
 [PASS] TEE_08
@@ -3008,20 +2945,20 @@ echo          |    10 |    9 |    1 |     90.0%
 cat           |    10 |    9 |    1 |     90.0%
 pwd           |    10 |    9 |    1 |     90.0%
 grep          |    10 |   10 |    0 |    100.0%
-head          |    10 |    8 |    2 |     80.0%
-tail          |    10 |    7 |    3 |     70.0%
-wc            |    10 |    7 |    3 |     70.0%
+head          |    10 |   10 |    0 |    100.0%
+tail          |    10 |   10 |    0 |    100.0%
+wc            |    10 |    9 |    1 |     90.0%
 chmod         |    10 |    7 |    3 |     70.0%
-awk           |    10 |    4 |    6 |     40.0%
+awk           |    10 |    9 |    1 |     90.0%
 sed           |    10 |    9 |    1 |     90.0%
 find          |    10 |    7 |    2 |     70.0%
 date          |    10 |    7 |    3 |     70.0%
 diff          |    10 |    5 |    5 |     50.0%
-sort          |    10 |    7 |    3 |     70.0%
-uniq          |    10 |    6 |    4 |     60.0%
-tr            |    10 |    6 |    4 |     60.0%
-cut           |    10 |    9 |    1 |     90.0%
-tee           |    10 |    8 |    2 |     80.0%
+sort          |    10 |   10 |    0 |    100.0%
+uniq          |    10 |   10 |    0 |    100.0%
+tr            |    10 |    8 |    2 |     80.0%
+cut           |    10 |   10 |    0 |    100.0%
+tee           |    10 |    9 |    1 |     90.0%
 alias         |    10 |    7 |    3 |     70.0%
 unalias       |    10 |    8 |    2 |     80.0%
 bg            |    10 |    8 |    2 |     80.0%
@@ -3173,7 +3110,7 @@ uustat        |    10 |    9 |    1 |     90.0%
 uux           |    10 |    2 |    8 |     20.0%
 xgettext      |    10 |    6 |    4 |     60.0%
 
-TOTAL COMPLIANCE: 60.0% (1050/1750)
+TOTAL COMPLIANCE: 61.3% (1073/1750)
 
 === MISSING UTILITIES (Implemented but failing) ===
 None

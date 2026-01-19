@@ -19,11 +19,10 @@ export class CommCommand implements ICommand {
     constructor(private fs: FileSystem) { }
 
     execute(args: string[], state: TerminalState, input?: string): CommandResponse {
-        // Options: -1, -2, -3 (suppress col 1, 2, 3)
-        // Also -12, -13, etc.
         let suppress1 = false;
         let suppress2 = false;
         let suppress3 = false;
+        let ignoreCase = false;
         const files: string[] = [];
 
         for (const arg of args) {
@@ -31,6 +30,7 @@ export class CommCommand implements ICommand {
                 if (arg.includes('1')) suppress1 = true;
                 if (arg.includes('2')) suppress2 = true;
                 if (arg.includes('3')) suppress3 = true;
+                if (arg.includes('i')) ignoreCase = true;
             } else {
                 files.push(arg);
             }
@@ -41,46 +41,56 @@ export class CommCommand implements ICommand {
         }
 
         try {
-            const content1 = this.readFile(files[0], state);
-            const content2 = this.readFile(files[1], state);
+            const content1 = this.readFile(files[0], state, input);
+            const content2 = this.readFile(files[1], state, input);
 
             const lines1 = content1.split('\n');
             const lines2 = content2.split('\n');
-            // Remove empty last line if exists
-            if (lines1[lines1.length - 1] === '') lines1.pop();
-            if (lines2[lines2.length - 1] === '') lines2.pop();
+            if (lines1.length > 0 && lines1[lines1.length - 1] === '') lines1.pop();
+            if (lines2.length > 0 && lines2[lines2.length - 1] === '') lines2.pop();
 
             let i = 0;
             let j = 0;
             const output: string[] = [];
+            let exitCode = 0;
+
+            const cmp = (a: string, b: string) => {
+                if (ignoreCase) return a.toLowerCase().localeCompare(b.toLowerCase());
+                return a.localeCompare(b);
+            };
+
+            for(let k=0; k<lines1.length-1; k++) {
+                if (cmp(lines1[k], lines1[k+1]) > 0) exitCode = 1;
+            }
+            for(let k=0; k<lines2.length-1; k++) {
+                if (cmp(lines2[k], lines2[k+1]) > 0) exitCode = 1;
+            }
 
             while (i < lines1.length || j < lines2.length) {
                 const l1 = i < lines1.length ? lines1[i] : null;
                 const l2 = j < lines2.length ? lines2[j] : null;
 
-                if (l1 !== null && (l2 === null || l1 < l2)) {
-                    // Only in file 1
-                    if (!suppress1) {
-                        output.push(l1);
-                    }
+                let comp = 0;
+                if (l1 === null) comp = 1;
+                else if (l2 === null) comp = -1;
+                else comp = cmp(l1, l2);
+
+                if (comp < 0) {
+                    if (!suppress1) output.push(l1!);
                     i++;
-                } else if (l2 !== null && (l1 === null || l2 < l1)) {
-                    // Only in file 2
+                } else if (comp > 0) {
                     if (!suppress2) {
-                         // Padding?
-                         // If col 1 is printed, we need 1 tab. If suppressed, 0 tabs.
                          let prefix = '';
                          if (!suppress1) prefix = '\t';
-                         output.push(prefix + l2);
+                         output.push(prefix + l2!);
                     }
                     j++;
-                } else if (l1 !== null && l2 !== null && l1 === l2) {
-                    // Common
+                } else {
                     if (!suppress3) {
                          let prefix = '';
                          if (!suppress1) prefix += '\t';
                          if (!suppress2) prefix += '\t';
-                         output.push(prefix + l1);
+                         output.push(prefix + l1!);
                     }
                     i++;
                     j++;
@@ -90,7 +100,7 @@ export class CommCommand implements ICommand {
             return {
                 output: output.join('\n'),
                 newState: state,
-                exitCode: 0
+                exitCode: exitCode
             };
 
         } catch (e) {
@@ -102,7 +112,8 @@ export class CommCommand implements ICommand {
         }
     }
 
-    private readFile(pathStr: string, state: TerminalState): string {
+    private readFile(pathStr: string, state: TerminalState, input?: string): string {
+        if (pathStr === '-') return input || '';
         const path = this.resolvePath(pathStr, state);
         return this.fs.readFile(path);
     }
