@@ -78,6 +78,7 @@ export class HeadCommand implements ICommand {
                 exitCode: 0
             };
         } catch (error: any) {
+            // Ensure strictly 1 for error
             return {
                 output: `head: cannot open '${filename}' for reading: No such file or directory`,
                 newState: state,
