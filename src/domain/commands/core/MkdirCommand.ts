@@ -54,22 +54,16 @@ export class MkdirCommand implements ICommand {
                 };
             }
 
-            // Create logic
-            // If -p, we need to ensure parents exist.
-            // But FileSystem.mkdir might not support recursive? 
-            // The FileSystem API signature is mkdir(path, mode, uid, gid, cwd)
-            // It splits path by slash. Let's see if it handles parents.
-            // Looking at previous edits to FileSystem.ts... 
-
-            // If the FS.mkdir implementation is iterative, we might need a custom loop here for -p if it fails.
-            // Or we check parent existence.
-
             try {
                 if (createParents) {
                     this.mkdirParents(path);
                 } else {
                     // Strict mkdir: parent must exist
-                    const parentPath = path.substring(0, path.lastIndexOf('/')) || '/';
+                    // Special case: if parent is root '/', it always exists.
+                    // But we must resolve parent properly.
+                    const lastSlash = path.lastIndexOf('/');
+                    const parentPath = lastSlash <= 0 ? '/' : path.substring(0, lastSlash);
+
                     const parent = this.fs.resolveNode(parentPath);
                     if (!parent || !this.fs.isDirectory(parent)) {
                         return {
@@ -97,7 +91,6 @@ export class MkdirCommand implements ICommand {
     }
 
     private mkdirParents(path: string) {
-        // Naive -p implementation: split and walk
         const parts = path.split('/').filter(p => p.length > 0);
         let currentPath = '';
 
@@ -105,10 +98,6 @@ export class MkdirCommand implements ICommand {
             currentPath += `/${part}`;
             const node = this.fs.resolveNode(currentPath);
             if (!node) {
-                // Determine parent for this segment? fs.mkdir handles creation if we give it path?
-                // Wait, if fs.mkdir accepts a full path, does it create parents?
-                // The current FS implementation might not. 
-                // Let's assume we must create one by one.
                 this.fs.mkdir(currentPath, 0o755);
             } else if (!this.fs.isDirectory(node)) {
                 throw new Error(`'${currentPath}' exists and is not a directory`);
