@@ -52,13 +52,16 @@ export class WcCommand implements ICommand {
         let totalChars = 0;
 
         const processContent = (content: string, name?: string) => {
-            // POSIX: line count is number of newlines
-            const actualLines = (content.match(/\n/g) || []).length;
+            const rawLines = content.split('\n');
+            let actualLines = rawLines.length;
+            if (content.length > 0 && content.endsWith('\n')) {
+                actualLines--;
+            }
+            if (content.length === 0) actualLines = 0;
 
-            // Words: contiguous non-whitespace.
             const words = content.trim().length === 0 ? 0 : content.trim().split(/\s+/).length;
             const bytes = content.length;
-            const chars = content.length; // TODO: Multibyte support if needed
+            const chars = content.length;
 
             if (name) {
                 totalLines += actualLines;
@@ -90,8 +93,6 @@ export class WcCommand implements ICommand {
                     if (input !== undefined) {
                         output += processContent(input, '-') + '\n';
                     } else {
-                        // If no input provided but - specified? Treat as empty? Or error?
-                        // Standard wc waits for stdin. Here we assume input passed.
                         output += processContent('', '-') + '\n';
                     }
                     continue;
@@ -105,6 +106,7 @@ export class WcCommand implements ICommand {
                 }
 
                 const node = this.fs.resolveNode(path);
+
                 if (!node) {
                     output += `wc: ${filename}: No such file or directory\n`;
                     exitCode = 1;
@@ -113,7 +115,7 @@ export class WcCommand implements ICommand {
 
                 if (this.fs.isDirectory(node)) {
                     output += `wc: ${filename}: Is a directory\n`;
-                    output += `      0       0       0 ${filename}\n`; // Some wcs print 0s for dirs, some fail.
+                    output += ` 0 0 0 ${filename}\n`;
                     exitCode = 1;
                     continue;
                 }

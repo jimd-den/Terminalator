@@ -23,7 +23,6 @@ export class HeadCommand implements ICommand {
         let linesToPrint = 10;
         const operands = [];
 
-        // Proper parsing loop to distinguish flags from operands
         let skipNext = false;
 
         for (let i = 0; i < args.length; i++) {
@@ -37,9 +36,8 @@ export class HeadCommand implements ICommand {
                     linesToPrint = parseInt(args[i + 1]);
                     skipNext = true;
                 }
-                // If -n is last, it's an error, but let's ignore for now or use default
             } else if (args[i].startsWith('-') && args[i] !== '-') {
-                // Other flags ignored
+                // Ignore
             } else {
                 operands.push(args[i]);
             }
@@ -47,43 +45,47 @@ export class HeadCommand implements ICommand {
 
         const getHead = (content: string): string => {
             const lines = content.split('\n');
-            // slice(0, 100) on 5 lines returns 5 lines. safe.
             const snippet = lines.slice(0, linesToPrint);
             return snippet.join('\n');
         };
 
-        if (operands.length === 0) {
-            // Use input
+        if (operands.length === 0 || (operands.length === 1 && operands[0] === '-')) {
             if (input !== undefined) {
                 return { output: getHead(input), newState: state, exitCode: 0 };
             } else {
-                // Head waits for stdin normally. Here error/empty.
                 return { output: '', newState: state, exitCode: 0 };
             }
         }
 
-        // Process file
-        const filename = operands[0];
-        let path = filename;
+        let output = '';
+        let exitCode = 0;
 
-        if (!path.startsWith('/')) {
-            path = state.currentDirectory === '/' ? `/${filename}` : `${state.currentDirectory}/${filename}`;
+        for (let i = 0; i < operands.length; i++) {
+            const filename = operands[i];
+
+            if (operands.length > 1) {
+                if (i > 0) output += '\n';
+                output += `==> ${filename} <==\n`;
+            }
+
+            let path = filename;
+            if (!path.startsWith('/')) {
+                path = state.currentDirectory === '/' ? `/${filename}` : `${state.currentDirectory}/${filename}`;
+            }
+
+            try {
+                const content = this.fs.readFile(path);
+                output += getHead(content);
+            } catch (error: any) {
+                output += `head: cannot open '${filename}' for reading: No such file or directory`;
+                exitCode = 1;
+            }
         }
 
-        try {
-            const content = this.fs.readFile(path);
-            return {
-                output: getHead(content),
-                newState: state,
-                exitCode: 0
-            };
-        } catch (error: any) {
-            // Ensure strictly 1 for error
-            return {
-                output: `head: cannot open '${filename}' for reading: No such file or directory`,
-                newState: state,
-                exitCode: 1
-            };
-        }
+        return {
+            output: output,
+            newState: state,
+            exitCode: exitCode
+        };
     }
 }

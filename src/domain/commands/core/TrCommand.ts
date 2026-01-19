@@ -44,8 +44,6 @@ export class TrCommand implements ICommand {
             else if (arg === '-s') options.squeeze = true;
             else if (arg === '-c' || arg === '-C') options.complement = true;
             else if (!arg.startsWith('-')) {
-                // Handling args usually passed as strings.
-                // In shell, they are args.
                 sets.push(arg);
             }
         }
@@ -59,44 +57,28 @@ export class TrCommand implements ICommand {
             options.set2 = this.expandSet(sets[1]);
         }
 
-        if (!input) {
-             // Should wait for stdin in real shell
+        if (input === undefined) {
              return { output: '', newState: state, exitCode: 0 };
         }
 
         let output = input;
 
         if (options.delete) {
-            if (options.squeeze && options.set2) {
-                 // tr -d -s SET1 SET2 ?
-                 // No, standard is tr -d SET1 or tr -s SET1 or tr -ds SET1 SET2 (delete SET1, squeeze SET2)
-                 // Wait, tr -d SET1 deletes chars in SET1.
-                 // tr -s SET1 squeezes repeats of chars in SET1.
-                 // If both, order matters?
-                 // Usually: delete first, then squeeze?
-                 // "tr -ds SET1 SET2" -> deletes SET1, squeezes SET2.
-            }
-
-            // Simple delete logic
-            // If squeeze is also present with 2 sets, it means delete SET1, squeeze SET2.
             if (options.squeeze && sets.length > 1) {
                  output = this.deleteChars(output, options.set1, options.complement);
                  output = this.squeezeChars(output, options.set2);
             } else {
+                 if (sets.length < 1) return { output: 'tr: missing operand', newState: state, exitCode: 1 };
                  output = this.deleteChars(output, options.set1, options.complement);
             }
-
         } else if (options.squeeze && sets.length === 1) {
-            // tr -s SET1 (squeeze repeats of SET1)
             output = this.squeezeChars(output, options.set1);
         } else {
-            // Translate SET1 to SET2
-            // If squeeze is also set: tr -s SET1 SET2 -> translate SET1 to SET2 then squeeze SET2
-            if (!options.set2) {
-                 return { output: 'tr: missing set2', newState: state, exitCode: 1 };
+            if (sets.length < 2) {
+                 return { output: 'tr: missing operand', newState: state, exitCode: 1 };
             }
+            output = this.translate(output, options.set1, options.set2, options.complement);
 
-            output = this.translate(output, options.set1, options.set2);
             if (options.squeeze) {
                 output = this.squeezeChars(output, options.set2);
             }
@@ -110,13 +92,41 @@ export class TrCommand implements ICommand {
     }
 
     private expandSet(setStr: string): string {
-        // Handle escapes like \n, \t
-        let expanded = setStr
-            .replace(/\\n/g, '\n')
-            .replace(/\\t/g, '\t')
-            .replace(/\\\\/g, '\\'); // simplistic unescape
+        let expanded = '';
+        let i = 0;
 
-        // TODO: Handle ranges [a-z] if needed. For now, strict literal.
+        if (setStr === 'a-z') return 'abcdefghijklmnopqrstuvwxyz';
+        if (setStr === 'A-Z') return 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        if (setStr === '0-9') return '0123456789';
+
+        while (i < setStr.length) {
+            if (i + 2 < setStr.length && setStr[i+1] === '-') {
+                const start = setStr.charCodeAt(i);
+                const end = setStr.charCodeAt(i+2);
+                if (start < end) {
+                    for (let c = start; c <= end; c++) {
+                        expanded += String.fromCharCode(c);
+                    }
+                    i += 3;
+                    continue;
+                }
+            }
+
+            if (setStr[i] === '\\') {
+                if (i + 1 < setStr.length) {
+                    const next = setStr[i+1];
+                    if (next === 'n') expanded += '\n';
+                    else if (next === 't') expanded += '\t';
+                    else if (next === '\\') expanded += '\\';
+                    else expanded += next;
+                    i += 2;
+                    continue;
+                }
+            }
+
+            expanded += setStr[i];
+            i++;
+        }
         return expanded;
     }
 
@@ -146,25 +156,36 @@ export class TrCommand implements ICommand {
         return res;
     }
 
-    private translate(str: string, set1: string, set2: string): string {
+    private translate(str: string, set1: string, set2: string, complement: boolean): string {
         const map = new Map<string, string>();
-        const len = Math.max(set1.length, set2.length); // usually set1 length matters
-        // POSIX: if set2 is shorter than set1, the last char of set2 is repeated.
 
-        for (let i = 0; i < set1.length; i++) {
-            const char1 = set1[i];
-            let char2 = '';
-            if (i < set2.length) {
-                char2 = set2[i];
-            } else {
-                char2 = set2[set2.length - 1]; // Repeat last
+        if (!complement) {
+            for (let i = 0; i < set1.length; i++) {
+                const char1 = set1[i];
+                let char2 = '';
+                if (i < set2.length) {
+                    char2 = set2[i];
+                } else {
+                    char2 = set2[set2.length - 1];
+                }
+                map.set(char1, char2);
             }
-            map.set(char1, char2);
         }
 
         let res = '';
+        const set1Set = new Set(set1.split(''));
+        const lastSet2 = set2.length > 0 ? set2[set2.length - 1] : '';
+
         for (const char of str) {
-            res += map.get(char) ?? char;
+            if (complement) {
+                if (!set1Set.has(char)) {
+                    res += lastSet2;
+                } else {
+                    res += char;
+                }
+            } else {
+                res += map.get(char) ?? char;
+            }
         }
         return res;
     }

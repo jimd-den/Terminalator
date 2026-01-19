@@ -23,12 +23,22 @@ export class PasteCommand implements ICommand {
         let serial = false;
         const files: string[] = [];
 
+        let skipNext = false;
         for (let i = 0; i < args.length; i++) {
+            if (skipNext) {
+                skipNext = false;
+                continue;
+            }
             const arg = args[i];
             if (arg === '-d') {
-                delimiter = args[++i] || '\t';
-                // Handle escape sequences in delimiter (simple)
-                delimiter = delimiter.replace(/\\t/g, '\t').replace(/\\n/g, '\n');
+                if (i + 1 < args.length) {
+                    delimiter = args[i + 1];
+                    delimiter = delimiter
+                        .replace(/\\t/g, '\t')
+                        .replace(/\\n/g, '\n')
+                        .replace(/\\\\/g, '\\');
+                    skipNext = true;
+                }
             } else if (arg === '-s') {
                 serial = true;
             } else if (!arg.startsWith('-')) {
@@ -37,9 +47,6 @@ export class PasteCommand implements ICommand {
         }
 
         if (files.length === 0) {
-             // Read from stdin?
-             // Without stdin handling in our shell fully, let's require files.
-             // Or fail.
              return { output: '', newState: state, exitCode: 0 };
         }
 
@@ -47,13 +54,12 @@ export class PasteCommand implements ICommand {
         try {
             for (const file of files) {
                 if (file === '-') {
-                    // Stdin placeholder, use input if available
                     fileContents.push((input || '').split('\n'));
                 } else {
                     const path = this.resolvePath(file, state);
                     const content = this.fs.readFile(path);
                     const lines = content.split('\n');
-                    if (lines[lines.length - 1] === '') lines.pop(); // Trim last empty
+                    if (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
                     fileContents.push(lines);
                 }
             }
@@ -66,23 +72,32 @@ export class PasteCommand implements ICommand {
         }
 
         const output: string[] = [];
+        const getDelim = (idx: number) => {
+            if (delimiter.length === 0) return '';
+            return delimiter[idx % delimiter.length];
+        };
 
         if (serial) {
-            // Paste -s: one file per line, joined by delimiter
             for (const lines of fileContents) {
-                output.push(lines.join(delimiter));
+                let lineStr = '';
+                for (let k = 0; k < lines.length; k++) {
+                    if (k > 0) lineStr += getDelim(k - 1);
+                    lineStr += lines[k];
+                }
+                output.push(lineStr);
             }
         } else {
-            // Standard paste: parallel merge
             let maxLines = 0;
             for (const lines of fileContents) maxLines = Math.max(maxLines, lines.length);
 
             for (let i = 0; i < maxLines; i++) {
-                const row: string[] = [];
-                for (const lines of fileContents) {
-                    row.push(i < lines.length ? lines[i] : '');
+                let rowStr = '';
+                for (let j = 0; j < fileContents.length; j++) {
+                    const lines = fileContents[j];
+                    if (j > 0) rowStr += getDelim(j - 1);
+                    rowStr += (i < lines.length ? lines[i] : '');
                 }
-                output.push(row.join(delimiter));
+                output.push(rowStr);
             }
         }
 

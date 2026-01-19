@@ -21,6 +21,7 @@ interface CutOptions {
     chars?: string;
     fields?: string;
     delimiter: string;
+    suppress: boolean;
     files: string[];
 }
 
@@ -30,6 +31,7 @@ export class CutCommand implements ICommand {
     execute(args: string[], state: TerminalState, input?: string): CommandResponse {
         const options: CutOptions = {
             delimiter: '\t',
+            suppress: false,
             files: []
         };
 
@@ -44,16 +46,16 @@ export class CutCommand implements ICommand {
                 options.fields = args[++i];
             } else if (arg === '-d') {
                 options.delimiter = args[++i];
-                // Handle quoted delimiter removal if necessary, shell parser might handle it
-                if (options.delimiter.startsWith('"') && options.delimiter.endsWith('"')) {
+                if (options.delimiter && options.delimiter.startsWith('"') && options.delimiter.endsWith('"')) {
                     options.delimiter = options.delimiter.slice(1, -1);
                 }
+            } else if (arg === '-s') {
+                options.suppress = true;
             } else if (!arg.startsWith('-')) {
                 options.files.push(arg);
             }
         }
 
-        // Validation
         if (!options.bytes && !options.chars && !options.fields) {
             return {
                 output: 'cut: you must specify a list of bytes, characters, or fields',
@@ -72,13 +74,16 @@ export class CutCommand implements ICommand {
 
         let inputContent = '';
         if (options.files.length > 0) {
-            // Read from files
             for (const file of options.files) {
+                if (file === '-') {
+                    inputContent += (input || '') + '\n';
+                    continue;
+                }
                 try {
                     const resolvedPath = this.resolvePath(file, state);
                     const node = this.fs.resolveNode(resolvedPath);
                     if (!node) throw new Error();
-                    inputContent += this.fs.readFile(resolvedPath);
+                    inputContent += this.fs.readFile(resolvedPath) + '\n';
                 } catch (e) {
                     return {
                         output: `cut: ${file}: No such file or directory`,
@@ -87,10 +92,10 @@ export class CutCommand implements ICommand {
                     };
                 }
             }
+            if (inputContent.endsWith('\n')) inputContent = inputContent.slice(0, -1);
         } else if (input !== undefined) {
             inputContent = input;
         } else {
-             // In a real shell, this would wait for stdin. Here we fail or return empty.
              return { output: '', newState: state, exitCode: 0 };
         }
 
@@ -105,7 +110,8 @@ export class CutCommand implements ICommand {
             }
 
             if (options.fields) {
-                results.push(this.processFields(line, options.fields, options.delimiter));
+                const res = this.processFields(line, options.fields, options.delimiter, options.suppress);
+                if (res !== null) results.push(res);
             } else {
                 const list = options.bytes || options.chars;
                 if (list) {
@@ -129,7 +135,6 @@ export class CutCommand implements ICommand {
     private processBytes(line: string, listStr: string): string {
         const ranges = this.parseRanges(listStr);
         let result = '';
-        // 1-based indexing for cut
         for (let i = 1; i <= line.length; i++) {
             if (this.isInRanges(i, ranges)) {
                 result += line[i - 1];
@@ -138,9 +143,10 @@ export class CutCommand implements ICommand {
         return result;
     }
 
-    private processFields(line: string, listStr: string, delimiter: string): string {
-        // If line contains no delimiter, output verbatim unless -s is used (not implemented yet)
-        if (!line.includes(delimiter)) return line;
+    private processFields(line: string, listStr: string, delimiter: string, suppress: boolean): string | null {
+        if (!line.includes(delimiter)) {
+            return suppress ? null : line;
+        }
 
         const fields = line.split(delimiter);
         const ranges = this.parseRanges(listStr);
