@@ -157,7 +157,8 @@ export class GrepCommand implements ICommand {
             }
         }
 
-        if (output.endsWith('\n')) output = output.slice(0, -1);
+        // Do not strip trailing newline for piping consistency
+        // if (output.endsWith('\n')) output = output.slice(0, -1);
 
         return {
             output: output,

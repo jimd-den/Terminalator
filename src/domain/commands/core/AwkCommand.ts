@@ -75,27 +75,37 @@ export class AwkCommand implements ICommand {
             // $0 is whole line
             // $1 is first col
 
+        // Variables: NF (Number of Fields), NR (Number of Records)
+        const NF = columns.length;
+        const NR = outputLines.length + 1; // 1-based line number (assuming we output one per input line)
+
             if (action === 'print') {
                 outputLines.push(line);
-            } else if (action.startsWith('print $')) {
-                const colIndexStr = action.substring(7); // "2"
+        } else if (action.startsWith('print ')) {
+            const expr = action.substring(6).trim();
+            if (expr.startsWith('$')) {
+                const colIndexStr = expr.substring(1); // "2"
                 const colIndex = parseInt(colIndexStr);
-
-                if (isNaN(colIndex)) {
-                    // print $0?
-                    if (action === 'print $0') outputLines.push(line);
-                } else if (colIndex === 0) {
-                    outputLines.push(line);
-                } else {
-                    // 1-based index
-                    if (colIndex - 1 < columns.length) {
-                        outputLines.push(columns[colIndex - 1]);
+                if (!isNaN(colIndex)) {
+                     if (colIndex === 0) outputLines.push(line);
+                     else if (colIndex > 0 && colIndex <= columns.length) outputLines.push(columns[colIndex - 1]);
+                     else outputLines.push('');
                     } else {
-                        outputLines.push('');
+                    outputLines.push(line); // fallback
                     }
+            } else if (expr === 'NF') {
+                outputLines.push(NF.toString());
+            } else if (expr === 'NR') {
+                outputLines.push(NR.toString());
+            } else {
+                // Simple literal or unknown
+                outputLines.push(expr); // e.g. print "hello" -> prints "hello" (quotes handled by shell parser?)
+                // If shell parser removed quotes, we get hello.
                 }
             } else {
-                return { output: `awk: unsupported action: ${action}`, newState: state, exitCode: 1 };
+             // Implicit print if pattern matches?
+             // Minimal stub:
+             return { output: `awk: unsupported action: ${action}`, newState: state, exitCode: 1 };
             }
         }
 

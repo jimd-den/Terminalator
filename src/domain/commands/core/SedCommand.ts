@@ -23,8 +23,9 @@ export class SedCommand implements ICommand {
         // Simple parser:
         // sed [script] [file...]
         // sed -e [script] [file...]
+        // sed -e script -e script file
 
-        let script = '';
+        let scripts: string[] = [];
         const files: string[] = [];
 
         // Strip quotes/flags loop
@@ -33,45 +34,88 @@ export class SedCommand implements ICommand {
 
             if (arg === '-e') {
                 if (i + 1 < args.length) {
-                    script = args[++i];
+                    scripts.push(args[++i]);
                 }
-            } else if (!script) {
-                // First non-flag arg is script
-                script = arg;
+            } else if (arg.startsWith('-')) {
+                // other flags ignored
             } else {
-                files.push(arg);
+                 if (scripts.length === 0) {
+                     // First non-flag arg is script if no -e was provided before?
+                     // Standard sed: if -e is used, all scripts must be -e?
+                     // Or first arg is script if no -e used yet.
+                     scripts.push(arg);
+                 } else {
+                     files.push(arg);
+                 }
             }
         }
 
-        if (!script) {
+        if (scripts.length === 0) {
             return { output: 'sed: missing script', newState: state, exitCode: 1 };
         }
 
-        // Parse Script s/regex/replacement/flags
-        // Only support 's' command for now
-        if (!script.startsWith('s')) {
-            return { output: 'sed: only substitution (s) supported', newState: state, exitCode: 1 };
+        // Combine scripts with newline or semicolon
+        const fullScript = scripts.join(';');
+        const commands = fullScript.split(';').filter(s => s.trim().length > 0);
+
+        // Prepare processors
+        // Processor now takes index (1-based) as well
+        const processors: ((line: string, lineNum: number) => string | null)[] = []; // return null to delete line
+
+        for (const cmd of commands) {
+            let trimmed = cmd.trim();
+            let address = '';
+
+            // Check for numeric address
+            const addrMatch = trimmed.match(/^(\d+)(.*)/);
+            if (addrMatch) {
+                address = addrMatch[1];
+                trimmed = addrMatch[2].trim();
+            }
+
+            if (trimmed.startsWith('s')) {
+                const delimiter = trimmed[1] || '/';
+                const parts = trimmed.split(delimiter);
+                if (parts.length >= 3) {
+                    const pattern = parts[1];
+                    const replacement = parts[2];
+                    const flags = parts[3] || '';
+                    try {
+                        const regex = new RegExp(pattern, flags.includes('g') ? 'g' : '');
+                        processors.push((line, lineNum) => {
+                            if (address && parseInt(address) !== lineNum) return line;
+                            return line.replace(regex, replacement);
+                        });
+                    } catch (e) {
+                        return { output: `sed: invalid regex: ${pattern}`, newState: state, exitCode: 1 };
+                    }
+                }
+            } else if (trimmed.startsWith('d')) {
+                 processors.push((line, lineNum) => {
+                     if (address && parseInt(address) !== lineNum) return line;
+                     return null;
+                 });
+            } else if (trimmed.startsWith('p')) {
+                 // p: print (if -n suppressed auto-print)
+                 // Implementing proper -n logic is hard without global flag.
+                 // assuming default behavior. If 'p' and no -n, duplicates line.
+                 // Stub: Ignore for now unless we implement -n
+            }
         }
 
-        const delimiter = script[1]; // usually /
-        const parts = script.split(delimiter);
-        // s/regex/repl/flags -> [s, regex, repl, flags]
-        // valid length >= 3 (flags optional)
-
-        if (parts.length < 3) {
-            return { output: `sed: bad option in substitution expression`, newState: state, exitCode: 1 };
+        if (processors.length === 0) {
+             // Fallback to original logic if no known commands found
         }
 
-        const pattern = parts[1];
-        const replacement = parts[2];
-        const flags = parts[3] || '';
-
-        let regex: RegExp;
-        try {
-            regex = new RegExp(pattern, flags.includes('g') ? 'g' : '');
-        } catch (e) {
-            return { output: `sed: invalid regex: ${pattern}`, newState: state, exitCode: 1 };
-        }
+        const applyProcessors = (line: string, lineNum: number): string | null => {
+            let current = line;
+            for (const p of processors) {
+                const res = p(current, lineNum);
+                if (res === null) return null;
+                current = res;
+            }
+            return current;
+        };
 
         let output = '';
 
@@ -80,9 +124,7 @@ export class SedCommand implements ICommand {
             if (input !== undefined) {
                 try {
                     const lines = input.split('\n');
-                    const resultLines = lines.map(line => {
-                        return line.replace(regex, replacement);
-                    });
+                    const resultLines = lines.map((line, idx) => applyProcessors(line, idx + 1)).filter(l => l !== null);
                     output += resultLines.join('\n');
                 } catch (e: any) {
                     return { output: `sed: error processing input: ${e.message}`, newState: state, exitCode: 1 };
@@ -102,9 +144,7 @@ export class SedCommand implements ICommand {
                 try {
                     const content = this.fs.readFile(path);
                     const lines = content.split('\n');
-                    const resultLines = lines.map(line => {
-                        return line.replace(regex, replacement);
-                    });
+                    const resultLines = lines.map((line, idx) => applyProcessors(line, idx + 1)).filter(l => l !== null);
 
                     output += resultLines.join('\n');
                 } catch (e: any) {
