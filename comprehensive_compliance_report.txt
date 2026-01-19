@@ -331,7 +331,7 @@ UTILITY: date
 [FAIL] DATE_06: Complex format
        -> Stdout Regex Mismatch.
    Expected: /Year: 20../
-   Got: "Sun Jan 18 2026 20:15:05 GMT-0700 (Mountain Standard Time)"
+   Got: "Mon Jan 19 2026 16:08:32 GMT+0000 (Coordinated Universal Time)"
 [PASS] DATE_07
 [FAIL] DATE_08: Set date (fail/stub)
        -> Exit Code: Expected 1, got 0
@@ -476,46 +476,28 @@ UTILITY: unalias
 [PASS] UNALIAS_10
 UTILITY: bg
 [FAIL] BG_01: Resume job
-       -> Exit Code: Expected 0, got 127
-[FAIL] BG_02: Specific job %1
-       -> Exit Code: Expected 1, got 127
-[FAIL] BG_03: Fail no current job
-       -> Exit Code: Expected 1, got 127
-[FAIL] BG_04: Multiple jobs
-       -> Exit Code: Expected 1, got 127
-[FAIL] BG_05: Invalid job
-       -> Exit Code: Expected 1, got 127
-[FAIL] BG_06: Already running
-       -> Exit Code: Expected 1, got 127
-[FAIL] BG_07: Output format
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 0, got 1
+[PASS] BG_02
+[PASS] BG_03
+[PASS] BG_04
+[PASS] BG_05
+[PASS] BG_06
+[PASS] BG_07
 [FAIL] BG_08: Help?
-       -> Exit Code: Expected 0, got 127
-[FAIL] BG_09: Arg parsing
-       -> Exit Code: Expected 1, got 127
-[FAIL] BG_10: Empty
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 0, got 1
+[PASS] BG_09
+[PASS] BG_10
 UTILITY: fg
-[FAIL] FG_01: Foreground job
-       -> Exit Code: Expected 1, got 127
-[FAIL] FG_02: Specific job %1
-       -> Exit Code: Expected 1, got 127
-[FAIL] FG_03: Fail if none
-       -> Exit Code: Expected 1, got 127
-[FAIL] FG_04: Invalid job
-       -> Exit Code: Expected 1, got 127
-[FAIL] FG_05: Format
-       -> Exit Code: Expected 1, got 127
-[FAIL] FG_06: No args
-       -> Exit Code: Expected 1, got 127
-[FAIL] FG_07: String ID
-       -> Exit Code: Expected 1, got 127
-[FAIL] FG_08: Multiple args fail?
-       -> Exit Code: Expected 1, got 127
-[FAIL] FG_09: Arg parsing
-       -> Exit Code: Expected 1, got 127
-[FAIL] FG_10: Smoke
-       -> Exit Code: Expected 1, got 127
+[PASS] FG_01
+[PASS] FG_02
+[PASS] FG_03
+[PASS] FG_04
+[PASS] FG_05
+[PASS] FG_06
+[PASS] FG_07
+[PASS] FG_08
+[PASS] FG_09
+[PASS] FG_10
 UTILITY: jobs
 [PASS] JOBS_01
 [PASS] JOBS_02
@@ -628,38 +610,20 @@ UTILITY: dirname
 [FAIL] DIRNAME_10: Multiple args fail?
        -> Exit Code: Expected 1, got 0
 UTILITY: file
-[FAIL] FILE_01: Check file
-       -> Exit Code: Expected 0, got 127
-       -> Stdout Regex Mismatch.
-   Expected: /text|ASCII/i
-   Got: "sh: command not found: file"
-[FAIL] FILE_02: Check dir
-       -> Exit Code: Expected 0, got 127
-       -> Stdout Regex Mismatch.
-   Expected: /directory/i
-   Got: "sh: command not found: file"
-[FAIL] FILE_03: Fail missing
-       -> Exit Code: Expected 1, got 127
-[FAIL] FILE_04: Multiple files
-       -> Exit Code: Expected 0, got 127
-       -> Stdout Regex Mismatch.
-   Expected: /\/1.*\/2/s
-   Got: "sh: command not found: file"
+[PASS] FILE_01
+[PASS] FILE_02
+[PASS] FILE_03
+[PASS] FILE_04
 [FAIL] FILE_05: Brief -b (stub)
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] FILE_06: Helpers -h (stub)
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] FILE_07: Mime -i (Ext)
-       -> Exit Code: Expected 0, got 127
-[FAIL] FILE_08: Empty file
-       -> Exit Code: Expected 0, got 127
-       -> Stdout Regex Mismatch.
-   Expected: /empty/i
-   Got: "sh: command not found: file"
-[FAIL] FILE_09: Binary? (stub)
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
+[PASS] FILE_08
+[PASS] FILE_09
 [FAIL] FILE_10: Special (stub)
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 UTILITY: join
 [PASS] JOIN_01
 [PASS] JOIN_02
@@ -716,32 +680,21 @@ UTILITY: split
        -> Exit Code: Expected 0, got 1
 UTILITY: csplit
 [FAIL] CSPLIT_01: Context split line
-       -> Exit Code: Expected 0, got 127
        -> Missing File: Expected /home/operator/xx00 to be created.
        -> Missing File: Expected /home/operator/xx01 to be created.
-[FAIL] CSPLIT_02: Regex
-       -> Exit Code: Expected 0, got 127
+[PASS] CSPLIT_02
 [FAIL] CSPLIT_03: Prefix -f
-       -> Exit Code: Expected 0, got 127
        -> Missing File: Expected /home/operator/out00 to be created.
 [FAIL] CSPLIT_04: Digits -n
-       -> Exit Code: Expected 0, got 127
        -> Missing File: Expected /home/operator/xx0000 to be created.
 [FAIL] CSPLIT_05: Keep files -k
-       -> Exit Code: Expected 1, got 127
-[FAIL] CSPLIT_06: Suppress counts -s
-       -> Exit Code: Expected 0, got 127
-       -> Stdout Regex Mismatch.
-   Expected: /^$/
-   Got: "sh: command not found: csplit"
+       -> Exit Code: Expected 1, got 0
+[PASS] CSPLIT_06
 [FAIL] CSPLIT_07: Fail missing
-       -> Exit Code: Expected 1, got 127
-[FAIL] CSPLIT_08: Repeat pattern {*}
-       -> Exit Code: Expected 0, got 127
-[FAIL] CSPLIT_09: Offset
-       -> Exit Code: Expected 0, got 127
-[FAIL] CSPLIT_10: Stdin
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] CSPLIT_08
+[PASS] CSPLIT_09
+[PASS] CSPLIT_10
 UTILITY: comm
 [PASS] COMM_01
 [FAIL] COMM_02: Suppress col 1 (-1)
@@ -885,26 +838,19 @@ UTILITY: [
 [FAIL] BRACKET_10: Fail arg count
        -> Exit Code: Expected 1, got 0
 UTILITY: read
-[FAIL] READ_01: Read var
-       -> Exit Code: Expected 0, got 127
-[FAIL] READ_02: Read multiple
-       -> Exit Code: Expected 0, got 127
-[FAIL] READ_03: Read line
-       -> Exit Code: Expected 0, got 127
-[FAIL] READ_04: Prompt -p (Ext)
-       -> Exit Code: Expected 0, got 127
+[PASS] READ_01
+[PASS] READ_02
+[PASS] READ_03
+[PASS] READ_04
 [FAIL] READ_05: Fail no input
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 0
 [FAIL] READ_06: Timeout -t (Ext)
-       -> Exit Code: Expected 1, got 127
-[FAIL] READ_07: Raw -r
-       -> Exit Code: Expected 0, got 127
-[FAIL] READ_08: Exit status
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] READ_07
+[PASS] READ_08
 [FAIL] READ_09: IFS usage (stub)
        -> Exit Code: Expected 0, got 127
-[FAIL] READ_10: No var (default REPLY)
-       -> Exit Code: Expected 0, got 127
+[PASS] READ_10
 UTILITY: xargs
 [PASS] XARGS_01
 [PASS] XARGS_02
@@ -1007,84 +953,81 @@ UTILITY: env
 [PASS] ENV_10
 UTILITY: ar
 [FAIL] AR_01: Create archive -rc
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
        -> Missing File: Expected /home/operator/lib.a to be created.
 [FAIL] AR_02: List contents -t
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] AR_03: Verbose list -tv
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] AR_04: Delete member -d
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] AR_05: Extract -x
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] AR_06: Update -r
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] AR_07: Quick append -q
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] AR_08: Move -m (stub)
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] AR_09: Print -p
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
        -> Stdout Regex Mismatch.
    Expected: /x/
-   Got: "sh: command not found: ar"
-[FAIL] AR_10: Fail missing lib
-       -> Exit Code: Expected 1, got 127
+   Got: "ar: no operation specified"
+[PASS] AR_10
 UTILITY: make
 [FAIL] MAKE_01: Default target
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 2
        -> Stdout Regex Mismatch.
    Expected: /ok/
-   Got: "sh: command not found: make"
+   Got: "make: *** No targets specified and no makefile found. Stop."
 [FAIL] MAKE_02: Specific target
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 2
        -> Stdout Regex Mismatch.
    Expected: /test/
-   Got: "sh: command not found: make"
+   Got: "make: *** No targets specified and no makefile found. Stop."
 [FAIL] MAKE_03: Ignore errors -i
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 2
        -> Stdout Regex Mismatch.
    Expected: /ok/
-   Got: "sh: command not found: make"
+   Got: "make: *** No targets specified and no makefile found. Stop."
 [FAIL] MAKE_04: Dry run -n
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 2
 [FAIL] MAKE_05: Keep going -k
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 2
        -> Stdout Regex Mismatch.
    Expected: /b/
-   Got: "sh: command not found: make"
+   Got: "make: *** No targets specified and no makefile found. Stop."
 [FAIL] MAKE_06: Specific file -f
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 2
        -> Stdout Regex Mismatch.
    Expected: /other/
-   Got: "sh: command not found: make"
+   Got: "make: *** No targets specified and no makefile found. Stop."
 [FAIL] MAKE_07: Touch -t
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 2
 [FAIL] MAKE_08: Env override -e
        -> Exit Code: Expected 0, got 127
-[FAIL] MAKE_09: Fail missing Makefile
-       -> Exit Code: Expected 2, got 127
+[PASS] MAKE_09
 [FAIL] MAKE_10: Macro usage
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 2
        -> Stdout Regex Mismatch.
    Expected: /1/
-   Got: "sh: command not found: make"
+   Got: "make: *** No targets specified and no makefile found. Stop."
 UTILITY: sh
 [FAIL] SH_01: Run script
        -> Exit Code: Expected 0, got 127
        -> Stdout Regex Mismatch.
    Expected: /hi/
-   Got: "sh: command not found: sh"
+   Got: "sh: s.sh: No such file or directory"
 [FAIL] SH_02: Command string -c
        -> Exit Code: Expected 0, got 127
        -> Stdout Regex Mismatch.
    Expected: /hello/
-   Got: "sh: command not found: sh"
+   Got: "sh: -c: No such file or directory"
 [FAIL] SH_03: Stdin
-       -> Exit Code: Expected 0, got 127
        -> Stdout Regex Mismatch.
    Expected: /stdin/
-   Got: "sh: command not found: sh"
+   Got: ""
 [FAIL] SH_04: Exit code
        -> Exit Code: Expected 5, got 127
 [FAIL] SH_05: Syntax check -n (stub)
@@ -1094,7 +1037,7 @@ UTILITY: sh
        -> Exit Code: Expected 0, got 127
        -> Stdout Regex Mismatch.
    Expected: /123/
-   Got: "sh: command not found: sh"
+   Got: "sh: -c: No such file or directory"
 [FAIL] SH_08: Verbose -v (Ext)
        -> Exit Code: Expected 0, got 127
 [FAIL] SH_09: Restricted -r (Ext)
@@ -1318,116 +1261,83 @@ UTILITY: zcat
        -> Exit Code: Expected 0, got 1
 UTILITY: gzip
 [FAIL] GZIP_01: Compress
-       -> Exit Code: Expected 0, got 127
        -> Missing File: Expected /home/operator/f.gz to be created.
-[FAIL] GZIP_02: Decompress -d
-       -> Exit Code: Expected 0, got 127
-[FAIL] GZIP_03: Stdout -c
-       -> Exit Code: Expected 0, got 127
-[FAIL] GZIP_04: Fast -1
-       -> Exit Code: Expected 0, got 127
-[FAIL] GZIP_05: Best -9
-       -> Exit Code: Expected 0, got 127
-[FAIL] GZIP_06: Recursive -r
-       -> Exit Code: Expected 0, got 127
-[FAIL] GZIP_07: Test -t
-       -> Exit Code: Expected 0, got 127
+[PASS] GZIP_02
+[PASS] GZIP_03
+[PASS] GZIP_04
+[PASS] GZIP_05
+[PASS] GZIP_06
+[PASS] GZIP_07
 [FAIL] GZIP_08: Keep -k
-       -> Exit Code: Expected 0, got 127
        -> Missing File: Expected /home/operator/f to be created.
-[FAIL] GZIP_09: Force -f
-       -> Exit Code: Expected 0, got 127
+[PASS] GZIP_09
 [FAIL] GZIP_10: Suffix -S
-       -> Exit Code: Expected 0, got 127
        -> Missing File: Expected /home/operator/f.z to be created.
 UTILITY: gunzip
 [FAIL] GUNZIP_01: Decompress
-       -> Exit Code: Expected 0, got 127
        -> Missing File: Expected /home/operator/f to be created.
-[FAIL] GUNZIP_02: Stdout -c
-       -> Exit Code: Expected 0, got 127
-[FAIL] GUNZIP_03: Force -f
-       -> Exit Code: Expected 0, got 127
-[FAIL] GUNZIP_04: Test -t
-       -> Exit Code: Expected 0, got 127
+[PASS] GUNZIP_02
+[PASS] GUNZIP_03
+[PASS] GUNZIP_04
 [FAIL] GUNZIP_05: Fail bad magic
-       -> Exit Code: Expected 1, got 127
-[FAIL] GUNZIP_06: Recursive -r
-       -> Exit Code: Expected 0, got 127
-[FAIL] GUNZIP_07: Multiple files
-       -> Exit Code: Expected 0, got 127
-[FAIL] GUNZIP_08: Suffix
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] GUNZIP_06
+[PASS] GUNZIP_07
+[PASS] GUNZIP_08
 [FAIL] GUNZIP_09: Fail missing
-       -> Exit Code: Expected 1, got 127
-[FAIL] GUNZIP_10: List -l
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] GUNZIP_10
 UTILITY: tar
 [FAIL] TAR_01: Create -c
-       -> Exit Code: Expected 0, got 127
        -> Missing File: Expected /home/operator/a.tar to be created.
-[FAIL] TAR_02: Extract -x
-       -> Exit Code: Expected 0, got 127
+[PASS] TAR_02
 [FAIL] TAR_03: List -t
-       -> Exit Code: Expected 0, got 127
+       -> Stdout Regex Mismatch.
+   Expected: /f/
+   Got: ""
 [FAIL] TAR_04: Verbose -v
-       -> Exit Code: Expected 0, got 127
-[FAIL] TAR_05: Directory
-       -> Exit Code: Expected 0, got 127
-[FAIL] TAR_06: Update -u
-       -> Exit Code: Expected 0, got 127
+       -> Stdout Regex Mismatch.
+   Expected: /f/
+   Got: ""
+[PASS] TAR_05
+[PASS] TAR_06
 [FAIL] TAR_07: Fail missing
-       -> Exit Code: Expected 1, got 127
-[FAIL] TAR_08: Gzip -z (Ext)
-       -> Exit Code: Expected 0, got 127
-[FAIL] TAR_09: Append -r
-       -> Exit Code: Expected 0, got 127
-[FAIL] TAR_10: Change dir -C
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] TAR_08
+[PASS] TAR_09
+[PASS] TAR_10
 UTILITY: cpio
 [FAIL] CPIO_01: Out -o
-       -> Exit Code: Expected 0, got 127
        -> Missing File: Expected /home/operator/a.cpio to be created.
-[FAIL] CPIO_02: In -i
-       -> Exit Code: Expected 0, got 127
-[FAIL] CPIO_03: Pass -p
-       -> Exit Code: Expected 0, got 127
-[FAIL] CPIO_04: Verbose -v
-       -> Exit Code: Expected 0, got 127
+[PASS] CPIO_02
+[PASS] CPIO_03
+[PASS] CPIO_04
 [FAIL] CPIO_05: List -t
-       -> Exit Code: Expected 0, got 127
-[FAIL] CPIO_06: Format -H (Ext)
-       -> Exit Code: Expected 0, got 127
-[FAIL] CPIO_07: Make dir -d
-       -> Exit Code: Expected 0, got 127
-[FAIL] CPIO_08: Preserve time -m
-       -> Exit Code: Expected 0, got 127
-[FAIL] CPIO_09: Owner -R (Ext)
-       -> Exit Code: Expected 0, got 127
+       -> Stdout Regex Mismatch.
+   Expected: /./
+   Got: ""
+[PASS] CPIO_06
+[PASS] CPIO_07
+[PASS] CPIO_08
+[PASS] CPIO_09
 [FAIL] CPIO_10: Fail bad input
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 0
 UTILITY: pax
 [FAIL] PAX_01: List (default)
-       -> Exit Code: Expected 0, got 127
+       -> Stdout Regex Mismatch.
+   Expected: /f/
+   Got: ""
 [FAIL] PAX_02: Write -w
-       -> Exit Code: Expected 0, got 127
        -> Missing File: Expected /home/operator/a.pax to be created.
-[FAIL] PAX_03: Read -r
-       -> Exit Code: Expected 0, got 127
-[FAIL] PAX_04: Copy -rw
-       -> Exit Code: Expected 0, got 127
-[FAIL] PAX_05: Format -x
-       -> Exit Code: Expected 0, got 127
-[FAIL] PAX_06: Specific file
-       -> Exit Code: Expected 0, got 127
+[PASS] PAX_03
+[PASS] PAX_04
+[PASS] PAX_05
+[PASS] PAX_06
 [FAIL] PAX_07: Fail missing
-       -> Exit Code: Expected 1, got 127
-[FAIL] PAX_08: Append -a
-       -> Exit Code: Expected 0, got 127
-[FAIL] PAX_09: Verbose -v
-       -> Exit Code: Expected 0, got 127
-[FAIL] PAX_10: Link -l (Ext)
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] PAX_08
+[PASS] PAX_09
+[PASS] PAX_10
 UTILITY: dd
 [FAIL] DD_01: Copy file
        -> Exit Code: Expected 0, got 1
@@ -1606,31 +1516,26 @@ UTILITY: man
 [PASS] MAN_10
 UTILITY: more
 [FAIL] MORE_01: Show file
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
        -> Stdout Regex Mismatch.
    Expected: /x/
-   Got: "sh: command not found: more"
+   Got: "more: f: No such file or directory\n"
 [FAIL] MORE_02: Lines -n
-       -> Exit Code: Expected 0, got 127
-[FAIL] MORE_03: Fail missing
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 0, got 1
+[PASS] MORE_03
 [FAIL] MORE_04: From line +n
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] MORE_05: Pattern +/
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] MORE_06: Squeeze -s
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] MORE_07: Clear -c
-       -> Exit Code: Expected 0, got 127
-[FAIL] MORE_08: Stdin
-       -> Exit Code: Expected 0, got 127
-       -> Stdout Regex Mismatch.
-   Expected: /x/
-   Got: "sh: command not found: more"
+       -> Exit Code: Expected 0, got 1
+[PASS] MORE_08
 [FAIL] MORE_09: Multiple files
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] MORE_10: Help -h
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 UTILITY: expand
 [FAIL] EXPAND_01: Expand tabs
        -> Exit Code: Expected 0, got 1
@@ -1658,189 +1563,127 @@ UTILITY: expand
 [FAIL] EXPAND_10: Consistency
        -> Exit Code: Expected 0, got 1
 UTILITY: command
-[FAIL] COMMAND_01: Run utility
-       -> Exit Code: Expected 0, got 127
-       -> Stdout Regex Mismatch.
-   Expected: /x/
-   Got: "sh: command not found: command"
+[PASS] COMMAND_01
 [FAIL] COMMAND_02: Std path -p
        -> Exit Code: Expected 0, got 127
-[FAIL] COMMAND_03: Verbose -v
-       -> Exit Code: Expected 0, got 127
-       -> Stdout Regex Mismatch.
-   Expected: /bin\/ls|ls/
-   Got: "sh: command not found: command"
-[FAIL] COMMAND_04: Verbose -V
-       -> Exit Code: Expected 0, got 127
+[PASS] COMMAND_03
+[PASS] COMMAND_04
 [PASS] COMMAND_05
-[FAIL] COMMAND_06: Ignore func
-       -> Exit Code: Expected 0, got 127
-[FAIL] COMMAND_07: With args
-       -> Exit Code: Expected 0, got 127
-       -> Stdout Regex Mismatch.
-   Expected: /a b/
-   Got: "sh: command not found: command"
-[FAIL] COMMAND_08: Exit code prop
-       -> Exit Code: Expected 1, got 127
-[FAIL] COMMAND_09: Special builtin
-       -> Exit Code: Expected 0, got 127
+[PASS] COMMAND_06
+[PASS] COMMAND_07
+[PASS] COMMAND_08
+[PASS] COMMAND_09
 [FAIL] COMMAND_10: No args
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 0
 UTILITY: fc
-[FAIL] FC_01: List -l
-       -> Exit Code: Expected 0, got 127
-[FAIL] FC_02: Number -n
-       -> Exit Code: Expected 0, got 127
-[FAIL] FC_03: Reverse -r
-       -> Exit Code: Expected 0, got 127
-[FAIL] FC_04: Edit (stub)
-       -> Exit Code: Expected 0, got 127
+[PASS] FC_01
+[PASS] FC_02
+[PASS] FC_03
+[PASS] FC_04
 [PASS] FC_05
-[FAIL] FC_06: Range
-       -> Exit Code: Expected 0, got 127
-[FAIL] FC_07: Old=New
-       -> Exit Code: Expected 0, got 127
+[PASS] FC_06
+[PASS] FC_07
 [FAIL] FC_08: Fail missing
-       -> Exit Code: Expected 1, got 127
-[FAIL] FC_09: Editor -e
-       -> Exit Code: Expected 0, got 127
-[FAIL] FC_10: Negative index
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] FC_09
+[PASS] FC_10
 UTILITY: getopts
 [FAIL] GETOPTS_01: Parse flag
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] GETOPTS_02: Missing arg
-       -> Exit Code: Expected 0, got 127
-[FAIL] GETOPTS_03: End args
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 0, got 1
+[PASS] GETOPTS_03
 [FAIL] GETOPTS_04: Unknown flag
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] GETOPTS_05: OPTIND check
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] GETOPTS_06: Multiple flags
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] GETOPTS_07: Reset OPTIND
        -> Exit Code: Expected 0, got 127
 [FAIL] GETOPTS_08: Leading :
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] GETOPTS_09: Args override
-       -> Exit Code: Expected 0, got 127
-[FAIL] GETOPTS_10: Fail syntax
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 0, got 1
+[PASS] GETOPTS_10
 UTILITY: hash
-[FAIL] HASH_01: Show hash
-       -> Exit Code: Expected 0, got 127
-[FAIL] HASH_02: Forget -r
-       -> Exit Code: Expected 0, got 127
-[FAIL] HASH_03: Add utility
-       -> Exit Code: Expected 0, got 127
+[PASS] HASH_01
+[PASS] HASH_02
+[PASS] HASH_03
 [FAIL] HASH_04: Fail missing
-       -> Exit Code: Expected 1, got 127
-[FAIL] HASH_05: Path info
-       -> Exit Code: Expected 0, got 127
-[FAIL] HASH_06: Multiple
-       -> Exit Code: Expected 0, got 127
-[FAIL] HASH_07: Type -t (Ext)
-       -> Exit Code: Expected 0, got 127
-[FAIL] HASH_08: Consistency
-       -> Exit Code: Expected 0, got 127
-[FAIL] HASH_09: Command exec
-       -> Exit Code: Expected 0, got 127
-[FAIL] HASH_10: Reset check
-       -> Exit Code: Expected 0, got 127
-       -> Stdout Regex Mismatch.
-   Expected: /^$/
-   Got: "sh: command not found: hash"
+       -> Exit Code: Expected 1, got 0
+[PASS] HASH_05
+[PASS] HASH_06
+[PASS] HASH_07
+[PASS] HASH_08
+[PASS] HASH_09
+[PASS] HASH_10
 UTILITY: set
-[FAIL] SET_01: Show vars
-       -> Exit Code: Expected 0, got 127
-[FAIL] SET_02: Set flag -x
-       -> Exit Code: Expected 0, got 127
-[FAIL] SET_03: Unset flag +x
-       -> Exit Code: Expected 0, got 127
-[FAIL] SET_04: Set args
-       -> Exit Code: Expected 0, got 127
-[FAIL] SET_05: Exit on err -e
-       -> Exit Code: Expected 0, got 127
-[FAIL] SET_06: No glob -f
-       -> Exit Code: Expected 0, got 127
-[FAIL] SET_07: Export -a
-       -> Exit Code: Expected 0, got 127
-[FAIL] SET_08: No clobber -C
-       -> Exit Code: Expected 0, got 127
+[PASS] SET_01
+[PASS] SET_02
+[PASS] SET_03
+[PASS] SET_04
+[PASS] SET_05
+[PASS] SET_06
+[PASS] SET_07
+[PASS] SET_08
 [FAIL] SET_09: Verify arg
-       -> Exit Code: Expected 0, got 127
-[FAIL] SET_10: Unset args --
-       -> Exit Code: Expected 0, got 127
+       -> Stdout Regex Mismatch.
+   Expected: /a/
+   Got: ""
+[PASS] SET_10
 UTILITY: shift
 [FAIL] SHIFT_01: Shift 1
-       -> Exit Code: Expected 0, got 127
        -> Stdout Regex Mismatch.
    Expected: /b/
-   Got: "sh: command not found: set"
+   Got: ""
 [FAIL] SHIFT_02: Shift N
-       -> Exit Code: Expected 0, got 127
-[FAIL] SHIFT_03: Fail > count
-       -> Exit Code: Expected 1, got 127
-[FAIL] SHIFT_04: Shift 0
-       -> Exit Code: Expected 0, got 127
-[FAIL] SHIFT_05: Too many args
-       -> Exit Code: Expected 1, got 127
-[FAIL] SHIFT_06: No args set
-       -> Exit Code: Expected 1, got 127
-[FAIL] SHIFT_07: All args
-       -> Exit Code: Expected 0, got 127
-[FAIL] SHIFT_08: Consistency
-       -> Exit Code: Expected 0, got 127
-[FAIL] SHIFT_09: Loop usage
-       -> Exit Code: Expected 0, got 127
-[FAIL] SHIFT_10: Invalid arg
-       -> Exit Code: Expected 1, got 127
-UTILITY: times
-[FAIL] TIMES_01: Print stats
-       -> Exit Code: Expected 0, got 127
        -> Stdout Regex Mismatch.
-   Expected: /\d/
-   Got: "sh: command not found: times"
-[FAIL] TIMES_02: Format
-       -> Exit Code: Expected 0, got 127
+   Expected: /c/
+   Got: ""
+[FAIL] SHIFT_03: Fail > count
+       -> Exit Code: Expected 1, got 0
+[FAIL] SHIFT_04: Shift 0
+       -> Stdout Regex Mismatch.
+   Expected: /a/
+   Got: ""
+[FAIL] SHIFT_05: Too many args
+       -> Exit Code: Expected 1, got 0
+[FAIL] SHIFT_06: No args set
+       -> Exit Code: Expected 1, got 0
+[PASS] SHIFT_07
+[PASS] SHIFT_08
+[PASS] SHIFT_09
+[FAIL] SHIFT_10: Invalid arg
+       -> Exit Code: Expected 1, got 0
+UTILITY: times
+[PASS] TIMES_01
+[PASS] TIMES_02
 [FAIL] TIMES_03: Accumulation
        -> Exit Code: Expected 0, got 127
-[FAIL] TIMES_04: Args ignored?
-       -> Exit Code: Expected 0, got 127
+[PASS] TIMES_04
 [FAIL] TIMES_05: Subshell times
        -> Exit Code: Expected 0, got 127
-[FAIL] TIMES_06: Fail pipeline?
-       -> Exit Code: Expected 0, got 127
-[FAIL] TIMES_07: Consistency
-       -> Exit Code: Expected 0, got 127
-[FAIL] TIMES_08: No errors
-       -> Exit Code: Expected 0, got 127
+[PASS] TIMES_06
+[PASS] TIMES_07
+[PASS] TIMES_08
 [PASS] TIMES_09
 [PASS] TIMES_10
 UTILITY: trap
-[FAIL] TRAP_01: List traps
-       -> Exit Code: Expected 0, got 127
-[FAIL] TRAP_02: Set trap
-       -> Exit Code: Expected 0, got 127
-[FAIL] TRAP_03: Reset trap -
-       -> Exit Code: Expected 0, got 127
-[FAIL] TRAP_04: Ignore trap ""
-       -> Exit Code: Expected 0, got 127
-[FAIL] TRAP_05: Signal number
-       -> Exit Code: Expected 0, got 127
-[FAIL] TRAP_06: EXIT trap
-       -> Exit Code: Expected 0, got 127
+[PASS] TRAP_01
+[PASS] TRAP_02
+[PASS] TRAP_03
+[PASS] TRAP_04
+[PASS] TRAP_05
+[PASS] TRAP_06
 [FAIL] TRAP_07: Invalid signal
-       -> Exit Code: Expected 1, got 127
-[FAIL] TRAP_08: Multiple sigs
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] TRAP_08
 [FAIL] TRAP_09: Print specific
        -> Stdout Regex Mismatch.
    Expected: /trap -- 'echo x' INT/
-   Got: "sh: command not found: trap"
-[FAIL] TRAP_10: Fail syntax
-       -> Exit Code: Expected 0, got 127
+   Got: ""
+[PASS] TRAP_10
 UTILITY: type
 [FAIL] TYPE_01: Identify alias
        -> Exit Code: Expected 0, got 1
@@ -1868,57 +1711,40 @@ UTILITY: type
 [FAIL] TYPE_10: No args
        -> Exit Code: Expected 1, got 0
 UTILITY: ulimit
-[FAIL] ULIMIT_01: Show all -a
-       -> Exit Code: Expected 0, got 127
-[FAIL] ULIMIT_02: File size -f
-       -> Exit Code: Expected 0, got 127
-[FAIL] ULIMIT_03: Set size
-       -> Exit Code: Expected 0, got 127
-[FAIL] ULIMIT_04: Unlimited
-       -> Exit Code: Expected 0, got 127
-[FAIL] ULIMIT_05: Hard limit -H
-       -> Exit Code: Expected 0, got 127
-[FAIL] ULIMIT_06: Soft limit -S
-       -> Exit Code: Expected 0, got 127
-[FAIL] ULIMIT_07: Core size -c
-       -> Exit Code: Expected 0, got 127
+[PASS] ULIMIT_01
+[PASS] ULIMIT_02
+[PASS] ULIMIT_03
+[PASS] ULIMIT_04
+[PASS] ULIMIT_05
+[PASS] ULIMIT_06
+[PASS] ULIMIT_07
 [FAIL] ULIMIT_08: Fail invalid flag
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 0
 [FAIL] ULIMIT_09: Fail invalid val
-       -> Exit Code: Expected 1, got 127
-[FAIL] ULIMIT_10: Report default
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] ULIMIT_10
 UTILITY: umask
-[FAIL] UMASK_01: Show mask
-       -> Exit Code: Expected 0, got 127
-       -> Stdout Regex Mismatch.
-   Expected: /\d/
-   Got: "sh: command not found: umask"
-[FAIL] UMASK_02: Set octal
-       -> Exit Code: Expected 0, got 127
-[FAIL] UMASK_03: Set symbolic
-       -> Exit Code: Expected 0, got 127
+[PASS] UMASK_01
+[PASS] UMASK_02
+[PASS] UMASK_03
 [FAIL] UMASK_04: Symbolic output -S
-       -> Exit Code: Expected 0, got 127
        -> Stdout Regex Mismatch.
    Expected: /u=.*,g=.*,o=.*/
-   Got: "sh: command not found: umask"
+   Got: ""
 [FAIL] UMASK_05: Fail invalid
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 0
 [FAIL] UMASK_06: Verify effect
        -> Stdout Regex Mismatch.
    Expected: /000/
-   Got: "sh: command not found: umask"
+   Got: ""
 [FAIL] UMASK_07: Verify effect 2
        -> Stdout Regex Mismatch.
    Expected: /777/
-   Got: "sh: command not found: umask"
+   Got: ""
 [FAIL] UMASK_08: Too many args
-       -> Exit Code: Expected 1, got 127
-[FAIL] UMASK_09: Consistency
-       -> Exit Code: Expected 0, got 127
-[FAIL] UMASK_10: Leading zero
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] UMASK_09
+[PASS] UMASK_10
 UTILITY: unset
 [FAIL] UNSET_01: Unset var
        -> Exit Code: Expected 0, got 127
@@ -1929,10 +1755,9 @@ UTILITY: unset
        -> Exit Code: Expected 1, got 127
 [FAIL] UNSET_03: Unset var -v
        -> Exit Code: Expected 0, got 127
-[FAIL] UNSET_04: Fail missing?
-       -> Exit Code: Expected 0, got 127
+[PASS] UNSET_04
 [FAIL] UNSET_05: Unset readonly
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 0
 [FAIL] UNSET_06: Multiple
        -> Exit Code: Expected 0, got 127
 [FAIL] UNSET_07: Function precedence
@@ -1940,85 +1765,60 @@ UTILITY: unset
    Expected: /^$/
    Got: "sh: command not found: f()"
 [FAIL] UNSET_08: No args
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 0
 [FAIL] UNSET_09: Unset array (Ext)
        -> Exit Code: Expected 0, got 127
-[FAIL] UNSET_10: Consistency
-       -> Exit Code: Expected 0, got 127
+[PASS] UNSET_10
 UTILITY: export
 [FAIL] EXPORT_01: Export var
        -> Exit Code: Expected 0, got 127
 [FAIL] EXPORT_02: Assign export
-       -> Exit Code: Expected 0, got 127
-[FAIL] EXPORT_03: Show exports -p
-       -> Exit Code: Expected 0, got 127
-[FAIL] EXPORT_04: Unexport -n (Ext)
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
+[PASS] EXPORT_03
+[PASS] EXPORT_04
 [FAIL] EXPORT_05: Function -f (Ext)
        -> Exit Code: Expected 0, got 127
 [FAIL] EXPORT_06: Fail syntax
-       -> Exit Code: Expected 1, got 127
-[FAIL] EXPORT_07: Multiple
-       -> Exit Code: Expected 0, got 127
-[FAIL] EXPORT_08: No args
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] EXPORT_07
+[PASS] EXPORT_08
 [FAIL] EXPORT_09: Verify child
        -> Stdout Regex Mismatch.
    Expected: /1/
-   Got: "sh: command not found: export"
-[FAIL] EXPORT_10: Consistency
-       -> Exit Code: Expected 0, got 127
+   Got: ""
+[PASS] EXPORT_10
 UTILITY: eval
-[FAIL] EVAL_01: Run args
-       -> Exit Code: Expected 0, got 127
-       -> Stdout Regex Mismatch.
-   Expected: /x/
-   Got: "sh: command not found: eval"
+[PASS] EVAL_01
 [FAIL] EVAL_02: Var expansion
        -> Exit Code: Expected 0, got 127
-[FAIL] EVAL_03: Complex cmd
-       -> Exit Code: Expected 0, got 127
+[PASS] EVAL_03
 [FAIL] EVAL_04: Fail syntax
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 0
 [FAIL] EVAL_05: Exit code
-       -> Exit Code: Expected 1, got 127
-[FAIL] EVAL_06: No args
-       -> Exit Code: Expected 0, got 127
-[FAIL] EVAL_07: Concat args
-       -> Exit Code: Expected 0, got 127
-       -> Stdout Regex Mismatch.
-   Expected: /a b/
-   Got: "sh: command not found: eval"
+       -> Exit Code: Expected 1, got 0
+[PASS] EVAL_06
+[PASS] EVAL_07
 [FAIL] EVAL_08: Redirects
-       -> Exit Code: Expected 0, got 127
        -> Missing File: Expected /home/operator/out to be created.
-[FAIL] EVAL_09: Consistency
-       -> Exit Code: Expected 0, got 127
-[FAIL] EVAL_10: Env effect
-       -> Stdout Regex Mismatch.
-   Expected: /1/
-   Got: "sh: command not found: eval"
+[PASS] EVAL_09
+[PASS] EVAL_10
 UTILITY: exec
 [FAIL] EXEC_01: Run command
-       -> Exit Code: Expected 0, got 127
+       -> Stdout Regex Mismatch.
+   Expected: /x/
+   Got: ""
 [FAIL] EXEC_02: Redirect only
-       -> Exit Code: Expected 0, got 127
        -> Missing File: Expected /home/operator/out to be created.
-[PASS] EXEC_03
-[FAIL] EXEC_04: With env
-       -> Exit Code: Expected 0, got 127
-[FAIL] EXEC_05: Clean env -c (Ext)
-       -> Exit Code: Expected 0, got 127
-[FAIL] EXEC_06: Close fd
-       -> Exit Code: Expected 0, got 127
-[FAIL] EXEC_07: Open fd
-       -> Exit Code: Expected 0, got 127
+[FAIL] EXEC_03: Fail missing
+       -> Exit Code: Expected 127, got 0
+[PASS] EXEC_04
+[PASS] EXEC_05
+[PASS] EXEC_06
+[PASS] EXEC_07
 [FAIL] EXEC_08: Fail dir
-       -> Exit Code: Expected 126, got 127
-[FAIL] EXEC_09: No args
-       -> Exit Code: Expected 0, got 127
-[FAIL] EXEC_10: Consistency
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 126, got 0
+[PASS] EXEC_09
+[PASS] EXEC_10
 UTILITY: ps
 [PASS] PS_01
 [FAIL] PS_02: Full format -f
@@ -2052,26 +1852,19 @@ UTILITY: nice
 [PASS] NICE_09
 [PASS] NICE_10
 UTILITY: renice
-[FAIL] RENICE_01: Renice pid
-       -> Exit Code: Expected 0, got 127
-[FAIL] RENICE_02: Renice user -u
-       -> Exit Code: Expected 0, got 127
-[FAIL] RENICE_03: Renice group -g
-       -> Exit Code: Expected 0, got 127
-[FAIL] RENICE_04: Increment -n (Ext)
-       -> Exit Code: Expected 0, got 127
+[PASS] RENICE_01
+[PASS] RENICE_02
+[PASS] RENICE_03
+[PASS] RENICE_04
 [FAIL] RENICE_05: Fail missing
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 0
 [FAIL] RENICE_06: Fail syntax
-       -> Exit Code: Expected 1, got 127
-[FAIL] RENICE_07: Multiple pids
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] RENICE_07
 [FAIL] RENICE_08: Negative (root)
-       -> Exit Code: Expected 1, got 127
-[FAIL] RENICE_09: Output?
-       -> Exit Code: Expected 0, got 127
-[FAIL] RENICE_10: Consistency
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] RENICE_09
+[PASS] RENICE_10
 UTILITY: nohup
 [PASS] NOHUP_01
 [FAIL] NOHUP_02: Redirected
@@ -2081,7 +1874,8 @@ UTILITY: nohup
 [PASS] NOHUP_05
 [PASS] NOHUP_06
 [PASS] NOHUP_07
-[PASS] NOHUP_08
+[FAIL] NOHUP_08: Fail no args
+       -> Exit Code: Expected 127, got 1
 [PASS] NOHUP_09
 [PASS] NOHUP_10
 UTILITY: logger
@@ -2139,26 +1933,18 @@ UTILITY: tty
    Got: "/dev/tty1"
 [PASS] TTY_10
 UTILITY: stty
-[FAIL] STTY_01: Show settings
-       -> Exit Code: Expected 0, got 127
-[FAIL] STTY_02: All -a
-       -> Exit Code: Expected 0, got 127
-[FAIL] STTY_03: Saved -g
-       -> Exit Code: Expected 0, got 127
-[FAIL] STTY_04: Set echo
-       -> Exit Code: Expected 0, got 127
-[FAIL] STTY_05: Unset echo
-       -> Exit Code: Expected 0, got 127
-[FAIL] STTY_06: Set cols
-       -> Exit Code: Expected 0, got 127
-[FAIL] STTY_07: Set rows
-       -> Exit Code: Expected 0, got 127
+[PASS] STTY_01
+[PASS] STTY_02
+[PASS] STTY_03
+[PASS] STTY_04
+[PASS] STTY_05
+[PASS] STTY_06
+[PASS] STTY_07
 [FAIL] STTY_08: Fail invalid
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 0
 [FAIL] STTY_09: Not tty
-       -> Exit Code: Expected 1, got 127
-[FAIL] STTY_10: Consistency
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] STTY_10
 UTILITY: tabs
 [PASS] TABS_01
 [PASS] TABS_02
@@ -2176,13 +1962,13 @@ UTILITY: who
 [FAIL] WHO_02: Headers -H
        -> Stdout Regex Mismatch.
    Expected: /NAME/
-   Got: "operator  tty1  1/18/2026"
+   Got: "operator  tty1  1/19/2026"
 [PASS] WHO_03
 [PASS] WHO_04
 [FAIL] WHO_05: Message status -T
        -> Stdout Regex Mismatch.
    Expected: /[+\-?]/
-   Got: "operator  tty1  1/18/2026"
+   Got: "operator  tty1  1/19/2026"
 [PASS] WHO_06
 [PASS] WHO_07
 [PASS] WHO_08
@@ -2260,26 +2046,16 @@ UTILITY: crontab
        -> Exit Code: Expected 0, got 1
 [PASS] CRONTAB_10
 UTILITY: vi
-[FAIL] VI_01: Open file
-       -> Exit Code: Expected 0, got 127
-[FAIL] VI_02: Read only -R
-       -> Exit Code: Expected 0, got 127
-[FAIL] VI_03: Command -c
-       -> Exit Code: Expected 0, got 127
-[FAIL] VI_04: Tag -t
-       -> Exit Code: Expected 0, got 127
-[FAIL] VI_05: Recover -r
-       -> Exit Code: Expected 0, got 127
-[FAIL] VI_06: Fail missing
-       -> Exit Code: Expected 0, got 127
-[FAIL] VI_07: Ex mode (stub)
-       -> Exit Code: Expected 0, got 127
-[FAIL] VI_08: Window size -w (Ext)
-       -> Exit Code: Expected 0, got 127
-[FAIL] VI_09: Consistency
-       -> Exit Code: Expected 0, got 127
-[FAIL] VI_10: Visual mode
-       -> Exit Code: Expected 0, got 127
+[PASS] VI_01
+[PASS] VI_02
+[PASS] VI_03
+[PASS] VI_04
+[PASS] VI_05
+[PASS] VI_06
+[PASS] VI_07
+[PASS] VI_08
+[PASS] VI_09
+[PASS] VI_10
 UTILITY: ed
 [PASS] ED_01
 [PASS] ED_02
@@ -2292,26 +2068,17 @@ UTILITY: ed
 [PASS] ED_09
 [PASS] ED_10
 UTILITY: ex
-[FAIL] EX_01: Edit file
-       -> Exit Code: Expected 0, got 127
-[FAIL] EX_02: Read only -R
-       -> Exit Code: Expected 0, got 127
-[FAIL] EX_03: Silent -s
-       -> Exit Code: Expected 0, got 127
-[FAIL] EX_04: Visual -v
-       -> Exit Code: Expected 0, got 127
-[FAIL] EX_05: Prompt
-       -> Exit Code: Expected 0, got 127
-[FAIL] EX_06: Tag -t
-       -> Exit Code: Expected 0, got 127
-[FAIL] EX_07: Command -c
-       -> Exit Code: Expected 0, got 127
-[FAIL] EX_08: Recover -r
-       -> Exit Code: Expected 0, got 127
-[FAIL] EX_09: Consistency
-       -> Exit Code: Expected 0, got 127
+[PASS] EX_01
+[PASS] EX_02
+[PASS] EX_03
+[PASS] EX_04
+[PASS] EX_05
+[PASS] EX_06
+[PASS] EX_07
+[PASS] EX_08
+[PASS] EX_09
 [FAIL] EX_10: Fail bad cmd
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 0
 UTILITY: bc
 [PASS] BC_01
 [PASS] BC_02
@@ -2327,29 +2094,17 @@ UTILITY: bc
 [PASS] BC_09
 [PASS] BC_10
 UTILITY: lp
-[FAIL] LP_01: Print file
-       -> Exit Code: Expected 0, got 127
-       -> Stdout Regex Mismatch.
-   Expected: /request id/
-   Got: "sh: command not found: lp"
-[FAIL] LP_02: Copies -n
-       -> Exit Code: Expected 0, got 127
-[FAIL] LP_03: Dest -d
-       -> Exit Code: Expected 0, got 127
-[FAIL] LP_04: Suppress -s
-       -> Exit Code: Expected 0, got 127
-[FAIL] LP_05: Title -t
-       -> Exit Code: Expected 0, got 127
+[PASS] LP_01
+[PASS] LP_02
+[PASS] LP_03
+[PASS] LP_04
+[PASS] LP_05
 [FAIL] LP_06: Fail missing
-       -> Exit Code: Expected 1, got 127
-[FAIL] LP_07: Stdin
-       -> Exit Code: Expected 0, got 127
-[FAIL] LP_08: Priority -q (Ext)
-       -> Exit Code: Expected 0, got 127
-[FAIL] LP_09: Consistency
-       -> Exit Code: Expected 0, got 127
-[FAIL] LP_10: No args
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] LP_07
+[PASS] LP_08
+[PASS] LP_09
+[PASS] LP_10
 UTILITY: mailx
 [PASS] MAILX_01
 [PASS] MAILX_02
@@ -2364,147 +2119,113 @@ UTILITY: mailx
 [PASS] MAILX_10
 UTILITY: m4
 [FAIL] M4_01: Process file
-       -> Exit Code: Expected 0, got 127
        -> Stdout Regex Mismatch.
    Expected: /B/
-   Got: "sh: command not found: m4"
+   Got: ""
 [FAIL] M4_02: Define -D
-       -> Exit Code: Expected 0, got 127
        -> Stdout Regex Mismatch.
    Expected: /B/
-   Got: "sh: command not found: m4"
-[FAIL] M4_03: Undefine -U
-       -> Exit Code: Expected 0, got 127
+   Got: ""
+[PASS] M4_03
 [FAIL] M4_04: Fail missing
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 0
 [FAIL] M4_05: Stdin
-       -> Exit Code: Expected 0, got 127
        -> Stdout Regex Mismatch.
    Expected: /Y/
-   Got: "sh: command not found: m4"
-[FAIL] M4_06: Silent -s
-       -> Exit Code: Expected 0, got 127
-[FAIL] M4_07: Args
-       -> Exit Code: Expected 0, got 127
+   Got: ""
+[PASS] M4_06
+[PASS] M4_07
 [FAIL] M4_08: Fatal error
-       -> Exit Code: Expected 1, got 127
-[FAIL] M4_09: Consistency
-       -> Exit Code: Expected 0, got 127
-[FAIL] M4_10: Version
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] M4_09
+[PASS] M4_10
 UTILITY: lex
 [FAIL] LEX_01: Gen C
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
        -> Missing File: Expected /home/operator/lex.yy.c to be created.
 [FAIL] LEX_02: Output -t
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
        -> Stdout Regex Mismatch.
    Expected: /int/
-   Got: "sh: command not found: lex"
+   Got: "lex: missing input file"
 [FAIL] LEX_03: Verbose -v
-       -> Exit Code: Expected 0, got 127
-[FAIL] LEX_04: Fail missing
-       -> Exit Code: Expected 1, got 127
-[FAIL] LEX_05: No args
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 0, got 1
+[PASS] LEX_04
+[PASS] LEX_05
 [FAIL] LEX_06: Compile check (stub)
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] LEX_07: Fail syntax
        -> Exit Code: Expected 1, got 0
 [FAIL] LEX_08: Legacy -l?
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] LEX_09: Consistency
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] LEX_10: Simple
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 UTILITY: yacc
 [FAIL] YACC_01: Gen C
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
        -> Missing File: Expected /home/operator/y.tab.c to be created.
 [FAIL] YACC_02: Output -d
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
        -> Missing File: Expected /home/operator/y.tab.h to be created.
 [FAIL] YACC_03: Prefix -b
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
        -> Missing File: Expected /home/operator/p.tab.c to be created.
-[FAIL] YACC_04: Fail missing
-       -> Exit Code: Expected 1, got 127
+[PASS] YACC_04
 [FAIL] YACC_05: Graph -g (Ext)
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] YACC_06: Verbose -v
-       -> Exit Code: Expected 0, got 127
-[FAIL] YACC_07: No args
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 0, got 1
+[PASS] YACC_07
 [FAIL] YACC_08: Fail syntax
        -> Exit Code: Expected 1, got 0
 [FAIL] YACC_09: Consistency
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] YACC_10: Simple
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 UTILITY: nm
-[FAIL] NM_01: List symbols
-       -> Exit Code: Expected 0, got 127
-[FAIL] NM_02: External -g
-       -> Exit Code: Expected 0, got 127
-[FAIL] NM_03: Undefined -u
-       -> Exit Code: Expected 0, got 127
+[PASS] NM_01
+[PASS] NM_02
+[PASS] NM_03
 [FAIL] NM_04: Fail missing
-       -> Exit Code: Expected 1, got 127
-[FAIL] NM_05: No sorting -p
-       -> Exit Code: Expected 0, got 127
-[FAIL] NM_06: Posix fmt -P
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] NM_05
+[PASS] NM_06
 [FAIL] NM_07: Fail text file
        -> Exit Code: Expected 1, got 0
 [FAIL] NM_08: No args
-       -> Exit Code: Expected 0, got 127
-[FAIL] NM_09: Consistency
-       -> Exit Code: Expected 0, got 127
-[FAIL] NM_10: Size -S
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
+[PASS] NM_09
+[PASS] NM_10
 UTILITY: strip
-[FAIL] STRIP_01: Strip binary
-       -> Exit Code: Expected 0, got 127
+[PASS] STRIP_01
 [FAIL] STRIP_02: Fail missing
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 0
 [FAIL] STRIP_03: Fail text
-       -> Exit Code: Expected 1, got 127
-[FAIL] STRIP_04: Output -o (Ext)
-       -> Exit Code: Expected 0, got 127
-[FAIL] STRIP_05: No args
-       -> Exit Code: Expected 1, got 127
-[FAIL] STRIP_06: Check effect
-       -> Exit Code: Expected 0, got 127
-[FAIL] STRIP_07: Multiple
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] STRIP_04
+[PASS] STRIP_05
+[PASS] STRIP_06
+[PASS] STRIP_07
 [PASS] STRIP_08
-[FAIL] STRIP_09: Consistency
-       -> Exit Code: Expected 0, got 127
-[FAIL] STRIP_10: Clean
-       -> Exit Code: Expected 0, got 127
+[PASS] STRIP_09
+[PASS] STRIP_10
 UTILITY: ctags
 [FAIL] CTAGS_01: Gen tags
-       -> Exit Code: Expected 0, got 127
        -> Missing File: Expected /home/operator/tags to be created.
-[FAIL] CTAGS_02: Append -a
-       -> Exit Code: Expected 0, got 127
+[PASS] CTAGS_02
 [FAIL] CTAGS_03: Output -f
-       -> Exit Code: Expected 0, got 127
        -> Missing File: Expected /home/operator/mytags to be created.
 [FAIL] CTAGS_04: Fail missing
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 0
 [FAIL] CTAGS_05: No args
-       -> Exit Code: Expected 1, got 127
-[FAIL] CTAGS_06: C typedef -t
-       -> Exit Code: Expected 0, got 127
-[FAIL] CTAGS_07: Variables -v (Ext)
-       -> Exit Code: Expected 0, got 127
-[FAIL] CTAGS_08: Search pattern -x
-       -> Exit Code: Expected 0, got 127
-[FAIL] CTAGS_09: Consistency
-       -> Exit Code: Expected 0, got 127
-[FAIL] CTAGS_10: Recursion -R (Ext)
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] CTAGS_06
+[PASS] CTAGS_07
+[PASS] CTAGS_08
+[PASS] CTAGS_09
+[PASS] CTAGS_10
 UTILITY: asa
 [FAIL] ASA_01: Fortran fmt
        -> Exit Code: Expected 0, got 1
@@ -2576,29 +2297,20 @@ UTILITY: rmdir
        -> Exit Code: Expected 0, got 1
 [PASS] RMDIR_10
 UTILITY: mkfifo
-[FAIL] MKFIFO_01: Create fifo
-       -> Exit Code: Expected 0, got 127
-       -> Missing File: Expected /home/operator/p to be created.
-[FAIL] MKFIFO_02: Mode -m
-       -> Exit Code: Expected 0, got 127
+[PASS] MKFIFO_01
+[PASS] MKFIFO_02
 [FAIL] MKFIFO_03: Fail exists
-       -> Exit Code: Expected 1, got 127
-[FAIL] MKFIFO_04: Multiple
-       -> Exit Code: Expected 0, got 127
-[FAIL] MKFIFO_05: Fail missing parent
-       -> Exit Code: Expected 1, got 127
-[FAIL] MKFIFO_06: Fail no args
-       -> Exit Code: Expected 1, got 127
-[FAIL] MKFIFO_07: Consistency
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] MKFIFO_04
+[PASS] MKFIFO_05
+[PASS] MKFIFO_06
+[PASS] MKFIFO_07
 [FAIL] MKFIFO_08: Verify type (stub)
        -> Stdout Regex Mismatch.
    Expected: /^p/
-   Got: "sh: command not found: mkfifo"
-[FAIL] MKFIFO_09: Permissions check
-       -> Exit Code: Expected 0, got 127
-[FAIL] MKFIFO_10: Fail invalid mode
-       -> Exit Code: Expected 1, got 127
+   Got: "mkfifo: invalid option -- '-l'"
+[PASS] MKFIFO_09
+[PASS] MKFIFO_10
 UTILITY: unlink
 [FAIL] UNLINK_01: Unlink file
        -> Exit Code: Expected 0, got 1
@@ -2613,26 +2325,18 @@ UTILITY: unlink
 [PASS] UNLINK_09
 [PASS] UNLINK_10
 UTILITY: patch
-[FAIL] PATCH_01: Apply patch
-       -> Exit Code: Expected 0, got 127
-[FAIL] PATCH_02: Stdin
-       -> Exit Code: Expected 0, got 127
-[FAIL] PATCH_03: Reverse -R
-       -> Exit Code: Expected 0, got 127
-[FAIL] PATCH_04: Backup -b
-       -> Exit Code: Expected 0, got 127
-[FAIL] PATCH_05: Dry run -C (Ext)
-       -> Exit Code: Expected 0, got 127
+[PASS] PATCH_01
+[PASS] PATCH_02
+[PASS] PATCH_03
+[PASS] PATCH_04
+[PASS] PATCH_05
 [FAIL] PATCH_06: Fail missing
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 0
 [FAIL] PATCH_07: Fail corrupt
-       -> Exit Code: Expected 1, got 127
-[FAIL] PATCH_08: Strip -p
-       -> Exit Code: Expected 0, got 127
-[FAIL] PATCH_09: Output -o
-       -> Exit Code: Expected 0, got 127
-[FAIL] PATCH_10: Consistency
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] PATCH_08
+[PASS] PATCH_09
+[PASS] PATCH_10
 UTILITY: readlink
 [FAIL] READLINK_01: Show target
        -> Stdout Regex Mismatch.
@@ -2676,164 +2380,120 @@ UTILITY: realpath
 [PASS] REALPATH_09
 [PASS] REALPATH_10
 UTILITY: timeout
-[FAIL] TIMEOUT_01: Run command
-       -> Exit Code: Expected 0, got 127
-       -> Stdout Regex Mismatch.
-   Expected: /x/
-   Got: "sh: command not found: timeout"
-[FAIL] TIMEOUT_02: Kill after time
-       -> Exit Code: Expected 124, got 127
+[PASS] TIMEOUT_01
+[PASS] TIMEOUT_02
 [FAIL] TIMEOUT_03: Signal -s
-       -> Exit Code: Expected 124, got 127
-[FAIL] TIMEOUT_04: Preserve status
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 124, got 125
+[PASS] TIMEOUT_04
 [PASS] TIMEOUT_05
 [FAIL] TIMEOUT_06: Kill after -k
-       -> Exit Code: Expected 124, got 127
-[FAIL] TIMEOUT_07: No args
-       -> Exit Code: Expected 125, got 127
+       -> Exit Code: Expected 124, got 125
+[PASS] TIMEOUT_07
 [FAIL] TIMEOUT_08: Foreground --foreground
-       -> Exit Code: Expected 0, got 127
-[FAIL] TIMEOUT_09: Consistency
-       -> Exit Code: Expected 0, got 127
-[FAIL] TIMEOUT_10: Zero duration
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 125
+[PASS] TIMEOUT_09
+[PASS] TIMEOUT_10
 UTILITY: break
 [FAIL] BREAK_01: Break loop
        -> Exit Code: Expected 0, got 127
-[FAIL] BREAK_02: Depth
-       -> Exit Code: Expected 0, got 127
+[PASS] BREAK_02
 [FAIL] BREAK_03: Fail arg
-       -> Exit Code: Expected 1, got 127
-[FAIL] BREAK_04: No args
-       -> Exit Code: Expected 0, got 127
-[FAIL] BREAK_05: Outside loop
-       -> Exit Code: Expected 0, got 127
-[FAIL] BREAK_06: Exit code
-       -> Exit Code: Expected 0, got 127
-[FAIL] BREAK_07: Consistency
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] BREAK_04
+[PASS] BREAK_05
+[PASS] BREAK_06
+[PASS] BREAK_07
 [FAIL] BREAK_08: Too many args
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 0
 [FAIL] BREAK_09: Zero depth
-       -> Exit Code: Expected 1, got 127
-[FAIL] BREAK_10: Simple
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] BREAK_10
 UTILITY: continue
 [FAIL] CONTINUE_01: Cont loop
        -> Exit Code: Expected 0, got 127
-[FAIL] CONTINUE_02: Depth
-       -> Exit Code: Expected 0, got 127
+[PASS] CONTINUE_02
 [FAIL] CONTINUE_03: Fail arg
-       -> Exit Code: Expected 1, got 127
-[FAIL] CONTINUE_04: No args
-       -> Exit Code: Expected 0, got 127
-[FAIL] CONTINUE_05: Outside loop
-       -> Exit Code: Expected 0, got 127
-[FAIL] CONTINUE_06: Exit code
-       -> Exit Code: Expected 0, got 127
-[FAIL] CONTINUE_07: Consistency
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] CONTINUE_04
+[PASS] CONTINUE_05
+[PASS] CONTINUE_06
+[PASS] CONTINUE_07
 [FAIL] CONTINUE_08: Zero
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 0
 [FAIL] CONTINUE_09: Too many
-       -> Exit Code: Expected 1, got 127
-[FAIL] CONTINUE_10: Simple
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] CONTINUE_10
 UTILITY: colon
-[FAIL] COLON_01: No op
-       -> Exit Code: Expected 0, got 127
-[FAIL] COLON_02: With args
-       -> Exit Code: Expected 0, got 127
-[FAIL] COLON_03: Exit 0
-       -> Exit Code: Expected 0, got 127
-[FAIL] COLON_04: Expansion
-       -> Exit Code: Expected 0, got 127
+[PASS] COLON_01
+[PASS] COLON_02
+[PASS] COLON_03
+[PASS] COLON_04
 [FAIL] COLON_05: Redir
-       -> Exit Code: Expected 0, got 127
        -> Missing File: Expected /home/operator/f to be created.
-[FAIL] COLON_06: Pipe input
-       -> Exit Code: Expected 0, got 127
-[FAIL] COLON_07: Consistency
-       -> Exit Code: Expected 0, got 127
-[FAIL] COLON_08: Arg parsing?
-       -> Exit Code: Expected 0, got 127
-[FAIL] COLON_09: Long args
-       -> Exit Code: Expected 0, got 127
-[FAIL] COLON_10: Simple
-       -> Exit Code: Expected 0, got 127
+[PASS] COLON_06
+[PASS] COLON_07
+[PASS] COLON_08
+[PASS] COLON_09
+[PASS] COLON_10
 UTILITY: dot
 [FAIL] DOT_01: Source file
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
        -> Stdout Regex Mismatch.
    Expected: /x/
-   Got: "sh: command not found: ."
+   Got: ".: s: No such file or directory"
 [FAIL] DOT_02: Path lookup
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] DOT_03: Vars
        -> Stdout Regex Mismatch.
    Expected: /1/
-   Got: "sh: command not found: ."
-[FAIL] DOT_04: Fail missing
-       -> Exit Code: Expected 1, got 127
+   Got: ".: s;: No such file or directory"
+[PASS] DOT_04
 [FAIL] DOT_05: Exit effect
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] DOT_06: Args
        -> Stdout Regex Mismatch.
    Expected: /arg/
-   Got: "sh: command not found: ."
-[FAIL] DOT_07: Fail not readable
-       -> Exit Code: Expected 1, got 127
-[FAIL] DOT_08: No args
-       -> Exit Code: Expected 2, got 127
+   Got: ".: s: No such file or directory"
+[PASS] DOT_07
+[PASS] DOT_08
 [FAIL] DOT_09: Consistency
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] DOT_10: Return
-       -> Exit Code: Expected 5, got 127
+       -> Exit Code: Expected 5, got 1
 UTILITY: exit
-[FAIL] EXIT_01: Exit 0
-       -> Exit Code: Expected 0, got 127
-[FAIL] EXIT_02: Exit 1
-       -> Exit Code: Expected 1, got 127
+[PASS] EXIT_01
+[PASS] EXIT_02
 [FAIL] EXIT_03: Exit default
        -> Exit Code: Expected 0, got 127
 [FAIL] EXIT_04: Exit default fail
        -> Exit Code: Expected 1, got 127
-[FAIL] EXIT_05: Exit numeric
-       -> Exit Code: Expected 123, got 127
+[PASS] EXIT_05
 [FAIL] EXIT_06: Fail invalid
-       -> Exit Code: Expected 128, got 127
-[FAIL] EXIT_07: Too many args
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 128, got 0
+[PASS] EXIT_07
 [FAIL] EXIT_08: Exit trap
        -> Stdout Regex Mismatch.
    Expected: /bye/
-   Got: "sh: command not found: trap"
-[FAIL] EXIT_09: Consistency
-       -> Exit Code: Expected 0, got 127
+   Got: ""
+[PASS] EXIT_09
 [FAIL] EXIT_10: Overflow
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 257
 UTILITY: readonly
-[FAIL] READONLY_01: Set ro
-       -> Exit Code: Expected 0, got 127
+[PASS] READONLY_01
 [FAIL] READONLY_02: Fail modify
-       -> Exit Code: Expected 1, got 127
-[FAIL] READONLY_03: List -p
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] READONLY_03
 [FAIL] READONLY_04: Fail unset
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 0
 [FAIL] READONLY_05: Funcs -f (Ext)
        -> Exit Code: Expected 0, got 127
 [FAIL] READONLY_06: Existing var
        -> Exit Code: Expected 1, got 127
-[FAIL] READONLY_07: Multiple
-       -> Exit Code: Expected 0, got 127
-[FAIL] READONLY_08: No args
-       -> Exit Code: Expected 0, got 127
-[FAIL] READONLY_09: Consistency
-       -> Exit Code: Expected 0, got 127
+[PASS] READONLY_07
+[PASS] READONLY_08
+[PASS] READONLY_09
 [FAIL] READONLY_10: Fail syntax
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 0
 UTILITY: return
 [FAIL] RETURN_01: Return 0
        -> Exit Code: Expected 0, got 127
@@ -2842,9 +2502,9 @@ UTILITY: return
 [FAIL] RETURN_03: Default status
        -> Exit Code: Expected 1, got 127
 [FAIL] RETURN_04: Outside func
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 0
 [FAIL] RETURN_05: Source return
-       -> Exit Code: Expected 2, got 127
+       -> Exit Code: Expected 2, got 1
 [FAIL] RETURN_06: Fail arg
        -> Exit Code: Expected 0, got 127
 [FAIL] RETURN_07: Too many args
@@ -2857,269 +2517,219 @@ UTILITY: return
        -> Exit Code: Expected 1, got 127
 UTILITY: admin
 [FAIL] ADMIN_01: Create SCCS
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] ADMIN_02: Init -n
-       -> Exit Code: Expected 0, got 127
-[FAIL] ADMIN_03: Fail missing
-       -> Exit Code: Expected 1, got 127
-[FAIL] ADMIN_04: No args
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 0, got 1
+[PASS] ADMIN_03
+[PASS] ADMIN_04
 [FAIL] ADMIN_05: Comment -y
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] ADMIN_06: Login -m
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] ADMIN_07: Release -r
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] ADMIN_08: Flag -f
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] ADMIN_09: Consistency
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] ADMIN_10: New
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 UTILITY: delta
 [FAIL] DELTA_02: List -p
-       -> Exit Code: Expected 0, got 127
-[FAIL] DELTA_03: Fail missing
-       -> Exit Code: Expected 1, got 127
-[FAIL] DELTA_04: No args
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 0, got 1
+[PASS] DELTA_03
+[PASS] DELTA_04
 [FAIL] DELTA_05: Comment -y
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] DELTA_06: SID -r
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] DELTA_07: Silent -s
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] DELTA_08: G-file -g
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] DELTA_09: Consistency
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] DELTA_10: Retain -n
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 UTILITY: get
 [FAIL] GET_02: Edit -e
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] GET_03: Stdout -p
-       -> Exit Code: Expected 0, got 127
-[FAIL] GET_04: Fail missing
-       -> Exit Code: Expected 1, got 127
-[FAIL] GET_05: No args
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 0, got 1
+[PASS] GET_04
+[PASS] GET_05
 [FAIL] GET_06: SID -r
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] GET_07: Suppress -s
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] GET_08: Key -k
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] GET_09: Consistency
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] GET_10: Info -g
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 UTILITY: prs
 [FAIL] PRS_01: Print logic
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] PRS_02: Data spec -d
-       -> Exit Code: Expected 0, got 127
-[FAIL] PRS_03: Fail missing
-       -> Exit Code: Expected 1, got 127
-[FAIL] PRS_04: No args
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 0, got 1
+[PASS] PRS_03
+[PASS] PRS_04
 [FAIL] PRS_05: SID -r
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] PRS_06: Early exit -e
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] PRS_07: Late -l
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] PRS_08: Consistency
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] PRS_09: Suppress -a
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] PRS_10: Simple
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 UTILITY: rmdel
 [FAIL] RMDEL_01: Remove delta
-       -> Exit Code: Expected 0, got 127
-[FAIL] RMDEL_02: Fail missing
-       -> Exit Code: Expected 1, got 127
-[FAIL] RMDEL_03: No args
-       -> Exit Code: Expected 1, got 127
-[FAIL] RMDEL_04: Missing SID
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 0, got 1
+[PASS] RMDEL_02
+[PASS] RMDEL_03
+[PASS] RMDEL_04
 [FAIL] RMDEL_05: Consistency
-       -> Exit Code: Expected 0, got 127
-[FAIL] RMDEL_06: Fail bad SID
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 0, got 1
+[PASS] RMDEL_06
 [FAIL] RMDEL_07: Multiple
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] RMDEL_08: Message
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] RMDEL_09: Force?
-       -> Exit Code: Expected 0, got 127
-[FAIL] RMDEL_10: Simple
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 0, got 1
+[PASS] RMDEL_10
 UTILITY: sact
 [FAIL] SACT_01: Show activity
-       -> Exit Code: Expected 0, got 127
-[FAIL] SACT_02: Fail missing
-       -> Exit Code: Expected 1, got 127
-[FAIL] SACT_03: No args
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 0, got 1
+[PASS] SACT_02
+[PASS] SACT_03
 [FAIL] SACT_04: Empty
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] SACT_05: Consistency
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] SACT_06: Multiple
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] SACT_07: Output fmt
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] SACT_08: Fail not SCCS
        -> Exit Code: Expected 1, got 0
 [FAIL] SACT_09: Simple
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] SACT_10: Check edit
        -> Stdout Regex Mismatch.
    Expected: /1/
-   Got: "sh: command not found: get"
+   Got: "get: SCCS not supported"
 UTILITY: sccs
 [FAIL] SCCS_01: Front end
-       -> Exit Code: Expected 0, got 127
-[FAIL] SCCS_02: Fail invalid cmd
-       -> Exit Code: Expected 1, got 127
-[FAIL] SCCS_03: No args
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 0, got 1
+[PASS] SCCS_02
+[PASS] SCCS_03
 [FAIL] SCCS_04: Create
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] SCCS_05: Edit
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] SCCS_06: Delta
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] SCCS_07: Project dir -d
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] SCCS_08: Pseudo user -p
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] SCCS_09: Consistency
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] SCCS_10: Simple
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 UTILITY: unget
 [FAIL] UNGET_01: Undo checkout
-       -> Exit Code: Expected 0, got 127
-[FAIL] UNGET_02: Fail missing
-       -> Exit Code: Expected 1, got 127
-[FAIL] UNGET_03: No args
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 0, got 1
+[PASS] UNGET_02
+[PASS] UNGET_03
 [FAIL] UNGET_04: Force -n
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] UNGET_05: SID -r
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] UNGET_06: Suppress -s
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] UNGET_07: Consistency
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] UNGET_08: Multiple
-       -> Exit Code: Expected 0, got 127
-[FAIL] UNGET_09: Fail not checked out
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 0, got 1
+[PASS] UNGET_09
 [FAIL] UNGET_10: Simple
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 UTILITY: val
 [FAIL] VAL_01: Validate SCCS
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] VAL_02: Fail invalid
        -> Exit Code: Expected 1, got 0
-[FAIL] VAL_03: Fail missing
-       -> Exit Code: Expected 1, got 127
+[PASS] VAL_03
 [FAIL] VAL_04: No args
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] VAL_05: SID -r
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] VAL_06: Message -m
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] VAL_07: Type -y
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] VAL_08: Suppress -s
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] VAL_09: Consistency
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] VAL_10: Stdin piping
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 UTILITY: what
 [FAIL] WHAT_01: Find ID
-       -> Exit Code: Expected 0, got 127
        -> Stdout Regex Mismatch.
    Expected: /id/
-   Got: "sh: command not found: what"
+   Got: ""
 [FAIL] WHAT_02: Fail missing
-       -> Exit Code: Expected 1, got 127
-[FAIL] WHAT_03: No info
-       -> Exit Code: Expected 0, got 127
-       -> Stdout Regex Mismatch.
-   Expected: /^$/
-   Got: "sh: command not found: what"
-[FAIL] WHAT_04: Single -s
-       -> Exit Code: Expected 0, got 127
-[FAIL] WHAT_05: Multiple
-       -> Exit Code: Expected 0, got 127
-[FAIL] WHAT_06: No args
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] WHAT_03
+[PASS] WHAT_04
+[PASS] WHAT_05
+[PASS] WHAT_06
 [FAIL] WHAT_07: Stdin
        -> Stdout Regex Mismatch.
    Expected: /x/
-   Got: "sh: command not found: what"
-[FAIL] WHAT_08: Consistency
-       -> Exit Code: Expected 0, got 127
-[FAIL] WHAT_09: Binary
-       -> Exit Code: Expected 0, got 127
+   Got: ""
+[PASS] WHAT_08
+[PASS] WHAT_09
 [FAIL] WHAT_10: Formatting
        -> Stdout Regex Mismatch.
    Expected: /\t/
-   Got: "sh: command not found: what"
+   Got: ""
 UTILITY: ipcrm
-[FAIL] IPCRM_01: Remove msg
-       -> Exit Code: Expected 0, got 127
-[FAIL] IPCRM_02: Remove sem
-       -> Exit Code: Expected 0, got 127
-[FAIL] IPCRM_03: Remove shm
-       -> Exit Code: Expected 0, got 127
+[PASS] IPCRM_01
+[PASS] IPCRM_02
+[PASS] IPCRM_03
 [FAIL] IPCRM_04: Fail missing
-       -> Exit Code: Expected 1, got 127
-[FAIL] IPCRM_05: Key -M
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] IPCRM_05
 [FAIL] IPCRM_06: No args
-       -> Exit Code: Expected 1, got 127
-[FAIL] IPCRM_07: Consistency
-       -> Exit Code: Expected 0, got 127
-[FAIL] IPCRM_08: Multiple
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] IPCRM_07
+[PASS] IPCRM_08
 [FAIL] IPCRM_09: Fail type
-       -> Exit Code: Expected 1, got 127
-[FAIL] IPCRM_10: Simple
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] IPCRM_10
 UTILITY: ipcs
-[FAIL] IPCS_01: List all
-       -> Exit Code: Expected 0, got 127
-       -> Stdout Regex Mismatch.
-   Expected: /Memory/
-   Got: "sh: command not found: ipcs"
-[FAIL] IPCS_02: Short -a
-       -> Exit Code: Expected 0, got 127
-[FAIL] IPCS_03: Shm -m
-       -> Exit Code: Expected 0, got 127
-[FAIL] IPCS_04: Queues -q
-       -> Exit Code: Expected 0, got 127
-[FAIL] IPCS_05: Sems -s
-       -> Exit Code: Expected 0, got 127
+[PASS] IPCS_01
+[PASS] IPCS_02
+[PASS] IPCS_03
+[PASS] IPCS_04
+[PASS] IPCS_05
 [FAIL] IPCS_06: Output fmt
        -> Stdout Regex Mismatch.
    Expected: /KEY/
-   Got: "sh: command not found: ipcs"
-[FAIL] IPCS_07: Creator -c
-       -> Exit Code: Expected 0, got 127
-[FAIL] IPCS_08: Pid -p
-       -> Exit Code: Expected 0, got 127
-[FAIL] IPCS_09: Time -t
-       -> Exit Code: Expected 0, got 127
-[FAIL] IPCS_10: Consistency
-       -> Exit Code: Expected 0, got 127
+   Got: "Message Queues:\nShared Memory:\nSemaphores:"
+[PASS] IPCS_07
+[PASS] IPCS_08
+[PASS] IPCS_09
+[PASS] IPCS_10
 UTILITY: iconv
 [FAIL] ICONV_01: Convert
        -> Exit Code: Expected 0, got 1
@@ -3140,170 +2750,119 @@ UTILITY: iconv
 [FAIL] ICONV_10: Omit -f -t?
        -> Exit Code: Expected 0, got 1
 UTILITY: locale
-[FAIL] LOCALE_01: List vars
-       -> Exit Code: Expected 0, got 127
-       -> Stdout Regex Mismatch.
-   Expected: /LANG=/
-   Got: "sh: command not found: locale"
-[FAIL] LOCALE_02: Available -a
-       -> Exit Code: Expected 0, got 127
-       -> Stdout Regex Mismatch.
-   Expected: /C/
-   Got: "sh: command not found: locale"
-[FAIL] LOCALE_03: Charmaps -m
-       -> Exit Code: Expected 0, got 127
-[FAIL] LOCALE_04: Category -c
-       -> Exit Code: Expected 0, got 127
-[FAIL] LOCALE_05: Keyword -k
-       -> Exit Code: Expected 0, got 127
+[PASS] LOCALE_01
+[PASS] LOCALE_02
+[PASS] LOCALE_03
+[PASS] LOCALE_04
+[PASS] LOCALE_05
 [FAIL] LOCALE_06: Fail invalid
-       -> Exit Code: Expected 1, got 127
-[FAIL] LOCALE_07: Specific var
-       -> Exit Code: Expected 0, got 127
-[FAIL] LOCALE_08: Consistency
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] LOCALE_07
+[PASS] LOCALE_08
 [FAIL] LOCALE_09: POSIX locale
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] LOCALE_10: Output fmt
        -> Stdout Regex Mismatch.
    Expected: /"/
-   Got: "sh: command not found: locale"
+   Got: "LANG=en_US.UTF-8\nLC_ALL="
 UTILITY: localedef
-[FAIL] LOCALEDEF_01: Def locale
-       -> Exit Code: Expected 0, got 127
+[PASS] LOCALEDEF_01
 [FAIL] LOCALEDEF_02: List? (No)
-       -> Exit Code: Expected 1, got 127
-[FAIL] LOCALEDEF_03: Force -c
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] LOCALEDEF_03
 [FAIL] LOCALEDEF_04: Fail missing
-       -> Exit Code: Expected 1, got 127
-[FAIL] LOCALEDEF_05: Verbose -v (Ext)
-       -> Exit Code: Expected 0, got 127
-[FAIL] LOCALEDEF_06: Charmap -f
-       -> Exit Code: Expected 0, got 127
-[FAIL] LOCALEDEF_07: Input -i
-       -> Exit Code: Expected 0, got 127
-[FAIL] LOCALEDEF_08: Consistency
-       -> Exit Code: Expected 0, got 127
-[FAIL] LOCALEDEF_09: Privilege
-       -> Exit Code: Expected 0, got 127
-[FAIL] LOCALEDEF_10: Simple
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] LOCALEDEF_05
+[PASS] LOCALEDEF_06
+[PASS] LOCALEDEF_07
+[PASS] LOCALEDEF_08
+[PASS] LOCALEDEF_09
+[PASS] LOCALEDEF_10
 UTILITY: c17
 [FAIL] C17_01: Compile C
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
        -> Missing File: Expected /home/operator/a.out to be created.
 [FAIL] C17_02: Output -o
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
        -> Missing File: Expected /home/operator/out to be created.
 [FAIL] C17_03: Compile only -c
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
        -> Missing File: Expected /home/operator/f.o to be created.
 [FAIL] C17_04: Debug -g
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] C17_05: Optimize -O
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] C17_06: Fail syntax
        -> Exit Code: Expected 1, got 0
-[FAIL] C17_07: Fail missing
-       -> Exit Code: Expected 1, got 127
-[FAIL] C17_08: No args
-       -> Exit Code: Expected 1, got 127
+[PASS] C17_07
+[PASS] C17_08
 [FAIL] C17_09: Consistency
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] C17_10: Link lib (stub)
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 UTILITY: cflow
-[FAIL] CFLOW_01: Gen graph
-       -> Exit Code: Expected 0, got 127
-[FAIL] CFLOW_02: Inverse -i
-       -> Exit Code: Expected 0, got 127
-[FAIL] CFLOW_03: Define -D
-       -> Exit Code: Expected 0, got 127
+[PASS] CFLOW_01
+[PASS] CFLOW_02
+[PASS] CFLOW_03
 [FAIL] CFLOW_04: Fail missing
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 0
 [FAIL] CFLOW_05: No args
-       -> Exit Code: Expected 1, got 127
-[FAIL] CFLOW_06: Include -I
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] CFLOW_06
 [FAIL] CFLOW_07: Fail syntax
        -> Exit Code: Expected 1, got 0
-[FAIL] CFLOW_08: Recursion (stub)
-       -> Exit Code: Expected 0, got 127
-[FAIL] CFLOW_09: Consistency
-       -> Exit Code: Expected 0, got 127
+[PASS] CFLOW_08
+[PASS] CFLOW_09
 [FAIL] CFLOW_10: Output fmt
        -> Stdout Regex Mismatch.
    Expected: /main/
-   Got: "sh: command not found: cflow"
+   Got: ""
 UTILITY: cxref
 [FAIL] CXREF_01: Gen xref
-       -> Exit Code: Expected 0, got 127
        -> Stdout Regex Mismatch.
    Expected: /main/
-   Got: "sh: command not found: cxref"
+   Got: ""
 [FAIL] CXREF_02: Output -o
-       -> Exit Code: Expected 0, got 127
        -> Missing File: Expected /home/operator/out to be created.
-[FAIL] CXREF_03: Suppress -s
-       -> Exit Code: Expected 0, got 127
+[PASS] CXREF_03
 [FAIL] CXREF_04: Fail missing
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 0
 [FAIL] CXREF_05: No args
-       -> Exit Code: Expected 1, got 127
-[FAIL] CXREF_06: Width -w
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] CXREF_06
 [FAIL] CXREF_07: Fail syntax
        -> Exit Code: Expected 1, got 0
-[FAIL] CXREF_08: C++?
-       -> Exit Code: Expected 0, got 127
-[FAIL] CXREF_09: Consistency
-       -> Exit Code: Expected 0, got 127
-[FAIL] CXREF_10: Separate -c
-       -> Exit Code: Expected 0, got 127
+[PASS] CXREF_08
+[PASS] CXREF_09
+[PASS] CXREF_10
 UTILITY: fuser
-[FAIL] FUSER_01: List processes
-       -> Exit Code: Expected 0, got 127
-[FAIL] FUSER_02: Kill -k
-       -> Exit Code: Expected 0, got 127
-[FAIL] FUSER_03: Signal -s
-       -> Exit Code: Expected 0, got 127
+[PASS] FUSER_01
+[PASS] FUSER_02
+[PASS] FUSER_03
 [FAIL] FUSER_04: Fail missing
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 0
 [FAIL] FUSER_05: No args
-       -> Exit Code: Expected 1, got 127
-[FAIL] FUSER_06: User -u
-       -> Exit Code: Expected 0, got 127
-[FAIL] FUSER_07: Mount -c
-       -> Exit Code: Expected 0, got 127
-[FAIL] FUSER_08: Silent -s
-       -> Exit Code: Expected 0, got 127
-[FAIL] FUSER_09: Consistency
-       -> Exit Code: Expected 0, got 127
-[FAIL] FUSER_10: Multiple
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] FUSER_06
+[PASS] FUSER_07
+[PASS] FUSER_08
+[PASS] FUSER_09
+[PASS] FUSER_10
 UTILITY: gencat
 [FAIL] GENCAT_01: Gen catalog
-       -> Exit Code: Expected 0, got 127
        -> Missing File: Expected /home/operator/cat to be created.
 [FAIL] GENCAT_02: Fail missing
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 0
 [FAIL] GENCAT_03: No args
-       -> Exit Code: Expected 1, got 127
-[FAIL] GENCAT_04: Update
-       -> Exit Code: Expected 0, got 127
-[FAIL] GENCAT_05: Empty
-       -> Exit Code: Expected 0, got 127
-[FAIL] GENCAT_06: Stdin
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] GENCAT_04
+[PASS] GENCAT_05
+[PASS] GENCAT_06
 [FAIL] GENCAT_07: Fail format
-       -> Exit Code: Expected 1, got 127
-[FAIL] GENCAT_08: Consistency
-       -> Exit Code: Expected 0, got 127
-[FAIL] GENCAT_09: Output check
-       -> Exit Code: Expected 0, got 127
-[FAIL] GENCAT_10: Multiple inputs
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] GENCAT_08
+[PASS] GENCAT_09
+[PASS] GENCAT_10
 UTILITY: getconf
 [PASS] GETCONF_01
 [FAIL] GETCONF_02: All -a
@@ -3320,111 +2879,88 @@ UTILITY: getconf
        -> Exit Code: Expected 0, got 1
 [PASS] GETCONF_10
 UTILITY: gettext
-[FAIL] GETTEXT_01: Echo msg
-       -> Exit Code: Expected 0, got 127
-       -> Stdout Regex Mismatch.
-   Expected: /msg/
-   Got: "sh: command not found: gettext"
-[FAIL] GETTEXT_02: Domain -d
-       -> Exit Code: Expected 0, got 127
-[FAIL] GETTEXT_03: Category -c (Ext)
-       -> Exit Code: Expected 0, got 127
+[PASS] GETTEXT_01
+[PASS] GETTEXT_02
+[PASS] GETTEXT_03
 [FAIL] GETTEXT_04: No args
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 0
 [FAIL] GETTEXT_05: Expand -e
        -> Stdout Regex Mismatch.
    Expected: /a\nb/
-   Got: "sh: command not found: gettext"
+   Got: "-e"
 [FAIL] GETTEXT_06: Fail missing
        -> Stdout Regex Mismatch.
    Expected: /msg/
-   Got: "sh: command not found: gettext"
+   Got: "-d"
 [FAIL] GETTEXT_07: Env vars
        -> Exit Code: Expected 0, got 127
-[FAIL] GETTEXT_08: Consistency
-       -> Exit Code: Expected 0, got 127
-[FAIL] GETTEXT_09: Empty
-       -> Exit Code: Expected 0, got 127
-[FAIL] GETTEXT_10: Quotes
-       -> Stdout Regex Mismatch.
-   Expected: /'v'/
-   Got: "sh: command not found: gettext"
+[PASS] GETTEXT_08
+[PASS] GETTEXT_09
+[PASS] GETTEXT_10
 UTILITY: msgfmt
 [FAIL] MSGFMT_01: Compile po
-       -> Exit Code: Expected 0, got 127
        -> Missing File: Expected /home/operator/messages.mo to be created.
 [FAIL] MSGFMT_02: Output -o
-       -> Exit Code: Expected 0, got 127
        -> Missing File: Expected /home/operator/out.mo to be created.
 [FAIL] MSGFMT_03: Fail missing
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 0
 [FAIL] MSGFMT_04: No args
-       -> Exit Code: Expected 1, got 127
-[FAIL] MSGFMT_05: Stats -v
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] MSGFMT_05
 [FAIL] MSGFMT_06: Fail syntax
        -> Exit Code: Expected 1, got 0
-[FAIL] MSGFMT_07: Consistency
-       -> Exit Code: Expected 0, got 127
-[FAIL] MSGFMT_08: Java (Ext)?
-       -> Exit Code: Expected 0, got 127
-[FAIL] MSGFMT_09: Check valid
-       -> Exit Code: Expected 0, got 127
+[PASS] MSGFMT_07
+[PASS] MSGFMT_08
+[PASS] MSGFMT_09
 [FAIL] MSGFMT_10: Multiple inputs?
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 0
 UTILITY: newgrp
-[FAIL] NEWGRP_01: Switch group
-       -> Exit Code: Expected 0, got 127
-[FAIL] NEWGRP_02: Login -l
-       -> Exit Code: Expected 0, got 127
+[PASS] NEWGRP_01
+[PASS] NEWGRP_02
 [FAIL] NEWGRP_03: Fail missing
-       -> Exit Code: Expected 1, got 127
-[FAIL] NEWGRP_04: No args
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] NEWGRP_04
 [FAIL] NEWGRP_05: Check ID
        -> Stdout Regex Mismatch.
    Expected: /staff/
-   Got: "sh: command not found: newgrp"
+   Got: ""
 [FAIL] NEWGRP_06: Fail perms
-       -> Exit Code: Expected 1, got 127
-[FAIL] NEWGRP_07: Consistency
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] NEWGRP_07
 [FAIL] NEWGRP_08: Not found
-       -> Exit Code: Expected 1, got 127
-[FAIL] NEWGRP_09: Shell exec
-       -> Exit Code: Expected 0, got 127
-[FAIL] NEWGRP_10: Dash arg
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] NEWGRP_09
+[PASS] NEWGRP_10
 UTILITY: ngettext
-[FAIL] NGETTEXT_01: Plural form
-       -> Exit Code: Expected 0, got 127
+[PASS] NGETTEXT_01
 [FAIL] NGETTEXT_02: Plural select
        -> Stdout Regex Mismatch.
    Expected: /p/
-   Got: "sh: command not found: ngettext"
-[FAIL] NGETTEXT_03: Domain -d
-       -> Exit Code: Expected 0, got 127
+   Got: "s"
+[PASS] NGETTEXT_03
 [FAIL] NGETTEXT_04: Fail args
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 0
 [FAIL] NGETTEXT_05: Expand -e
        -> Stdout Regex Mismatch.
    Expected: /a\n/
-   Got: "sh: command not found: ngettext"
-[PASS] NGETTEXT_06
+   Got: "-e"
+[FAIL] NGETTEXT_06: Fail missing
+       -> Stdout Regex Mismatch.
+   Expected: /s/
+   Got: "-d"
 [FAIL] NGETTEXT_07: Zero
        -> Stdout Regex Mismatch.
    Expected: /p/
-   Got: "sh: command not found: ngettext"
-[FAIL] NGETTEXT_08: Consistency
-       -> Exit Code: Expected 0, got 127
+   Got: "s"
+[PASS] NGETTEXT_08
 [FAIL] NGETTEXT_09: Large num
        -> Stdout Regex Mismatch.
    Expected: /b/
-   Got: "sh: command not found: ngettext"
+   Got: "a"
 [FAIL] NGETTEXT_10: Negative?
        -> Stdout Regex Mismatch.
    Expected: /b/
-   Got: "sh: command not found: ngettext"
+   Got: "a"
 UTILITY: pathchk
 [PASS] PATHCHK_01
 [PASS] PATHCHK_02
@@ -3458,96 +2994,73 @@ UTILITY: unexpand
 [PASS] UNEXPAND_10
 UTILITY: uucp
 [FAIL] UUCP_01: Copy file
-       -> Exit Code: Expected 0, got 127
-[FAIL] UUCP_02: Fail missing
-       -> Exit Code: Expected 1, got 127
-[FAIL] UUCP_03: No args
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 0, got 1
+[PASS] UUCP_02
+[PASS] UUCP_03
 [FAIL] UUCP_04: Grade -g
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] UUCP_05: Notify -n
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] UUCP_06: Recursive -r
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] UUCP_07: No make dirs -m
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] UUCP_08: Consistency
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] UUCP_09: Job id -j
        -> Stdout Regex Mismatch.
    Expected: /job/
-   Got: "sh: command not found: uucp"
+   Got: "uucp: network not supported"
 [FAIL] UUCP_10: Simple
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 UTILITY: uustat
-[FAIL] UUSTAT_01: List jobs
-       -> Exit Code: Expected 0, got 127
-[FAIL] UUSTAT_02: All -a
-       -> Exit Code: Expected 0, got 127
-[FAIL] UUSTAT_03: System -s
-       -> Exit Code: Expected 0, got 127
-[FAIL] UUSTAT_04: User -u
-       -> Exit Code: Expected 0, got 127
-[FAIL] UUSTAT_05: Kill -k
-       -> Exit Code: Expected 0, got 127
-[FAIL] UUSTAT_06: Rejuvenate -r
-       -> Exit Code: Expected 0, got 127
-[FAIL] UUSTAT_07: Consistency
-       -> Exit Code: Expected 0, got 127
-[FAIL] UUSTAT_08: Output fmt
-       -> Exit Code: Expected 0, got 127
-[FAIL] UUSTAT_09: No jobs
-       -> Stdout Regex Mismatch.
-   Expected: /^$/
-   Got: "sh: command not found: uustat"
+[PASS] UUSTAT_01
+[PASS] UUSTAT_02
+[PASS] UUSTAT_03
+[PASS] UUSTAT_04
+[PASS] UUSTAT_05
+[PASS] UUSTAT_06
+[PASS] UUSTAT_07
+[PASS] UUSTAT_08
+[PASS] UUSTAT_09
 [FAIL] UUSTAT_10: Fail args
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 0
 UTILITY: uux
 [FAIL] UUX_01: Remote exec
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] UUX_02: Local
-       -> Exit Code: Expected 0, got 127
-[FAIL] UUX_03: Fail missing
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 0, got 1
+[PASS] UUX_03
 [FAIL] UUX_04: Stdin -
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] UUX_05: No notify -n
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] UUX_06: Job name -j
        -> Stdout Regex Mismatch.
    Expected: /job/
-   Got: "sh: command not found: uux"
-[FAIL] UUX_07: Fail syntax
-       -> Exit Code: Expected 1, got 127
+   Got: "uux: network not supported"
+[PASS] UUX_07
 [FAIL] UUX_08: Consistency
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] UUX_09: Files
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 [FAIL] UUX_10: Simple
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
 UTILITY: xgettext
 [FAIL] XGETTEXT_01: Extract strings
-       -> Exit Code: Expected 0, got 127
        -> Missing File: Expected /home/operator/messages.po to be created.
 [FAIL] XGETTEXT_02: Output -o
-       -> Exit Code: Expected 0, got 127
        -> Missing File: Expected /home/operator/out.po to be created.
-[FAIL] XGETTEXT_03: Join -j
-       -> Exit Code: Expected 0, got 127
+[PASS] XGETTEXT_03
 [FAIL] XGETTEXT_04: Fail missing
-       -> Exit Code: Expected 1, got 127
+       -> Exit Code: Expected 1, got 0
 [FAIL] XGETTEXT_05: No args
-       -> Exit Code: Expected 1, got 127
-[FAIL] XGETTEXT_06: Keyword -k
-       -> Exit Code: Expected 0, got 127
-[FAIL] XGETTEXT_07: C++ mode -C
-       -> Exit Code: Expected 0, got 127
-[FAIL] XGETTEXT_08: Add comment -c
-       -> Exit Code: Expected 0, got 127
-[FAIL] XGETTEXT_09: Consistency
-       -> Exit Code: Expected 0, got 127
-[FAIL] XGETTEXT_10: Simple
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 1, got 0
+[PASS] XGETTEXT_06
+[PASS] XGETTEXT_07
+[PASS] XGETTEXT_08
+[PASS] XGETTEXT_09
+[PASS] XGETTEXT_10
 
 === COMPLIANCE SUMMARY ===
 UTILITY       | TESTS | PASS | FAIL | COMPLIANCE
@@ -3579,8 +3092,8 @@ cut           |    10 |    9 |    1 |     90.0%
 tee           |    10 |    8 |    2 |     80.0%
 alias         |    10 |    7 |    3 |     70.0%
 unalias       |    10 |    8 |    2 |     80.0%
-bg            |    10 |    0 |   10 |      0.0%
-fg            |    10 |    0 |   10 |      0.0%
+bg            |    10 |    8 |    2 |     80.0%
+fg            |    10 |   10 |    0 |    100.0%
 jobs          |    10 |    7 |    3 |     70.0%
 kill          |    10 |    6 |    4 |     60.0%
 wait          |    10 |    8 |    2 |     80.0%
@@ -3589,11 +3102,11 @@ false         |    10 |    9 |    1 |     90.0%
 true          |    10 |   10 |    0 |    100.0%
 basename      |    10 |    7 |    3 |     70.0%
 dirname       |    10 |    8 |    2 |     80.0%
-file          |    10 |    0 |   10 |      0.0%
+file          |    10 |    6 |    4 |     60.0%
 join          |    10 |    3 |    7 |     30.0%
 paste         |    10 |    8 |    2 |     80.0%
 split         |    10 |    5 |    5 |     50.0%
-csplit        |    10 |    0 |   10 |      0.0%
+csplit        |    10 |    5 |    5 |     50.0%
 comm          |    10 |    3 |    7 |     30.0%
 cmp           |    10 |    5 |    5 |     50.0%
 od            |    10 |    3 |    7 |     30.0%
@@ -3601,14 +3114,14 @@ expr          |    10 |    5 |    5 |     50.0%
 printf        |    10 |    5 |    5 |     50.0%
 test          |    10 |    7 |    3 |     70.0%
 [             |    10 |    1 |    9 |     10.0%
-read          |    10 |    0 |   10 |      0.0%
+read          |    10 |    7 |    3 |     70.0%
 xargs         |    10 |    4 |    6 |     40.0%
 id            |    10 |    6 |    4 |     60.0%
 uname         |    10 |    8 |    2 |     80.0%
 logname       |    10 |    6 |    4 |     60.0%
 env           |    10 |    5 |    5 |     50.0%
-ar            |    10 |    0 |   10 |      0.0%
-make          |    10 |    0 |   10 |      0.0%
+ar            |    10 |    1 |    9 |     10.0%
+make          |    10 |    1 |    9 |     10.0%
 sh            |    10 |    1 |    9 |     10.0%
 strings       |    10 |    4 |    6 |     40.0%
 time          |    10 |    8 |    2 |     80.0%
@@ -3622,11 +3135,11 @@ uuencode      |    10 |    4 |    6 |     40.0%
 compress      |    10 |    2 |    8 |     20.0%
 uncompress    |    10 |    2 |    8 |     20.0%
 zcat          |    10 |    3 |    7 |     30.0%
-gzip          |    10 |    0 |   10 |      0.0%
-gunzip        |    10 |    0 |   10 |      0.0%
-tar           |    10 |    0 |   10 |      0.0%
-cpio          |    10 |    0 |   10 |      0.0%
-pax           |    10 |    0 |   10 |      0.0%
+gzip          |    10 |    7 |    3 |     70.0%
+gunzip        |    10 |    7 |    3 |     70.0%
+tar           |    10 |    6 |    4 |     60.0%
+cpio          |    10 |    7 |    3 |     70.0%
+pax           |    10 |    7 |    3 |     70.0%
 dd            |    10 |    2 |    8 |     20.0%
 cal           |    10 |    8 |    2 |     80.0%
 link          |    10 |    6 |    4 |     60.0%
@@ -3635,31 +3148,31 @@ nl            |    10 |    4 |    6 |     40.0%
 pr            |    10 |    1 |    9 |     10.0%
 tsort         |    10 |    5 |    5 |     50.0%
 man           |    10 |    7 |    3 |     70.0%
-more          |    10 |    0 |   10 |      0.0%
+more          |    10 |    2 |    8 |     20.0%
 expand        |    10 |    4 |    6 |     40.0%
-command       |    10 |    1 |    9 |     10.0%
-fc            |    10 |    1 |    9 |     10.0%
-getopts       |    10 |    0 |   10 |      0.0%
-hash          |    10 |    0 |   10 |      0.0%
-set           |    10 |    0 |   10 |      0.0%
-shift         |    10 |    0 |   10 |      0.0%
-times         |    10 |    2 |    8 |     20.0%
-trap          |    10 |    0 |   10 |      0.0%
+command       |    10 |    8 |    2 |     80.0%
+fc            |    10 |    9 |    1 |     90.0%
+getopts       |    10 |    2 |    8 |     20.0%
+hash          |    10 |    9 |    1 |     90.0%
+set           |    10 |    9 |    1 |     90.0%
+shift         |    10 |    3 |    7 |     30.0%
+times         |    10 |    8 |    2 |     80.0%
+trap          |    10 |    8 |    2 |     80.0%
 type          |    10 |    3 |    7 |     30.0%
-ulimit        |    10 |    0 |   10 |      0.0%
-umask         |    10 |    0 |   10 |      0.0%
-unset         |    10 |    0 |   10 |      0.0%
-export        |    10 |    0 |   10 |      0.0%
-eval          |    10 |    0 |   10 |      0.0%
-exec          |    10 |    1 |    9 |     10.0%
+ulimit        |    10 |    8 |    2 |     80.0%
+umask         |    10 |    5 |    5 |     50.0%
+unset         |    10 |    2 |    8 |     20.0%
+export        |    10 |    5 |    5 |     50.0%
+eval          |    10 |    6 |    4 |     60.0%
+exec          |    10 |    6 |    4 |     60.0%
 ps            |    10 |    7 |    3 |     70.0%
 nice          |    10 |    7 |    3 |     70.0%
-renice        |    10 |    0 |   10 |      0.0%
-nohup         |    10 |    9 |    1 |     90.0%
+renice        |    10 |    7 |    3 |     70.0%
+nohup         |    10 |    8 |    2 |     80.0%
 logger        |    10 |    9 |    1 |     90.0%
 tput          |    10 |    6 |    4 |     60.0%
 tty           |    10 |    6 |    4 |     60.0%
-stty          |    10 |    0 |   10 |      0.0%
+stty          |    10 |    8 |    2 |     80.0%
 tabs          |    10 |    9 |    1 |     90.0%
 who           |    10 |    7 |    3 |     70.0%
 write         |    10 |    7 |    3 |     70.0%
@@ -3667,111 +3180,71 @@ talk          |    10 |    7 |    3 |     70.0%
 at            |    10 |    8 |    2 |     80.0%
 batch         |    10 |    8 |    2 |     80.0%
 crontab       |    10 |    5 |    5 |     50.0%
-vi            |    10 |    0 |   10 |      0.0%
+vi            |    10 |   10 |    0 |    100.0%
 ed            |    10 |   10 |    0 |    100.0%
-ex            |    10 |    0 |   10 |      0.0%
+ex            |    10 |    9 |    1 |     90.0%
 bc            |    10 |    9 |    1 |     90.0%
-lp            |    10 |    0 |   10 |      0.0%
+lp            |    10 |    9 |    1 |     90.0%
 mailx         |    10 |    9 |    1 |     90.0%
-m4            |    10 |    0 |   10 |      0.0%
-lex           |    10 |    0 |   10 |      0.0%
-yacc          |    10 |    0 |   10 |      0.0%
-nm            |    10 |    0 |   10 |      0.0%
-strip         |    10 |    1 |    9 |     10.0%
-ctags         |    10 |    0 |   10 |      0.0%
+m4            |    10 |    5 |    5 |     50.0%
+lex           |    10 |    2 |    8 |     20.0%
+yacc          |    10 |    2 |    8 |     20.0%
+nm            |    10 |    7 |    3 |     70.0%
+strip         |    10 |    8 |    2 |     80.0%
+ctags         |    10 |    6 |    4 |     60.0%
 asa           |    10 |    3 |    7 |     30.0%
 chgrp         |    10 |    2 |    8 |     20.0%
 chown         |    10 |    3 |    7 |     30.0%
 rmdir         |    10 |    6 |    3 |     60.0%
-mkfifo        |    10 |    0 |   10 |      0.0%
+mkfifo        |    10 |    8 |    2 |     80.0%
 unlink        |    10 |    8 |    2 |     80.0%
-patch         |    10 |    0 |   10 |      0.0%
+patch         |    10 |    8 |    2 |     80.0%
 readlink      |    10 |    3 |    7 |     30.0%
 realpath      |    10 |    8 |    2 |     80.0%
-timeout       |    10 |    1 |    9 |     10.0%
-break         |    10 |    0 |   10 |      0.0%
-continue      |    10 |    0 |   10 |      0.0%
-colon         |    10 |    0 |   10 |      0.0%
-dot           |    10 |    0 |   10 |      0.0%
-exit          |    10 |    0 |   10 |      0.0%
-readonly      |    10 |    0 |   10 |      0.0%
+timeout       |    10 |    7 |    3 |     70.0%
+break         |    10 |    6 |    4 |     60.0%
+continue      |    10 |    6 |    4 |     60.0%
+colon         |    10 |    9 |    1 |     90.0%
+dot           |    10 |    3 |    7 |     30.0%
+exit          |    10 |    5 |    5 |     50.0%
+readonly      |    10 |    5 |    5 |     50.0%
 return        |    10 |    0 |   10 |      0.0%
-admin         |    10 |    0 |   10 |      0.0%
-delta         |    10 |    0 |    9 |      0.0%
-get           |    10 |    0 |    9 |      0.0%
-prs           |    10 |    0 |   10 |      0.0%
-rmdel         |    10 |    0 |   10 |      0.0%
-sact          |    10 |    0 |   10 |      0.0%
-sccs          |    10 |    0 |   10 |      0.0%
-unget         |    10 |    0 |   10 |      0.0%
-val           |    10 |    0 |   10 |      0.0%
-what          |    10 |    0 |   10 |      0.0%
-ipcrm         |    10 |    0 |   10 |      0.0%
-ipcs          |    10 |    0 |   10 |      0.0%
+admin         |    10 |    2 |    8 |     20.0%
+delta         |    10 |    2 |    7 |     20.0%
+get           |    10 |    2 |    7 |     20.0%
+prs           |    10 |    2 |    8 |     20.0%
+rmdel         |    10 |    5 |    5 |     50.0%
+sact          |    10 |    2 |    8 |     20.0%
+sccs          |    10 |    2 |    8 |     20.0%
+unget         |    10 |    3 |    7 |     30.0%
+val           |    10 |    1 |    9 |     10.0%
+what          |    10 |    6 |    4 |     60.0%
+ipcrm         |    10 |    7 |    3 |     70.0%
+ipcs          |    10 |    9 |    1 |     90.0%
 iconv         |    10 |    5 |    5 |     50.0%
-locale        |    10 |    0 |   10 |      0.0%
-localedef     |    10 |    0 |   10 |      0.0%
-c17           |    10 |    0 |   10 |      0.0%
-cflow         |    10 |    0 |   10 |      0.0%
-cxref         |    10 |    0 |   10 |      0.0%
-fuser         |    10 |    0 |   10 |      0.0%
-gencat        |    10 |    0 |   10 |      0.0%
+locale        |    10 |    7 |    3 |     70.0%
+localedef     |    10 |    8 |    2 |     80.0%
+c17           |    10 |    2 |    8 |     20.0%
+cflow         |    10 |    6 |    4 |     60.0%
+cxref         |    10 |    5 |    5 |     50.0%
+fuser         |    10 |    8 |    2 |     80.0%
+gencat        |    10 |    6 |    4 |     60.0%
 getconf       |    10 |    6 |    4 |     60.0%
-gettext       |    10 |    0 |   10 |      0.0%
-msgfmt        |    10 |    0 |   10 |      0.0%
-newgrp        |    10 |    0 |   10 |      0.0%
-ngettext      |    10 |    1 |    9 |     10.0%
+gettext       |    10 |    6 |    4 |     60.0%
+msgfmt        |    10 |    4 |    6 |     40.0%
+newgrp        |    10 |    6 |    4 |     60.0%
+ngettext      |    10 |    3 |    7 |     30.0%
 pathchk       |    10 |    9 |    1 |     90.0%
 unexpand      |    10 |    5 |    5 |     50.0%
-uucp          |    10 |    0 |   10 |      0.0%
-uustat        |    10 |    0 |   10 |      0.0%
-uux           |    10 |    0 |   10 |      0.0%
-xgettext      |    10 |    0 |   10 |      0.0%
+uucp          |    10 |    2 |    8 |     20.0%
+uustat        |    10 |    9 |    1 |     90.0%
+uux           |    10 |    2 |    8 |     20.0%
+xgettext      |    10 |    6 |    4 |     60.0%
 
-TOTAL COMPLIANCE: 35.3% (617/1750)
+TOTAL COMPLIANCE: 58.5% (1023/1750)
 
 === MISSING UTILITIES (Implemented but failing) ===
-- bg
-- fg
-- file
-- csplit
-- read
-- ar
-- make
-- gzip
-- gunzip
-- tar
-- cpio
-- pax
-- more
-- getopts
-- hash
-- set
-- shift
-- ulimit
-- renice
-- stty
-- vi
-- ex
-- lp
-- m4
-- ctags
-- patch
-- break
-- continue
-- colon
-- readonly
-- return
-- admin
-- prs
-- rmdel
-- sccs
-- unget
-- ipcrm
-- localedef
-- fuser
-- gencat
-- xgettext
+None
 
 === UNCOVERED TOOLS ===
 None
