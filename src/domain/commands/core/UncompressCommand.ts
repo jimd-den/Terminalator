@@ -11,16 +11,17 @@ export class UncompressCommand implements ICommand {
         const file = args[0];
 
         if (!file) {
-             return { output: 'uncompress: missing file', newState: state, exitCode: 1 };
+            return { output: 'uncompress: missing file', newState: state, exitCode: 1 };
         }
 
         const node = fs.resolveNode(file, state.currentDirectory);
         if (!node || fs.isDirectory(node)) {
-             return { output: `uncompress: ${file}: No such file or directory`, newState: state, exitCode: 1 };
+            return { output: `uncompress: ${file}: No such file or directory`, newState: state, exitCode: 1 };
         }
 
         const path = fs.getAbsolutePath(node);
-        const content = fs.readFile(path);
+        const raw = fs.readFile(path);
+        const content = typeof raw === 'string' ? raw : new TextDecoder().decode(raw);
 
         // Strip header if present
         let decompressed = content;

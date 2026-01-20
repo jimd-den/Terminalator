@@ -49,11 +49,11 @@ export class TestCommand implements ICommand {
                     case '-d':
                         if (!node) return false;
                         const inode = this.fs.getInode(node.inodeId);
-                        return !!(inode.mode & 0o040000);
+                        return !!(inode!.mode & 0o040000);
                     case '-f':
                         if (!node) return false;
                         const inodeF = this.fs.getInode(node.inodeId);
-                        return !(inodeF.mode & 0o040000); // Rough check for file
+                        return !(inodeF!.mode & 0o040000); // Rough check for file
                     case '-z': return file.length === 0; // -z string? No, -z checks string length.
                     case '-n': return file.length > 0;
                 }

@@ -28,9 +28,9 @@ export class CodeCompiler {
         };
     }
 
-    compile(path: string): CompilationResult {
+    compile(path: string, cwd: string = '/'): CompilationResult {
         const compileLogic = () => {
-            const node = this.fs.resolveNode(path);
+            const node = this.fs.resolveNode(path, cwd);
             if (!node) {
                 return { success: false, output: `Error: File ${path} not found.` };
             }

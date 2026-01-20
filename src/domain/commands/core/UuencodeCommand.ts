@@ -29,13 +29,14 @@ export class UuencodeCommand implements ICommand {
             infile = args[0];
             decodePath = args[1];
         } else {
-             return { output: 'uuencode: missing operand', newState: state, exitCode: 1 };
+            return { output: 'uuencode: missing operand', newState: state, exitCode: 1 };
         }
 
         let content = '';
         if (infile) {
             try {
-                content = this.fs.readFile(this.resolvePath(infile, state));
+                const raw = this.fs.readFile(this.resolvePath(infile, state));
+                content = typeof raw === 'string' ? raw : new TextDecoder().decode(raw);
             } catch (e) {
                 return { output: `uuencode: ${infile}: No such file`, newState: state, exitCode: 1 };
             }

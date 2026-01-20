@@ -14,17 +14,10 @@ describe('LsCommand', () => {
         // Setup a test file structure
         // /home/operator has 'mail' (dir) and 'notes.txt' (file)
         // We will add a hidden file
-        const homeOp = fs.getNode('/home/operator');
-        if (homeOp && homeOp.children) {
-            homeOp.children['.hidden'] = {
-                name: '.hidden',
-                type: 'file',
-                content: 'secret',
-                owner: 'operator',
-                permissions: 'rw-------',
-                updatedAt: new Date().toISOString()
-            };
-        }
+        // Create hidden file
+        fs.writeFile('/home/operator/.hidden', 'secret', 'w', '/');
+        // Set permissions manually if writeFile doesn't allow (it defaults to 644 usually)
+        fs.chmod('/home/operator/.hidden', 0o600, '/');
         lsCommand = new LsCommand(fs);
     });
 

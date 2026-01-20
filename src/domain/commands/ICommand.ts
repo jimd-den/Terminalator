@@ -11,6 +11,8 @@
 import { TerminalState } from '../entities/TerminalState';
 import { CommandResponse } from '../usecases/ExecuteCommand';
 
+export { CommandResponse };
+
 export interface CommandContext {
     // Context can provide access to infrastructure or other domain services if needed
     // For now, it might be empty or provide a way to access the file system if passed down

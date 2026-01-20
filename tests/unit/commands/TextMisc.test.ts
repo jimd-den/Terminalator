@@ -30,9 +30,9 @@ async function runTests() {
     const fs = new FileSystem();
     const state = createInitialTerminalState();
 
-    const asa = new AsaCommand(fs);
-    const dd = new DdCommand(fs);
-    const iconv = new IconvCommand(fs);
+    const asa = new AsaCommand(fs); // AsaCommand usually takes fs?
+    const dd = new DdCommand();
+    const iconv = new IconvCommand(fs); // Iconv takes fs?
 
     // --- Asa ---
     await runTest('asa interprets carriage control', async () => {

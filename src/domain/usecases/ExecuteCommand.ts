@@ -22,6 +22,7 @@ import { CommandRegistry } from '../commands/CommandRegistry';
 import { ShellParser } from '../services/ShellParser';
 import { CoreUtilsModule } from '../modules/CoreUtilsModule';
 import { SystemUtilsModule } from '../modules/SystemUtilsModule';
+import { IBinaryRunner } from '../interfaces/IBinaryRunner';
 
 export interface CommandResponse {
     output: string;
@@ -51,7 +52,8 @@ export class ExecuteCommand {
     constructor(
         protected fs: FileSystem,
         protected telemetry?: TelemetryPort,
-        registry?: CommandRegistry
+        registry?: CommandRegistry,
+        protected binaryRunner?: IBinaryRunner
     ) {
         this.parser = new ShellParser();
 
@@ -107,6 +109,44 @@ export class ExecuteCommand {
                 const command = this.registry.get(commandName);
 
                 if (!command) {
+                    // Check if it is a file path (starts with / or ./ or ../)
+                    if (commandName.startsWith('/') || commandName.startsWith('./') || commandName.startsWith('../')) {
+                        const dentry = this.fs.resolve(commandName, currentState.currentDirectory);
+                        if (dentry && !dentry.isDirectory) {
+                            const inode = this.fs.getInode(dentry.inodeId);
+                            // Check executable bit (0o111) - minimal check
+                            if (inode && (inode.mode & 0o111)) {
+                                if (this.binaryRunner && inode.content instanceof Uint8Array) {
+                                    try {
+                                        // Execute Binary
+                                        // Env should ideally come from state, passing empty for now or parser expansion
+                                        const response = await this.binaryRunner.run(inode.content, args, {});
+                                        previousOutput = response.output;
+                                        currentState = response.newState; // State updates (state is mutable reference usually, but good to return)
+                                        finalExitCode = response.exitCode;
+                                        continue;
+                                    } catch (e: any) {
+                                        return {
+                                            output: `sh: ${commandName}: cannot execute binary file: ${e.message}`,
+                                            newState: currentState,
+                                            exitCode: 126
+                                        };
+                                    }
+                                }
+                            }
+                            return {
+                                output: `sh: ${commandName}: Permission denied`,
+                                newState: currentState,
+                                exitCode: 126
+                            };
+                        }
+                        return {
+                            output: `sh: ${commandName}: No such file or directory`,
+                            newState: currentState,
+                            exitCode: 127
+                        };
+                    }
+
                     return {
                         output: `sh: command not found: ${commandName}`,
                         newState: currentState,

@@ -45,40 +45,30 @@ export class JoinCommand implements ICommand {
         let skipNext = false;
 
         for (let i = 0; i < args.length; i++) {
-            if (skipNext) {
-                skipNext = false;
-                continue;
-            }
             const arg = args[i];
             if (arg === '-1') {
                 options.field1 = parseInt(args[++i]);
-                skipNext = true;
             } else if (arg === '-2') {
                 options.field2 = parseInt(args[++i]);
-                skipNext = true;
             } else if (arg === '-t') {
                 options.separator = args[++i];
-                skipNext = true;
             } else if (arg === '-o') {
                 options.outputFormat = args[++i];
-                skipNext = true;
             } else if (arg === '-a') {
                 const filenum = args[++i];
                 if (filenum === '1') options.showUnpaired1 = true;
                 if (filenum === '2') options.showUnpaired2 = true;
-                skipNext = true;
             } else if (arg === '-i') {
                 options.ignoreCase = true;
             } else if (arg === '-e') {
                 options.emptyReplace = args[++i];
-                skipNext = true;
             } else if (!arg.startsWith('-')) {
                 files.push(arg);
             }
         }
 
         if (files.length !== 2) {
-             return { output: 'join: missing operand', newState: state, exitCode: 1 };
+            return { output: 'join: missing operand', newState: state, exitCode: 1 };
         }
 
         try {
@@ -159,8 +149,11 @@ export class JoinCommand implements ICommand {
                 exitCode: 0
             };
 
-        } catch (e) {
-            return { output: `join: No such file`, newState: state, exitCode: 1 };
+        } catch (e: any) {
+            if (e.message.includes('No such file')) {
+                return { output: `join: ${files.join(' ')}: No such file or directory`, newState: state, exitCode: 1 };
+            }
+            return { output: `join: error: ${e.message}`, newState: state, exitCode: 1 };
         }
     }
 

@@ -121,7 +121,8 @@ export class WcCommand implements ICommand {
                 }
 
                 try {
-                    const content = this.fs.readFile(path);
+                    const raw = this.fs.readFile(path);
+                    const content = typeof raw === 'string' ? raw : new TextDecoder().decode(raw);
                     output += processContent(content, filename) + '\n';
                 } catch (e: any) {
                     output += `wc: ${filename}: ${e.message}\n`;

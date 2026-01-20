@@ -219,7 +219,7 @@ UTILITY: date
 [FAIL] DATE_06: Complex format
        -> Stdout Regex Mismatch.
    Expected: /Year: 20../
-   Got: "Mon Jan 19 2026 23:38:32 GMT+0000 (Coordinated Universal Time)"
+   Got: "Mon Jan 19 2026 20:08:21 GMT-0700 (Mountain Standard Time)"
 [PASS] DATE_07
 [FAIL] DATE_08: Set date (fail/stub)
        -> Exit Code: Expected 1, got 0
@@ -486,24 +486,16 @@ UTILITY: file
 UTILITY: join
 [PASS] JOIN_01
 [PASS] JOIN_02
-[FAIL] JOIN_03: Specific field -1 -2 (stub)
-       -> Exit Code: Expected 0, got 1
-[FAIL] JOIN_04: Output all -a
-       -> Exit Code: Expected 0, got 1
+[PASS] JOIN_03
+[PASS] JOIN_04
 [FAIL] JOIN_05: Output format -o
        -> Exit Code: Expected 0, got 1
-[FAIL] JOIN_06: Delimiter -t
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /1:a:b/
-   Got: "join: missing operand"
+[PASS] JOIN_06
 [PASS] JOIN_07
 [FAIL] JOIN_08: Unsorted input check (stub)
        -> Exit Code: Expected 0, got 1
-[FAIL] JOIN_09: Empty file
-       -> Exit Code: Expected 0, got 1
-[FAIL] JOIN_10: Case ignore -i
-       -> Exit Code: Expected 0, got 1
+[PASS] JOIN_09
+[PASS] JOIN_10
 UTILITY: paste
 [PASS] PASTE_01
 [PASS] PASTE_02
@@ -556,22 +548,16 @@ UTILITY: csplit
 [PASS] CSPLIT_10
 UTILITY: comm
 [PASS] COMM_01
-[FAIL] COMM_02: Suppress col 1 (-1)
-       -> Exit Code: Expected 0, got 1
-[FAIL] COMM_03: Suppress col 2 (-2)
-       -> Exit Code: Expected 0, got 1
-[FAIL] COMM_04: Suppress col 3 (-3)
-       -> Exit Code: Expected 0, got 1
+[PASS] COMM_02
+[PASS] COMM_03
+[PASS] COMM_04
 [PASS] COMM_05
-[FAIL] COMM_06: Fail un-sorted (stub)
-       -> Exit Code: Expected 0, got 1
+[PASS] COMM_06
 [PASS] COMM_07
 [FAIL] COMM_08: Stdin
        -> Exit Code: Expected 0, got 1
-[FAIL] COMM_09: Empty file
-       -> Exit Code: Expected 0, got 1
-[FAIL] COMM_10: Case ignore (Extension)
-       -> Exit Code: Expected 0, got 1
+[PASS] COMM_09
+[PASS] COMM_10
 UTILITY: cmp
 [PASS] CMP_01
 [PASS] CMP_02
@@ -1961,7 +1947,7 @@ UTILITY: lex
        -> Exit Code: Expected 0, got 1
        -> Stdout Regex Mismatch.
    Expected: /int/
-   Got: "lex: missing input file"
+   Got: "lex: l: No such file or directory"
 [FAIL] LEX_03: Verbose -v
        -> Exit Code: Expected 0, got 1
 [PASS] LEX_04
@@ -2481,8 +2467,7 @@ UTILITY: val
 [FAIL] VAL_02: Fail invalid
        -> Exit Code: Expected 1, got 0
 [PASS] VAL_03
-[FAIL] VAL_04: No args
-       -> Exit Code: Expected 0, got 1
+[PASS] VAL_04
 [FAIL] VAL_05: SID -r
        -> Exit Code: Expected 0, got 1
 [FAIL] VAL_06: Message -m
@@ -2545,24 +2530,17 @@ UTILITY: ipcs
 [PASS] IPCS_09
 [PASS] IPCS_10
 UTILITY: iconv
-[FAIL] ICONV_01: Convert
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /text/
-   Got: "iconv: f: No such file"
+[PASS] ICONV_01
 [PASS] ICONV_02
 [PASS] ICONV_03
 [PASS] ICONV_04
 [PASS] ICONV_05
-[FAIL] ICONV_06: Output -o (Ext)
-       -> Exit Code: Expected 0, got 1
+[PASS] ICONV_06
 [FAIL] ICONV_07: Fail args
        -> Exit Code: Expected 1, got 0
-[FAIL] ICONV_08: Silent -s
-       -> Exit Code: Expected 0, got 1
+[PASS] ICONV_08
 [PASS] ICONV_09
-[FAIL] ICONV_10: Omit -f -t?
-       -> Exit Code: Expected 0, got 1
+[PASS] ICONV_10
 UTILITY: locale
 [PASS] LOCALE_01
 [PASS] LOCALE_02
@@ -2593,56 +2571,34 @@ UTILITY: localedef
 [PASS] LOCALEDEF_09
 [PASS] LOCALEDEF_10
 UTILITY: c17
-[FAIL] C17_01: Compile C
-       -> Exit Code: Expected 0, got 1
-       -> Missing File: Expected /home/operator/a.out to be created.
-[FAIL] C17_02: Output -o
-       -> Exit Code: Expected 0, got 1
-       -> Missing File: Expected /home/operator/out to be created.
-[FAIL] C17_03: Compile only -c
-       -> Exit Code: Expected 0, got 1
-       -> Missing File: Expected /home/operator/f.o to be created.
-[FAIL] C17_04: Debug -g
-       -> Exit Code: Expected 0, got 1
-[FAIL] C17_05: Optimize -O
-       -> Exit Code: Expected 0, got 1
-[FAIL] C17_06: Fail syntax
-       -> Exit Code: Expected 1, got 0
+[PASS] C17_01
+[PASS] C17_02
+[PASS] C17_03
+[PASS] C17_04
+[PASS] C17_05
+[PASS] C17_06
 [PASS] C17_07
 [PASS] C17_08
-[FAIL] C17_09: Consistency
-       -> Exit Code: Expected 0, got 1
-[FAIL] C17_10: Link lib (stub)
-       -> Exit Code: Expected 0, got 1
+[PASS] C17_09
+[PASS] C17_10
 UTILITY: cflow
 [PASS] CFLOW_01
 [PASS] CFLOW_02
 [PASS] CFLOW_03
-[FAIL] CFLOW_04: Fail missing
-       -> Exit Code: Expected 1, got 0
-[FAIL] CFLOW_05: No args
-       -> Exit Code: Expected 1, got 0
+[PASS] CFLOW_04
+[PASS] CFLOW_05
 [PASS] CFLOW_06
 [FAIL] CFLOW_07: Fail syntax
        -> Exit Code: Expected 1, got 0
 [PASS] CFLOW_08
 [PASS] CFLOW_09
-[FAIL] CFLOW_10: Output fmt
-       -> Stdout Regex Mismatch.
-   Expected: /main/
-   Got: ""
+[PASS] CFLOW_10
 UTILITY: cxref
-[FAIL] CXREF_01: Gen xref
-       -> Stdout Regex Mismatch.
-   Expected: /main/
-   Got: ""
-[FAIL] CXREF_02: Output -o
-       -> Missing File: Expected /home/operator/out to be created.
+[PASS] CXREF_01
+[PASS] CXREF_02
 [PASS] CXREF_03
-[FAIL] CXREF_04: Fail missing
-       -> Exit Code: Expected 1, got 0
-[FAIL] CXREF_05: No args
-       -> Exit Code: Expected 1, got 0
+[PASS] CXREF_04
+[PASS] CXREF_05
 [PASS] CXREF_06
 [FAIL] CXREF_07: Fail syntax
        -> Exit Code: Expected 1, got 0
@@ -2653,63 +2609,50 @@ UTILITY: fuser
 [PASS] FUSER_01
 [PASS] FUSER_02
 [PASS] FUSER_03
-[FAIL] FUSER_04: Fail missing
-       -> Exit Code: Expected 1, got 0
-[FAIL] FUSER_05: No args
-       -> Exit Code: Expected 1, got 0
+[PASS] FUSER_04
+[PASS] FUSER_05
 [PASS] FUSER_06
 [PASS] FUSER_07
 [PASS] FUSER_08
 [PASS] FUSER_09
 [PASS] FUSER_10
 UTILITY: gencat
-[FAIL] GENCAT_01: Gen catalog
-       -> Missing File: Expected /home/operator/cat to be created.
-[FAIL] GENCAT_02: Fail missing
-       -> Exit Code: Expected 1, got 0
-[FAIL] GENCAT_03: No args
-       -> Exit Code: Expected 1, got 0
+[PASS] GENCAT_01
+[PASS] GENCAT_02
+[PASS] GENCAT_03
 [PASS] GENCAT_04
 [PASS] GENCAT_05
 [PASS] GENCAT_06
-[FAIL] GENCAT_07: Fail format
-       -> Exit Code: Expected 1, got 0
-[PASS] GENCAT_08
-[PASS] GENCAT_09
-[PASS] GENCAT_10
+[PASS] GENCAT_07
+[FAIL] GENCAT_08: Consistency
+       -> Exit Code: Expected 0, got 1
+[FAIL] GENCAT_09: Output check
+       -> Exit Code: Expected 0, got 1
+[FAIL] GENCAT_10: Multiple inputs
+       -> Exit Code: Expected 0, got 1
 UTILITY: getconf
 [PASS] GETCONF_01
-[FAIL] GETCONF_02: All -a
-       -> Exit Code: Expected 0, got 1
-[FAIL] GETCONF_03: Specific spec -v
-       -> Exit Code: Expected 0, got 1
+[PASS] GETCONF_02
+[PASS] GETCONF_03
 [PASS] GETCONF_04
-[FAIL] GETCONF_05: Fail path missing
-       -> Exit Code: Expected 1, got 0
+[PASS] GETCONF_05
 [PASS] GETCONF_06
 [PASS] GETCONF_07
 [PASS] GETCONF_08
-[FAIL] GETCONF_09: Legacy
-       -> Exit Code: Expected 0, got 1
+[PASS] GETCONF_09
 [PASS] GETCONF_10
 UTILITY: gettext
 [PASS] GETTEXT_01
 [PASS] GETTEXT_02
 [PASS] GETTEXT_03
-[FAIL] GETTEXT_04: No args
-       -> Exit Code: Expected 1, got 0
-[FAIL] GETTEXT_05: Expand -e
-       -> Stdout Regex Mismatch.
-   Expected: /a\nb/
-   Got: "-e"
-[FAIL] GETTEXT_06: Fail missing
-       -> Stdout Regex Mismatch.
-   Expected: /msg/
-   Got: "-d"
+[PASS] GETTEXT_04
+[PASS] GETTEXT_05
+[PASS] GETTEXT_06
 [FAIL] GETTEXT_07: Env vars
        -> Exit Code: Expected 0, got 127
 [PASS] GETTEXT_08
-[PASS] GETTEXT_09
+[FAIL] GETTEXT_09: Empty
+       -> Exit Code: Expected 0, got 1
 [PASS] GETTEXT_10
 UTILITY: msgfmt
 [FAIL] MSGFMT_01: Compile po
@@ -2917,11 +2860,11 @@ true          |    10 |   10 |    0 |    100.0%
 basename      |    10 |    7 |    3 |     70.0%
 dirname       |    10 |    8 |    2 |     80.0%
 file          |    10 |    6 |    4 |     60.0%
-join          |    10 |    3 |    7 |     30.0%
+join          |    10 |    8 |    2 |     80.0%
 paste         |    10 |    8 |    2 |     80.0%
 split         |    10 |    5 |    5 |     50.0%
 csplit        |    10 |    5 |    5 |     50.0%
-comm          |    10 |    3 |    7 |     30.0%
+comm          |    10 |    9 |    1 |     90.0%
 cmp           |    10 |    5 |    5 |     50.0%
 od            |    10 |    3 |    7 |     30.0%
 expr          |    10 |    5 |    5 |     50.0%
@@ -3031,20 +2974,20 @@ rmdel         |    10 |    5 |    5 |     50.0%
 sact          |    10 |    2 |    8 |     20.0%
 sccs          |    10 |    2 |    8 |     20.0%
 unget         |    10 |    3 |    7 |     30.0%
-val           |    10 |    1 |    9 |     10.0%
+val           |    10 |    2 |    8 |     20.0%
 what          |    10 |    6 |    4 |     60.0%
 ipcrm         |    10 |    7 |    3 |     70.0%
 ipcs          |    10 |    9 |    1 |     90.0%
-iconv         |    10 |    5 |    5 |     50.0%
+iconv         |    10 |    9 |    1 |     90.0%
 locale        |    10 |    7 |    3 |     70.0%
 localedef     |    10 |    8 |    2 |     80.0%
-c17           |    10 |    2 |    8 |     20.0%
-cflow         |    10 |    6 |    4 |     60.0%
-cxref         |    10 |    5 |    5 |     50.0%
-fuser         |    10 |    8 |    2 |     80.0%
-gencat        |    10 |    6 |    4 |     60.0%
-getconf       |    10 |    6 |    4 |     60.0%
-gettext       |    10 |    6 |    4 |     60.0%
+c17           |    10 |   10 |    0 |    100.0%
+cflow         |    10 |    9 |    1 |     90.0%
+cxref         |    10 |    9 |    1 |     90.0%
+fuser         |    10 |   10 |    0 |    100.0%
+gencat        |    10 |    7 |    3 |     70.0%
+getconf       |    10 |   10 |    0 |    100.0%
+gettext       |    10 |    8 |    2 |     80.0%
 msgfmt        |    10 |    4 |    6 |     40.0%
 newgrp        |    10 |    6 |    4 |     60.0%
 ngettext      |    10 |    3 |    7 |     30.0%
@@ -3055,7 +2998,7 @@ uustat        |    10 |    9 |    1 |     90.0%
 uux           |    10 |    2 |    8 |     20.0%
 xgettext      |    10 |    6 |    4 |     60.0%
 
-TOTAL COMPLIANCE: 62.7% (1097/1750)
+TOTAL COMPLIANCE: 65.0% (1137/1750)
 
 === MISSING UTILITIES (Implemented but failing) ===
 None

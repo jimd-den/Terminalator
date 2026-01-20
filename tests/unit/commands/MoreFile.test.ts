@@ -39,7 +39,7 @@ async function runTests() {
         // Or check inode if we can access it (unit test privilege).
         const node = fs.resolveNode('/file');
         const inode = fs.getInode(node!.inodeId);
-        assert.equal(inode.gid, 1000); // Wait, newgroup is string. FS uses numbers usually.
+        assert.equal(inode!.gid, 1000); // Wait, newgroup is string. FS uses numbers usually.
         // ChgrpCommand should resolve group name to gid.
         // If no group DB, use gid directly or fail?
         // Standard chgrp accepts ID.
@@ -50,7 +50,7 @@ async function runTests() {
         assert.equal(res.exitCode, 0);
         const node = fs.resolveNode('/file');
         const inode = fs.getInode(node!.inodeId);
-        assert.equal(inode.gid, 2000);
+        assert.equal(inode!.gid, 2000);
     });
 
     console.log(`\nResults: ${passed} Passed, ${failed} Failed`);

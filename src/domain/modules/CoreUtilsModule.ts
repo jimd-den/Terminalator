@@ -183,9 +183,12 @@ import { GzipCommand } from '../commands/core/GzipCommand';
 import { GunzipCommand } from '../commands/core/GunzipCommand';
 import { TarCommand } from '../commands/core/TarCommand';
 import { CpioCommand } from '../commands/core/CpioCommand';
+import { StubCompilerService } from '../../infrastructure/services/StubCompilerService';
+import { WasmCompilerService } from '../../infrastructure/services/WasmCompilerService';
+import { GccCommand } from '../commands/core/GccCommand';
 
 export class CoreUtilsModule implements CommandModule {
-    constructor(private fs: FileSystem) {}
+    constructor(private fs: FileSystem) { }
 
     register(registry: CommandRegistry): void {
         const fs = this.fs;
@@ -268,11 +271,11 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('unalias', new UnaliasCommand(fs));
         registry.register('type', new TypeCommand(fs, registry));
         registry.register('pr', new PrCommand(fs));
-        registry.register('compress', new CompressCommand(fs));
-        registry.register('uncompress', new UncompressCommand(fs));
+        registry.register('compress', new CompressCommand());
+        registry.register('uncompress', new UncompressCommand());
         registry.register('zcat', new ZcatCommand(fs));
         registry.register('asa', new AsaCommand(fs));
-        registry.register('dd', new DdCommand(fs));
+        registry.register('dd', new DdCommand());
         registry.register('iconv', new IconvCommand(fs));
         registry.register('jobs', new JobsCommand(fs));
         registry.register('kill', new KillCommand(fs));
@@ -294,7 +297,7 @@ export class CoreUtilsModule implements CommandModule {
 
         registry.register(':', new NullCommand());
         registry.register('exit', new ExitCommand());
-        registry.register('sh', new ShCommand(fs));
+        registry.register('sh', new ShCommand());
         registry.register('umask', new UmaskCommand());
         registry.register('times', new TimesCommand());
         registry.register('more', new MoreCommand(fs));
@@ -323,7 +326,7 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('vi', new ViCommand());
         registry.register('ex', new ExCommand());
         registry.register('make', new MakeCommand());
-        registry.register('ar', new ArCommand());
+        registry.register('ar', new ArCommand(fs));
         registry.register('lex', new LexCommand());
         registry.register('yacc', new YaccCommand());
         registry.register('m4', new M4Command());
@@ -333,14 +336,14 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('lp', new LpCommand());
         registry.register('renice', new ReniceCommand());
         registry.register('admin', new AdminCommand());
-        registry.register('c17', new C17Command());
-        registry.register('cflow', new CflowCommand());
+        registry.register('c17', new C17Command(new WasmCompilerService(fs), fs));
+        registry.register('cflow', new CflowCommand(fs));
         registry.register('csplit', new CsplitCommand());
         registry.register('ctags', new CtagsCommand());
-        registry.register('cxref', new CxrefCommand());
+        registry.register('cxref', new CxrefCommand(fs));
         registry.register('delta', new DeltaCommand());
-        registry.register('fuser', new FuserCommand());
-        registry.register('gencat', new GencatCommand());
+        registry.register('fuser', new FuserCommand(fs));
+        registry.register('gencat', new GencatCommand(fs));
         registry.register('get', new GetCommand());
         registry.register('gettext', new GettextCommand());
         registry.register('ipcrm', new IpcrmCommand());
@@ -365,6 +368,7 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('gunzip', new GunzipCommand());
         registry.register('tar', new TarCommand());
         registry.register('cpio', new CpioCommand());
+        registry.register('gcc', new GccCommand(new WasmCompilerService(fs), fs));
 
         // Factory-like registration for Xargs to avoid circular dependency in constructor
         registry.register('xargs', new XargsCommand(fs, (name) => registry.get(name)));

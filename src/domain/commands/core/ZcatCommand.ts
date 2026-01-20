@@ -21,7 +21,7 @@ export class ZcatCommand implements ICommand {
     execute(args: string[], state: TerminalState, input?: string): CommandResponse {
         const files = args.filter(a => !a.startsWith('-'));
         if (files.length === 0) {
-             return { output: 'zcat: missing operand', newState: state, exitCode: 1 };
+            return { output: 'zcat: missing operand', newState: state, exitCode: 1 };
         }
 
         let output = '';
@@ -29,7 +29,8 @@ export class ZcatCommand implements ICommand {
         for (const file of files) {
             try {
                 const path = this.resolvePath(file, state);
-                const content = this.fs.readFile(path);
+                const rawContent = this.fs.readFile(path);
+                const content = typeof rawContent === 'string' ? rawContent : new TextDecoder().decode(rawContent);
 
                 if (content.startsWith('RLE:')) {
                     output += this.rleDecode(content.substring(4));

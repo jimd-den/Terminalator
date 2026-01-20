@@ -24,7 +24,8 @@ export class UudecodeCommand implements ICommand {
 
         if (file) {
             try {
-                content = this.fs.readFile(this.resolvePath(file, state));
+                const raw = this.fs.readFile(this.resolvePath(file, state));
+                content = typeof raw === 'string' ? raw : new TextDecoder().decode(raw);
             } catch (e) {
                 return { output: `uudecode: ${file}: No such file`, newState: state, exitCode: 1 };
             }

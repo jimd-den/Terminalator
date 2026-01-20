@@ -75,7 +75,7 @@ export class EdCommand implements ICommand {
         // POSIX: "The number of bytes ... shall be written..."
 
         for (const line of scriptLines) {
-            if (this.mode === 'input') {
+            if ((this.mode as string) === 'input') {
                 if (line === '.') {
                     this.mode = 'command';
                     // Insert collected lines into buffer

@@ -21,7 +21,7 @@ export class RmdirCommand implements ICommand {
     execute(args: string[], state: TerminalState, input?: string): CommandResponse {
         const dirs = args.filter(a => !a.startsWith('-'));
         if (dirs.length === 0) {
-             return { output: 'rmdir: missing operand', newState: state, exitCode: 1 };
+            return { output: 'rmdir: missing operand', newState: state, exitCode: 1 };
         }
 
         for (const dir of dirs) {
@@ -33,7 +33,7 @@ export class RmdirCommand implements ICommand {
                 }
                 const inode = this.fs.getInode(node.inodeId);
                 // Check if directory
-                if (!(inode.mode & 0o040000)) {
+                if (!(inode!.mode & 0o040000)) {
                     return { output: `rmdir: failed to remove '${dir}': Not a directory`, newState: state, exitCode: 1 };
                 }
                 // Check if empty (size 0 or internal check)
@@ -48,10 +48,11 @@ export class RmdirCommand implements ICommand {
                 // `fs.getDirectoryChildren(path)`?
                 // FileSystem interface in memory says:
                 // getDirectoryEntries(path).
-                const entries = this.fs.getDirectoryEntries(path);
-                // POSIX: . and .. don't count.
-                const validEntries = entries.filter(e => e !== '.' && e !== '..');
-                if (validEntries.length > 0) {
+                if (node.children.size > 0) {
+                    return {
+                        output: `rmdir: failed to remove '${dir}': Directory not empty`, newState: state, exitCode: 1
+                    };
+                    const validEntries: string[] = []; // Dummy for linter if needed? No.
                     return { output: `rmdir: failed to remove '${dir}': Directory not empty`, newState: state, exitCode: 1 };
                 }
 

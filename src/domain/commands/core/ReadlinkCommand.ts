@@ -21,7 +21,7 @@ export class ReadlinkCommand implements ICommand {
     execute(args: string[], state: TerminalState, input?: string): CommandResponse {
         const files = args.filter(a => !a.startsWith('-'));
         if (files.length === 0) {
-             return { output: 'readlink: missing operand', newState: state, exitCode: 1 };
+            return { output: 'readlink: missing operand', newState: state, exitCode: 1 };
         }
 
         const file = files[0]; // POSIX readlink usually takes file
@@ -38,7 +38,7 @@ export class ReadlinkCommand implements ICommand {
             // Or `readLink(path)`?
             // Assuming `fs.readLink(path)` exists.
 
-            const target = this.fs.readLink(path);
+            const target = this.fs.readlink(path);
             if (target) {
                 return {
                     output: target,

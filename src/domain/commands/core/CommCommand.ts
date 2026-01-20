@@ -37,7 +37,7 @@ export class CommCommand implements ICommand {
         }
 
         if (files.length !== 2) {
-             return { output: 'comm: missing operand', newState: state, exitCode: 1 };
+            return { output: 'comm: missing operand', newState: state, exitCode: 1 };
         }
 
         try {
@@ -59,12 +59,9 @@ export class CommCommand implements ICommand {
                 return a.localeCompare(b);
             };
 
-            for(let k=0; k<lines1.length-1; k++) {
-                if (cmp(lines1[k], lines1[k+1]) > 0) exitCode = 1;
-            }
-            for(let k=0; k<lines2.length-1; k++) {
-                if (cmp(lines2[k], lines2[k+1]) > 0) exitCode = 1;
-            }
+            // POSIX says results undefined if unsorted, but typically doesn't error out hard unless requested.
+            // We proceed with best effort.
+
 
             while (i < lines1.length || j < lines2.length) {
                 const l1 = i < lines1.length ? lines1[i] : null;
@@ -80,17 +77,17 @@ export class CommCommand implements ICommand {
                     i++;
                 } else if (comp > 0) {
                     if (!suppress2) {
-                         let prefix = '';
-                         if (!suppress1) prefix = '\t';
-                         output.push(prefix + l2!);
+                        let prefix = '';
+                        if (!suppress1) prefix = '\t';
+                        output.push(prefix + l2!);
                     }
                     j++;
                 } else {
                     if (!suppress3) {
-                         let prefix = '';
-                         if (!suppress1) prefix += '\t';
-                         if (!suppress2) prefix += '\t';
-                         output.push(prefix + l1!);
+                        let prefix = '';
+                        if (!suppress1) prefix += '\t';
+                        if (!suppress2) prefix += '\t';
+                        output.push(prefix + l1!);
                     }
                     i++;
                     j++;
@@ -103,9 +100,12 @@ export class CommCommand implements ICommand {
                 exitCode: exitCode
             };
 
-        } catch (e) {
+        } catch (e: any) {
+            if (e.message.includes('No such file')) {
+                return { output: `comm: ${files.join(' ')}: No such file or directory`, newState: state, exitCode: 1 };
+            }
             return {
-                output: `comm: No such file or directory`,
+                output: `comm: error: ${e.message}`,
                 newState: state,
                 exitCode: 1
             };

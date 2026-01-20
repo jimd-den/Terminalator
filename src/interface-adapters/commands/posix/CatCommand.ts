@@ -29,7 +29,8 @@ export class CatCommand implements ICommand {
                 return { output: `cat: ${target}: Is a directory`, exitCode: 1 };
             }
 
-            const content = context.fs.readFile(target, context.cwd);
+            const raw = context.fs.readFile(target, context.cwd);
+            const content = typeof raw === 'string' ? raw : new TextDecoder().decode(raw);
             return { output: content, exitCode: 0 };
         } catch (e: any) {
             return {

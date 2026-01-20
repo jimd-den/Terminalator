@@ -145,7 +145,11 @@ export class CpCommand implements ICommand {
             // File
             const inode = fs.getInode(node.inodeId);
             const content = inode ? inode.content : '';
-            fs.writeFile(destPath, content || '', 'w', cwd);
+            if (content instanceof Map) {
+                // Should not happen for file
+            } else {
+                fs.writeFile(destPath, content || '', 'w', cwd);
+            }
         }
     }
 }

@@ -3,6 +3,9 @@ import * as fsNode from 'fs';
 import { FileSystem } from '../src/domain/entities/FileSystem';
 import { ExecuteCommand } from '../src/domain/usecases/ExecuteCommand';
 import { createInitialTerminalState, TerminalState } from '../src/domain/entities/TerminalState';
+import { HostCompilerService } from '../src/infrastructure/services/HostCompilerService';
+import { HostBinaryRunner } from '../src/infrastructure/services/HostBinaryRunner';
+import { C17Command } from '../src/domain/commands/core/C17Command';
 
 // --- COLOR CONSTANTS ---
 const GREEN = '\x1b[32m';
@@ -182,6 +185,7 @@ const SUITES: UtilitySuite[] = [
             { id: 'ECHO_10', description: 'Pipeline check (source)', posixSection: 'echo.html', posixRequirement: 'Standard out', command: 'echo pipe_test', expect: { exitCode: 0, stdout: /pipe_test/ } }
         ]
     },
+
     {
         utility: 'cat',
         htmlFile: 'cat.html',
@@ -686,16 +690,16 @@ const SUITES: UtilitySuite[] = [
         utility: 'join',
         htmlFile: 'join.html',
         tests: [
-            { id: 'JOIN_01', description: 'Basic join', posixSection: 'join.html', posixRequirement: 'Join on first field', setup: (fs) => { fs.writeFile('/1', '1 a', 'w'); fs.writeFile('/2', '1 b', 'w'); }, command: 'join /1 /2', expect: { exitCode: 0, stdout: /1 a b/ } },
-            { id: 'JOIN_02', description: 'Miss match', posixSection: 'join.html', posixRequirement: 'Output matched only', setup: (fs) => { fs.writeFile('/1', '1 a', 'w'); fs.writeFile('/2', '2 b', 'w'); }, command: 'join /1 /2', expect: { exitCode: 0, stdout: /^$/ } },
-            { id: 'JOIN_03', description: 'Specific field -1 -2 (stub)', posixSection: 'join.html', posixRequirement: 'Fields', command: 'join -1 2 -2 1 /1 /2', expect: { exitCode: 0 } },
-            { id: 'JOIN_04', description: 'Output all -a', posixSection: 'join.html', posixRequirement: '-a file_number', command: 'join -a 1 /1 /2', expect: { exitCode: 0 } },
-            { id: 'JOIN_05', description: 'Output format -o', posixSection: 'join.html', posixRequirement: '-o list', command: 'join -o 1.1 2.2 /1 /2', expect: { exitCode: 0 } },
-            { id: 'JOIN_06', description: 'Delimiter -t', posixSection: 'join.html', posixRequirement: '-t char', setup: (fs) => { fs.writeFile('/1', '1:a', 'w'); fs.writeFile('/2', '1:b', 'w'); }, command: 'join -t : /1 /2', expect: { exitCode: 0, stdout: /1:a:b/ } },
-            { id: 'JOIN_07', description: 'Fail missing', posixSection: 'join.html', posixRequirement: 'Error', command: 'join /1 /missing', expect: { exitCode: 1 } },
-            { id: 'JOIN_08', description: 'Unsorted input check (stub)', posixSection: 'join.html', posixRequirement: 'Expects sorted', command: 'join /1 /2', expect: { exitCode: 0 } },
-            { id: 'JOIN_09', description: 'Empty file', posixSection: 'join.html', posixRequirement: 'Empty', command: 'join /empty /f', expect: { exitCode: 0 } },
-            { id: 'JOIN_10', description: 'Case ignore -i', posixSection: 'join.html', posixRequirement: '-i', command: 'join -i /1 /2', expect: { exitCode: 0 } }
+            { id: 'JOIN_01', description: 'Basic join', posixSection: 'join.html', posixRequirement: 'Join on first field', setup: (fs) => { fs.writeFile('/home/operator/f1', '1 a', 'w'); fs.writeFile('/home/operator/f2', '1 b', 'w'); }, command: 'join f1 f2', expect: { exitCode: 0, stdout: /1 a b/ } },
+            { id: 'JOIN_02', description: 'Miss match', posixSection: 'join.html', posixRequirement: 'Output matched only', setup: (fs) => { fs.writeFile('/home/operator/f1', '1 a', 'w'); fs.writeFile('/home/operator/f2', '2 b', 'w'); }, command: 'join f1 f2', expect: { exitCode: 0, stdout: /^$/ } },
+            { id: 'JOIN_03', description: 'Specific field -1 -2', posixSection: 'join.html', posixRequirement: 'Fields', setup: (fs) => { fs.writeFile('/home/operator/f1', '1 a', 'w'); fs.writeFile('/home/operator/f2', '2 b', 'w'); }, command: 'join -1 2 -2 1 f1 f2', expect: { exitCode: 0 } },
+            { id: 'JOIN_04', description: 'Output all -a', posixSection: 'join.html', posixRequirement: '-a file_number', setup: (fs) => { fs.writeFile('/home/operator/f1', '1 a', 'w'); fs.writeFile('/home/operator/f2', '2 b', 'w'); }, command: 'join -a 1 f1 f2', expect: { exitCode: 0 } },
+            { id: 'JOIN_05', description: 'Output format -o', posixSection: 'join.html', posixRequirement: '-o list', setup: (fs) => { fs.writeFile('/home/operator/f1', '1 a', 'w'); fs.writeFile('/home/operator/f2', '2 b', 'w'); }, command: 'join -o 1.1 2.2 f1 f2', expect: { exitCode: 0 } },
+            { id: 'JOIN_06', description: 'Delimiter -t', posixSection: 'join.html', posixRequirement: '-t char', setup: (fs) => { fs.writeFile('/home/operator/f1', '1:a', 'w'); fs.writeFile('/home/operator/f2', '1:b', 'w'); }, command: 'join -t : f1 f2', expect: { exitCode: 0, stdout: /1:a:b/ } },
+            { id: 'JOIN_07', description: 'Fail missing', posixSection: 'join.html', posixRequirement: 'Error', command: 'join f1 missing', expect: { exitCode: 1 } },
+            { id: 'JOIN_08', description: 'Unsorted input check (stub)', posixSection: 'join.html', posixRequirement: 'Expects sorted', command: 'join f1 f2', expect: { exitCode: 0 } },
+            { id: 'JOIN_09', description: 'Empty file', posixSection: 'join.html', posixRequirement: 'Empty', setup: (fs) => { fs.writeFile('/home/operator/empty', '', 'w'); fs.writeFile('/home/operator/f', 'x', 'w'); }, command: 'join empty f', expect: { exitCode: 0 } },
+            { id: 'JOIN_10', description: 'Case ignore -i', posixSection: 'join.html', posixRequirement: '-i', setup: (fs) => { fs.writeFile('/home/operator/f1', 'A 1', 'w'); fs.writeFile('/home/operator/f2', 'a 2', 'w'); }, command: 'join -i f1 f2', expect: { exitCode: 0 } }
         ]
     },
     {
@@ -750,16 +754,16 @@ const SUITES: UtilitySuite[] = [
         utility: 'comm',
         htmlFile: 'comm.html',
         tests: [
-            { id: 'COMM_01', description: 'Compare 3 cols', posixSection: 'comm.html', posixRequirement: '3 columns', setup: (fs) => { fs.writeFile('/1', 'a', 'w'); fs.writeFile('/2', 'b', 'w'); }, command: 'comm /1 /2', expect: { exitCode: 0, stdout: /a\s+b/ } },
-            { id: 'COMM_02', description: 'Suppress col 1 (-1)', posixSection: 'comm.html', posixRequirement: '-1', command: 'comm -1 /1 /2', expect: { exitCode: 0 } },
-            { id: 'COMM_03', description: 'Suppress col 2 (-2)', posixSection: 'comm.html', posixRequirement: '-2', command: 'comm -2 /1 /2', expect: { exitCode: 0 } },
-            { id: 'COMM_04', description: 'Suppress col 3 (-3)', posixSection: 'comm.html', posixRequirement: '-3', command: 'comm -3 /1 /2', expect: { exitCode: 0 } },
-            { id: 'COMM_05', description: 'Common lines', posixSection: 'comm.html', posixRequirement: 'Match', setup: (fs) => { fs.writeFile('/1', 'a', 'w'); fs.writeFile('/2', 'a', 'w'); }, command: 'comm -12 /1 /2', expect: { exitCode: 0, stdout: /a/ } },
-            { id: 'COMM_06', description: 'Fail un-sorted (stub)', posixSection: 'comm.html', posixRequirement: 'Sorted', command: 'comm /1 /2', expect: { exitCode: 0 } },
-            { id: 'COMM_07', description: 'Fail missing', posixSection: 'comm.html', posixRequirement: 'Error', command: 'comm /1 /missing', expect: { exitCode: 1 } },
-            { id: 'COMM_08', description: 'Stdin', posixSection: 'comm.html', posixRequirement: '-', command: 'comm - /2', expect: { exitCode: 0 } },
-            { id: 'COMM_09', description: 'Empty file', posixSection: 'comm.html', posixRequirement: 'Empty', command: 'comm /1 /e', expect: { exitCode: 0 } },
-            { id: 'COMM_10', description: 'Case ignore (Extension)', posixSection: 'comm.html', posixRequirement: '-i', command: 'comm -i /1 /2', expect: { exitCode: 0 } }
+            { id: 'COMM_01', description: 'Compare 3 cols', posixSection: 'comm.html', posixRequirement: '3 columns', setup: (fs) => { fs.writeFile('/home/operator/f1', 'a', 'w'); fs.writeFile('/home/operator/f2', 'b', 'w'); }, command: 'comm f1 f2', expect: { exitCode: 0, stdout: /a\s+b/ } },
+            { id: 'COMM_02', description: 'Suppress col 1 (-1)', posixSection: 'comm.html', posixRequirement: '-1', setup: (fs) => { fs.writeFile('/home/operator/f1', 'a', 'w'); fs.writeFile('/home/operator/f2', 'b', 'w'); }, command: 'comm -1 f1 f2', expect: { exitCode: 0 } },
+            { id: 'COMM_03', description: 'Suppress col 2 (-2)', posixSection: 'comm.html', posixRequirement: '-2', setup: (fs) => { fs.writeFile('/home/operator/f1', 'a', 'w'); fs.writeFile('/home/operator/f2', 'b', 'w'); }, command: 'comm -2 f1 f2', expect: { exitCode: 0 } },
+            { id: 'COMM_04', description: 'Suppress col 3 (-3)', posixSection: 'comm.html', posixRequirement: '-3', setup: (fs) => { fs.writeFile('/home/operator/f1', 'a', 'w'); fs.writeFile('/home/operator/f2', 'b', 'w'); }, command: 'comm -3 f1 f2', expect: { exitCode: 0 } },
+            { id: 'COMM_05', description: 'Common lines', posixSection: 'comm.html', posixRequirement: 'Match', setup: (fs) => { fs.writeFile('/home/operator/f1', 'a', 'w'); fs.writeFile('/home/operator/f2', 'a', 'w'); }, command: 'comm -12 f1 f2', expect: { exitCode: 0, stdout: /a/ } },
+            { id: 'COMM_06', description: 'Fail un-sorted', posixSection: 'comm.html', posixRequirement: 'Sorted', setup: (fs) => { fs.writeFile('/home/operator/f1', 'b\na', 'w'); fs.writeFile('/home/operator/f2', 'a', 'w'); }, command: 'comm f1 f2', expect: { exitCode: 0 } },
+            { id: 'COMM_07', description: 'Fail missing', posixSection: 'comm.html', posixRequirement: 'Error', command: 'comm f1 missing', expect: { exitCode: 1 } },
+            { id: 'COMM_08', description: 'Stdin', posixSection: 'comm.html', posixRequirement: '-', setup: (fs) => { fs.writeFile('/home/operator/f2', 'a', 'w'); }, command: 'echo a | comm - f2', expect: { exitCode: 0 } },
+            { id: 'COMM_09', description: 'Empty file', posixSection: 'comm.html', posixRequirement: 'Empty', setup: (fs) => { fs.writeFile('/home/operator/f1', 'a', 'w'); fs.writeFile('/home/operator/e', '', 'w'); }, command: 'comm f1 e', expect: { exitCode: 0 } },
+            { id: 'COMM_10', description: 'Case ignore (Extension)', posixSection: 'comm.html', posixRequirement: '-i', setup: (fs) => { fs.writeFile('/home/operator/f1', 'A', 'w'); fs.writeFile('/home/operator/f2', 'a', 'w'); }, command: 'comm -i f1 f2', expect: { exitCode: 0 } }
         ]
     },
     {
@@ -2578,16 +2582,16 @@ const SUITES: UtilitySuite[] = [
         utility: 'iconv',
         htmlFile: 'iconv.html',
         tests: [
-            { id: 'ICONV_01', description: 'Convert', posixSection: 'iconv.html', posixRequirement: 'Conv', setup: (fs) => fs.writeFile('f', 'text', 'w'), command: 'iconv -f UTF-8 -t ASCII f', expect: { exitCode: 0, stdout: /text/ } },
+            { id: 'ICONV_01', description: 'Convert', posixSection: 'iconv.html', posixRequirement: 'Conv', setup: (fs) => fs.writeFile('/home/operator/f', 'text', 'w'), command: 'iconv -f UTF-8 -t ASCII f', expect: { exitCode: 0, stdout: /text/ } },
             { id: 'ICONV_02', description: 'List -l', posixSection: 'iconv.html', posixRequirement: '-l', command: 'iconv -l', expect: { exitCode: 0 } },
             { id: 'ICONV_03', description: 'Fail codeset', posixSection: 'iconv.html', posixRequirement: 'Error', command: 'iconv -f JUNK -t ASCII f', expect: { exitCode: 1 } },
             { id: 'ICONV_04', description: 'Fail missing', posixSection: 'iconv.html', posixRequirement: 'Error', command: 'iconv missing', expect: { exitCode: 1 } },
             { id: 'ICONV_05', description: 'Stdin', posixSection: 'iconv.html', posixRequirement: '-', command: 'echo x | iconv -f UTF-8 -t ASCII', expect: { exitCode: 0 } },
-            { id: 'ICONV_06', description: 'Output -o (Ext)', posixSection: 'iconv.html', posixRequirement: '-o', command: 'iconv -o out f', expect: { exitCode: 0 } },
+            { id: 'ICONV_06', description: 'Output -o (Ext)', posixSection: 'iconv.html', posixRequirement: '-o', setup: (fs) => fs.writeFile('/home/operator/f', 'text', 'w'), command: 'iconv -o out f', expect: { exitCode: 0 } },
             { id: 'ICONV_07', description: 'Fail args', posixSection: 'iconv.html', posixRequirement: 'Error', command: 'iconv', expect: { exitCode: 1 } }, // needs -f -t?
-            { id: 'ICONV_08', description: 'Silent -s', posixSection: 'iconv.html', posixRequirement: '-s', command: 'iconv -s f', expect: { exitCode: 0 } },
+            { id: 'ICONV_08', description: 'Silent -s', posixSection: 'iconv.html', posixRequirement: '-s', setup: (fs) => fs.writeFile('/home/operator/f', 'text', 'w'), command: 'iconv -s f', expect: { exitCode: 0 } },
             { id: 'ICONV_09', description: 'Consistency', posixSection: 'iconv.html', posixRequirement: 'Stable', command: 'iconv -l', expect: { exitCode: 0 } },
-            { id: 'ICONV_10', description: 'Omit -f -t?', posixSection: 'iconv.html', posixRequirement: 'Default', command: 'iconv f', expect: { exitCode: 0 } }
+            { id: 'ICONV_10', description: 'Omit -f -t?', posixSection: 'iconv.html', posixRequirement: 'Default', setup: (fs) => fs.writeFile('/home/operator/f', 'text', 'w'), command: 'iconv f', expect: { exitCode: 0 } }
         ]
     },
     {
@@ -2626,74 +2630,74 @@ const SUITES: UtilitySuite[] = [
         utility: 'c17',
         htmlFile: 'c17.html',
         tests: [
-            { id: 'C17_01', description: 'Compile C', posixSection: 'c17.html', posixRequirement: 'Compile', setup: (fs) => fs.writeFile('f.c', 'int main(){}', 'w'), command: 'c17 f.c', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/a.out', type: 'file' }] } },
-            { id: 'C17_02', description: 'Output -o', posixSection: 'c17.html', posixRequirement: '-o', command: 'c17 -o out f.c', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/out', type: 'file' }] } },
-            { id: 'C17_03', description: 'Compile only -c', posixSection: 'c17.html', posixRequirement: '-c', command: 'c17 -c f.c', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/f.o', type: 'file' }] } },
-            { id: 'C17_04', description: 'Debug -g', posixSection: 'c17.html', posixRequirement: '-g', command: 'c17 -g f.c', expect: { exitCode: 0 } },
-            { id: 'C17_05', description: 'Optimize -O', posixSection: 'c17.html', posixRequirement: '-O', command: 'c17 -O f.c', expect: { exitCode: 0 } },
-            { id: 'C17_06', description: 'Fail syntax', posixSection: 'c17.html', posixRequirement: 'Error', command: 'echo "bad" > b.c; c17 b.c', expect: { exitCode: 1 } },
+            { id: 'C17_01', description: 'Compile C', posixSection: 'c17.html', posixRequirement: 'Compile', setup: (fs) => fs.writeFile('/home/operator/f.c', 'int main(){return 0;}', 'w'), command: 'c17 f.c', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/a.out', type: 'file' }] } },
+            { id: 'C17_02', description: 'Output -o', posixSection: 'c17.html', posixRequirement: '-o', setup: (fs) => fs.writeFile('/home/operator/f.c', 'int main(){return 0;}', 'w'), command: 'c17 -o out f.c', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/out', type: 'file' }] } },
+            { id: 'C17_03', description: 'Compile only -c', posixSection: 'c17.html', posixRequirement: '-c', setup: (fs) => fs.writeFile('/home/operator/f.c', 'int main(){return 0;}', 'w'), command: 'c17 -c f.c', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/f.o', type: 'file' }] } },
+            { id: 'C17_04', description: 'Debug -g', posixSection: 'c17.html', posixRequirement: '-g', setup: (fs) => fs.writeFile('/home/operator/f.c', 'int main(){return 0;}', 'w'), command: 'c17 -g f.c', expect: { exitCode: 0 } },
+            { id: 'C17_05', description: 'Optimize -O', posixSection: 'c17.html', posixRequirement: '-O', setup: (fs) => fs.writeFile('/home/operator/f.c', 'int main(){return 0;}', 'w'), command: 'c17 -O f.c', expect: { exitCode: 0 } },
+            { id: 'C17_06', description: 'Fail syntax', posixSection: 'c17.html', posixRequirement: 'Error', setup: (fs) => fs.writeFile('/home/operator/b.c', 'bad code', 'w'), command: 'c17 b.c', expect: { exitCode: 1 } },
             { id: 'C17_07', description: 'Fail missing', posixSection: 'c17.html', posixRequirement: 'Error', command: 'c17 missing', expect: { exitCode: 1 } },
             { id: 'C17_08', description: 'No args', posixSection: 'c17.html', posixRequirement: 'Error', command: 'c17', expect: { exitCode: 1 } },
-            { id: 'C17_09', description: 'Consistency', posixSection: 'c17.html', posixRequirement: 'Stable', command: 'c17 f.c', expect: { exitCode: 0 } },
-            { id: 'C17_10', description: 'Link lib (stub)', posixSection: 'c17.html', posixRequirement: '-l', command: 'c17 f.c -lm', expect: { exitCode: 0 } }
+            { id: 'C17_09', description: 'Consistency', posixSection: 'c17.html', posixRequirement: 'Stable', setup: (fs) => fs.writeFile('/home/operator/f.c', 'int main(){return 0;}', 'w'), command: 'c17 f.c', expect: { exitCode: 0 } },
+            { id: 'C17_10', description: 'Link lib (stub)', posixSection: 'c17.html', posixRequirement: '-l', setup: (fs) => fs.writeFile('/home/operator/f.c', 'int main(){return 0;}', 'w'), command: 'c17 f.c -lm', expect: { exitCode: 0 } }
         ]
     },
     {
         utility: 'cflow',
         htmlFile: 'cflow.html',
         tests: [
-            { id: 'CFLOW_01', description: 'Gen graph', posixSection: 'cflow.html', posixRequirement: 'Graph', setup: (fs) => fs.writeFile('f.c', 'int main(){}', 'w'), command: 'cflow f.c', expect: { exitCode: 0 } },
-            { id: 'CFLOW_02', description: 'Inverse -i', posixSection: 'cflow.html', posixRequirement: '-i', command: 'cflow -i f.c', expect: { exitCode: 0 } },
-            { id: 'CFLOW_03', description: 'Define -D', posixSection: 'cflow.html', posixRequirement: '-D', command: 'cflow -DA=1 f.c', expect: { exitCode: 0 } },
+            { id: 'CFLOW_01', description: 'Gen graph', posixSection: 'cflow.html', posixRequirement: 'Graph', setup: (fs) => fs.writeFile('/home/operator/f.c', 'int main(){}', 'w'), command: 'cflow /home/operator/f.c', expect: { exitCode: 0 } },
+            { id: 'CFLOW_02', description: 'Inverse -i', posixSection: 'cflow.html', posixRequirement: '-i', setup: (fs) => fs.writeFile('/home/operator/f.c', 'int main(){}', 'w'), command: 'cflow -i /home/operator/f.c', expect: { exitCode: 0 } },
+            { id: 'CFLOW_03', description: 'Define -D', posixSection: 'cflow.html', posixRequirement: '-D', setup: (fs) => fs.writeFile('/home/operator/f.c', 'int main(){}', 'w'), command: 'cflow -DA=1 /home/operator/f.c', expect: { exitCode: 0 } },
             { id: 'CFLOW_04', description: 'Fail missing', posixSection: 'cflow.html', posixRequirement: 'Error', command: 'cflow missing', expect: { exitCode: 1 } },
             { id: 'CFLOW_05', description: 'No args', posixSection: 'cflow.html', posixRequirement: 'Error', command: 'cflow', expect: { exitCode: 1 } },
-            { id: 'CFLOW_06', description: 'Include -I', posixSection: 'cflow.html', posixRequirement: '-I', command: 'cflow -I. f.c', expect: { exitCode: 0 } },
-            { id: 'CFLOW_07', description: 'Fail syntax', posixSection: 'cflow.html', posixRequirement: 'Error', command: 'echo x > b.c; cflow b.c', expect: { exitCode: 1 } },
-            { id: 'CFLOW_08', description: 'Recursion (stub)', posixSection: 'cflow.html', posixRequirement: 'Recurse', command: 'cflow f.c', expect: { exitCode: 0 } },
-            { id: 'CFLOW_09', description: 'Consistency', posixSection: 'cflow.html', posixRequirement: 'Stable', command: 'cflow f.c', expect: { exitCode: 0 } },
-            { id: 'CFLOW_10', description: 'Output fmt', posixSection: 'cflow.html', posixRequirement: 'Fmt', command: 'cflow f.c', expect: { stdout: /main/ } }
+            { id: 'CFLOW_06', description: 'Include -I', posixSection: 'cflow.html', posixRequirement: '-I', setup: (fs) => fs.writeFile('/home/operator/f.c', 'int main(){}', 'w'), command: 'cflow -I. /home/operator/f.c', expect: { exitCode: 0 } },
+            { id: 'CFLOW_07', description: 'Fail syntax', posixSection: 'cflow.html', posixRequirement: 'Error', command: 'echo x > /home/operator/b.c; cflow /home/operator/b.c', expect: { exitCode: 1 } },
+            { id: 'CFLOW_08', description: 'Recursion (stub)', posixSection: 'cflow.html', posixRequirement: 'Recurse', setup: (fs) => fs.writeFile('/home/operator/f.c', 'int main(){}', 'w'), command: 'cflow /home/operator/f.c', expect: { exitCode: 0 } },
+            { id: 'CFLOW_09', description: 'Consistency', posixSection: 'cflow.html', posixRequirement: 'Stable', setup: (fs) => fs.writeFile('/home/operator/f.c', 'int main(){}', 'w'), command: 'cflow /home/operator/f.c', expect: { exitCode: 0 } },
+            { id: 'CFLOW_10', description: 'Output fmt', posixSection: 'cflow.html', posixRequirement: 'Fmt', setup: (fs) => fs.writeFile('/home/operator/f.c', 'int main(){}', 'w'), command: 'cflow /home/operator/f.c', expect: { stdout: /main/ } }
         ]
     },
     {
         utility: 'cxref',
         htmlFile: 'cxref.html',
         tests: [
-            { id: 'CXREF_01', description: 'Gen xref', posixSection: 'cxref.html', posixRequirement: 'Xref', setup: (fs) => fs.writeFile('f.c', 'int main(){}', 'w'), command: 'cxref f.c', expect: { exitCode: 0, stdout: /main/ } },
-            { id: 'CXREF_02', description: 'Output -o', posixSection: 'cxref.html', posixRequirement: '-o file', command: 'cxref -o out f.c', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/out', type: 'file' }] } },
-            { id: 'CXREF_03', description: 'Suppress -s', posixSection: 'cxref.html', posixRequirement: '-s', command: 'cxref -s f.c', expect: { exitCode: 0 } }, // silent
+            { id: 'CXREF_01', description: 'Gen xref', posixSection: 'cxref.html', posixRequirement: 'Xref', setup: (fs) => fs.writeFile('/home/operator/f.c', 'int main(){}', 'w'), command: 'cxref /home/operator/f.c', expect: { exitCode: 0, stdout: /main/ } },
+            { id: 'CXREF_02', description: 'Output -o', posixSection: 'cxref.html', posixRequirement: '-o file', setup: (fs) => fs.writeFile('/home/operator/f.c', 'int main(){}', 'w'), command: 'cxref -o /home/operator/out /home/operator/f.c', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/out', type: 'file' }] } },
+            { id: 'CXREF_03', description: 'Suppress -s', posixSection: 'cxref.html', posixRequirement: '-s', setup: (fs) => fs.writeFile('/home/operator/f.c', 'int main(){}', 'w'), command: 'cxref -s /home/operator/f.c', expect: { exitCode: 0 } }, // silent
             { id: 'CXREF_04', description: 'Fail missing', posixSection: 'cxref.html', posixRequirement: 'Error', command: 'cxref missing', expect: { exitCode: 1 } },
             { id: 'CXREF_05', description: 'No args', posixSection: 'cxref.html', posixRequirement: 'Error', command: 'cxref', expect: { exitCode: 1 } },
-            { id: 'CXREF_06', description: 'Width -w', posixSection: 'cxref.html', posixRequirement: '-w num', command: 'cxref -w 80 f.c', expect: { exitCode: 0 } },
-            { id: 'CXREF_07', description: 'Fail syntax', posixSection: 'cxref.html', posixRequirement: 'Error', command: 'echo x > b.c; cxref b.c', expect: { exitCode: 1 } },
-            { id: 'CXREF_08', description: 'C++?', posixSection: 'cxref.html', posixRequirement: 'C', command: 'cxref f.c', expect: { exitCode: 0 } },
-            { id: 'CXREF_09', description: 'Consistency', posixSection: 'cxref.html', posixRequirement: 'Stable', command: 'cxref f.c', expect: { exitCode: 0 } },
-            { id: 'CXREF_10', description: 'Separate -c', posixSection: 'cxref.html', posixRequirement: '-c', command: 'cxref -c f.c', expect: { exitCode: 0 } }
+            { id: 'CXREF_06', description: 'Width -w', posixSection: 'cxref.html', posixRequirement: '-w num', setup: (fs) => fs.writeFile('/home/operator/f.c', 'int main(){}', 'w'), command: 'cxref -w 80 /home/operator/f.c', expect: { exitCode: 0 } },
+            { id: 'CXREF_07', description: 'Fail syntax', posixSection: 'cxref.html', posixRequirement: 'Error', command: 'echo x > /home/operator/b.c; cxref /home/operator/b.c', expect: { exitCode: 1 } },
+            { id: 'CXREF_08', description: 'C++?', posixSection: 'cxref.html', posixRequirement: 'C', setup: (fs) => fs.writeFile('/home/operator/f.c', 'int main(){}', 'w'), command: 'cxref /home/operator/f.c', expect: { exitCode: 0 } },
+            { id: 'CXREF_09', description: 'Consistency', posixSection: 'cxref.html', posixRequirement: 'Stable', setup: (fs) => fs.writeFile('/home/operator/f.c', 'int main(){}', 'w'), command: 'cxref /home/operator/f.c', expect: { exitCode: 0 } },
+            { id: 'CXREF_10', description: 'Separate -c', posixSection: 'cxref.html', posixRequirement: '-c', setup: (fs) => fs.writeFile('/home/operator/f.c', 'int main(){}', 'w'), command: 'cxref -c /home/operator/f.c', expect: { exitCode: 0 } }
         ]
     },
     {
         utility: 'fuser',
         htmlFile: 'fuser.html',
         tests: [
-            { id: 'FUSER_01', description: 'List processes', posixSection: 'fuser.html', posixRequirement: 'List', setup: (fs) => fs.writeFile('f', 'x', 'w'), command: 'fuser f', expect: { exitCode: 0 } }, // needs usage?
-            { id: 'FUSER_02', description: 'Kill -k', posixSection: 'fuser.html', posixRequirement: '-k', command: 'fuser -k f', expect: { exitCode: 0 } }, // Mock kill
-            { id: 'FUSER_03', description: 'Signal -s', posixSection: 'fuser.html', posixRequirement: '-s sig', command: 'fuser -k -s 9 f', expect: { exitCode: 0 } },
+            { id: 'FUSER_01', description: 'List processes', posixSection: 'fuser.html', posixRequirement: 'List', setup: (fs) => fs.writeFile('/home/operator/f', 'x', 'w'), command: 'fuser /home/operator/f', expect: { exitCode: 0 } },
+            { id: 'FUSER_02', description: 'Kill -k', posixSection: 'fuser.html', posixRequirement: '-k', setup: (fs) => fs.writeFile('/home/operator/f', 'x', 'w'), command: 'fuser -k /home/operator/f', expect: { exitCode: 0 } },
+            { id: 'FUSER_03', description: 'Signal -s', posixSection: 'fuser.html', posixRequirement: '-s sig', setup: (fs) => fs.writeFile('/home/operator/f', 'x', 'w'), command: 'fuser -k -s 9 /home/operator/f', expect: { exitCode: 0 } },
             { id: 'FUSER_04', description: 'Fail missing', posixSection: 'fuser.html', posixRequirement: 'Error', command: 'fuser missing', expect: { exitCode: 1 } },
             { id: 'FUSER_05', description: 'No args', posixSection: 'fuser.html', posixRequirement: 'Error', command: 'fuser', expect: { exitCode: 1 } },
-            { id: 'FUSER_06', description: 'User -u', posixSection: 'fuser.html', posixRequirement: '-u', command: 'fuser -u f', expect: { exitCode: 0 } },
-            { id: 'FUSER_07', description: 'Mount -c', posixSection: 'fuser.html', posixRequirement: '-c', command: 'fuser -c .', expect: { exitCode: 0 } },
-            { id: 'FUSER_08', description: 'Silent -s', posixSection: 'fuser.html', posixRequirement: '-s', command: 'fuser -s f', expect: { exitCode: 0 } },
-            { id: 'FUSER_09', description: 'Consistency', posixSection: 'fuser.html', posixRequirement: 'Stable', command: 'fuser f', expect: { exitCode: 0 } },
-            { id: 'FUSER_10', description: 'Multiple', posixSection: 'fuser.html', posixRequirement: 'Args', command: 'fuser f f', expect: { exitCode: 0 } }
+            { id: 'FUSER_06', description: 'User -u', posixSection: 'fuser.html', posixRequirement: '-u', setup: (fs) => fs.writeFile('/home/operator/f', 'x', 'w'), command: 'fuser -u /home/operator/f', expect: { exitCode: 0 } },
+            { id: 'FUSER_07', description: 'Mount -c', posixSection: 'fuser.html', posixRequirement: '-c', setup: (fs) => fs.writeFile('/home/operator/f', 'x', 'w'), command: 'fuser -c /home/operator', expect: { exitCode: 0 } },
+            { id: 'FUSER_08', description: 'Silent -s', posixSection: 'fuser.html', posixRequirement: '-s', setup: (fs) => fs.writeFile('/home/operator/f', 'x', 'w'), command: 'fuser -s /home/operator/f', expect: { exitCode: 0 } },
+            { id: 'FUSER_09', description: 'Consistency', posixSection: 'fuser.html', posixRequirement: 'Stable', setup: (fs) => fs.writeFile('/home/operator/f', 'x', 'w'), command: 'fuser /home/operator/f', expect: { exitCode: 0 } },
+            { id: 'FUSER_10', description: 'Multiple', posixSection: 'fuser.html', posixRequirement: 'Args', setup: (fs) => fs.writeFile('/home/operator/f', 'x', 'w'), command: 'fuser /home/operator/f /home/operator/f', expect: { exitCode: 0 } }
         ]
     },
     {
         utility: 'gencat',
         htmlFile: 'gencat.html',
         tests: [
-            { id: 'GENCAT_01', description: 'Gen catalog', posixSection: 'gencat.html', posixRequirement: 'Create', setup: (fs) => fs.writeFile('m', '1 quote', 'w'), command: 'gencat cat m', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/cat', type: 'file' }] } },
-            { id: 'GENCAT_02', description: 'Fail missing', posixSection: 'gencat.html', posixRequirement: 'Error', command: 'gencat cat missing', expect: { exitCode: 1 } },
+            { id: 'GENCAT_01', description: 'Gen catalog', posixSection: 'gencat.html', posixRequirement: 'Create', setup: (fs) => fs.writeFile('/home/operator/m', '1 quote', 'w'), command: 'gencat /home/operator/cat /home/operator/m', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/cat', type: 'file' }] } },
+            { id: 'GENCAT_02', description: 'Fail missing', posixSection: 'gencat.html', posixRequirement: 'Error', command: 'gencat /home/operator/cat missing', expect: { exitCode: 1 } },
             { id: 'GENCAT_03', description: 'No args', posixSection: 'gencat.html', posixRequirement: 'Error', command: 'gencat', expect: { exitCode: 1 } },
-            { id: 'GENCAT_04', description: 'Update', posixSection: 'gencat.html', posixRequirement: 'Update', command: 'gencat cat m', expect: { exitCode: 0 } },
+            { id: 'GENCAT_04', description: 'Update', posixSection: 'gencat.html', posixRequirement: 'Update', setup: (fs) => fs.writeFile('/home/operator/m', '1 quote', 'w'), command: 'gencat /home/operator/cat /home/operator/m', expect: { exitCode: 0 } },
             { id: 'GENCAT_05', description: 'Empty', posixSection: 'gencat.html', posixRequirement: 'Valid', command: 'gencat cat', expect: { exitCode: 0 } }, // ? needs input usually
             { id: 'GENCAT_06', description: 'Stdin', posixSection: 'gencat.html', posixRequirement: '-', command: 'echo "1 q" | gencat cat -', expect: { exitCode: 0 } },
             { id: 'GENCAT_07', description: 'Fail format', posixSection: 'gencat.html', posixRequirement: 'Error', command: 'echo x | gencat cat -', expect: { exitCode: 1 } },
@@ -2728,7 +2732,7 @@ const SUITES: UtilitySuite[] = [
             { id: 'GETTEXT_04', description: 'No args', posixSection: 'gettext.html', posixRequirement: 'Error?', command: 'gettext', expect: { exitCode: 1 } },
             { id: 'GETTEXT_05', description: 'Expand -e', posixSection: 'gettext.html', posixRequirement: '-e', command: 'gettext -e "a\\nb"', expect: { stdout: /a\nb/ } },
             { id: 'GETTEXT_06', description: 'Fail missing', posixSection: 'gettext.html', posixRequirement: 'Fallback', command: 'gettext -d missing "msg"', expect: { stdout: /msg/ } },
-            { id: 'GETTEXT_07', description: 'Env vars', posixSection: 'gettext.html', posixRequirement: 'TEXTDOMAIN', command: 'TEXTDOMAIN=d gettext "msg"', expect: { exitCode: 0 } },
+            { id: 'GETTEXT_07', description: 'Env vars', posixSection: 'gettext.html', posixRequirement: 'TEXTDOMAIN', command: 'sh -c "TEXTDOMAIN=d gettext msg"', expect: { exitCode: 0 } },
             { id: 'GETTEXT_08', description: 'Consistency', posixSection: 'gettext.html', posixRequirement: 'Stable', command: 'gettext "x"', expect: { exitCode: 0 } },
             { id: 'GETTEXT_09', description: 'Empty', posixSection: 'gettext.html', posixRequirement: 'Empty', command: 'gettext ""', expect: { exitCode: 0 } },
             { id: 'GETTEXT_10', description: 'Quotes', posixSection: 'gettext.html', posixRequirement: 'Quote', command: 'gettext "\'v\'"', expect: { stdout: /'v'/ } }
@@ -2916,7 +2920,17 @@ async function runSuite() {
             let failureReasons: string[] = [];
 
             const testFs = new FileSystem();
-            const testExecutor = new ExecuteCommand(testFs);
+            let testExecutor: ExecuteCommand;
+            if (suite.utility === 'c17') {
+                const compiler = new HostCompilerService();
+                const runner = new HostBinaryRunner();
+                // We need to register C17 with these
+                const registry = new ExecuteCommand(testFs).getRegistry();
+                registry.register('c17', new C17Command(compiler, testFs));
+                testExecutor = new ExecuteCommand(testFs, undefined, registry, runner);
+            } else {
+                testExecutor = new ExecuteCommand(testFs);
+            }
             const testState = createInitialTerminalState();
 
             if (test.setup) {

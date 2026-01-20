@@ -31,10 +31,10 @@ interface ArEntry {
 }
 
 export class ArCommand implements ICommand {
-    private fs: FileSystem;
+    constructor(private fs: FileSystem) { }
 
     async execute(args: string[], state: TerminalState, _input?: string): Promise<CommandResponse> {
-        this.fs = state.fs;
+        // this.fs = state.fs; // Already injected
 
         let mode = '';
         let archiveName = '';
@@ -84,12 +84,8 @@ export class ArCommand implements ICommand {
             }
         } else if (mode.includes('r') || mode.includes('q') || mode.includes('c')) {
             created = true;
-            if (verbose) {
-                // 'ar: creating archive.a' is standard sometimes, but tests might check stderr?
-                // We'll return it in output if verbose.
-            }
         } else {
-             return {
+            return {
                 output: `ar: ${archiveName}: No such file or directory`,
                 newState: state,
                 exitCode: 1
@@ -100,19 +96,10 @@ export class ArCommand implements ICommand {
 
         // Operations
         if (mode.includes('t')) { // List
-            if (files.length > 0) {
-                for (const f of files) {
-                    const entry = entries.find(e => e.header.name === f);
-                    if (entry) {
-                        if (verbose) outputLines.push(this.formatVerbose(entry));
-                        else outputLines.push(entry.header.name);
-                    }
-                }
-            } else {
-                for (const entry of entries) {
-                    if (verbose) outputLines.push(this.formatVerbose(entry));
-                    else outputLines.push(entry.header.name);
-                }
+            const targets = files.length > 0 ? entries.filter(e => files.includes(e.header.name)) : entries;
+            for (const entry of targets) {
+                if (verbose) outputLines.push(this.formatVerbose(entry));
+                else outputLines.push(entry.header.name);
             }
         } else if (mode.includes('d')) { // Delete
             for (const f of files) {
@@ -164,11 +151,11 @@ export class ArCommand implements ICommand {
             }
             this.writeArchive(archivePath, entries, state.currentDirectory);
         } else if (mode.includes('p')) { // Print
-             const targets = files.length > 0 ? entries.filter(e => files.includes(e.header.name)) : entries;
-             for (const entry of targets) {
-                 if (verbose) outputLines.push(`\n<${entry.header.name}>\n`);
-                 outputLines.push(entry.content);
-             }
+            const targets = files.length > 0 ? entries.filter(e => files.includes(e.header.name)) : entries;
+            for (const entry of targets) {
+                if (verbose) outputLines.push(`\n<${entry.header.name}>\n`);
+                outputLines.push(entry.content);
+            }
         }
 
         return {
@@ -178,9 +165,6 @@ export class ArCommand implements ICommand {
         };
     }
 
-    // Simple JSON-based format for simulation
-    // "Real" ar uses binary headers, but we store text.
-    // Format: !<arch>\nJSON_ARRAY
     private parseArchive(content: string): ArEntry[] {
         if (!content.startsWith('!<arch>\n')) return [];
         try {
@@ -197,8 +181,6 @@ export class ArCommand implements ICommand {
     }
 
     private formatVerbose(entry: ArEntry): string {
-        // rw-r--r-- 0/0 4 Nov 1 12:00 2023 file
-        // Simplified
         return `rw-r--r-- ${entry.header.uid}/${entry.header.gid} ${entry.header.size} ${entry.header.name}`;
     }
 }

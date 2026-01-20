@@ -34,7 +34,7 @@ export class InodeTable {
             mtime: now,
             ctime: now,
             links: 1,
-            content: (mode & S_IFDIR) ? null : ''
+            content: (mode & S_IFDIR) ? new Map() : ''
         };
 
         if (mode & S_IFDIR) {

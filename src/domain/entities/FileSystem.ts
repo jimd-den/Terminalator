@@ -13,13 +13,22 @@
 
 import {
     Inode, Dentry,
-    S_IFMT, S_IFSOCK, S_IFLNK, S_IFREG, S_IFBLK, S_IFDIR, S_IFCHR, S_IFIFO
+    S_IFMT, S_IFSOCK, S_IFLNK, S_IFREG, S_IFBLK, S_IFDIR, S_IFCHR, S_IFIFO,
+    S_IRWXU, S_IRUSR, S_IWUSR, S_IXUSR,
+    S_IRWXG, S_IRGRP, S_IWGRP, S_IXGRP,
+    S_IRWXO, S_IROTH, S_IWOTH, S_IXOTH
 } from './filesystem/FileSystemTypes';
 import { InodeTable } from './filesystem/InodeTable';
 import { PathResolver } from '../services/filesystem/PathResolver';
 
 export type FileType = 'file' | 'directory' | 'symlink' | 'block' | 'char' | 'fifo' | 'socket';
-export { Inode, Dentry, S_IFDIR, S_IFLNK, S_IFMT, S_IFREG, S_IFBLK, S_IFCHR, S_IFIFO, S_IFSOCK }; // Re-export for compatibility
+export {
+    Inode, Dentry,
+    S_IFDIR, S_IFLNK, S_IFMT, S_IFREG, S_IFBLK, S_IFCHR, S_IFIFO, S_IFSOCK,
+    S_IRWXU, S_IRUSR, S_IWUSR, S_IXUSR,
+    S_IRWXG, S_IRGRP, S_IWGRP, S_IXGRP,
+    S_IRWXO, S_IROTH, S_IWOTH, S_IXOTH
+}; // Re-export for compatibility
 
 export class FileSystem {
     private inodeTable: InodeTable;
@@ -233,10 +242,10 @@ export class FileSystem {
                 const inode = this.inodeTable.get(dentry.inodeId);
                 // Attach isDirectory to inode as well if needed by test suite
                 if (inode) {
-                     Object.defineProperty(inode, 'isDirectory', {
+                    Object.defineProperty(inode, 'isDirectory', {
                         get: () => !!(inode.mode & S_IFDIR),
                         configurable: true
-                     });
+                    });
                 }
                 return inode;
             },
@@ -244,7 +253,7 @@ export class FileSystem {
         });
     }
 
-    writeFile(path: string, content: string, modeStr: 'w' | 'a' = 'w', cwd: string = '/'): Dentry {
+    writeFile(path: string, content: string | Uint8Array, modeStr: 'w' | 'a' = 'w', cwd: string = '/'): Dentry {
         // this.log(`writeFile(${path}, mode=${modeStr})`);
         let dentry = this.resolve(path, cwd);
         let inode: Inode;
@@ -262,9 +271,37 @@ export class FileSystem {
         if (modeStr === 'w') {
             inode.content = content;
         } else {
-            inode.content = (inode.content || '') + content;
+            if (typeof inode.content === 'string' && typeof content === 'string') {
+                inode.content = inode.content + content;
+            } else if (content instanceof Uint8Array && (inode.content instanceof Uint8Array || typeof inode.content === 'string')) {
+                // Determine total length
+                const current = inode.content instanceof Uint8Array
+                    ? inode.content
+                    : new TextEncoder().encode(inode.content as string || '');
+
+                const combined = new Uint8Array(current.length + content.length);
+                combined.set(current);
+                combined.set(content, current.length);
+                inode.content = combined;
+            } else {
+                // Fallback: convert everything to string if appending string to buffer? 
+                // Or force buffer if mixed? Ideally C17 output is always buffer. 
+                // For simplicity: if mixed, convert existing to buffer and append.
+                const current = inode.content instanceof Uint8Array
+                    ? inode.content
+                    : new TextEncoder().encode(inode.content as string || '');
+                const incoming = content instanceof Uint8Array
+                    ? content
+                    : new TextEncoder().encode(content);
+
+                const combined = new Uint8Array(current.length + incoming.length);
+                combined.set(current);
+                combined.set(incoming, current.length);
+                inode.content = combined;
+            }
         }
-        inode.size = inode.content.length;
+
+        inode.size = (typeof inode.content === 'string') ? inode.content.length : (inode.content as Uint8Array).length;
         this.usedBytes += (inode.size - oldSize);
 
         inode.mtime = Date.now();
@@ -279,7 +316,26 @@ export class FileSystem {
         const inode = this.getInode(dentry.inodeId);
         if (!inode) throw new Error('Corrupt filesystem');
         if (inode.mode & S_IFDIR) throw new Error(`${path}: Is a directory`);
-        return inode.content as string;
+
+        const content = inode.content;
+        if (content instanceof Uint8Array) {
+            return new TextDecoder().decode(content);
+        }
+        return content as string;
+    }
+
+    readFileBuffer(path: string, cwd: string = '/'): Uint8Array {
+        const dentry = this.resolve(path, cwd);
+        if (!dentry) throw new Error(`${path}: No such file or directory`);
+        const inode = this.getInode(dentry.inodeId);
+        if (!inode) throw new Error('Corrupt filesystem');
+        if (inode.mode & S_IFDIR) throw new Error(`${path}: Is a directory`);
+
+        const content = inode.content;
+        if (content instanceof Uint8Array) {
+            return content;
+        }
+        return new TextEncoder().encode(content as string);
     }
 
     deleteNode(path: string, cwd: string = '/'): void {

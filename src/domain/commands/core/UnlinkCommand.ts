@@ -21,7 +21,7 @@ export class UnlinkCommand implements ICommand {
     execute(args: string[], state: TerminalState, input?: string): CommandResponse {
         const files = args.filter(a => !a.startsWith('-'));
         if (files.length === 0) {
-             return { output: 'unlink: missing operand', newState: state, exitCode: 1 };
+            return { output: 'unlink: missing operand', newState: state, exitCode: 1 };
         }
 
         const file = files[0]; // unlink takes exactly one argument usually? POSIX says "file". Singular.
@@ -35,7 +35,7 @@ export class UnlinkCommand implements ICommand {
 
             // Check if directory
             const inode = this.fs.getInode(node.inodeId);
-            if (inode.mode & 0o040000) {
+            if (inode!.mode & 0o040000) {
                 return { output: `unlink: cannot unlink '${file}': Is a directory`, newState: state, exitCode: 1 };
             }
 
