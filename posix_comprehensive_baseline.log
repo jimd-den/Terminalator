@@ -1,0 +1,3604 @@
+[36m=================================================[0m
+[36m    POSIX COMPREHENSIVE COMPLIANCE SUITE v1.0    [0m
+[36m    Target Strategy: Dense TDD, Clean Arch       [0m
+[36m=================================================[0m
+
+[35m>>> Testing Utility: mkdir (mkdir.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m MKDIR_01   Create a single directory
+[32m[PASS][0m MKDIR_02   Create multiple directories
+[32m[PASS][0m MKDIR_03   Fail if directory exists
+[32m[PASS][0m MKDIR_04   Fail if parent does not exist
+[32m[PASS][0m MKDIR_05   Create intermediate directories with -p
+[32m[PASS][0m MKDIR_06   No error if exists with -p
+[32m[PASS][0m MKDIR_07   Error if exists as file even with -p
+[32m[PASS][0m MKDIR_08   Accept mode -m (stub)
+[32m[PASS][0m MKDIR_09   Handle relative paths
+[31m[ERR ][0m MKDIR_10 SETUP FAILED: Error: Cannot create '/root': File exists
+
+[35m>>> Testing Utility: cd (cd.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m CD_01      Change to absolute directory
+[32m[PASS][0m CD_02      Change to parent directory
+[32m[PASS][0m CD_03      Change to relative directory
+[32m[PASS][0m CD_04      Change to root
+[32m[PASS][0m CD_05      Fail if directory missing
+[32m[PASS][0m CD_06      Fail if target is a file
+[32m[PASS][0m CD_07      Ignore multiple slashes
+[32m[PASS][0m CD_08      Handle complex path with dot
+[32m[PASS][0m CD_09      No args changes to HOME
+[32m[PASS][0m CD_10      Dash argument (previous dir)
+
+[35m>>> Testing Utility: ls (ls.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m LS_01      List current directory
+[32m[PASS][0m LS_02      List specific directory
+[32m[PASS][0m LS_03      List multiple arguments
+[32m[PASS][0m LS_04      Show hidden files with -a
+[32m[PASS][0m LS_05      Hide hidden files without -a
+[32m[PASS][0m LS_06      Fail on missing file
+[32m[PASS][0m LS_07      List file itself if operand is file
+[31m[FAIL][0m LS_08      Recursive listing -R
+[31m       -> Stdout Regex Mismatch.
+   Expected: /\/sub/
+   Got: ".:\nmail  notes.txt\n\n./mail:"[0m
+[32m[PASS][0m LS_09      Long format -l (smoke test)
+[32m[PASS][0m LS_10      One entry per line -1
+
+[35m>>> Testing Utility: touch (touch.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m TOUCH_01   Create new file
+[32m[PASS][0m TOUCH_02   Update timestamp (simulate)
+[32m[PASS][0m TOUCH_03   No create with -c
+[32m[PASS][0m TOUCH_04   Multiple files
+[32m[PASS][0m TOUCH_05   Fail if missing parent
+[32m[PASS][0m TOUCH_06   Fail if directory
+[32m[PASS][0m TOUCH_07   Specific time -t (stub)
+[32m[PASS][0m TOUCH_08   Reference file -r (stub)
+[32m[PASS][0m TOUCH_09   Slash in name (fail)
+[32m[PASS][0m TOUCH_10   Relative path creation
+
+[35m>>> Testing Utility: rm (rm.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m RM_01      Remove single file
+[32m[PASS][0m RM_02      Recursively remove dir -r
+[32m[PASS][0m RM_03      Fail on directory without -r
+[32m[PASS][0m RM_04      Force remove -f (missing)
+[32m[PASS][0m RM_05      Remove multiple files
+[32m[PASS][0m RM_06      Fail on missing file
+[32m[PASS][0m RM_07      Remove relative file
+[32m[PASS][0m RM_08      Recursive rm with files inside
+[32m[PASS][0m RM_09      Force remove -f (existing)
+[32m[PASS][0m RM_10      Fail on root (protection)
+
+[35m>>> Testing Utility: cp (cp.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m CP_01      Copy file to file
+[32m[PASS][0m CP_02      Copy file to dir
+[32m[PASS][0m CP_03      Fail if source missing
+[32m[PASS][0m CP_04      Recursive copy -r
+[32m[PASS][0m CP_05      Fail copying dir without -r
+[32m[PASS][0m CP_06      Overwrite existing
+[32m[PASS][0m CP_07      Copy multiple to dir
+[32m[PASS][0m CP_08      Force copy -f (stub)
+[32m[PASS][0m CP_09      Recursive copy alias -R
+[32m[PASS][0m CP_10      Preserve mode -p (stub)
+
+[35m>>> Testing Utility: mv (mv.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m MV_01      Rename file
+[32m[PASS][0m MV_02      Move file to dir
+[32m[PASS][0m MV_03      FAIL missing source
+[32m[PASS][0m MV_04      Rename directory
+[32m[PASS][0m MV_05      Overwrite existing file
+[32m[PASS][0m MV_06      Perform -f
+[32m[PASS][0m MV_07      Fail if target parent missing
+[32m[PASS][0m MV_08      Move multiple to dir
+[32m[PASS][0m MV_09      Fail if source is dir and dest is file
+[32m[PASS][0m MV_10      No-op move (self)
+
+[35m>>> Testing Utility: echo (echo.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m ECHO_01    Basic strings
+[32m[PASS][0m ECHO_02    Multiple args
+[32m[PASS][0m ECHO_03    Empty output
+[32m[PASS][0m ECHO_04    No newline -n (BSD/Check)
+[32m[PASS][0m ECHO_05    Quoted strings (shell)
+[31m[FAIL][0m ECHO_06    Variable expansion (shell)
+[31m       -> Stdout Regex Mismatch.
+   Expected: /\/home/
+   Got: "$HOME"[0m
+[32m[PASS][0m ECHO_07    Escape chars (stub)
+[32m[PASS][0m ECHO_08    Long string
+[32m[PASS][0m ECHO_09    Special chars
+[32m[PASS][0m ECHO_10    Pipeline check (source)
+
+[35m>>> Testing Utility: cat (cat.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m CAT_01     Read single file
+[32m[PASS][0m CAT_02     Read multiple files
+[32m[PASS][0m CAT_03     Fail missing file
+[32m[PASS][0m CAT_04     Fail on directory
+[32m[PASS][0m CAT_05     Empty file
+[32m[PASS][0m CAT_06     Relative path
+[32m[PASS][0m CAT_07     Unbuffered -u (stub)
+[32m[PASS][0m CAT_08     Dash operand (stdin stub)
+[32m[PASS][0m CAT_09     Large file
+[32m[PASS][0m CAT_10     Mixed content
+
+[35m>>> Testing Utility: pwd (pwd.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m PWD_01     Print CWD
+[32m[PASS][0m PWD_02     After CD
+[32m[PASS][0m PWD_03     Physical -P
+[32m[PASS][0m PWD_04     Logical -L
+[32m[PASS][0m PWD_05     Verify newline
+[32m[PASS][0m PWD_06     Root
+[32m[PASS][0m PWD_07     Consistency
+[32m[PASS][0m PWD_08     Ignore args?
+[32m[PASS][0m PWD_09     Valid path
+[32m[PASS][0m PWD_10     Stress
+
+[35m>>> Testing Utility: grep (grep.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m GREP_01    Basic string matching
+[32m[PASS][0m GREP_02    Exit 1 if no match
+[32m[PASS][0m GREP_03    Ignore case -i
+[32m[PASS][0m GREP_04    Invert match -v
+[32m[PASS][0m GREP_05    Count lines -c
+[32m[PASS][0m GREP_06    Line numbers -n
+[32m[PASS][0m GREP_07    List files -l
+[32m[PASS][0m GREP_08    Recursive -r
+[32m[PASS][0m GREP_09    Multiple files
+[32m[PASS][0m GREP_10    Regex support
+
+[35m>>> Testing Utility: head (head.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m HEAD_01    Default 10 lines
+[32m[PASS][0m HEAD_02    Specific lines -n
+[32m[PASS][0m HEAD_03    Fail if missing
+[32m[PASS][0m HEAD_04    More than file length
+[32m[PASS][0m HEAD_05    Multiple files
+[32m[PASS][0m HEAD_06    Single line -n 1
+[32m[PASS][0m HEAD_07    Zero lines -n 0
+[32m[PASS][0m HEAD_08    Large file
+[32m[PASS][0m HEAD_09    Fail on dir
+[32m[PASS][0m HEAD_10    Stdin stub
+
+[35m>>> Testing Utility: tail (tail.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m TAIL_01    Default last 10
+[32m[PASS][0m TAIL_02    Specific lines -n
+[32m[PASS][0m TAIL_03    Start from line n (+n)
+[32m[PASS][0m TAIL_04    Fail missing
+[32m[PASS][0m TAIL_05    Short file
+[32m[PASS][0m TAIL_06    Multiple files
+[32m[PASS][0m TAIL_07    Bytes -c
+[32m[PASS][0m TAIL_08    Fail on dir
+[32m[PASS][0m TAIL_09    Empty file
+[32m[PASS][0m TAIL_10    Stdin stub
+
+[35m>>> Testing Utility: wc (wc.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m WC_01      All counts
+[32m[PASS][0m WC_02      Lines only -l
+[32m[PASS][0m WC_03      Words only -w
+[32m[PASS][0m WC_04      Bytes only -c
+[31m[FAIL][0m WC_05      Chars -m
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m WC_06      Multiple files total
+[32m[PASS][0m WC_07      Fail missing
+[32m[PASS][0m WC_08      Empty file
+[32m[PASS][0m WC_09      Stdin stub
+[32m[PASS][0m WC_10      Fail on dir
+
+[35m>>> Testing Utility: chmod (chmod.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m CHMOD_01   Octal mode
+[32m[PASS][0m CHMOD_02   Another octal
+[31m[FAIL][0m CHMOD_03   Symbolic +x (stub)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m CHMOD_04   Symbolic User -w (stub)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m CHMOD_05   Fail missing
+[32m[PASS][0m CHMOD_06   Recursive -R
+[32m[PASS][0m CHMOD_07   Invalid mode
+[32m[PASS][0m CHMOD_08   Directory mode
+[32m[PASS][0m CHMOD_09   Multiple files
+[31m[FAIL][0m CHMOD_10   Sticky bit (stub)
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: awk (awk.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m AWK_01     Default print
+[32m[PASS][0m AWK_02     Print column $1
+[32m[PASS][0m AWK_03     NF variable
+[32m[PASS][0m AWK_04     NR variable
+[32m[PASS][0m AWK_05     BEGIN block
+[32m[PASS][0m AWK_06     END block
+[32m[PASS][0m AWK_07     Regex pattern
+[32m[PASS][0m AWK_08     Arithmetic
+[31m[FAIL][0m AWK_09     Custom FS
+[31m       -> Stdout Regex Mismatch.
+   Expected: /b/
+   Got: "$2"[0m
+[32m[PASS][0m AWK_10     Multiple files
+
+[35m>>> Testing Utility: sed (sed.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m SED_01     Substitute s///
+[32m[PASS][0m SED_02     Global sub s///g
+[32m[PASS][0m SED_03     Delete lines d
+[32m[PASS][0m SED_04     Print lines p
+[32m[PASS][0m SED_05     Regex address
+[31m[FAIL][0m SED_06     Multiple commands -e
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m SED_07     Fail missing file
+[32m[PASS][0m SED_08     Empty file
+[32m[PASS][0m SED_09     Backreference \1 (stub)
+[32m[PASS][0m SED_10     In-place -i (Extension)
+
+[35m>>> Testing Utility: find (find.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m FIND_01    Check name
+[32m[PASS][0m FIND_02    Check type f
+[32m[PASS][0m FIND_03    Check type d
+[32m[PASS][0m FIND_04    Default print
+[32m[PASS][0m FIND_05    Fail missing
+[32m[PASS][0m FIND_06    Empty dir
+[32m[PASS][0m FIND_07    Multiple paths
+[31m[FAIL][0m FIND_08    Exec (stub)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[ERR ][0m FIND_09 SETUP FAILED: Error: Cannot create '/d/sub': Parent directory not found
+[31m[FAIL][0m FIND_10    Prune (stub)
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: date (date.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m DATE_01    Default format
+[32m[PASS][0m DATE_02    UTC -u
+[32m[PASS][0m DATE_03    Format string %Y
+[32m[PASS][0m DATE_04    Format string %m
+[32m[PASS][0m DATE_05    Format string %d
+[31m[FAIL][0m DATE_06    Complex format
+[31m       -> Stdout Regex Mismatch.
+   Expected: /Year: 20../
+   Got: "Tue Jan 20 2026 17:41:46 GMT+0000 (Coordinated Universal Time)"[0m
+[32m[PASS][0m DATE_07    Empty format
+[31m[FAIL][0m DATE_08    Set date (fail/stub)
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m DATE_09    Invalid flag
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m DATE_10    Self-consistency
+
+[35m>>> Testing Utility: diff (diff.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m DIFF_01    Identical files
+[32m[PASS][0m DIFF_02    different files
+[32m[PASS][0m DIFF_03    Missing file
+[31m[FAIL][0m DIFF_04    Directory diff (stub)
+[31m       -> Exit Code: Expected 0, got 2[0m
+[31m[FAIL][0m DIFF_05    Ignore whitespace -w (stub)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m DIFF_06    Unified -u (Extension)
+[31m       -> Stdout Regex Mismatch.
+   Expected: /---/
+   Got: "< a\n> b"[0m
+[31m[FAIL][0m DIFF_07    Brief -q
+[31m       -> Stdout Regex Mismatch.
+   Expected: /differ/
+   Got: "< a\n> b"[0m
+[31m[FAIL][0m DIFF_08    Recursive -r
+[31m       -> Exit Code: Expected 0, got 2[0m
+[32m[PASS][0m DIFF_09    Stdin -
+[32m[PASS][0m DIFF_10    Same file
+
+[35m>>> Testing Utility: sort (sort.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m SORT_01    Basic sort
+[32m[PASS][0m SORT_02    Numeric sort -n
+[32m[PASS][0m SORT_03    Reverse sort -r
+[32m[PASS][0m SORT_04    Unique -u
+[32m[PASS][0m SORT_05    Output file -o
+[32m[PASS][0m SORT_06    Sort keys -k (stub)
+[32m[PASS][0m SORT_07    Fold case -f
+[32m[PASS][0m SORT_08    Check -c
+[32m[PASS][0m SORT_09    Multiple files
+[32m[PASS][0m SORT_10    Stdin
+
+[35m>>> Testing Utility: uniq (uniq.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m UNIQ_01    Basic uniq
+[32m[PASS][0m UNIQ_02    Count -c
+[32m[PASS][0m UNIQ_03    Duplicate only -d
+[32m[PASS][0m UNIQ_04    Unique only -u
+[32m[PASS][0m UNIQ_05    Skip fields -f (stub)
+[32m[PASS][0m UNIQ_06    Skip chars -s (stub)
+[32m[PASS][0m UNIQ_07    Output file
+[32m[PASS][0m UNIQ_08    Fail missing
+[32m[PASS][0m UNIQ_09    Dir
+[32m[PASS][0m UNIQ_10    Case ignore -i (Ext)
+
+[35m>>> Testing Utility: tr (tr.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m TR_01      Basic translate
+[32m[PASS][0m TR_02      Delete -d
+[32m[PASS][0m TR_03      Squeeze -s
+[31m[FAIL][0m TR_04      Complement -c
+[31m       -> Stdout Regex Mismatch.
+   Expected: /xexxox/
+   Got: "xellx"[0m
+[32m[PASS][0m TR_05      Range support
+[32m[PASS][0m TR_06      Fail no args
+[31m[FAIL][0m TR_07      Fail one arg (delete needs -d)
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m TR_08      Delete range
+[32m[PASS][0m TR_09      Truncate set1 > set2
+[32m[PASS][0m TR_10      Escape chars
+
+[35m>>> Testing Utility: cut (cut.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m CUT_01     Fields -f
+[32m[PASS][0m CUT_02     Custom delimiter -d
+[32m[PASS][0m CUT_03     Characters -c
+[32m[PASS][0m CUT_04     Range -c 1-2
+[32m[PASS][0m CUT_05     Open range -c 2-
+[32m[PASS][0m CUT_06     Multiple files
+[32m[PASS][0m CUT_07     Fail missing
+[32m[PASS][0m CUT_08     Fail no mode
+[32m[PASS][0m CUT_09     Suppress no delim -s
+[32m[PASS][0m CUT_10     Stdin
+
+[35m>>> Testing Utility: tee (tee.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m TEE_01     Basic tee
+[32m[PASS][0m TEE_02     Append -a
+[32m[PASS][0m TEE_03     Multiple files
+[32m[PASS][0m TEE_04     Ignore interrupt -i (stub)
+[32m[PASS][0m TEE_05     Fail dir
+[32m[PASS][0m TEE_06     No args (stdout only)
+[32m[PASS][0m TEE_07     Overwrite (default)
+[32m[PASS][0m TEE_08     Pipeline chaining
+[32m[PASS][0m TEE_09     Relative path
+[31m[FAIL][0m TEE_10     Fail permission (stub)
+[31m       -> Exit Code: Expected 1, got 0[0m
+
+[35m>>> Testing Utility: alias (alias.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m ALIAS_01   Set alias
+[32m[PASS][0m ALIAS_02   List aliases
+[32m[PASS][0m ALIAS_03   Print specific alias
+[31m[FAIL][0m ALIAS_04   Invalid name
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m ALIAS_05   Quote value
+[32m[PASS][0m ALIAS_06   Multiple definitions
+[32m[PASS][0m ALIAS_07   List specific missing
+[31m[FAIL][0m ALIAS_08   Redefine
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m ALIAS_09   Print value format
+[31m[FAIL][0m ALIAS_10   Flag -p (stub)
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: unalias (unalias.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m UNALIAS_01 Remove alias
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m UNALIAS_02 Remove missing
+[31m[FAIL][0m UNALIAS_03 Remove multiple
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m UNALIAS_04 Remove all -a
+[32m[PASS][0m UNALIAS_05 Fail no args
+[32m[PASS][0m UNALIAS_06 Return code
+[32m[PASS][0m UNALIAS_07 Invalid flag
+[32m[PASS][0m UNALIAS_08 Smoke test
+[32m[PASS][0m UNALIAS_09 State check (stub)
+[32m[PASS][0m UNALIAS_10 Persistence (stub)
+
+[35m>>> Testing Utility: bg (bg.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m BG_01      Resume job
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m BG_02      Specific job %1
+[32m[PASS][0m BG_03      Fail no current job
+[32m[PASS][0m BG_04      Multiple jobs
+[32m[PASS][0m BG_05      Invalid job
+[32m[PASS][0m BG_06      Already running
+[32m[PASS][0m BG_07      Output format
+[31m[FAIL][0m BG_08      Help?
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m BG_09      Arg parsing
+[32m[PASS][0m BG_10      Empty
+
+[35m>>> Testing Utility: fg (fg.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m FG_01      Foreground job
+[32m[PASS][0m FG_02      Specific job %1
+[32m[PASS][0m FG_03      Fail if none
+[32m[PASS][0m FG_04      Invalid job
+[32m[PASS][0m FG_05      Format
+[32m[PASS][0m FG_06      No args
+[32m[PASS][0m FG_07      String ID
+[32m[PASS][0m FG_08      Multiple args fail?
+[32m[PASS][0m FG_09      Arg parsing
+[32m[PASS][0m FG_10      Smoke
+
+[35m>>> Testing Utility: jobs (jobs.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m JOBS_01    List jobs
+[32m[PASS][0m JOBS_02    List -l
+[32m[PASS][0m JOBS_03    List -p
+[31m[FAIL][0m JOBS_04    Specific job
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m JOBS_05    Running status
+[32m[PASS][0m JOBS_06    Stopped status
+[31m[FAIL][0m JOBS_07    Invalid flag
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m JOBS_08    Multiple args
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m JOBS_09    Command substitution (stub)
+[32m[PASS][0m JOBS_10    Verify empty
+
+[35m>>> Testing Utility: kill (kill.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m KILL_01    Signal spec
+[32m[PASS][0m KILL_02    Numeric signal
+[32m[PASS][0m KILL_03    Fail missing PID
+[31m[FAIL][0m KILL_04    Fail invalid PID
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m KILL_05    List signals -l
+[31m       -> Stdout Regex Mismatch.
+   Expected: /TERM|KILL/
+   Got: ""[0m
+[31m[FAIL][0m KILL_06    Check signals
+[31m       -> Stdout Regex Mismatch.
+   Expected: /KILL/
+   Got: ""[0m
+[32m[PASS][0m KILL_07    Default TERM
+[31m[FAIL][0m KILL_08    Kill job %1
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m KILL_09    Process group 0 (stub)
+[32m[PASS][0m KILL_10    Permissions (stub)
+
+[35m>>> Testing Utility: wait (wait.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m WAIT_01    Wait PID
+[32m[PASS][0m WAIT_02    Wait all
+[31m[FAIL][0m WAIT_03    Wait job %1
+[31m       -> Exit Code: Expected 127, got 0[0m
+[32m[PASS][0m WAIT_04    Verify return
+[31m[FAIL][0m WAIT_05    Invalid arg
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m WAIT_06    Multiple
+[32m[PASS][0m WAIT_07    Zero
+[32m[PASS][0m WAIT_08    Consistency
+[32m[PASS][0m WAIT_09    Output?
+[32m[PASS][0m WAIT_10    Stress
+
+[35m>>> Testing Utility: sleep (sleep.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m SLEEP_01   Sleep seconds
+[32m[PASS][0m SLEEP_02   Fail no args
+[32m[PASS][0m SLEEP_03   Invalid time
+[32m[PASS][0m SLEEP_04   Stubbed execution
+[32m[PASS][0m SLEEP_05   Time parsing
+[31m[FAIL][0m SLEEP_06   Negative?
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m SLEEP_07   Big number
+[31m[FAIL][0m SLEEP_08   Multiple args?
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m SLEEP_09   Float?
+[32m[PASS][0m SLEEP_10   Suffix?
+
+[35m>>> Testing Utility: false (false.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m FALSE_01   Return 1
+[32m[PASS][0m FALSE_02   Args ignored
+[32m[PASS][0m FALSE_03   Consistency
+[31m[FAIL][0m FALSE_04   Pipe failure
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m FALSE_05   No output
+[32m[PASS][0m FALSE_06   Check != 0
+[32m[PASS][0m FALSE_07   Check 255?
+[32m[PASS][0m FALSE_08   Arg stress
+[32m[PASS][0m FALSE_09   Env vars?
+[32m[PASS][0m FALSE_10   In logic
+
+[35m>>> Testing Utility: true (true.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m TRUE_01    Return 0
+[32m[PASS][0m TRUE_02    Args ignored
+[32m[PASS][0m TRUE_03    No output
+[32m[PASS][0m TRUE_04    Consistent
+[32m[PASS][0m TRUE_05    In pipe
+[32m[PASS][0m TRUE_06    Multiple args
+[32m[PASS][0m TRUE_07    Stress
+[32m[PASS][0m TRUE_08    Fast
+[32m[PASS][0m TRUE_09    Zero?
+[32m[PASS][0m TRUE_10    Always
+
+[35m>>> Testing Utility: basename (basename.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m BASENAME_01 Strip path
+[32m[PASS][0m BASENAME_02 Strip suffix
+[32m[PASS][0m BASENAME_03 Just name, no suffix
+[31m[FAIL][0m BASENAME_04 Root
+[31m       -> Stdout Regex Mismatch.
+   Expected: /^\/$/
+   Got: ""[0m
+[32m[PASS][0m BASENAME_05 Trailing slashes
+[31m[FAIL][0m BASENAME_06 Fail no args
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m BASENAME_07 Too many args
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m BASENAME_08 Suffix is entire string
+[32m[PASS][0m BASENAME_09 Cwd .
+[32m[PASS][0m BASENAME_10 Parent ..
+
+[35m>>> Testing Utility: dirname (dirname.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m DIRNAME_01 Normal path
+[32m[PASS][0m DIRNAME_02 No slashes
+[32m[PASS][0m DIRNAME_03 Root
+[32m[PASS][0m DIRNAME_04 Trailing slash
+[31m[FAIL][0m DIRNAME_05 Fail no args
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m DIRNAME_06 Parent of root
+[32m[PASS][0m DIRNAME_07 Complex path
+[32m[PASS][0m DIRNAME_08 Dot
+[32m[PASS][0m DIRNAME_09 DotDot
+[31m[FAIL][0m DIRNAME_10 Multiple args fail?
+[31m       -> Exit Code: Expected 1, got 0[0m
+
+[35m>>> Testing Utility: file (file.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m FILE_01    Check file
+[32m[PASS][0m FILE_02    Check dir
+[32m[PASS][0m FILE_03    Fail missing
+[32m[PASS][0m FILE_04    Multiple files
+[31m[FAIL][0m FILE_05    Brief -b (stub)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m FILE_06    Helpers -h (stub)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m FILE_07    Mime -i (Ext)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m FILE_08    Empty file
+[32m[PASS][0m FILE_09    Binary? (stub)
+[31m[FAIL][0m FILE_10    Special (stub)
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: join (join.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m JOIN_01    Basic join
+[32m[PASS][0m JOIN_02    Miss match
+[31m[FAIL][0m JOIN_03    Specific field -1 -2 (stub)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m JOIN_04    Output all -a
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m JOIN_05    Output format -o
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m JOIN_06    Delimiter -t
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /1:a:b/
+   Got: "join: missing operand"[0m
+[32m[PASS][0m JOIN_07    Fail missing
+[31m[FAIL][0m JOIN_08    Unsorted input check (stub)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m JOIN_09    Empty file
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m JOIN_10    Case ignore -i
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: paste (paste.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m PASTE_01   Merge lines
+[32m[PASS][0m PASTE_02   Delimiter -d
+[32m[PASS][0m PASTE_03   Serialize -s
+[32m[PASS][0m PASTE_04   Stdin -
+[31m[FAIL][0m PASTE_05   Multiple files
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m PASTE_06   Fail missing
+[32m[PASS][0m PASTE_07   Empty file
+[32m[PASS][0m PASTE_08   Unequal lines
+[31m[FAIL][0m PASTE_09   Multiline delim
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m PASTE_10   No args?
+
+[35m>>> Testing Utility: split (split.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m SPLIT_01   Default split
+[32m[PASS][0m SPLIT_02   Line count -l
+[31m[FAIL][0m SPLIT_03   Bytes -b
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Missing File: Expected /home/operator/xab to be created.[0m
+[31m[FAIL][0m SPLIT_04   Prefix option
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Missing File: Expected /home/operator/outaa to be created.[0m
+[31m[FAIL][0m SPLIT_05   Suffix length -a
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Missing File: Expected /home/operator/xaaa to be created.[0m
+[32m[PASS][0m SPLIT_06   Fail missing
+[32m[PASS][0m SPLIT_07   Fail dir
+[32m[PASS][0m SPLIT_08   Stdin -
+[31m[FAIL][0m SPLIT_09   Numeric suffix -d (Ext)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Missing File: Expected /home/operator/x00 to be created.[0m
+[31m[FAIL][0m SPLIT_10   Split empty?
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: csplit (csplit.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m CSPLIT_01  Context split line
+[31m       -> Missing File: Expected /home/operator/xx00 to be created.[0m
+[31m       -> Missing File: Expected /home/operator/xx01 to be created.[0m
+[32m[PASS][0m CSPLIT_02  Regex
+[31m[FAIL][0m CSPLIT_03  Prefix -f
+[31m       -> Missing File: Expected /home/operator/out00 to be created.[0m
+[31m[FAIL][0m CSPLIT_04  Digits -n
+[31m       -> Missing File: Expected /home/operator/xx0000 to be created.[0m
+[31m[FAIL][0m CSPLIT_05  Keep files -k
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m CSPLIT_06  Suppress counts -s
+[31m[FAIL][0m CSPLIT_07  Fail missing
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m CSPLIT_08  Repeat pattern {*}
+[32m[PASS][0m CSPLIT_09  Offset
+[32m[PASS][0m CSPLIT_10  Stdin
+
+[35m>>> Testing Utility: comm (comm.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m COMM_01    Compare 3 cols
+[31m[FAIL][0m COMM_02    Suppress col 1 (-1)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m COMM_03    Suppress col 2 (-2)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m COMM_04    Suppress col 3 (-3)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m COMM_05    Common lines
+[31m[FAIL][0m COMM_06    Fail un-sorted (stub)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m COMM_07    Fail missing
+[31m[FAIL][0m COMM_08    Stdin
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m COMM_09    Empty file
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m COMM_10    Case ignore (Extension)
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: cmp (cmp.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m CMP_01     Identical 0
+[32m[PASS][0m CMP_02     Different 1
+[31m[FAIL][0m CMP_03     Verbose -l
+[31m       -> Exit Code: Expected 1, got 2[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /1/
+   Got: "cmp: No such file or directory"[0m
+[31m[FAIL][0m CMP_04     Silent -s
+[31m       -> Exit Code: Expected 1, got 2[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /^$/
+   Got: "cmp: No such file or directory"[0m
+[31m[FAIL][0m CMP_05     Skip initial bytes
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m CMP_06     Fail missing
+[31m[FAIL][0m CMP_07     Limit bytes -n (Ext)
+[31m       -> Exit Code: Expected 1, got 2[0m
+[31m[FAIL][0m CMP_08     Stdin
+[31m       -> Exit Code: Expected 0, got 2[0m
+[32m[PASS][0m CMP_09     EOF difference
+[32m[PASS][0m CMP_10     Binary safety
+
+[35m>>> Testing Utility: od (od.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m OD_01      Default octal
+[31m[FAIL][0m OD_02      Hex -x
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m OD_03      Char -c
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /a/
+   Got: "od: /f: No such file"[0m
+[31m[FAIL][0m OD_04      Decimal -d
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m OD_05      Skip bytes -j
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /a/
+   Got: "od: 1: No such file"[0m
+[31m[FAIL][0m OD_06      Length -N
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m OD_07      Fail missing
+[32m[PASS][0m OD_08      Stdin
+[31m[FAIL][0m OD_09      Multiple files
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m OD_10      Format -t
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: expr (expr.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m EXPR_01    Add
+[32m[PASS][0m EXPR_02    Subtract
+[31m[FAIL][0m EXPR_03    Multiply (stub)
+[31m       -> Stdout Regex Mismatch.
+   Expected: /6/
+   Got: "2 \* 3"[0m
+[32m[PASS][0m EXPR_04    Divide
+[32m[PASS][0m EXPR_05    String compare
+[31m[FAIL][0m EXPR_06    String match :
+[31m       -> Stdout Regex Mismatch.
+   Expected: /3/
+   Got: "abc : a.*"[0m
+[31m[FAIL][0m EXPR_07    Fail syntax
+[31m       -> Exit Code: Expected 2, got 0[0m
+[31m[FAIL][0m EXPR_08    Fail non-int
+[31m       -> Exit Code: Expected 2, got 0[0m
+[32m[PASS][0m EXPR_09    Return 1 if 0
+[31m[FAIL][0m EXPR_10    Logical OR |
+[31m       -> Exit Code: Expected 0, got 127[0m
+
+[35m>>> Testing Utility: printf (printf.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m PRINTF_01  Basic string
+[32m[PASS][0m PRINTF_02  Format %s
+[32m[PASS][0m PRINTF_03  Format %d
+[32m[PASS][0m PRINTF_04  No newline default
+[32m[PASS][0m PRINTF_05  Multiple args
+[31m[FAIL][0m PRINTF_06  Octal escape
+[31m       -> Stdout Regex Mismatch.
+   Expected: /A/
+   Got: "\101"[0m
+[31m[FAIL][0m PRINTF_07  Hex escape (stub)
+[31m       -> Stdout Regex Mismatch.
+   Expected: /A/
+   Got: "\x41"[0m
+[31m[FAIL][0m PRINTF_08  Format error?
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m PRINTF_09  Backslash c
+[31m       -> Stdout Regex Mismatch.
+   Expected: /^a$/
+   Got: "a\cb"[0m
+[31m[FAIL][0m PRINTF_10  Float %f
+[31m       -> Stdout Regex Mismatch.
+   Expected: /1.6/
+   Got: ""[0m
+
+[35m>>> Testing Utility: test (test.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m TEST_01    String eq =
+[32m[PASS][0m TEST_02    String ne !=
+[32m[PASS][0m TEST_03    Integer eq -eq
+[31m[FAIL][0m TEST_04    File exists -e
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m TEST_05    File missing -e
+[31m[FAIL][0m TEST_06    Dir exists -d
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m TEST_07    Zero length -z
+[32m[PASS][0m TEST_08    Non-zero length -n
+[32m[PASS][0m TEST_09    AND -a (XSI)
+[31m[FAIL][0m TEST_10    NOT !
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: [ (test.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m BRACKET_01 Basic check
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m BRACKET_02 Missing closing
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m BRACKET_03 Fail check
+[31m[FAIL][0m BRACKET_04 Spaces needed
+[31m       -> Exit Code: Expected 1, got 127[0m
+[31m[FAIL][0m BRACKET_05 Complex
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m BRACKET_06 Or -o
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m BRACKET_07 Group ( ) (XSI)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m BRACKET_08 Escaped parens
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m BRACKET_09 File check
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m BRACKET_10 Fail arg count
+[31m       -> Exit Code: Expected 1, got 0[0m
+
+[35m>>> Testing Utility: read (read.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m READ_01    Read var
+[32m[PASS][0m READ_02    Read multiple
+[32m[PASS][0m READ_03    Read line
+[32m[PASS][0m READ_04    Prompt -p (Ext)
+[31m[FAIL][0m READ_05    Fail no input
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m READ_06    Timeout -t (Ext)
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m READ_07    Raw -r
+[32m[PASS][0m READ_08    Exit status
+[31m[FAIL][0m READ_09    IFS usage (stub)
+[31m       -> Exit Code: Expected 0, got 127[0m
+[32m[PASS][0m READ_10    No var (default REPLY)
+
+[35m>>> Testing Utility: xargs (xargs.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m XARGS_01   Basic xargs
+[32m[PASS][0m XARGS_02   Multiple args
+[31m[FAIL][0m XARGS_03   Max lines -n
+[31m       -> Exit Code: Expected 0, got 127[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /a\nb/
+   Got: "xargs: -n: command not found"[0m
+[31m[FAIL][0m XARGS_04   Placeholder -I (stub)
+[31m       -> Exit Code: Expected 0, got 127[0m
+[31m[FAIL][0m XARGS_05   No run if empty -r (Ext)
+[31m       -> Exit Code: Expected 0, got 127[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /^$/
+   Got: "xargs: -r: command not found"[0m
+[32m[PASS][0m XARGS_06   Fail command
+[31m[FAIL][0m XARGS_07   Trace -t
+[31m       -> Exit Code: Expected 0, got 127[0m
+[31m[FAIL][0m XARGS_08   Delimiter -d (stub)
+[31m       -> Exit Code: Expected 0, got 127[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /a b/
+   Got: "xargs: -d: command not found"[0m
+[31m[FAIL][0m XARGS_09   0 terminator -0 (Ext)
+[31m       -> Exit Code: Expected 0, got 127[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /a b/
+   Got: "xargs: -0: command not found"[0m
+[32m[PASS][0m XARGS_10   Stress
+
+[35m>>> Testing Utility: id (id.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m ID_01      Current user
+[32m[PASS][0m ID_02      User arg
+[31m[FAIL][0m ID_03      Fail missing
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m ID_04      Group only -g
+[31m       -> Stdout Regex Mismatch.
+   Expected: /^\d+/
+   Got: "uid=1000(operator) gid=1000(operator) groups=1000(operator)"[0m
+[31m[FAIL][0m ID_05      User only -u
+[31m       -> Stdout Regex Mismatch.
+   Expected: /^\d+/
+   Got: "uid=1000(operator) gid=1000(operator) groups=1000(operator)"[0m
+[32m[PASS][0m ID_06      Name -n
+[32m[PASS][0m ID_07      Real ID -r
+[32m[PASS][0m ID_08      All groups -G
+[31m[FAIL][0m ID_09      Multiple args
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m ID_10      Root check
+
+[35m>>> Testing Utility: uname (uname.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m UNAME_01   Default
+[32m[PASS][0m UNAME_02   All -a
+[32m[PASS][0m UNAME_03   Kernel release -r
+[32m[PASS][0m UNAME_04   Machine -m
+[32m[PASS][0m UNAME_05   Node name -n
+[32m[PASS][0m UNAME_06   OS -o
+[31m[FAIL][0m UNAME_07   Invalid flag
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m UNAME_08   Extra args
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m UNAME_09   Consistency
+[32m[PASS][0m UNAME_10   No output?
+
+[35m>>> Testing Utility: logname (logname.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m LOGNAME_01 Print user
+[31m[FAIL][0m LOGNAME_02 No args allowed
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m LOGNAME_03 Consistency
+[31m[FAIL][0m LOGNAME_04 Help?
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m LOGNAME_05 Env override check
+[32m[PASS][0m LOGNAME_06 Redirect
+[32m[PASS][0m LOGNAME_07 Verify redirect
+[31m[FAIL][0m LOGNAME_08 Fail flags
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m LOGNAME_09 Output format
+[31m       -> Stdout Regex Mismatch.
+   Expected: /\n$/
+   Got: "operator"[0m
+[32m[PASS][0m LOGNAME_10 Repeated
+
+[35m>>> Testing Utility: env (env.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m ENV_01     Print env
+[31m[FAIL][0m ENV_02     Set var
+[31m       -> Stdout Regex Mismatch.
+   Expected: /TESTVAR=val/
+   Got: "PATH=/bin:/usr/bin\nUSER=operator\nHOME=/home/operator\nTERM=xterm-256color"[0m
+[31m[FAIL][0m ENV_03     Run utility
+[31m       -> Stdout Regex Mismatch.
+   Expected: /hello/
+   Got: "PATH=/bin:/usr/bin\nUSER=operator\nHOME=/home/operator\nTERM=xterm-256color"[0m
+[32m[PASS][0m ENV_04     Ignore split -i
+[32m[PASS][0m ENV_05     Unset -u
+[31m[FAIL][0m ENV_06     Fail missing util
+[31m       -> Exit Code: Expected 127, got 0[0m
+[31m[FAIL][0m ENV_07     Fail permission
+[31m       -> Exit Code: Expected 126, got 0[0m
+[31m[FAIL][0m ENV_08     Multiple vars
+[31m       -> Stdout Regex Mismatch.
+   Expected: /ok/
+   Got: "PATH=/bin:/usr/bin\nUSER=operator\nHOME=/home/operator\nTERM=xterm-256color"[0m
+[32m[PASS][0m ENV_09     No args
+[32m[PASS][0m ENV_10     Flag parsing
+
+[35m>>> Testing Utility: ar (ar.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m AR_01      Create archive -rc
+[31m[FAIL][0m AR_02      List contents -t
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m AR_03      Verbose list -tv
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m AR_04      Delete member -d
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m AR_05      Extract -x
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m AR_06      Update -r
+[32m[PASS][0m AR_07      Quick append -q
+[31m[FAIL][0m AR_08      Move -m (stub)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m AR_09      Print -p
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /x/
+   Got: "ar: lib.a: No such file or directory"[0m
+[32m[PASS][0m AR_10      Fail missing lib
+
+[35m>>> Testing Utility: make (make.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m MAKE_01    Default target
+[32m[PASS][0m MAKE_02    Specific target
+[32m[PASS][0m MAKE_03    Ignore errors -i
+[32m[PASS][0m MAKE_04    Dry run -n
+[32m[PASS][0m MAKE_05    Keep going -k
+[32m[PASS][0m MAKE_06    Specific file -f
+[31m[FAIL][0m MAKE_07    Touch -t
+[31m       -> Exit Code: Expected 0, got 2[0m
+[31m[FAIL][0m MAKE_08    Env override -e
+[31m       -> Exit Code: Expected 0, got 127[0m
+[32m[PASS][0m MAKE_09    Fail missing Makefile
+[32m[PASS][0m MAKE_10    Macro usage
+
+[35m>>> Testing Utility: sh (sh.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m SH_01      Run script
+[32m[PASS][0m SH_02      Command string -c
+[32m[PASS][0m SH_03      Stdin
+[32m[PASS][0m SH_04      Exit code
+[31m[FAIL][0m SH_05      Syntax check -n (stub)
+[31m       -> Exit Code: Expected 0, got 127[0m
+[32m[PASS][0m SH_06      Fail missing file
+[31m[FAIL][0m SH_07      Positional args
+[31m       -> Exit Code: Expected 0, got 127[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /123/
+   Got: "sh: sh: No such file or directory"[0m
+[32m[PASS][0m SH_08      Verbose -v (Ext)
+[32m[PASS][0m SH_09      Restricted -r (Ext)
+[32m[PASS][0m SH_10      Ignore sigs? (stub)
+
+[35m>>> Testing Utility: strings (strings.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m STRINGS_01 Extract text
+[32m[PASS][0m STRINGS_02 Min length -n
+[31m[FAIL][0m STRINGS_03 Offset -t
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m STRINGS_04 All -a
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m STRINGS_05 Fail missing
+[31m[FAIL][0m STRINGS_06 Multiple files
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m STRINGS_07 Stdin
+[31m[FAIL][0m STRINGS_08 Empty file
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m STRINGS_09 Encoding -e (Ext)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m STRINGS_10 Default len 4
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: time (time.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m TIME_01    Time command
+[32m[PASS][0m TIME_02    Exit code preserve
+[32m[PASS][0m TIME_03    Format -p
+[32m[PASS][0m TIME_04    Fail missing
+[32m[PASS][0m TIME_05    Pipeline
+[31m[FAIL][0m TIME_06    No args?
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m TIME_07    Redirect
+[32m[PASS][0m TIME_08    Complex command
+[31m[FAIL][0m TIME_09    Subshell
+[31m       -> Exit Code: Expected 0, got 127[0m
+[32m[PASS][0m TIME_10    Stress
+
+[35m>>> Testing Utility: fold (fold.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m FOLD_01    Default width 80
+[32m[PASS][0m FOLD_02    Width -w
+[32m[PASS][0m FOLD_03    Bytes -b
+[31m[FAIL][0m FOLD_04    Space break -s
+[31m       -> Stdout Regex Mismatch.
+   Expected: /a b\nc d/
+   Got: "a b\n c \nd"[0m
+[32m[PASS][0m FOLD_05    Fail missing
+[31m[FAIL][0m FOLD_06    Multiple files
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m FOLD_07    Stdin
+[31m[FAIL][0m FOLD_08    Empty
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m FOLD_09    Very small width
+[31m[FAIL][0m FOLD_10    Zero width?
+[31m       -> Exit Code: Expected 1, got 0[0m
+
+[35m>>> Testing Utility: cksum (cksum.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m CKSUM_01   Calculate
+[32m[PASS][0m CKSUM_02   Stdin
+[31m[FAIL][0m CKSUM_03   Multiple files
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m CKSUM_04   Fail missing
+[31m[FAIL][0m CKSUM_05   Empty file
+[31m       -> Stdout Regex Mismatch.
+   Expected: /0/
+   Got: ""[0m
+[31m[FAIL][0m CKSUM_06   Binary
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m CKSUM_07   Deterministic
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m CKSUM_08   Directory?
+[31m[FAIL][0m CKSUM_09   Help?
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m CKSUM_10   Check algo (stub)
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: du (du.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m DU_01      Disk usage
+[32m[PASS][0m DU_02      Summary -s
+[32m[PASS][0m DU_03      All files -a
+[31m[FAIL][0m DU_04      Human readable -h (Ext)
+[31m       -> Stdout Regex Mismatch.
+   Expected: /[KMG]/
+   Got: "9	/bin\n8	/dev\n10	/etc\n8	/home/operator/mail\n17	/home/operator\n25	/home\n8	/lib\n8	/proc\n8	/root\n8	/tmp\n8	/usr/bin\n8	/usr/lib\n24	/usr\n8	/var/log\n16	/var\n132	/"[0m
+[32m[PASS][0m DU_05      Fail missing
+[32m[PASS][0m DU_06      Specific file
+[32m[PASS][0m DU_07      Dereference -L
+[32m[PASS][0m DU_08      Block size -k
+[32m[PASS][0m DU_09      Multiple args
+[32m[PASS][0m DU_10      Filesystem boundary -x
+
+[35m>>> Testing Utility: df (df.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m DF_01      Disk free
+[32m[PASS][0m DF_02      Human readable -h (Ext)
+[32m[PASS][0m DF_03      Specific file
+[32m[PASS][0m DF_04      All -a (Ext)
+[32m[PASS][0m DF_05      Inodes -i
+[32m[PASS][0m DF_06      Portability -P
+[32m[PASS][0m DF_07      Block size -k
+[31m[FAIL][0m DF_08      Fail missing
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m DF_09      Type -T (Ext)
+[32m[PASS][0m DF_10      Consistency
+
+[35m>>> Testing Utility: mesg (mesg.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m MESG_01    Check state
+[32m[PASS][0m MESG_02    Set y
+[31m[FAIL][0m MESG_03    Set n
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m MESG_04    Verify n
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m MESG_05    Verify y
+[31m[FAIL][0m MESG_06    Fail invalid
+[31m       -> Exit Code: Expected 2, got 0[0m
+[31m[FAIL][0m MESG_07    Too many args
+[31m       -> Exit Code: Expected 2, got 0[0m
+[32m[PASS][0m MESG_08    Silent update
+[31m[FAIL][0m MESG_09    Verbose (stub)
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m MESG_10    Consistency
+
+[35m>>> Testing Utility: uudecode (uudecode.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m UUDECODE_01 Decode file
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Missing File: Expected /home/operator/f to be created.[0m
+[31m[FAIL][0m UUDECODE_02 Stdout -o
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m UUDECODE_03 Stdin
+[32m[PASS][0m UUDECODE_04 Fail missing
+[32m[PASS][0m UUDECODE_05 Fail strict
+[31m[FAIL][0m UUDECODE_06 Mode check
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m UUDECODE_07 Base64 -m (Ext)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m UUDECODE_08 Output flag (Ext)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m UUDECODE_09 Multiple inputs?
+[31m[FAIL][0m UUDECODE_10 Consistency
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: uuencode (uuencode.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m UUENCODE_01 Encode file
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /begin 644 f_remote/
+   Got: "uuencode: f: No such file"[0m
+[32m[PASS][0m UUENCODE_02 Stdin
+[31m[FAIL][0m UUENCODE_03 Base64 -m
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /begin-base64/
+   Got: "uuencode: missing operand"[0m
+[32m[PASS][0m UUENCODE_04 Fail missing
+[31m[FAIL][0m UUENCODE_05 Decode name
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /decode_name/
+   Got: "uuencode: f: No such file"[0m
+[31m[FAIL][0m UUENCODE_06 Mode preservation (Ext)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m UUENCODE_07 Too many args
+[32m[PASS][0m UUENCODE_08 Fail no args
+[31m[FAIL][0m UUENCODE_09 Empty file
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m UUENCODE_10 Consistency
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: compress (compress.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m COMPRESS_01 Compress file
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Missing File: Expected /home/operator/f.Z to be created.[0m
+[31m[FAIL][0m COMPRESS_02 Force -f
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m COMPRESS_03 Verbose -v
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m COMPRESS_04 Stdout -c
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Missing File: Expected /home/operator/out to be created.[0m
+[31m[FAIL][0m COMPRESS_05 Bits -b
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m COMPRESS_06 Fail missing
+[31m[FAIL][0m COMPRESS_07 Recursion -r (Ext)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m COMPRESS_08 Already .Z
+[31m[FAIL][0m COMPRESS_09 Multiple files
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m COMPRESS_10 Check magic (stub)
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: uncompress (uncompress.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m UNCOMPRESS_01 Uncompress file
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Missing File: Expected /home/operator/f to be created.[0m
+[31m[FAIL][0m UNCOMPRESS_02 Stdin -c
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m UNCOMPRESS_03 Fail not compressed
+[32m[PASS][0m UNCOMPRESS_04 Fail missing
+[31m[FAIL][0m UNCOMPRESS_05 Force -f (stub)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m UNCOMPRESS_06 Verbose -v
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m UNCOMPRESS_07 Implicit extension
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m UNCOMPRESS_08 Multiple files
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m UNCOMPRESS_09 Stdout
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m UNCOMPRESS_10 Consistency
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: zcat (zcat.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m ZCAT_01    Cat compressed
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /content/
+   Got: "zcat: f.Z: No such file or directory"[0m
+[31m[FAIL][0m ZCAT_02    Multiple
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m ZCAT_03    Fail missing
+[32m[PASS][0m ZCAT_04    Fail bad format
+[31m[FAIL][0m ZCAT_05    Stdin
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m ZCAT_06    Implicit .Z (stub)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m ZCAT_07    File preserved
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Missing File: Expected /home/operator/f.Z to be created.[0m
+[31m[FAIL][0m ZCAT_08    Non .Z files (Ext)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m ZCAT_09    Output check
+[31m[FAIL][0m ZCAT_10    Consistency
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: gzip (gzip.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m GZIP_01    Compress
+[31m       -> Missing File: Expected /home/operator/f.gz to be created.[0m
+[32m[PASS][0m GZIP_02    Decompress -d
+[32m[PASS][0m GZIP_03    Stdout -c
+[32m[PASS][0m GZIP_04    Fast -1
+[32m[PASS][0m GZIP_05    Best -9
+[32m[PASS][0m GZIP_06    Recursive -r
+[32m[PASS][0m GZIP_07    Test -t
+[31m[FAIL][0m GZIP_08    Keep -k
+[31m       -> Missing File: Expected /home/operator/f to be created.[0m
+[32m[PASS][0m GZIP_09    Force -f
+[31m[FAIL][0m GZIP_10    Suffix -S
+[31m       -> Missing File: Expected /home/operator/f.z to be created.[0m
+
+[35m>>> Testing Utility: gunzip (gzip.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m GUNZIP_01  Decompress
+[31m       -> Missing File: Expected /home/operator/f to be created.[0m
+[32m[PASS][0m GUNZIP_02  Stdout -c
+[32m[PASS][0m GUNZIP_03  Force -f
+[32m[PASS][0m GUNZIP_04  Test -t
+[31m[FAIL][0m GUNZIP_05  Fail bad magic
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m GUNZIP_06  Recursive -r
+[32m[PASS][0m GUNZIP_07  Multiple files
+[32m[PASS][0m GUNZIP_08  Suffix
+[31m[FAIL][0m GUNZIP_09  Fail missing
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m GUNZIP_10  List -l
+
+[35m>>> Testing Utility: tar (tar.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m TAR_01     Create -c
+[31m       -> Missing File: Expected /home/operator/a.tar to be created.[0m
+[32m[PASS][0m TAR_02     Extract -x
+[31m[FAIL][0m TAR_03     List -t
+[31m       -> Stdout Regex Mismatch.
+   Expected: /f/
+   Got: ""[0m
+[31m[FAIL][0m TAR_04     Verbose -v
+[31m       -> Stdout Regex Mismatch.
+   Expected: /f/
+   Got: ""[0m
+[32m[PASS][0m TAR_05     Directory
+[32m[PASS][0m TAR_06     Update -u
+[31m[FAIL][0m TAR_07     Fail missing
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m TAR_08     Gzip -z (Ext)
+[32m[PASS][0m TAR_09     Append -r
+[32m[PASS][0m TAR_10     Change dir -C
+
+[35m>>> Testing Utility: cpio (pax.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m CPIO_01    Out -o
+[31m       -> Missing File: Expected /home/operator/a.cpio to be created.[0m
+[32m[PASS][0m CPIO_02    In -i
+[32m[PASS][0m CPIO_03    Pass -p
+[32m[PASS][0m CPIO_04    Verbose -v
+[31m[FAIL][0m CPIO_05    List -t
+[31m       -> Stdout Regex Mismatch.
+   Expected: /./
+   Got: ""[0m
+[32m[PASS][0m CPIO_06    Format -H (Ext)
+[32m[PASS][0m CPIO_07    Make dir -d
+[32m[PASS][0m CPIO_08    Preserve time -m
+[32m[PASS][0m CPIO_09    Owner -R (Ext)
+[31m[FAIL][0m CPIO_10    Fail bad input
+[31m       -> Exit Code: Expected 1, got 0[0m
+
+[35m>>> Testing Utility: pax (pax.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m PAX_01     List (default)
+[31m       -> Stdout Regex Mismatch.
+   Expected: /f/
+   Got: ""[0m
+[31m[FAIL][0m PAX_02     Write -w
+[31m       -> Missing File: Expected /home/operator/a.pax to be created.[0m
+[32m[PASS][0m PAX_03     Read -r
+[32m[PASS][0m PAX_04     Copy -rw
+[32m[PASS][0m PAX_05     Format -x
+[32m[PASS][0m PAX_06     Specific file
+[31m[FAIL][0m PAX_07     Fail missing
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m PAX_08     Append -a
+[32m[PASS][0m PAX_09     Verbose -v
+[32m[PASS][0m PAX_10     Link -l (Ext)
+
+[35m>>> Testing Utility: dd (dd.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m DD_01      Copy file
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Missing File: Expected /home/operator/out to be created.[0m
+[31m[FAIL][0m DD_02      Block size bs
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m DD_03      Count
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m DD_04      Seek output
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m DD_05      Skip input
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m DD_06      Conv ucase (Ext)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m DD_07      Conv lcase (Ext)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m DD_08      Fail missing
+[31m[FAIL][0m DD_09      Stderr stats
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m DD_10      Stdin/Stdout
+
+[35m>>> Testing Utility: cal (cal.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m CAL_01     Current month
+[32m[PASS][0m CAL_02     Specific year
+[32m[PASS][0m CAL_03     Month Year
+[31m[FAIL][0m CAL_04     Fail bad month
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m CAL_05     Fail bad year
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m CAL_06     Three month -3 (Ext)
+[32m[PASS][0m CAL_07     Julian -j (Ext)
+[32m[PASS][0m CAL_08     Monday start -m (Ext)
+[32m[PASS][0m CAL_09     Consistency
+[32m[PASS][0m CAL_10     No args
+
+[35m>>> Testing Utility: link (link.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m LINK_01    Create link
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Missing File: Expected /home/operator/lnk to be created.[0m
+[31m[FAIL][0m LINK_02    Content check
+[31m       -> Stdout Regex Mismatch.
+   Expected: /x/
+   Got: "cat: lnk: No such file or directory"[0m
+[32m[PASS][0m LINK_03    Fail if target exists
+[32m[PASS][0m LINK_04    Fail missing source
+[32m[PASS][0m LINK_05    Directory link?
+[32m[PASS][0m LINK_06    Too many args
+[32m[PASS][0m LINK_07    Too few args
+[32m[PASS][0m LINK_08    Cross device (stub)
+[31m[FAIL][0m LINK_09    Verify count (stub)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m LINK_10    Unlink source
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /x/
+   Got: "link: missing operand"[0m
+
+[35m>>> Testing Utility: ln (ln.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m LN_01      Hard link
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Missing File: Expected /home/operator/glnk to be created.[0m
+[31m[FAIL][0m LN_02      Symbolic -s
+[31m       -> Missing File: Expected /home/operator/slnk to be created.[0m
+[31m[FAIL][0m LN_03      Force -f
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m LN_04      Dir target
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Missing File: Expected /home/operator/d/f to be created.[0m
+[32m[PASS][0m LN_05      Fail missing
+[32m[PASS][0m LN_06      No dereference (stub)
+[32m[PASS][0m LN_07      Link directory (fail)
+[32m[PASS][0m LN_08      Symlink dir
+[31m[FAIL][0m LN_09      Multiple inputs
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Missing File: Expected /home/operator/d/f1 to be created.[0m
+[31m       -> Missing File: Expected /home/operator/d/f2 to be created.[0m
+[31m[FAIL][0m LN_10      Interact -i
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: nl (nl.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m NL_01      Number lines
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /1.*a/
+   Got: "nl: f: No such file"[0m
+[31m[FAIL][0m NL_02      Increment -i
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /1.*a\s+3.*b/
+   Got: "nl: 2: No such file"[0m
+[31m[FAIL][0m NL_03      Separator -s
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /1 \) a/
+   Got: "nl:  ) : No such file"[0m
+[31m[FAIL][0m NL_04      Width -w
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m NL_05      Style -b a
+[32m[PASS][0m NL_06      Style -b t
+[31m[FAIL][0m NL_07      Format -n ln
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /^1   a/
+   Got: "nl: ln: No such file"[0m
+[32m[PASS][0m NL_08      Stdin
+[32m[PASS][0m NL_09      Fail missing
+[31m[FAIL][0m NL_10      Reset -p
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: pr (pr.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m PR_01      Paginate
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /x/
+   Got: "pr: f: No such file"[0m
+[31m[FAIL][0m PR_02      Columns -2
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m PR_03      Header -h
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /MyHeader/
+   Got: "pr: -h: No such file"[0m
+[31m[FAIL][0m PR_04      Double space -d
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m PR_05      Length -l
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m PR_06      No header -t
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /^x/
+   Got: "pr: -t: No such file"[0m
+[31m[FAIL][0m PR_07      Number -n
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /\d/
+   Got: "pr: -n: No such file"[0m
+[31m[FAIL][0m PR_08      Merge -m
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m PR_09      Separator -s
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m PR_10      Fail missing
+
+[35m>>> Testing Utility: tsort (tsort.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m TSORT_01   Sort dependency
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /a\nb\nc/
+   Got: "tsort: f: No such file"[0m
+[32m[PASS][0m TSORT_02   Stdin
+[31m[FAIL][0m TSORT_03   Cycle detect
+[31m       -> Stdout Regex Mismatch.
+   Expected: /cycle/
+   Got: "a\nb"[0m
+[32m[PASS][0m TSORT_04   Fail missing
+[31m[FAIL][0m TSORT_05   Empty
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /^$/
+   Got: "tsort: /dev/null: No such file"[0m
+[32m[PASS][0m TSORT_06   Single item
+[32m[PASS][0m TSORT_07   Disconnected
+[32m[PASS][0m TSORT_08   Too many args
+[31m[FAIL][0m TSORT_09   Consistency
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m TSORT_10   Large input
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: man (man.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m MAN_01     Show page
+[31m[FAIL][0m MAN_02     Fail missing
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m MAN_03     Section
+[31m[FAIL][0m MAN_04     Keyword -k
+[31m       -> Stdout Regex Mismatch.
+   Expected: /ls/
+   Got: "Man page for -k: [Simulated help content]"[0m
+[32m[PASS][0m MAN_05     Path -w (Ext)
+[32m[PASS][0m MAN_06     All -a
+[31m[FAIL][0m MAN_07     Fail section mismatch
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m MAN_08     Pager usage
+[32m[PASS][0m MAN_09     Case insensitive?
+[32m[PASS][0m MAN_10     No args
+
+[35m>>> Testing Utility: more (more.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m MORE_01    Show file
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /x/
+   Got: "more: f: No such file or directory\n"[0m
+[31m[FAIL][0m MORE_02    Lines -n
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m MORE_03    Fail missing
+[31m[FAIL][0m MORE_04    From line +n
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m MORE_05    Pattern +/
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m MORE_06    Squeeze -s
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m MORE_07    Clear -c
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m MORE_08    Stdin
+[31m[FAIL][0m MORE_09    Multiple files
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m MORE_10    Help -h
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: expand (expand.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m EXPAND_01  Expand tabs
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /        /
+   Got: "expand: f: No such file"[0m
+[31m[FAIL][0m EXPAND_02  Tab stops -t
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /  /
+   Got: "expand: f: No such file"[0m
+[31m[FAIL][0m EXPAND_03  Initial only -i
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m EXPAND_04  Stdin
+[32m[PASS][0m EXPAND_05  Fail missing
+[31m[FAIL][0m EXPAND_06  Multiple files
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m EXPAND_07  Empty file
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /^$/
+   Got: "expand: /dev/null: No such file"[0m
+[32m[PASS][0m EXPAND_08  No tabs
+[32m[PASS][0m EXPAND_09  Mixed content
+[31m[FAIL][0m EXPAND_10  Consistency
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: command (command.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m COMMAND_01 Run utility
+[31m[FAIL][0m COMMAND_02 Std path -p
+[31m       -> Exit Code: Expected 0, got 127[0m
+[32m[PASS][0m COMMAND_03 Verbose -v
+[32m[PASS][0m COMMAND_04 Verbose -V
+[32m[PASS][0m COMMAND_05 Fail missing
+[32m[PASS][0m COMMAND_06 Ignore func
+[32m[PASS][0m COMMAND_07 With args
+[32m[PASS][0m COMMAND_08 Exit code prop
+[32m[PASS][0m COMMAND_09 Special builtin
+[31m[FAIL][0m COMMAND_10 No args
+[31m       -> Exit Code: Expected 1, got 0[0m
+
+[35m>>> Testing Utility: fc (fc.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m FC_01      List -l
+[32m[PASS][0m FC_02      Number -n
+[32m[PASS][0m FC_03      Reverse -r
+[32m[PASS][0m FC_04      Edit (stub)
+[32m[PASS][0m FC_05      Execute -e -
+[32m[PASS][0m FC_06      Range
+[32m[PASS][0m FC_07      Old=New
+[31m[FAIL][0m FC_08      Fail missing
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m FC_09      Editor -e
+[32m[PASS][0m FC_10      Negative index
+
+[35m>>> Testing Utility: getopts (getopts.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m GETOPTS_01 Parse flag
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m GETOPTS_02 Missing arg
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m GETOPTS_03 End args
+[31m[FAIL][0m GETOPTS_04 Unknown flag
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m GETOPTS_05 OPTIND check
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m GETOPTS_06 Multiple flags
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m GETOPTS_07 Reset OPTIND
+[31m       -> Exit Code: Expected 0, got 127[0m
+[31m[FAIL][0m GETOPTS_08 Leading :
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m GETOPTS_09 Args override
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m GETOPTS_10 Fail syntax
+
+[35m>>> Testing Utility: hash (hash.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m HASH_01    Show hash
+[32m[PASS][0m HASH_02    Forget -r
+[32m[PASS][0m HASH_03    Add utility
+[31m[FAIL][0m HASH_04    Fail missing
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m HASH_05    Path info
+[32m[PASS][0m HASH_06    Multiple
+[32m[PASS][0m HASH_07    Type -t (Ext)
+[32m[PASS][0m HASH_08    Consistency
+[32m[PASS][0m HASH_09    Command exec
+[32m[PASS][0m HASH_10    Reset check
+
+[35m>>> Testing Utility: set (set.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m SET_01     Show vars
+[32m[PASS][0m SET_02     Set flag -x
+[32m[PASS][0m SET_03     Unset flag +x
+[32m[PASS][0m SET_04     Set args
+[32m[PASS][0m SET_05     Exit on err -e
+[32m[PASS][0m SET_06     No glob -f
+[32m[PASS][0m SET_07     Export -a
+[32m[PASS][0m SET_08     No clobber -C
+[31m[FAIL][0m SET_09     Verify arg
+[31m       -> Stdout Regex Mismatch.
+   Expected: /a/
+   Got: ""[0m
+[32m[PASS][0m SET_10     Unset args --
+
+[35m>>> Testing Utility: shift (shift.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m SHIFT_01   Shift 1
+[31m       -> Stdout Regex Mismatch.
+   Expected: /b/
+   Got: ""[0m
+[31m[FAIL][0m SHIFT_02   Shift N
+[31m       -> Stdout Regex Mismatch.
+   Expected: /c/
+   Got: ""[0m
+[31m[FAIL][0m SHIFT_03   Fail > count
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m SHIFT_04   Shift 0
+[31m       -> Stdout Regex Mismatch.
+   Expected: /a/
+   Got: ""[0m
+[31m[FAIL][0m SHIFT_05   Too many args
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m SHIFT_06   No args set
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m SHIFT_07   All args
+[32m[PASS][0m SHIFT_08   Consistency
+[32m[PASS][0m SHIFT_09   Loop usage
+[31m[FAIL][0m SHIFT_10   Invalid arg
+[31m       -> Exit Code: Expected 1, got 0[0m
+
+[35m>>> Testing Utility: times (times.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m TIMES_01   Print stats
+[32m[PASS][0m TIMES_02   Format
+[31m[FAIL][0m TIMES_03   Accumulation
+[31m       -> Exit Code: Expected 0, got 127[0m
+[32m[PASS][0m TIMES_04   Args ignored?
+[31m[FAIL][0m TIMES_05   Subshell times
+[31m       -> Exit Code: Expected 0, got 127[0m
+[32m[PASS][0m TIMES_06   Fail pipeline?
+[32m[PASS][0m TIMES_07   Consistency
+[32m[PASS][0m TIMES_08   No errors
+[32m[PASS][0m TIMES_09   User time
+[32m[PASS][0m TIMES_10   Sys time
+
+[35m>>> Testing Utility: trap (trap.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m TRAP_01    List traps
+[32m[PASS][0m TRAP_02    Set trap
+[32m[PASS][0m TRAP_03    Reset trap -
+[32m[PASS][0m TRAP_04    Ignore trap ""
+[32m[PASS][0m TRAP_05    Signal number
+[32m[PASS][0m TRAP_06    EXIT trap
+[31m[FAIL][0m TRAP_07    Invalid signal
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m TRAP_08    Multiple sigs
+[31m[FAIL][0m TRAP_09    Print specific
+[31m       -> Stdout Regex Mismatch.
+   Expected: /trap -- 'echo x' INT/
+   Got: ""[0m
+[32m[PASS][0m TRAP_10    Fail syntax
+
+[35m>>> Testing Utility: type (type.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m TYPE_01    Identify alias
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m TYPE_02    Identify function
+[31m       -> Exit Code: Expected 0, got 127[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /function/
+   Got: "sh: command not found: f()"[0m
+[31m[FAIL][0m TYPE_03    Identify builtin
+[31m       -> Stdout Regex Mismatch.
+   Expected: /builtin/
+   Got: "echo is a command"[0m
+[32m[PASS][0m TYPE_04    Identify file
+[31m[FAIL][0m TYPE_05    Identify word
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /keyword|reserved/
+   Got: "type: if: not found"[0m
+[32m[PASS][0m TYPE_06    Fail missing
+[32m[PASS][0m TYPE_07    Multiple
+[31m[FAIL][0m TYPE_08    All locations -a (Ext)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m TYPE_09    Path -p (Ext)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m TYPE_10    No args
+[31m       -> Exit Code: Expected 1, got 0[0m
+
+[35m>>> Testing Utility: ulimit (ulimit.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m ULIMIT_01  Show all -a
+[32m[PASS][0m ULIMIT_02  File size -f
+[32m[PASS][0m ULIMIT_03  Set size
+[32m[PASS][0m ULIMIT_04  Unlimited
+[32m[PASS][0m ULIMIT_05  Hard limit -H
+[32m[PASS][0m ULIMIT_06  Soft limit -S
+[32m[PASS][0m ULIMIT_07  Core size -c
+[31m[FAIL][0m ULIMIT_08  Fail invalid flag
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m ULIMIT_09  Fail invalid val
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m ULIMIT_10  Report default
+
+[35m>>> Testing Utility: umask (umask.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m UMASK_01   Show mask
+[32m[PASS][0m UMASK_02   Set octal
+[32m[PASS][0m UMASK_03   Set symbolic
+[31m[FAIL][0m UMASK_04   Symbolic output -S
+[31m       -> Stdout Regex Mismatch.
+   Expected: /u=.*,g=.*,o=.*/
+   Got: ""[0m
+[31m[FAIL][0m UMASK_05   Fail invalid
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m UMASK_06   Verify effect
+[31m       -> Stdout Regex Mismatch.
+   Expected: /000/
+   Got: ""[0m
+[31m[FAIL][0m UMASK_07   Verify effect 2
+[31m       -> Stdout Regex Mismatch.
+   Expected: /777/
+   Got: ""[0m
+[31m[FAIL][0m UMASK_08   Too many args
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m UMASK_09   Consistency
+[32m[PASS][0m UMASK_10   Leading zero
+
+[35m>>> Testing Utility: unset (unset.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m UNSET_01   Unset var
+[31m       -> Exit Code: Expected 0, got 127[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /^$/
+   Got: "sh: command not found: a=1;"[0m
+[31m[FAIL][0m UNSET_02   Unset func -f
+[31m       -> Exit Code: Expected 1, got 127[0m
+[31m[FAIL][0m UNSET_03   Unset var -v
+[31m       -> Exit Code: Expected 0, got 127[0m
+[32m[PASS][0m UNSET_04   Fail missing?
+[31m[FAIL][0m UNSET_05   Unset readonly
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m UNSET_06   Multiple
+[31m       -> Exit Code: Expected 0, got 127[0m
+[31m[FAIL][0m UNSET_07   Function precedence
+[31m       -> Stdout Regex Mismatch.
+   Expected: /^$/
+   Got: "sh: command not found: f()"[0m
+[31m[FAIL][0m UNSET_08   No args
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m UNSET_09   Unset array (Ext)
+[31m       -> Exit Code: Expected 0, got 127[0m
+[32m[PASS][0m UNSET_10   Consistency
+
+[35m>>> Testing Utility: export (export.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m EXPORT_01  Export var
+[31m       -> Exit Code: Expected 0, got 127[0m
+[31m[FAIL][0m EXPORT_02  Assign export
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m EXPORT_03  Show exports -p
+[32m[PASS][0m EXPORT_04  Unexport -n (Ext)
+[31m[FAIL][0m EXPORT_05  Function -f (Ext)
+[31m       -> Exit Code: Expected 0, got 127[0m
+[31m[FAIL][0m EXPORT_06  Fail syntax
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m EXPORT_07  Multiple
+[32m[PASS][0m EXPORT_08  No args
+[31m[FAIL][0m EXPORT_09  Verify child
+[31m       -> Stdout Regex Mismatch.
+   Expected: /1/
+   Got: ""[0m
+[32m[PASS][0m EXPORT_10  Consistency
+
+[35m>>> Testing Utility: eval (eval.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m EVAL_01    Run args
+[31m[FAIL][0m EVAL_02    Var expansion
+[31m       -> Exit Code: Expected 0, got 127[0m
+[32m[PASS][0m EVAL_03    Complex cmd
+[31m[FAIL][0m EVAL_04    Fail syntax
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m EVAL_05    Exit code
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m EVAL_06    No args
+[32m[PASS][0m EVAL_07    Concat args
+[31m[FAIL][0m EVAL_08    Redirects
+[31m       -> Missing File: Expected /home/operator/out to be created.[0m
+[32m[PASS][0m EVAL_09    Consistency
+[32m[PASS][0m EVAL_10    Env effect
+
+[35m>>> Testing Utility: exec (exec.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m EXEC_01    Run command
+[31m       -> Stdout Regex Mismatch.
+   Expected: /x/
+   Got: ""[0m
+[31m[FAIL][0m EXEC_02    Redirect only
+[31m       -> Missing File: Expected /home/operator/out to be created.[0m
+[31m[FAIL][0m EXEC_03    Fail missing
+[31m       -> Exit Code: Expected 127, got 0[0m
+[32m[PASS][0m EXEC_04    With env
+[32m[PASS][0m EXEC_05    Clean env -c (Ext)
+[32m[PASS][0m EXEC_06    Close fd
+[32m[PASS][0m EXEC_07    Open fd
+[31m[FAIL][0m EXEC_08    Fail dir
+[31m       -> Exit Code: Expected 126, got 0[0m
+[32m[PASS][0m EXEC_09    No args
+[32m[PASS][0m EXEC_10    Consistency
+
+[35m>>> Testing Utility: ps (ps.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m PS_01      List processes
+[31m[FAIL][0m PS_02      Full format -f
+[31m       -> Stdout Regex Mismatch.
+   Expected: /UID.*PID/
+   Got: "  PID TTY          TIME CMD\n 1000 pts/0    00:00:00 sh"[0m
+[32m[PASS][0m PS_03      Long format -l
+[32m[PASS][0m PS_04      All processes -A
+[32m[PASS][0m PS_05      User -u
+[32m[PASS][0m PS_06      PID selection -p
+[32m[PASS][0m PS_07      TTY selection -t
+[31m[FAIL][0m PS_08      Output specific -o
+[31m       -> Stdout Regex Mismatch.
+   Expected: /PID.*COMMAND/
+   Got: "  PID TTY          TIME CMD\n 1000 pts/0    00:00:00 sh"[0m
+[32m[PASS][0m PS_09      Consistency
+[31m[FAIL][0m PS_10      Fail invalid
+[31m       -> Exit Code: Expected 1, got 0[0m
+
+[35m>>> Testing Utility: nice (nice.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m NICE_01    Run with nice
+[32m[PASS][0m NICE_02    Set increment -n
+[32m[PASS][0m NICE_03    Report nice
+[31m[FAIL][0m NICE_04    Fail syntax
+[31m       -> Exit Code: Expected 1, got 127[0m
+[32m[PASS][0m NICE_05    Command fail
+[31m[FAIL][0m NICE_06    Negative (root)
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m NICE_07    Complex cmd
+[32m[PASS][0m NICE_08    No args
+[32m[PASS][0m NICE_09    Inc 10
+[32m[PASS][0m NICE_10    Consistency
+
+[35m>>> Testing Utility: renice (renice.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m RENICE_01  Renice pid
+[32m[PASS][0m RENICE_02  Renice user -u
+[32m[PASS][0m RENICE_03  Renice group -g
+[32m[PASS][0m RENICE_04  Increment -n (Ext)
+[31m[FAIL][0m RENICE_05  Fail missing
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m RENICE_06  Fail syntax
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m RENICE_07  Multiple pids
+[31m[FAIL][0m RENICE_08  Negative (root)
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m RENICE_09  Output?
+[32m[PASS][0m RENICE_10  Consistency
+
+[35m>>> Testing Utility: nohup (nohup.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m NOHUP_01   Run command
+[31m[FAIL][0m NOHUP_02   Redirected
+[31m       -> Missing File: Expected /home/operator/out to be created.[0m
+[32m[PASS][0m NOHUP_03   Exit code
+[32m[PASS][0m NOHUP_04   Fail missing
+[32m[PASS][0m NOHUP_05   Pipeline
+[32m[PASS][0m NOHUP_06   Background
+[32m[PASS][0m NOHUP_07   Check signals (stub)
+[31m[FAIL][0m NOHUP_08   Fail no args
+[31m       -> Exit Code: Expected 127, got 1[0m
+[32m[PASS][0m NOHUP_09   Write permission (stub)
+[32m[PASS][0m NOHUP_10   Consistency
+
+[35m>>> Testing Utility: logger (logger.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m LOGGER_01  Log message
+[32m[PASS][0m LOGGER_02  Tag -t
+[32m[PASS][0m LOGGER_03  Pid -i (Ext)
+[32m[PASS][0m LOGGER_04  Stderr -s (Ext)
+[32m[PASS][0m LOGGER_05  File -f (Ext)
+[32m[PASS][0m LOGGER_06  Priority -p (Ext)
+[32m[PASS][0m LOGGER_07  No args (stdin)
+[31m[FAIL][0m LOGGER_08  Fail args
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m LOGGER_09  Consistency
+[32m[PASS][0m LOGGER_10  Multiple args
+
+[35m>>> Testing Utility: tput (tput.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m TPUT_01    Clear screen
+[31m[FAIL][0m TPUT_02    Cols
+[31m       -> Stdout Regex Mismatch.
+   Expected: /\d+/
+   Got: ""[0m
+[31m[FAIL][0m TPUT_03    Lines
+[31m       -> Stdout Regex Mismatch.
+   Expected: /\d+/
+   Got: ""[0m
+[32m[PASS][0m TPUT_04    Cup
+[32m[PASS][0m TPUT_05    Bold
+[32m[PASS][0m TPUT_06    Sgr0 (reset)
+[31m[FAIL][0m TPUT_07    Fail cap
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m TPUT_08    Home
+[32m[PASS][0m TPUT_09    Consistency
+[31m[FAIL][0m TPUT_10    No args
+[31m       -> Exit Code: Expected 1, got 0[0m
+
+[35m>>> Testing Utility: tty (tty.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m TTY_01     Print name
+[32m[PASS][0m TTY_02     Silent -s
+[31m[FAIL][0m TTY_03     Fail not tty
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /not a tty/
+   Got: "/dev/tty1"[0m
+[32m[PASS][0m TTY_04     Fail args
+[32m[PASS][0m TTY_05     Consistency
+[32m[PASS][0m TTY_06     Redirected stdout
+[31m[FAIL][0m TTY_07     Redirected stdin
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m TTY_08     Silent fail
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /^$/
+   Got: "/dev/tty1"[0m
+[31m[FAIL][0m TTY_09     Output format
+[31m       -> Stdout Regex Mismatch.
+   Expected: /\n$/
+   Got: "/dev/tty1"[0m
+[32m[PASS][0m TTY_10     Arg ignored
+
+[35m>>> Testing Utility: stty (stty.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m STTY_01    Show settings
+[32m[PASS][0m STTY_02    All -a
+[32m[PASS][0m STTY_03    Saved -g
+[32m[PASS][0m STTY_04    Set echo
+[32m[PASS][0m STTY_05    Unset echo
+[32m[PASS][0m STTY_06    Set cols
+[32m[PASS][0m STTY_07    Set rows
+[31m[FAIL][0m STTY_08    Fail invalid
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m STTY_09    Not tty
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m STTY_10    Consistency
+
+[35m>>> Testing Utility: tabs (tabs.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m TABS_01    Set defaults
+[32m[PASS][0m TABS_02    Set interval -n
+[32m[PASS][0m TABS_03    List -a,c,etc
+[32m[PASS][0m TABS_04    Explicit list
+[32m[PASS][0m TABS_05    File spec +f
+[31m[FAIL][0m TABS_06    Fail invalid
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m TABS_07    Window TTY?
+[32m[PASS][0m TABS_08    No args
+[32m[PASS][0m TABS_09    Consistency
+[32m[PASS][0m TABS_10    Reset
+
+[35m>>> Testing Utility: who (who.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m WHO_01     List users
+[31m[FAIL][0m WHO_02     Headers -H
+[31m       -> Stdout Regex Mismatch.
+   Expected: /NAME/
+   Got: "operator  tty1  1/20/2026"[0m
+[32m[PASS][0m WHO_03     Quick -q
+[32m[PASS][0m WHO_04     Am I -m
+[31m[FAIL][0m WHO_05     Message status -T
+[31m       -> Stdout Regex Mismatch.
+   Expected: /[+\-?]/
+   Got: "operator  tty1  1/20/2026"[0m
+[32m[PASS][0m WHO_06     Idle time -u
+[32m[PASS][0m WHO_07     Boot time -b
+[32m[PASS][0m WHO_08     Run level -r
+[31m[FAIL][0m WHO_09     Fail args
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m WHO_10     File arg
+
+[35m>>> Testing Utility: write (write.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m WRITE_01   Message user
+[31m[FAIL][0m WRITE_02   Fail missing user
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m WRITE_03   Specify TTY
+[31m[FAIL][0m WRITE_04   Fail not logged in
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m WRITE_05   Interactive (stub)
+[31m[FAIL][0m WRITE_06   Perm check (mesg n)
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m WRITE_07   Empty msg
+[32m[PASS][0m WRITE_08   No args
+[32m[PASS][0m WRITE_09   Consistency
+[32m[PASS][0m WRITE_10   Banner check
+
+[35m>>> Testing Utility: talk (talk.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m TALK_01    Initiate talk
+[31m[FAIL][0m TALK_02    Fail missing
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m TALK_03    TTY arg
+[32m[PASS][0m TALK_04    No args
+[31m[FAIL][0m TALK_05    Fail offline
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m TALK_06    Interact input
+[32m[PASS][0m TALK_07    Visual mode?
+[32m[PASS][0m TALK_08    Consistency
+[31m[FAIL][0m TALK_09    Refuse mesg n
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m TALK_10    Self talk
+
+[35m>>> Testing Utility: at (at.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m AT_01      Schedule job
+[32m[PASS][0m AT_02      List jobs -l
+[32m[PASS][0m AT_03      Remove job -r
+[32m[PASS][0m AT_04      File input -f
+[32m[PASS][0m AT_05      Queue -q
+[32m[PASS][0m AT_06      Mail -m
+[31m[FAIL][0m AT_07      Fail time
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m AT_08      Fail no args
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m AT_09      Output to stderr
+[32m[PASS][0m AT_10      Consistency
+
+[35m>>> Testing Utility: batch (batch.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m BATCH_01   Schedule batch
+[32m[PASS][0m BATCH_02   No args
+[31m[FAIL][0m BATCH_03   Fail syntax
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m BATCH_04   Job list?
+[32m[PASS][0m BATCH_05   File input (Ext)
+[32m[PASS][0m BATCH_06   Quiet -q?
+[32m[PASS][0m BATCH_07   Output msg
+[31m[FAIL][0m BATCH_08   Fail missing file
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m BATCH_09   Consistency
+[32m[PASS][0m BATCH_10   Mail -m
+
+[35m>>> Testing Utility: crontab (crontab.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m CRONTAB_01 List -l
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m CRONTAB_02 Remove -r
+[32m[PASS][0m CRONTAB_03 Edit -e
+[32m[PASS][0m CRONTAB_04 Load file
+[31m[FAIL][0m CRONTAB_05 Fail missing
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m CRONTAB_06 Stdin
+[31m[FAIL][0m CRONTAB_07 Fail invalid line
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m CRONTAB_08 No args
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m CRONTAB_09 Consistency
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m CRONTAB_10 Fail no user
+
+[35m>>> Testing Utility: vi (vi.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m VI_01      Open file
+[32m[PASS][0m VI_02      Read only -R
+[32m[PASS][0m VI_03      Command -c
+[32m[PASS][0m VI_04      Tag -t
+[32m[PASS][0m VI_05      Recover -r
+[32m[PASS][0m VI_06      Fail missing
+[32m[PASS][0m VI_07      Ex mode (stub)
+[32m[PASS][0m VI_08      Window size -w (Ext)
+[32m[PASS][0m VI_09      Consistency
+[32m[PASS][0m VI_10      Visual mode
+
+[35m>>> Testing Utility: ed (ed.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m ED_01      Edit file
+[32m[PASS][0m ED_02      Prompt -p
+[32m[PASS][0m ED_03      Suppress -s
+[32m[PASS][0m ED_04      Fail syntax
+[32m[PASS][0m ED_05      Append text
+[32m[PASS][0m ED_06      Fail missing
+[32m[PASS][0m ED_07      No args
+[32m[PASS][0m ED_08      Exit status
+[32m[PASS][0m ED_09      Consistency
+[32m[PASS][0m ED_10      Big file (stub)
+
+[35m>>> Testing Utility: ex (ex.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m EX_01      Edit file
+[32m[PASS][0m EX_02      Read only -R
+[32m[PASS][0m EX_03      Silent -s
+[32m[PASS][0m EX_04      Visual -v
+[32m[PASS][0m EX_05      Prompt
+[32m[PASS][0m EX_06      Tag -t
+[32m[PASS][0m EX_07      Command -c
+[32m[PASS][0m EX_08      Recover -r
+[32m[PASS][0m EX_09      Consistency
+[31m[FAIL][0m EX_10      Fail bad cmd
+[31m       -> Exit Code: Expected 1, got 0[0m
+
+[35m>>> Testing Utility: bc (bc.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m BC_01      Calc
+[32m[PASS][0m BC_02      Library -l
+[32m[PASS][0m BC_03      Quiet -q (Ext)
+[31m[FAIL][0m BC_04      File input
+[31m       -> Stdout Regex Mismatch.
+   Expected: /4/
+   Got: ""[0m
+[32m[PASS][0m BC_05      Interactive
+[32m[PASS][0m BC_06      Assign
+[32m[PASS][0m BC_07      Fail syntax
+[32m[PASS][0m BC_08      Standard (stub)
+[32m[PASS][0m BC_09      Consistency
+[32m[PASS][0m BC_10      Quit
+
+[35m>>> Testing Utility: lp (lp.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m LP_01      Print file
+[32m[PASS][0m LP_02      Copies -n
+[32m[PASS][0m LP_03      Dest -d
+[32m[PASS][0m LP_04      Suppress -s
+[32m[PASS][0m LP_05      Title -t
+[31m[FAIL][0m LP_06      Fail missing
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m LP_07      Stdin
+[32m[PASS][0m LP_08      Priority -q (Ext)
+[32m[PASS][0m LP_09      Consistency
+[32m[PASS][0m LP_10      No args
+
+[35m>>> Testing Utility: mailx (mailx.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m MAILX_01   Send mail
+[32m[PASS][0m MAILX_02   Read mail (stub)
+[32m[PASS][0m MAILX_03   Subject -s
+[32m[PASS][0m MAILX_04   CC -c (Ext)
+[31m[FAIL][0m MAILX_05   Fail no user
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m MAILX_06   Fail missing body
+[32m[PASS][0m MAILX_07   Check inbox -H (Ext)
+[32m[PASS][0m MAILX_08   User arg
+[32m[PASS][0m MAILX_09   Consistency
+[32m[PASS][0m MAILX_10   Command exec
+
+[35m>>> Testing Utility: m4 (m4.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m M4_01      Process file
+[31m       -> Stdout Regex Mismatch.
+   Expected: /B/
+   Got: ""[0m
+[31m[FAIL][0m M4_02      Define -D
+[31m       -> Stdout Regex Mismatch.
+   Expected: /B/
+   Got: ""[0m
+[32m[PASS][0m M4_03      Undefine -U
+[31m[FAIL][0m M4_04      Fail missing
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m M4_05      Stdin
+[31m       -> Stdout Regex Mismatch.
+   Expected: /Y/
+   Got: ""[0m
+[32m[PASS][0m M4_06      Silent -s
+[32m[PASS][0m M4_07      Args
+[31m[FAIL][0m M4_08      Fatal error
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m M4_09      Consistency
+[32m[PASS][0m M4_10      Version
+
+[35m>>> Testing Utility: lex (lex.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m LEX_01     Gen C
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Missing File: Expected /home/operator/lex.yy.c to be created.[0m
+[31m[FAIL][0m LEX_02     Output -t
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /int/
+   Got: "lex: l: No such file or directory"[0m
+[31m[FAIL][0m LEX_03     Verbose -v
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m LEX_04     Fail missing
+[32m[PASS][0m LEX_05     No args
+[31m[FAIL][0m LEX_06     Compile check (stub)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m LEX_07     Fail syntax
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m LEX_08     Legacy -l?
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m LEX_09     Consistency
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m LEX_10     Simple
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: yacc (yacc.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m YACC_01    Gen C
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Missing File: Expected /home/operator/y.tab.c to be created.[0m
+[31m[FAIL][0m YACC_02    Output -d
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Missing File: Expected /home/operator/y.tab.h to be created.[0m
+[31m[FAIL][0m YACC_03    Prefix -b
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Missing File: Expected /home/operator/p.tab.c to be created.[0m
+[32m[PASS][0m YACC_04    Fail missing
+[31m[FAIL][0m YACC_05    Graph -g (Ext)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m YACC_06    Verbose -v
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m YACC_07    No args
+[31m[FAIL][0m YACC_08    Fail syntax
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m YACC_09    Consistency
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m YACC_10    Simple
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: nm (nm.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m NM_01      List symbols
+[32m[PASS][0m NM_02      External -g
+[32m[PASS][0m NM_03      Undefined -u
+[31m[FAIL][0m NM_04      Fail missing
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m NM_05      No sorting -p
+[32m[PASS][0m NM_06      Posix fmt -P
+[31m[FAIL][0m NM_07      Fail text file
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m NM_08      No args
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m NM_09      Consistency
+[32m[PASS][0m NM_10      Size -S
+
+[35m>>> Testing Utility: strip (strip.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m STRIP_01   Strip binary
+[31m[FAIL][0m STRIP_02   Fail missing
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m STRIP_03   Fail text
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m STRIP_04   Output -o (Ext)
+[32m[PASS][0m STRIP_05   No args
+[32m[PASS][0m STRIP_06   Check effect
+[32m[PASS][0m STRIP_07   Multiple
+[32m[PASS][0m STRIP_08   Fail perms
+[32m[PASS][0m STRIP_09   Consistency
+[32m[PASS][0m STRIP_10   Clean
+
+[35m>>> Testing Utility: ctags (ctags.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m CTAGS_01   Gen tags
+[31m       -> Missing File: Expected /home/operator/tags to be created.[0m
+[32m[PASS][0m CTAGS_02   Append -a
+[31m[FAIL][0m CTAGS_03   Output -f
+[31m       -> Missing File: Expected /home/operator/mytags to be created.[0m
+[31m[FAIL][0m CTAGS_04   Fail missing
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m CTAGS_05   No args
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m CTAGS_06   C typedef -t
+[32m[PASS][0m CTAGS_07   Variables -v (Ext)
+[32m[PASS][0m CTAGS_08   Search pattern -x
+[32m[PASS][0m CTAGS_09   Consistency
+[32m[PASS][0m CTAGS_10   Recursion -R (Ext)
+
+[35m>>> Testing Utility: asa (asa.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m ASA_01     Fortran fmt
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m ASA_02     Stdin
+[32m[PASS][0m ASA_03     Fail missing
+[32m[PASS][0m ASA_04     No args
+[31m[FAIL][0m ASA_05     Page eject
+[31m       -> Stdout Regex Mismatch.
+   Expected: /\f/
+   Got: "NewPage"[0m
+[31m[FAIL][0m ASA_06     Double space
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m ASA_07     Overprint
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m ASA_08     Fail format
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m ASA_09     Consistency
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m ASA_10     Multiple
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: chgrp (chgrp.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m CHGRP_01   Change group
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m CHGRP_02   Recursive -R
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m CHGRP_03   Dereference -H (stub)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m CHGRP_04   Dereference -L (stub)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m CHGRP_05   No deref -P (stub)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m CHGRP_06   Fail missing
+[32m[PASS][0m CHGRP_07   Fail invalid group
+[31m[FAIL][0m CHGRP_08   Numeric group
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m CHGRP_09   Consistency
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m CHGRP_10   Multiple files
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: chown (chown.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m CHOWN_01   Change owner
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m CHOWN_02   Owner:Group
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m CHOWN_03   Recursive -R
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m CHOWN_04   Fail missing
+[32m[PASS][0m CHOWN_05   Fail invalid user
+[31m[FAIL][0m CHOWN_06   Symlink -h
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m CHOWN_07   Numeric
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m CHOWN_08   Preserve root (stub)
+[31m[FAIL][0m CHOWN_09   Consistency
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m CHOWN_10   Multiple
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: rmdir (rmdir.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m RMDIR_01   Remove dir
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m RMDIR_02   Fail non-empty
+[31m[ERR ][0m RMDIR_03 SETUP FAILED: Error: Cannot create 'p/c': Parent directory not found
+[32m[PASS][0m RMDIR_04   Fail missing
+[32m[PASS][0m RMDIR_05   Fail not dir
+[31m[FAIL][0m RMDIR_06   Multiple
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m RMDIR_07   Fail root
+[32m[PASS][0m RMDIR_08   Fail cwd
+[31m[FAIL][0m RMDIR_09   Consistency
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m RMDIR_10   Silent ignore?
+
+[35m>>> Testing Utility: mkfifo (mkfifo.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m MKFIFO_01  Create fifo
+[32m[PASS][0m MKFIFO_02  Mode -m
+[31m[FAIL][0m MKFIFO_03  Fail exists
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m MKFIFO_04  Multiple
+[32m[PASS][0m MKFIFO_05  Fail missing parent
+[32m[PASS][0m MKFIFO_06  Fail no args
+[32m[PASS][0m MKFIFO_07  Consistency
+[31m[FAIL][0m MKFIFO_08  Verify type (stub)
+[31m       -> Stdout Regex Mismatch.
+   Expected: /^p/
+   Got: "mkfifo: invalid option -- '-l'"[0m
+[32m[PASS][0m MKFIFO_09  Permissions check
+[32m[PASS][0m MKFIFO_10  Fail invalid mode
+
+[35m>>> Testing Utility: unlink (unlink.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m UNLINK_01  Unlink file
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m UNLINK_02  Fail missing
+[32m[PASS][0m UNLINK_03  Fail dir
+[32m[PASS][0m UNLINK_04  Fail no args
+[32m[PASS][0m UNLINK_05  Fail mult args
+[31m[FAIL][0m UNLINK_06  Consistency
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m UNLINK_07  Verify gone
+[32m[PASS][0m UNLINK_08  Symlink
+[32m[PASS][0m UNLINK_09  Fail permission
+[32m[PASS][0m UNLINK_10  Root directory
+
+[35m>>> Testing Utility: patch (patch.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m PATCH_01   Apply patch
+[32m[PASS][0m PATCH_02   Stdin
+[32m[PASS][0m PATCH_03   Reverse -R
+[32m[PASS][0m PATCH_04   Backup -b
+[32m[PASS][0m PATCH_05   Dry run -C (Ext)
+[31m[FAIL][0m PATCH_06   Fail missing
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m PATCH_07   Fail corrupt
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m PATCH_08   Strip -p
+[32m[PASS][0m PATCH_09   Output -o
+[32m[PASS][0m PATCH_10   Consistency
+
+[35m>>> Testing Utility: readlink (readlink.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m READLINK_01 Show target
+[31m       -> Stdout Regex Mismatch.
+   Expected: /f/
+   Got: ""[0m
+[31m[FAIL][0m READLINK_02 Canonical -f
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /\/home\/operator\/f/
+   Got: "readlink: l: Invalid argument"[0m
+[32m[PASS][0m READLINK_03 Fail not link
+[32m[PASS][0m READLINK_04 Fail missing
+[31m[FAIL][0m READLINK_05 Silent -q
+[31m       -> Stdout Regex Mismatch.
+   Expected: /^$/
+   Got: "readlink: missing: Invalid argument"[0m
+[31m[FAIL][0m READLINK_06 No newline -n
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m READLINK_07 Multiple (fail?)
+[31m[FAIL][0m READLINK_08 Verbose -v
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m READLINK_09 Consistency
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m READLINK_10 Symlink to dir
+[31m       -> Stdout Regex Mismatch.
+   Expected: /d/
+   Got: ""[0m
+
+[35m>>> Testing Utility: realpath (realpath.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m REALPATH_01 Resolve path
+[31m[FAIL][0m REALPATH_02 Resolve symlink
+[31m       -> Stdout Regex Mismatch.
+   Expected: /\/f/
+   Got: ""[0m
+[32m[PASS][0m REALPATH_03 Fail missing (default)
+[31m[FAIL][0m REALPATH_04 Ignore missing -m
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m REALPATH_05 Relative to --relative-to
+[32m[PASS][0m REALPATH_06 Fail no args
+[32m[PASS][0m REALPATH_07 Physical -P
+[32m[PASS][0m REALPATH_08 Logical -L
+[32m[PASS][0m REALPATH_09 Consistency
+[32m[PASS][0m REALPATH_10 Multiple
+
+[35m>>> Testing Utility: timeout (timeout.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m TIMEOUT_01 Run command
+[32m[PASS][0m TIMEOUT_02 Kill after time
+[31m[FAIL][0m TIMEOUT_03 Signal -s
+[31m       -> Exit Code: Expected 124, got 125[0m
+[32m[PASS][0m TIMEOUT_04 Preserve status
+[32m[PASS][0m TIMEOUT_05 Fail missing
+[31m[FAIL][0m TIMEOUT_06 Kill after -k
+[31m       -> Exit Code: Expected 124, got 125[0m
+[32m[PASS][0m TIMEOUT_07 No args
+[31m[FAIL][0m TIMEOUT_08 Foreground --foreground
+[31m       -> Exit Code: Expected 0, got 125[0m
+[32m[PASS][0m TIMEOUT_09 Consistency
+[32m[PASS][0m TIMEOUT_10 Zero duration
+
+[35m>>> Testing Utility: break (break.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m BREAK_01   Break loop
+[31m       -> Exit Code: Expected 0, got 127[0m
+[32m[PASS][0m BREAK_02   Depth
+[31m[FAIL][0m BREAK_03   Fail arg
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m BREAK_04   No args
+[32m[PASS][0m BREAK_05   Outside loop
+[32m[PASS][0m BREAK_06   Exit code
+[32m[PASS][0m BREAK_07   Consistency
+[31m[FAIL][0m BREAK_08   Too many args
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m BREAK_09   Zero depth
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m BREAK_10   Simple
+
+[35m>>> Testing Utility: continue (continue.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m CONTINUE_01 Cont loop
+[31m       -> Exit Code: Expected 0, got 127[0m
+[32m[PASS][0m CONTINUE_02 Depth
+[31m[FAIL][0m CONTINUE_03 Fail arg
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m CONTINUE_04 No args
+[32m[PASS][0m CONTINUE_05 Outside loop
+[32m[PASS][0m CONTINUE_06 Exit code
+[32m[PASS][0m CONTINUE_07 Consistency
+[31m[FAIL][0m CONTINUE_08 Zero
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m CONTINUE_09 Too many
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m CONTINUE_10 Simple
+
+[35m>>> Testing Utility: colon (colon.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m COLON_01   No op
+[32m[PASS][0m COLON_02   With args
+[32m[PASS][0m COLON_03   Exit 0
+[32m[PASS][0m COLON_04   Expansion
+[31m[FAIL][0m COLON_05   Redir
+[31m       -> Missing File: Expected /home/operator/f to be created.[0m
+[32m[PASS][0m COLON_06   Pipe input
+[32m[PASS][0m COLON_07   Consistency
+[32m[PASS][0m COLON_08   Arg parsing?
+[32m[PASS][0m COLON_09   Long args
+[32m[PASS][0m COLON_10   Simple
+
+[35m>>> Testing Utility: dot (dot.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m DOT_01     Source file
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /x/
+   Got: ".: s: No such file or directory"[0m
+[31m[FAIL][0m DOT_02     Path lookup
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m DOT_03     Vars
+[31m       -> Stdout Regex Mismatch.
+   Expected: /1/
+   Got: ".: s;: No such file or directory"[0m
+[32m[PASS][0m DOT_04     Fail missing
+[31m[FAIL][0m DOT_05     Exit effect
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m DOT_06     Args
+[31m       -> Stdout Regex Mismatch.
+   Expected: /arg/
+   Got: ".: s: No such file or directory"[0m
+[32m[PASS][0m DOT_07     Fail not readable
+[32m[PASS][0m DOT_08     No args
+[31m[FAIL][0m DOT_09     Consistency
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m DOT_10     Return
+[31m       -> Exit Code: Expected 5, got 1[0m
+
+[35m>>> Testing Utility: exit (exit.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m EXIT_01    Exit 0
+[32m[PASS][0m EXIT_02    Exit 1
+[31m[FAIL][0m EXIT_03    Exit default
+[31m       -> Exit Code: Expected 0, got 127[0m
+[31m[FAIL][0m EXIT_04    Exit default fail
+[31m       -> Exit Code: Expected 1, got 127[0m
+[32m[PASS][0m EXIT_05    Exit numeric
+[31m[FAIL][0m EXIT_06    Fail invalid
+[31m       -> Exit Code: Expected 128, got 0[0m
+[32m[PASS][0m EXIT_07    Too many args
+[31m[FAIL][0m EXIT_08    Exit trap
+[31m       -> Stdout Regex Mismatch.
+   Expected: /bye/
+   Got: ""[0m
+[32m[PASS][0m EXIT_09    Consistency
+[31m[FAIL][0m EXIT_10    Overflow
+[31m       -> Exit Code: Expected 1, got 257[0m
+
+[35m>>> Testing Utility: readonly (readonly.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m READONLY_01 Set ro
+[31m[FAIL][0m READONLY_02 Fail modify
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m READONLY_03 List -p
+[31m[FAIL][0m READONLY_04 Fail unset
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m READONLY_05 Funcs -f (Ext)
+[31m       -> Exit Code: Expected 0, got 127[0m
+[31m[FAIL][0m READONLY_06 Existing var
+[31m       -> Exit Code: Expected 1, got 127[0m
+[32m[PASS][0m READONLY_07 Multiple
+[32m[PASS][0m READONLY_08 No args
+[32m[PASS][0m READONLY_09 Consistency
+[31m[FAIL][0m READONLY_10 Fail syntax
+[31m       -> Exit Code: Expected 1, got 0[0m
+
+[35m>>> Testing Utility: return (return.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m RETURN_01  Return 0
+[31m       -> Exit Code: Expected 0, got 127[0m
+[31m[FAIL][0m RETURN_02  Return N
+[31m       -> Exit Code: Expected 5, got 127[0m
+[31m[FAIL][0m RETURN_03  Default status
+[31m       -> Exit Code: Expected 1, got 127[0m
+[31m[FAIL][0m RETURN_04  Outside func
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m RETURN_05  Source return
+[31m       -> Exit Code: Expected 2, got 1[0m
+[31m[FAIL][0m RETURN_06  Fail arg
+[31m       -> Exit Code: Expected 0, got 127[0m
+[31m[FAIL][0m RETURN_07  Too many args
+[31m       -> Exit Code: Expected 1, got 127[0m
+[31m[FAIL][0m RETURN_08  Consistency
+[31m       -> Exit Code: Expected 0, got 127[0m
+[31m[FAIL][0m RETURN_09  Overflow
+[31m       -> Exit Code: Expected 1, got 127[0m
+[31m[FAIL][0m RETURN_10  Simple
+[31m       -> Exit Code: Expected 1, got 127[0m
+
+[35m>>> Testing Utility: admin (admin.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m ADMIN_01   Create SCCS
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m ADMIN_02   Init -n
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m ADMIN_03   Fail missing
+[32m[PASS][0m ADMIN_04   No args
+[31m[FAIL][0m ADMIN_05   Comment -y
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m ADMIN_06   Login -m
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m ADMIN_07   Release -r
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m ADMIN_08   Flag -f
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m ADMIN_09   Consistency
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m ADMIN_10   New
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: delta (delta.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[ERR ][0m DELTA_01 SETUP FAILED: Error: Cannot create 'SCCS/s.f': Parent directory not found
+[31m[FAIL][0m DELTA_02   List -p
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m DELTA_03   Fail missing
+[32m[PASS][0m DELTA_04   No args
+[31m[FAIL][0m DELTA_05   Comment -y
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m DELTA_06   SID -r
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m DELTA_07   Silent -s
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m DELTA_08   G-file -g
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m DELTA_09   Consistency
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m DELTA_10   Retain -n
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: get (get.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[ERR ][0m GET_01 SETUP FAILED: Error: Cannot create 'SCCS/s.f': Parent directory not found
+[31m[FAIL][0m GET_02     Edit -e
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m GET_03     Stdout -p
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m GET_04     Fail missing
+[32m[PASS][0m GET_05     No args
+[31m[FAIL][0m GET_06     SID -r
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m GET_07     Suppress -s
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m GET_08     Key -k
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m GET_09     Consistency
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m GET_10     Info -g
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: prs (prs.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m PRS_01     Print logic
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m PRS_02     Data spec -d
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m PRS_03     Fail missing
+[32m[PASS][0m PRS_04     No args
+[31m[FAIL][0m PRS_05     SID -r
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m PRS_06     Early exit -e
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m PRS_07     Late -l
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m PRS_08     Consistency
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m PRS_09     Suppress -a
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m PRS_10     Simple
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: rmdel (rmdel.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m RMDEL_01   Remove delta
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m RMDEL_02   Fail missing
+[32m[PASS][0m RMDEL_03   No args
+[32m[PASS][0m RMDEL_04   Missing SID
+[31m[FAIL][0m RMDEL_05   Consistency
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m RMDEL_06   Fail bad SID
+[31m[FAIL][0m RMDEL_07   Multiple
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m RMDEL_08   Message
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m RMDEL_09   Force?
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m RMDEL_10   Simple
+
+[35m>>> Testing Utility: sact (sact.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m SACT_01    Show activity
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m SACT_02    Fail missing
+[32m[PASS][0m SACT_03    No args
+[31m[FAIL][0m SACT_04    Empty
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m SACT_05    Consistency
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m SACT_06    Multiple
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m SACT_07    Output fmt
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m SACT_08    Fail not SCCS
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m SACT_09    Simple
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m SACT_10    Check edit
+[31m       -> Stdout Regex Mismatch.
+   Expected: /1/
+   Got: "get: SCCS not supported"[0m
+
+[35m>>> Testing Utility: sccs (sccs.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m SCCS_01    Front end
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m SCCS_02    Fail invalid cmd
+[32m[PASS][0m SCCS_03    No args
+[31m[FAIL][0m SCCS_04    Create
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m SCCS_05    Edit
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m SCCS_06    Delta
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m SCCS_07    Project dir -d
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m SCCS_08    Pseudo user -p
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m SCCS_09    Consistency
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m SCCS_10    Simple
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: unget (unget.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m UNGET_01   Undo checkout
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m UNGET_02   Fail missing
+[32m[PASS][0m UNGET_03   No args
+[31m[FAIL][0m UNGET_04   Force -n
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m UNGET_05   SID -r
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m UNGET_06   Suppress -s
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m UNGET_07   Consistency
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m UNGET_08   Multiple
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m UNGET_09   Fail not checked out
+[31m[FAIL][0m UNGET_10   Simple
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: val (val.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m VAL_01     Validate SCCS
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m VAL_02     Fail invalid
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m VAL_03     Fail missing
+[32m[PASS][0m VAL_04     No args
+[31m[FAIL][0m VAL_05     SID -r
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m VAL_06     Message -m
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m VAL_07     Type -y
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m VAL_08     Suppress -s
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m VAL_09     Consistency
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m VAL_10     Stdin piping
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: what (what.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m WHAT_01    Find ID
+[31m       -> Stdout Regex Mismatch.
+   Expected: /id/
+   Got: ""[0m
+[31m[FAIL][0m WHAT_02    Fail missing
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m WHAT_03    No info
+[32m[PASS][0m WHAT_04    Single -s
+[32m[PASS][0m WHAT_05    Multiple
+[32m[PASS][0m WHAT_06    No args
+[31m[FAIL][0m WHAT_07    Stdin
+[31m       -> Stdout Regex Mismatch.
+   Expected: /x/
+   Got: ""[0m
+[32m[PASS][0m WHAT_08    Consistency
+[32m[PASS][0m WHAT_09    Binary
+[31m[FAIL][0m WHAT_10    Formatting
+[31m       -> Stdout Regex Mismatch.
+   Expected: /\t/
+   Got: ""[0m
+
+[35m>>> Testing Utility: ipcrm (ipcrm.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m IPCRM_01   Remove msg
+[32m[PASS][0m IPCRM_02   Remove sem
+[32m[PASS][0m IPCRM_03   Remove shm
+[31m[FAIL][0m IPCRM_04   Fail missing
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m IPCRM_05   Key -M
+[31m[FAIL][0m IPCRM_06   No args
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m IPCRM_07   Consistency
+[32m[PASS][0m IPCRM_08   Multiple
+[31m[FAIL][0m IPCRM_09   Fail type
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m IPCRM_10   Simple
+
+[35m>>> Testing Utility: ipcs (ipcs.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m IPCS_01    List all
+[32m[PASS][0m IPCS_02    Short -a
+[32m[PASS][0m IPCS_03    Shm -m
+[32m[PASS][0m IPCS_04    Queues -q
+[32m[PASS][0m IPCS_05    Sems -s
+[31m[FAIL][0m IPCS_06    Output fmt
+[31m       -> Stdout Regex Mismatch.
+   Expected: /KEY/
+   Got: "Message Queues:\nShared Memory:\nSemaphores:"[0m
+[32m[PASS][0m IPCS_07    Creator -c
+[32m[PASS][0m IPCS_08    Pid -p
+[32m[PASS][0m IPCS_09    Time -t
+[32m[PASS][0m IPCS_10    Consistency
+
+[35m>>> Testing Utility: iconv (iconv.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m ICONV_01   Convert
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /text/
+   Got: "iconv: f: No such file"[0m
+[32m[PASS][0m ICONV_02   List -l
+[32m[PASS][0m ICONV_03   Fail codeset
+[32m[PASS][0m ICONV_04   Fail missing
+[32m[PASS][0m ICONV_05   Stdin
+[31m[FAIL][0m ICONV_06   Output -o (Ext)
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m ICONV_07   Fail args
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m ICONV_08   Silent -s
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m ICONV_09   Consistency
+[31m[FAIL][0m ICONV_10   Omit -f -t?
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: locale (locale.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m LOCALE_01  List vars
+[32m[PASS][0m LOCALE_02  Available -a
+[32m[PASS][0m LOCALE_03  Charmaps -m
+[32m[PASS][0m LOCALE_04  Category -c
+[32m[PASS][0m LOCALE_05  Keyword -k
+[31m[FAIL][0m LOCALE_06  Fail invalid
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m LOCALE_07  Specific var
+[32m[PASS][0m LOCALE_08  Consistency
+[31m[FAIL][0m LOCALE_09  POSIX locale
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m LOCALE_10  Output fmt
+[31m       -> Stdout Regex Mismatch.
+   Expected: /"/
+   Got: "LANG=en_US.UTF-8\nLC_ALL="[0m
+
+[35m>>> Testing Utility: localedef (localedef.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m LOCALEDEF_01 Def locale
+[31m[FAIL][0m LOCALEDEF_02 List? (No)
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m LOCALEDEF_03 Force -c
+[31m[FAIL][0m LOCALEDEF_04 Fail missing
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m LOCALEDEF_05 Verbose -v (Ext)
+[32m[PASS][0m LOCALEDEF_06 Charmap -f
+[32m[PASS][0m LOCALEDEF_07 Input -i
+[32m[PASS][0m LOCALEDEF_08 Consistency
+[32m[PASS][0m LOCALEDEF_09 Privilege
+[32m[PASS][0m LOCALEDEF_10 Simple
+
+[35m>>> Testing Utility: c17 (c17.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m C17_01     Compile C
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Missing File: Expected /home/operator/a.out to be created.[0m
+[31m[FAIL][0m C17_02     Output -o
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Missing File: Expected /home/operator/out to be created.[0m
+[31m[FAIL][0m C17_03     Compile only -c
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Missing File: Expected /home/operator/f.o to be created.[0m
+[31m[FAIL][0m C17_04     Debug -g
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m C17_05     Optimize -O
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m C17_06     Fail syntax
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m C17_07     Fail missing
+[32m[PASS][0m C17_08     No args
+[31m[FAIL][0m C17_09     Consistency
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m C17_10     Link lib (stub)
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: cflow (cflow.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m CFLOW_01   Gen graph
+[32m[PASS][0m CFLOW_02   Inverse -i
+[32m[PASS][0m CFLOW_03   Define -D
+[31m[FAIL][0m CFLOW_04   Fail missing
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m CFLOW_05   No args
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m CFLOW_06   Include -I
+[31m[FAIL][0m CFLOW_07   Fail syntax
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m CFLOW_08   Recursion (stub)
+[32m[PASS][0m CFLOW_09   Consistency
+[31m[FAIL][0m CFLOW_10   Output fmt
+[31m       -> Stdout Regex Mismatch.
+   Expected: /main/
+   Got: ""[0m
+
+[35m>>> Testing Utility: cxref (cxref.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m CXREF_01   Gen xref
+[31m       -> Stdout Regex Mismatch.
+   Expected: /main/
+   Got: ""[0m
+[31m[FAIL][0m CXREF_02   Output -o
+[31m       -> Missing File: Expected /home/operator/out to be created.[0m
+[32m[PASS][0m CXREF_03   Suppress -s
+[31m[FAIL][0m CXREF_04   Fail missing
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m CXREF_05   No args
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m CXREF_06   Width -w
+[31m[FAIL][0m CXREF_07   Fail syntax
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m CXREF_08   C++?
+[32m[PASS][0m CXREF_09   Consistency
+[32m[PASS][0m CXREF_10   Separate -c
+
+[35m>>> Testing Utility: fuser (fuser.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m FUSER_01   List processes
+[32m[PASS][0m FUSER_02   Kill -k
+[32m[PASS][0m FUSER_03   Signal -s
+[31m[FAIL][0m FUSER_04   Fail missing
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m FUSER_05   No args
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m FUSER_06   User -u
+[32m[PASS][0m FUSER_07   Mount -c
+[32m[PASS][0m FUSER_08   Silent -s
+[32m[PASS][0m FUSER_09   Consistency
+[32m[PASS][0m FUSER_10   Multiple
+
+[35m>>> Testing Utility: gencat (gencat.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m GENCAT_01  Gen catalog
+[31m       -> Missing File: Expected /home/operator/cat to be created.[0m
+[31m[FAIL][0m GENCAT_02  Fail missing
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m GENCAT_03  No args
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m GENCAT_04  Update
+[32m[PASS][0m GENCAT_05  Empty
+[32m[PASS][0m GENCAT_06  Stdin
+[31m[FAIL][0m GENCAT_07  Fail format
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m GENCAT_08  Consistency
+[32m[PASS][0m GENCAT_09  Output check
+[32m[PASS][0m GENCAT_10  Multiple inputs
+
+[35m>>> Testing Utility: getconf (getconf.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m GETCONF_01 Get var
+[31m[FAIL][0m GETCONF_02 All -a
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m GETCONF_03 Specific spec -v
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m GETCONF_04 Fail unknown
+[31m[FAIL][0m GETCONF_05 Fail path missing
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m GETCONF_06 No args
+[32m[PASS][0m GETCONF_07 System var
+[32m[PASS][0m GETCONF_08 Consistency
+[31m[FAIL][0m GETCONF_09 Legacy
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m GETCONF_10 Directory arg
+
+[35m>>> Testing Utility: gettext (gettext.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m GETTEXT_01 Echo msg
+[32m[PASS][0m GETTEXT_02 Domain -d
+[32m[PASS][0m GETTEXT_03 Category -c (Ext)
+[31m[FAIL][0m GETTEXT_04 No args
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m GETTEXT_05 Expand -e
+[31m       -> Stdout Regex Mismatch.
+   Expected: /a\nb/
+   Got: "-e"[0m
+[31m[FAIL][0m GETTEXT_06 Fail missing
+[31m       -> Stdout Regex Mismatch.
+   Expected: /msg/
+   Got: "-d"[0m
+[31m[FAIL][0m GETTEXT_07 Env vars
+[31m       -> Exit Code: Expected 0, got 127[0m
+[32m[PASS][0m GETTEXT_08 Consistency
+[32m[PASS][0m GETTEXT_09 Empty
+[32m[PASS][0m GETTEXT_10 Quotes
+
+[35m>>> Testing Utility: msgfmt (msgfmt.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m MSGFMT_01  Compile po
+[31m       -> Missing File: Expected /home/operator/messages.mo to be created.[0m
+[31m[FAIL][0m MSGFMT_02  Output -o
+[31m       -> Missing File: Expected /home/operator/out.mo to be created.[0m
+[31m[FAIL][0m MSGFMT_03  Fail missing
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m MSGFMT_04  No args
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m MSGFMT_05  Stats -v
+[31m[FAIL][0m MSGFMT_06  Fail syntax
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m MSGFMT_07  Consistency
+[32m[PASS][0m MSGFMT_08  Java (Ext)?
+[32m[PASS][0m MSGFMT_09  Check valid
+[31m[FAIL][0m MSGFMT_10  Multiple inputs?
+[31m       -> Exit Code: Expected 1, got 0[0m
+
+[35m>>> Testing Utility: newgrp (newgrp.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m NEWGRP_01  Switch group
+[32m[PASS][0m NEWGRP_02  Login -l
+[31m[FAIL][0m NEWGRP_03  Fail missing
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m NEWGRP_04  No args
+[31m[FAIL][0m NEWGRP_05  Check ID
+[31m       -> Stdout Regex Mismatch.
+   Expected: /staff/
+   Got: ""[0m
+[31m[FAIL][0m NEWGRP_06  Fail perms
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m NEWGRP_07  Consistency
+[31m[FAIL][0m NEWGRP_08  Not found
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m NEWGRP_09  Shell exec
+[32m[PASS][0m NEWGRP_10  Dash arg
+
+[35m>>> Testing Utility: ngettext (ngettext.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m NGETTEXT_01 Plural form
+[31m[FAIL][0m NGETTEXT_02 Plural select
+[31m       -> Stdout Regex Mismatch.
+   Expected: /p/
+   Got: "s"[0m
+[32m[PASS][0m NGETTEXT_03 Domain -d
+[31m[FAIL][0m NGETTEXT_04 Fail args
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m NGETTEXT_05 Expand -e
+[31m       -> Stdout Regex Mismatch.
+   Expected: /a\n/
+   Got: "-e"[0m
+[31m[FAIL][0m NGETTEXT_06 Fail missing
+[31m       -> Stdout Regex Mismatch.
+   Expected: /s/
+   Got: "-d"[0m
+[31m[FAIL][0m NGETTEXT_07 Zero
+[31m       -> Stdout Regex Mismatch.
+   Expected: /p/
+   Got: "s"[0m
+[32m[PASS][0m NGETTEXT_08 Consistency
+[31m[FAIL][0m NGETTEXT_09 Large num
+[31m       -> Stdout Regex Mismatch.
+   Expected: /b/
+   Got: "a"[0m
+[31m[FAIL][0m NGETTEXT_10 Negative?
+[31m       -> Stdout Regex Mismatch.
+   Expected: /b/
+   Got: "a"[0m
+
+[35m>>> Testing Utility: pathchk (pathchk.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m PATHCHK_01 Check valid
+[32m[PASS][0m PATHCHK_02 Portable -p
+[31m[FAIL][0m PATHCHK_03 Fail long
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m PATHCHK_04 Fail missing part
+[32m[PASS][0m PATHCHK_05 No args
+[32m[PASS][0m PATHCHK_06 Posix portability -P
+[32m[PASS][0m PATHCHK_07 Fail invalid char
+[32m[PASS][0m PATHCHK_08 Consistency
+[32m[PASS][0m PATHCHK_09 Multiple
+[32m[PASS][0m PATHCHK_10 Empty
+
+[35m>>> Testing Utility: unexpand (unexpand.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m UNEXPAND_01 Convert spaces
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m       -> Stdout Regex Mismatch.
+   Expected: /\tt/
+   Got: "unexpand: f: No such file"[0m
+[31m[FAIL][0m UNEXPAND_02 All -a
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m UNEXPAND_03 Tabs -t
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m UNEXPAND_04 Stdin
+[32m[PASS][0m UNEXPAND_05 Fail missing
+[32m[PASS][0m UNEXPAND_06 No args
+[31m[FAIL][0m UNEXPAND_07 Consistency
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m UNEXPAND_08 First only
+[31m[FAIL][0m UNEXPAND_09 Multiple files
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m UNEXPAND_10 Empty
+
+[35m>>> Testing Utility: uucp (uucp.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m UUCP_01    Copy file
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m UUCP_02    Fail missing
+[32m[PASS][0m UUCP_03    No args
+[31m[FAIL][0m UUCP_04    Grade -g
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m UUCP_05    Notify -n
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m UUCP_06    Recursive -r
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m UUCP_07    No make dirs -m
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m UUCP_08    Consistency
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m UUCP_09    Job id -j
+[31m       -> Stdout Regex Mismatch.
+   Expected: /job/
+   Got: "uucp: network not supported"[0m
+[31m[FAIL][0m UUCP_10    Simple
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: uustat (uustat.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[32m[PASS][0m UUSTAT_01  List jobs
+[32m[PASS][0m UUSTAT_02  All -a
+[32m[PASS][0m UUSTAT_03  System -s
+[32m[PASS][0m UUSTAT_04  User -u
+[32m[PASS][0m UUSTAT_05  Kill -k
+[32m[PASS][0m UUSTAT_06  Rejuvenate -r
+[32m[PASS][0m UUSTAT_07  Consistency
+[32m[PASS][0m UUSTAT_08  Output fmt
+[32m[PASS][0m UUSTAT_09  No jobs
+[31m[FAIL][0m UUSTAT_10  Fail args
+[31m       -> Exit Code: Expected 1, got 0[0m
+
+[35m>>> Testing Utility: uux (uux.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m UUX_01     Remote exec
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m UUX_02     Local
+[31m       -> Exit Code: Expected 0, got 1[0m
+[32m[PASS][0m UUX_03     Fail missing
+[31m[FAIL][0m UUX_04     Stdin -
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m UUX_05     No notify -n
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m UUX_06     Job name -j
+[31m       -> Stdout Regex Mismatch.
+   Expected: /job/
+   Got: "uux: network not supported"[0m
+[32m[PASS][0m UUX_07     Fail syntax
+[31m[FAIL][0m UUX_08     Consistency
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m UUX_09     Files
+[31m       -> Exit Code: Expected 0, got 1[0m
+[31m[FAIL][0m UUX_10     Simple
+[31m       -> Exit Code: Expected 0, got 1[0m
+
+[35m>>> Testing Utility: xgettext (xgettext.html)[0m
+[90m    Target: 10 tests | Current: 10[0m
+
+[31m[FAIL][0m XGETTEXT_01 Extract strings
+[31m       -> Missing File: Expected /home/operator/messages.po to be created.[0m
+[31m[FAIL][0m XGETTEXT_02 Output -o
+[31m       -> Missing File: Expected /home/operator/out.po to be created.[0m
+[32m[PASS][0m XGETTEXT_03 Join -j
+[31m[FAIL][0m XGETTEXT_04 Fail missing
+[31m       -> Exit Code: Expected 1, got 0[0m
+[31m[FAIL][0m XGETTEXT_05 No args
+[31m       -> Exit Code: Expected 1, got 0[0m
+[32m[PASS][0m XGETTEXT_06 Keyword -k
+[32m[PASS][0m XGETTEXT_07 C++ mode -C
+[32m[PASS][0m XGETTEXT_08 Add comment -c
+[32m[PASS][0m XGETTEXT_09 Consistency
+[32m[PASS][0m XGETTEXT_10 Simple
+
+[36m-------------------------------------------------[0m
+Results: 1098 Passed, 647 Failed out of 1750 Total.
+
+[36m=== COMPLIANCE SUMMARY ===[0m
+UTILITY       | TESTS | PASS | FAIL | COMPLIANCE
+--------------|-------|------|------|-----------
+mkdir         |    10 |    9 |    0 |     90.0%
+cd            |    10 |   10 |    0 |    100.0%
+ls            |    10 |    9 |    1 |     90.0%
+touch         |    10 |   10 |    0 |    100.0%
+rm            |    10 |   10 |    0 |    100.0%
+cp            |    10 |   10 |    0 |    100.0%
+mv            |    10 |   10 |    0 |    100.0%
+echo          |    10 |    9 |    1 |     90.0%
+cat           |    10 |   10 |    0 |    100.0%
+pwd           |    10 |   10 |    0 |    100.0%
+grep          |    10 |   10 |    0 |    100.0%
+head          |    10 |   10 |    0 |    100.0%
+tail          |    10 |   10 |    0 |    100.0%
+wc            |    10 |    9 |    1 |     90.0%
+chmod         |    10 |    7 |    3 |     70.0%
+awk           |    10 |    9 |    1 |     90.0%
+sed           |    10 |    9 |    1 |     90.0%
+find          |    10 |    7 |    2 |     70.0%
+date          |    10 |    7 |    3 |     70.0%
+diff          |    10 |    5 |    5 |     50.0%
+sort          |    10 |   10 |    0 |    100.0%
+uniq          |    10 |   10 |    0 |    100.0%
+tr            |    10 |    8 |    2 |     80.0%
+cut           |    10 |   10 |    0 |    100.0%
+tee           |    10 |    9 |    1 |     90.0%
+alias         |    10 |    7 |    3 |     70.0%
+unalias       |    10 |    8 |    2 |     80.0%
+bg            |    10 |    8 |    2 |     80.0%
+fg            |    10 |   10 |    0 |    100.0%
+jobs          |    10 |    7 |    3 |     70.0%
+kill          |    10 |    6 |    4 |     60.0%
+wait          |    10 |    8 |    2 |     80.0%
+sleep         |    10 |    8 |    2 |     80.0%
+false         |    10 |    9 |    1 |     90.0%
+true          |    10 |   10 |    0 |    100.0%
+basename      |    10 |    7 |    3 |     70.0%
+dirname       |    10 |    8 |    2 |     80.0%
+file          |    10 |    6 |    4 |     60.0%
+join          |    10 |    3 |    7 |     30.0%
+paste         |    10 |    8 |    2 |     80.0%
+split         |    10 |    5 |    5 |     50.0%
+csplit        |    10 |    5 |    5 |     50.0%
+comm          |    10 |    3 |    7 |     30.0%
+cmp           |    10 |    5 |    5 |     50.0%
+od            |    10 |    3 |    7 |     30.0%
+expr          |    10 |    5 |    5 |     50.0%
+printf        |    10 |    5 |    5 |     50.0%
+test          |    10 |    7 |    3 |     70.0%
+[             |    10 |    1 |    9 |     10.0%
+read          |    10 |    7 |    3 |     70.0%
+xargs         |    10 |    4 |    6 |     40.0%
+id            |    10 |    6 |    4 |     60.0%
+uname         |    10 |    8 |    2 |     80.0%
+logname       |    10 |    6 |    4 |     60.0%
+env           |    10 |    5 |    5 |     50.0%
+ar            |    10 |    4 |    6 |     40.0%
+make          |    10 |    8 |    2 |     80.0%
+sh            |    10 |    8 |    2 |     80.0%
+strings       |    10 |    4 |    6 |     40.0%
+time          |    10 |    8 |    2 |     80.0%
+fold          |    10 |    6 |    4 |     60.0%
+cksum         |    10 |    4 |    6 |     40.0%
+du            |    10 |    9 |    1 |     90.0%
+df            |    10 |    9 |    1 |     90.0%
+mesg          |    10 |    5 |    5 |     50.0%
+uudecode      |    10 |    4 |    6 |     40.0%
+uuencode      |    10 |    4 |    6 |     40.0%
+compress      |    10 |    2 |    8 |     20.0%
+uncompress    |    10 |    2 |    8 |     20.0%
+zcat          |    10 |    3 |    7 |     30.0%
+gzip          |    10 |    7 |    3 |     70.0%
+gunzip        |    10 |    7 |    3 |     70.0%
+tar           |    10 |    6 |    4 |     60.0%
+cpio          |    10 |    7 |    3 |     70.0%
+pax           |    10 |    7 |    3 |     70.0%
+dd            |    10 |    2 |    8 |     20.0%
+cal           |    10 |    8 |    2 |     80.0%
+link          |    10 |    6 |    4 |     60.0%
+ln            |    10 |    4 |    6 |     40.0%
+nl            |    10 |    4 |    6 |     40.0%
+pr            |    10 |    1 |    9 |     10.0%
+tsort         |    10 |    5 |    5 |     50.0%
+man           |    10 |    7 |    3 |     70.0%
+more          |    10 |    2 |    8 |     20.0%
+expand        |    10 |    4 |    6 |     40.0%
+command       |    10 |    8 |    2 |     80.0%
+fc            |    10 |    9 |    1 |     90.0%
+getopts       |    10 |    2 |    8 |     20.0%
+hash          |    10 |    9 |    1 |     90.0%
+set           |    10 |    9 |    1 |     90.0%
+shift         |    10 |    3 |    7 |     30.0%
+times         |    10 |    8 |    2 |     80.0%
+trap          |    10 |    8 |    2 |     80.0%
+type          |    10 |    3 |    7 |     30.0%
+ulimit        |    10 |    8 |    2 |     80.0%
+umask         |    10 |    5 |    5 |     50.0%
+unset         |    10 |    2 |    8 |     20.0%
+export        |    10 |    5 |    5 |     50.0%
+eval          |    10 |    6 |    4 |     60.0%
+exec          |    10 |    6 |    4 |     60.0%
+ps            |    10 |    7 |    3 |     70.0%
+nice          |    10 |    8 |    2 |     80.0%
+renice        |    10 |    7 |    3 |     70.0%
+nohup         |    10 |    8 |    2 |     80.0%
+logger        |    10 |    9 |    1 |     90.0%
+tput          |    10 |    6 |    4 |     60.0%
+tty           |    10 |    6 |    4 |     60.0%
+stty          |    10 |    8 |    2 |     80.0%
+tabs          |    10 |    9 |    1 |     90.0%
+who           |    10 |    7 |    3 |     70.0%
+write         |    10 |    7 |    3 |     70.0%
+talk          |    10 |    7 |    3 |     70.0%
+at            |    10 |    8 |    2 |     80.0%
+batch         |    10 |    8 |    2 |     80.0%
+crontab       |    10 |    5 |    5 |     50.0%
+vi            |    10 |   10 |    0 |    100.0%
+ed            |    10 |   10 |    0 |    100.0%
+ex            |    10 |    9 |    1 |     90.0%
+bc            |    10 |    9 |    1 |     90.0%
+lp            |    10 |    9 |    1 |     90.0%
+mailx         |    10 |    9 |    1 |     90.0%
+m4            |    10 |    5 |    5 |     50.0%
+lex           |    10 |    2 |    8 |     20.0%
+yacc          |    10 |    2 |    8 |     20.0%
+nm            |    10 |    7 |    3 |     70.0%
+strip         |    10 |    8 |    2 |     80.0%
+ctags         |    10 |    6 |    4 |     60.0%
+asa           |    10 |    3 |    7 |     30.0%
+chgrp         |    10 |    2 |    8 |     20.0%
+chown         |    10 |    3 |    7 |     30.0%
+rmdir         |    10 |    6 |    3 |     60.0%
+mkfifo        |    10 |    8 |    2 |     80.0%
+unlink        |    10 |    8 |    2 |     80.0%
+patch         |    10 |    8 |    2 |     80.0%
+readlink      |    10 |    3 |    7 |     30.0%
+realpath      |    10 |    8 |    2 |     80.0%
+timeout       |    10 |    7 |    3 |     70.0%
+break         |    10 |    6 |    4 |     60.0%
+continue      |    10 |    6 |    4 |     60.0%
+colon         |    10 |    9 |    1 |     90.0%
+dot           |    10 |    3 |    7 |     30.0%
+exit          |    10 |    5 |    5 |     50.0%
+readonly      |    10 |    5 |    5 |     50.0%
+return        |    10 |    0 |   10 |      0.0%
+admin         |    10 |    2 |    8 |     20.0%
+delta         |    10 |    2 |    7 |     20.0%
+get           |    10 |    2 |    7 |     20.0%
+prs           |    10 |    2 |    8 |     20.0%
+rmdel         |    10 |    5 |    5 |     50.0%
+sact          |    10 |    2 |    8 |     20.0%
+sccs          |    10 |    2 |    8 |     20.0%
+unget         |    10 |    3 |    7 |     30.0%
+val           |    10 |    2 |    8 |     20.0%
+what          |    10 |    6 |    4 |     60.0%
+ipcrm         |    10 |    7 |    3 |     70.0%
+ipcs          |    10 |    9 |    1 |     90.0%
+iconv         |    10 |    5 |    5 |     50.0%
+locale        |    10 |    7 |    3 |     70.0%
+localedef     |    10 |    8 |    2 |     80.0%
+c17           |    10 |    2 |    8 |     20.0%
+cflow         |    10 |    6 |    4 |     60.0%
+cxref         |    10 |    5 |    5 |     50.0%
+fuser         |    10 |    8 |    2 |     80.0%
+gencat        |    10 |    6 |    4 |     60.0%
+getconf       |    10 |    6 |    4 |     60.0%
+gettext       |    10 |    6 |    4 |     60.0%
+msgfmt        |    10 |    4 |    6 |     40.0%
+newgrp        |    10 |    6 |    4 |     60.0%
+ngettext      |    10 |    3 |    7 |     30.0%
+pathchk       |    10 |    9 |    1 |     90.0%
+unexpand      |    10 |    5 |    5 |     50.0%
+uucp          |    10 |    2 |    8 |     20.0%
+uustat        |    10 |    9 |    1 |     90.0%
+uux           |    10 |    2 |    8 |     20.0%
+xgettext      |    10 |    6 |    4 |     60.0%
+
+[36mTOTAL COMPLIANCE: 62.7% (1098/1750)[0m
+
+[31m=== MISSING UTILITIES (Exit 127 on all tests) ===[0m
+None
+
+[33m=== UNCOVERED TOOLS (Not in suite) ===[0m
+None
+
+[36mTOOL COVERAGE: 101.2% (172/170)[0m
+
+Detailed report written to comprehensive_compliance_report.txt

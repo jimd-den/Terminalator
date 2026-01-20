@@ -65,7 +65,7 @@ export class ExecuteCommand {
 
     private registerCoreCommands() {
         // Use the CoreUtilsModule to register all standard commands
-        const coreModule = new CoreUtilsModule(this.fs);
+        const coreModule = new CoreUtilsModule(this.fs, this.telemetry);
         coreModule.register(this.registry);
 
         // Register System Utilities

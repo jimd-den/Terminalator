@@ -1,0 +1,303 @@
+npm warn exec The following package was not found and will be installed: tsx@4.21.0
+[36mStarting POSIX Compliance Check...[0m
+
+
+[33m--- FILESYSTEM ---[0m
+[32m[PASS][0m Root directory parent is root
+[32m[PASS][0m Path normalization (ignoring redundant slashes)
+[32m[PASS][0m Cannot cd into a file
+
+[33m--- LS ---[0m
+[32m[PASS][0m ls lists current directory content
+[32m[PASS][0m ls -a matches hidden files
+[32m[PASS][0m ls exit code >0 on missing file
+
+[33m--- CD ---[0m
+[32m[PASS][0m cd changes working directory
+[32m[PASS][0m cd exit code >0 on failure
+
+[33m--- PWD ---[0m
+[32m[PASS][0m pwd writes absolute path of current directory
+
+[33m--- CAT ---[0m
+[32m[PASS][0m cat reads file content
+[32m[PASS][0m cat fails on directory
+
+[33m--- GREP ---[0m
+[32m[PASS][0m grep finds matches strictly
+[32m[PASS][0m grep -i ignores case
+[32m[PASS][0m grep -r recursive format
+
+[33m--- CLEAR ---[0m
+[32m[PASS][0m clear command exists
+
+[33m--- MKDIR ---[0m
+[32m[PASS][0m mkdir creates directory
+[32m[PASS][0m mkdir fails if exists
+[32m[PASS][0m mkdir fails if parent missing
+[32m[PASS][0m mkdir -p creates parents
+
+[33m--- TOUCH ---[0m
+[32m[PASS][0m touch creates new empty file
+[32m[PASS][0m touch updates existing file (no error)
+[32m[PASS][0m touch fails if parent missing
+
+[33m--- RM ---[0m
+[32m[PASS][0m rm removes a file
+[32m[PASS][0m rm fails on directory without -r
+[32m[PASS][0m rm -r removes directory
+[32m[PASS][0m rm -rf does not error on missing
+
+[33m--- CP ---[0m
+[32m[PASS][0m cp copies a file
+[32m[PASS][0m cp copies file into directory
+[32m[PASS][0m cp fails on directory without -r
+[32m[PASS][0m cp -r copies directory
+
+[33m--- MV ---[0m
+[32m[PASS][0m mv renames a file
+[32m[PASS][0m mv moves file into directory
+[32m[PASS][0m mv fails if source missing
+
+[33m--- ECHO ---[0m
+[32m[PASS][0m echo prints arguments
+[32m[PASS][0m echo prints empty line
+
+[33m--- HEAD ---[0m
+[32m[PASS][0m head prints first 10 lines by default
+[32m[PASS][0m head -n 2 prints first 2 lines
+[32m[PASS][0m head fails on missing file
+
+[33m--- TAIL ---[0m
+[32m[PASS][0m tail prints last 10 lines by default
+[32m[PASS][0m tail -n 3 prints last 3 lines
+
+[33m--- WC ---[0m
+[32m[PASS][0m wc counts lines words bytes
+[32m[PASS][0m wc -l counts lines only
+[32m[PASS][0m wc -w counts words only
+[32m[PASS][0m wc -c counts bytes only
+
+[33m--- CHMOD ---[0m
+[32m[PASS][0m chmod changes permissions (octal)
+[32m[PASS][0m chmod fails on invalid mode
+[32m[PASS][0m chmod fails on missing file
+
+[33m--- CHOWN ---[0m
+[32m[PASS][0m chown changes uid and gid
+[32m[PASS][0m chown changes uid only
+[32m[PASS][0m chown fails on missing file
+
+[33m--- DU ---[0m
+[32m[PASS][0m du reports file size in blocks
+[32m[PASS][0m du reports directory size recursively
+
+[33m--- LN ---[0m
+[32m[PASS][0m ln creates hard link
+[32m[PASS][0m ln -s creates symlink
+[32m[PASS][0m ln fails if target exists
+
+[33m--- DF ---[0m
+[32m[PASS][0m df report filesystem usage
+
+[33m--- FIND ---[0m
+[32m[PASS][0m find finds matching files by name
+[32m[PASS][0m find filters by type directory
+
+[33m--- SED ---[0m
+[32m[PASS][0m sed substitutes text in file
+[32m[PASS][0m sed substitutes text from stdin
+
+[33m--- AWK ---[0m
+[32m[PASS][0m awk default action print lines
+[32m[PASS][0m awk print specific column
+
+[33m--- XARGS ---[0m
+[32m[PASS][0m xargs echoes args by default (concept check)
+
+[33m--- PIPE ---[0m
+[32m[PASS][0m pipe passes output to next command
+[32m[PASS][0m pipe chain multiple
+
+[33m--- GAP ANALYSIS ---[0m
+[32m[PRESENT][0m admin
+[32m[PRESENT][0m alias
+[32m[PRESENT][0m ar
+[32m[PRESENT][0m asa
+[32m[PRESENT][0m at
+[32m[PRESENT][0m awk
+[32m[PRESENT][0m basename
+[32m[PRESENT][0m batch
+[32m[PRESENT][0m bc
+[32m[PRESENT][0m bg
+[32m[PRESENT][0m break
+[32m[PRESENT][0m c17
+[32m[PRESENT][0m cal
+[32m[PRESENT][0m cat
+[32m[PRESENT][0m cd
+[32m[PRESENT][0m cflow
+[32m[PRESENT][0m chgrp
+[32m[PRESENT][0m chmod
+[32m[PRESENT][0m chown
+[32m[PRESENT][0m cksum
+[32m[PRESENT][0m cmp
+[32m[PRESENT][0m comm
+[32m[PRESENT][0m command
+[32m[PRESENT][0m compress
+[32m[PRESENT][0m continue
+[32m[PRESENT][0m cp
+[32m[PRESENT][0m crontab
+[32m[PRESENT][0m csplit
+[32m[PRESENT][0m ctags
+[32m[PRESENT][0m cut
+[32m[PRESENT][0m cxref
+[32m[PRESENT][0m date
+[32m[PRESENT][0m dd
+[32m[PRESENT][0m delta
+[32m[PRESENT][0m df
+[32m[PRESENT][0m diff
+[32m[PRESENT][0m dirname
+[32m[PRESENT][0m .
+[32m[PRESENT][0m du
+[32m[PRESENT][0m echo
+[32m[PRESENT][0m ed
+[32m[PRESENT][0m env
+[32m[PRESENT][0m eval
+[32m[PRESENT][0m ex
+[32m[PRESENT][0m exec
+[32m[PRESENT][0m exit
+[32m[PRESENT][0m expand
+[32m[PRESENT][0m export
+[32m[PRESENT][0m expr
+[32m[PRESENT][0m false
+[32m[PRESENT][0m fc
+[32m[PRESENT][0m fg
+[32m[PRESENT][0m file
+[32m[PRESENT][0m find
+[32m[PRESENT][0m fold
+[32m[PRESENT][0m fuser
+[32m[PRESENT][0m gencat
+[32m[PRESENT][0m get
+[32m[PRESENT][0m getconf
+[32m[PRESENT][0m getopts
+[32m[PRESENT][0m gettext
+[32m[PRESENT][0m grep
+[32m[PRESENT][0m hash
+[32m[PRESENT][0m head
+[32m[PRESENT][0m iconv
+[32m[PRESENT][0m id
+[32m[PRESENT][0m ipcrm
+[32m[PRESENT][0m ipcs
+[32m[PRESENT][0m jobs
+[32m[PRESENT][0m join
+[32m[PRESENT][0m kill
+[32m[PRESENT][0m lex
+[32m[PRESENT][0m link
+[32m[PRESENT][0m ln
+[32m[PRESENT][0m locale
+[32m[PRESENT][0m localedef
+[32m[PRESENT][0m logger
+[32m[PRESENT][0m logname
+[32m[PRESENT][0m lp
+[32m[PRESENT][0m ls
+[32m[PRESENT][0m m4
+[32m[PRESENT][0m mailx
+[32m[PRESENT][0m make
+[32m[PRESENT][0m man
+[32m[PRESENT][0m mesg
+[32m[PRESENT][0m mkdir
+[32m[PRESENT][0m mkfifo
+[32m[PRESENT][0m more
+[32m[PRESENT][0m msgfmt
+[32m[PRESENT][0m mv
+[32m[PRESENT][0m newgrp
+[32m[PRESENT][0m ngettext
+[32m[PRESENT][0m nice
+[32m[PRESENT][0m nl
+[32m[PRESENT][0m nm
+[32m[PRESENT][0m nohup
+[32m[PRESENT][0m od
+[32m[PRESENT][0m paste
+[32m[PRESENT][0m patch
+[32m[PRESENT][0m pathchk
+[32m[PRESENT][0m pax
+[32m[PRESENT][0m pr
+[32m[PRESENT][0m printf
+[32m[PRESENT][0m prs
+[32m[PRESENT][0m ps
+[32m[PRESENT][0m pwd
+[32m[PRESENT][0m read
+[32m[PRESENT][0m readlink
+[32m[PRESENT][0m readonly
+[32m[PRESENT][0m realpath
+[32m[PRESENT][0m renice
+[32m[PRESENT][0m return
+[32m[PRESENT][0m rm
+[32m[PRESENT][0m rmdel
+[32m[PRESENT][0m rmdir
+[32m[PRESENT][0m sact
+[32m[PRESENT][0m sccs
+[32m[PRESENT][0m sed
+[32m[PRESENT][0m set
+[32m[PRESENT][0m sh
+[32m[PRESENT][0m shift
+[32m[PRESENT][0m sleep
+[32m[PRESENT][0m sort
+[32m[PRESENT][0m split
+[32m[PRESENT][0m strings
+[32m[PRESENT][0m strip
+[32m[PRESENT][0m stty
+[32m[PRESENT][0m tabs
+[32m[PRESENT][0m tail
+[32m[PRESENT][0m talk
+[32m[PRESENT][0m tee
+[32m[PRESENT][0m test
+[32m[PRESENT][0m [
+[32m[PRESENT][0m time
+[32m[PRESENT][0m timeout
+[32m[PRESENT][0m times
+[32m[PRESENT][0m touch
+[32m[PRESENT][0m tput
+[32m[PRESENT][0m tr
+[32m[PRESENT][0m trap
+[32m[PRESENT][0m true
+[32m[PRESENT][0m tsort
+[32m[PRESENT][0m tty
+[32m[PRESENT][0m type
+[32m[PRESENT][0m ulimit
+[32m[PRESENT][0m umask
+[32m[PRESENT][0m unalias
+[32m[PRESENT][0m uname
+[32m[PRESENT][0m uncompress
+[32m[PRESENT][0m unexpand
+[32m[PRESENT][0m unget
+[32m[PRESENT][0m uniq
+[32m[PRESENT][0m unlink
+[32m[PRESENT][0m unset
+[32m[PRESENT][0m uucp
+[32m[PRESENT][0m uudecode
+[32m[PRESENT][0m uuencode
+[32m[PRESENT][0m uustat
+[32m[PRESENT][0m uux
+[32m[PRESENT][0m val
+[32m[PRESENT][0m vi
+[32m[PRESENT][0m wait
+[32m[PRESENT][0m wc
+[32m[PRESENT][0m what
+[32m[PRESENT][0m who
+[32m[PRESENT][0m write
+[32m[PRESENT][0m xargs
+[32m[PRESENT][0m xgettext
+[32m[PRESENT][0m yacc
+[32m[PRESENT][0m zcat
+[32m[PRESENT][0m :
+
+COMPLETENESS: 100% (171/171 core utilities implemented)
+TEST RESULTS: 65 Passed, 0 Failed
+
+Detailed report written to compliance_report.txt
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.7.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.7.0
+npm notice To update run: npm install -g npm@11.7.0
+npm notice
