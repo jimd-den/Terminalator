@@ -219,7 +219,7 @@ UTILITY: date
 [FAIL] DATE_06: Complex format
        -> Stdout Regex Mismatch.
    Expected: /Year: 20../
-   Got: "Mon Jan 19 2026 23:38:32 GMT+0000 (Coordinated Universal Time)"
+   Got: "Tue Jan 20 2026 17:44:36 GMT+0000 (Coordinated Universal Time)"
 [PASS] DATE_07
 [FAIL] DATE_08: Set date (fail/stub)
        -> Exit Code: Expected 1, got 0
@@ -1776,13 +1776,13 @@ UTILITY: who
 [FAIL] WHO_02: Headers -H
        -> Stdout Regex Mismatch.
    Expected: /NAME/
-   Got: "operator  tty1  1/19/2026"
+   Got: "operator  tty1  1/20/2026"
 [PASS] WHO_03
 [PASS] WHO_04
 [FAIL] WHO_05: Message status -T
        -> Stdout Regex Mismatch.
    Expected: /[+\-?]/
-   Got: "operator  tty1  1/19/2026"
+   Got: "operator  tty1  1/20/2026"
 [PASS] WHO_06
 [PASS] WHO_07
 [PASS] WHO_08
@@ -1961,7 +1961,7 @@ UTILITY: lex
        -> Exit Code: Expected 0, got 1
        -> Stdout Regex Mismatch.
    Expected: /int/
-   Got: "lex: missing input file"
+   Got: "lex: l: No such file or directory"
 [FAIL] LEX_03: Verbose -v
        -> Exit Code: Expected 0, got 1
 [PASS] LEX_04
@@ -2481,8 +2481,7 @@ UTILITY: val
 [FAIL] VAL_02: Fail invalid
        -> Exit Code: Expected 1, got 0
 [PASS] VAL_03
-[FAIL] VAL_04: No args
-       -> Exit Code: Expected 0, got 1
+[PASS] VAL_04
 [FAIL] VAL_05: SID -r
        -> Exit Code: Expected 0, got 1
 [FAIL] VAL_06: Message -m
@@ -3031,7 +3030,7 @@ rmdel         |    10 |    5 |    5 |     50.0%
 sact          |    10 |    2 |    8 |     20.0%
 sccs          |    10 |    2 |    8 |     20.0%
 unget         |    10 |    3 |    7 |     30.0%
-val           |    10 |    1 |    9 |     10.0%
+val           |    10 |    2 |    8 |     20.0%
 what          |    10 |    6 |    4 |     60.0%
 ipcrm         |    10 |    7 |    3 |     70.0%
 ipcs          |    10 |    9 |    1 |     90.0%
@@ -3055,7 +3054,7 @@ uustat        |    10 |    9 |    1 |     90.0%
 uux           |    10 |    2 |    8 |     20.0%
 xgettext      |    10 |    6 |    4 |     60.0%
 
-TOTAL COMPLIANCE: 62.7% (1097/1750)
+TOTAL COMPLIANCE: 62.7% (1098/1750)
 
 === MISSING UTILITIES (Implemented but failing) ===
 None

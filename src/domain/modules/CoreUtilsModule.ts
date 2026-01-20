@@ -183,19 +183,24 @@ import { GzipCommand } from '../commands/core/GzipCommand';
 import { GunzipCommand } from '../commands/core/GunzipCommand';
 import { TarCommand } from '../commands/core/TarCommand';
 import { CpioCommand } from '../commands/core/CpioCommand';
+import { TelemetryPort } from '../ports/TelemetryPort';
 
 export class CoreUtilsModule implements CommandModule {
-    constructor(private fs: FileSystem) {}
+    constructor(
+        private fs: FileSystem,
+        private telemetry?: TelemetryPort
+    ) {}
 
     register(registry: CommandRegistry): void {
         const fs = this.fs;
+        const tm = this.telemetry;
 
         registry.register('ls', new LsCommand(fs));
         registry.register('cd', new CdCommand(fs));
         registry.register('pwd', new PwdCommand(fs));
         registry.register('cat', new CatCommand(fs));
-        registry.register('grep', new GrepCommand(fs));
-        registry.register('mkdir', new MkdirCommand(fs));
+        registry.register('grep', new GrepCommand(fs, tm));
+        registry.register('mkdir', new MkdirCommand(fs, tm));
         registry.register('touch', new TouchCommand(fs));
         registry.register('rm', new RmCommand(fs));
         registry.register('cp', new CpCommand(fs));
