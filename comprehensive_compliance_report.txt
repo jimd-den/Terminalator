@@ -219,7 +219,7 @@ UTILITY: date
 [FAIL] DATE_06: Complex format
        -> Stdout Regex Mismatch.
    Expected: /Year: 20../
-   Got: "Mon Jan 19 2026 22:51:40 GMT+0000 (Coordinated Universal Time)"
+   Got: "Mon Jan 19 2026 23:38:32 GMT+0000 (Coordinated Universal Time)"
 [PASS] DATE_07
 [FAIL] DATE_08: Set date (fail/stub)
        -> Exit Code: Expected 1, got 0
@@ -811,9 +811,7 @@ UTILITY: env
 [PASS] ENV_09
 [PASS] ENV_10
 UTILITY: ar
-[FAIL] AR_01: Create archive -rc
-       -> Exit Code: Expected 0, got 1
-       -> Missing File: Expected /home/operator/lib.a to be created.
+[PASS] AR_01
 [FAIL] AR_02: List contents -t
        -> Exit Code: Expected 0, got 1
 [FAIL] AR_03: Verbose list -tv
@@ -822,73 +820,34 @@ UTILITY: ar
        -> Exit Code: Expected 0, got 1
 [FAIL] AR_05: Extract -x
        -> Exit Code: Expected 0, got 1
-[FAIL] AR_06: Update -r
-       -> Exit Code: Expected 0, got 1
-[FAIL] AR_07: Quick append -q
-       -> Exit Code: Expected 0, got 1
+[PASS] AR_06
+[PASS] AR_07
 [FAIL] AR_08: Move -m (stub)
        -> Exit Code: Expected 0, got 1
 [FAIL] AR_09: Print -p
        -> Exit Code: Expected 0, got 1
        -> Stdout Regex Mismatch.
    Expected: /x/
-   Got: "ar: no operation specified"
+   Got: "ar: lib.a: No such file or directory"
 [PASS] AR_10
 UTILITY: make
-[FAIL] MAKE_01: Default target
-       -> Exit Code: Expected 0, got 2
-       -> Stdout Regex Mismatch.
-   Expected: /ok/
-   Got: "make: *** No targets specified and no makefile found. Stop."
-[FAIL] MAKE_02: Specific target
-       -> Exit Code: Expected 0, got 2
-       -> Stdout Regex Mismatch.
-   Expected: /test/
-   Got: "make: *** No targets specified and no makefile found. Stop."
-[FAIL] MAKE_03: Ignore errors -i
-       -> Exit Code: Expected 0, got 2
-       -> Stdout Regex Mismatch.
-   Expected: /ok/
-   Got: "make: *** No targets specified and no makefile found. Stop."
-[FAIL] MAKE_04: Dry run -n
-       -> Exit Code: Expected 0, got 2
-[FAIL] MAKE_05: Keep going -k
-       -> Exit Code: Expected 1, got 2
-       -> Stdout Regex Mismatch.
-   Expected: /b/
-   Got: "make: *** No targets specified and no makefile found. Stop."
-[FAIL] MAKE_06: Specific file -f
-       -> Exit Code: Expected 0, got 2
-       -> Stdout Regex Mismatch.
-   Expected: /other/
-   Got: "make: *** No targets specified and no makefile found. Stop."
+[PASS] MAKE_01
+[PASS] MAKE_02
+[PASS] MAKE_03
+[PASS] MAKE_04
+[PASS] MAKE_05
+[PASS] MAKE_06
 [FAIL] MAKE_07: Touch -t
        -> Exit Code: Expected 0, got 2
 [FAIL] MAKE_08: Env override -e
        -> Exit Code: Expected 0, got 127
 [PASS] MAKE_09
-[FAIL] MAKE_10: Macro usage
-       -> Exit Code: Expected 0, got 2
-       -> Stdout Regex Mismatch.
-   Expected: /1/
-   Got: "make: *** No targets specified and no makefile found. Stop."
+[PASS] MAKE_10
 UTILITY: sh
-[FAIL] SH_01: Run script
-       -> Exit Code: Expected 0, got 127
-       -> Stdout Regex Mismatch.
-   Expected: /hi/
-   Got: "sh: s.sh: No such file or directory"
-[FAIL] SH_02: Command string -c
-       -> Exit Code: Expected 0, got 127
-       -> Stdout Regex Mismatch.
-   Expected: /hello/
-   Got: "sh: -c: No such file or directory"
-[FAIL] SH_03: Stdin
-       -> Stdout Regex Mismatch.
-   Expected: /stdin/
-   Got: ""
-[FAIL] SH_04: Exit code
-       -> Exit Code: Expected 5, got 127
+[PASS] SH_01
+[PASS] SH_02
+[PASS] SH_03
+[PASS] SH_04
 [FAIL] SH_05: Syntax check -n (stub)
        -> Exit Code: Expected 0, got 127
 [PASS] SH_06
@@ -896,13 +855,10 @@ UTILITY: sh
        -> Exit Code: Expected 0, got 127
        -> Stdout Regex Mismatch.
    Expected: /123/
-   Got: "sh: -c: No such file or directory"
-[FAIL] SH_08: Verbose -v (Ext)
-       -> Exit Code: Expected 0, got 127
-[FAIL] SH_09: Restricted -r (Ext)
-       -> Exit Code: Expected 0, got 127
-[FAIL] SH_10: Ignore sigs? (stub)
-       -> Exit Code: Expected 0, got 127
+   Got: "sh: sh: No such file or directory"
+[PASS] SH_08
+[PASS] SH_09
+[PASS] SH_10
 UTILITY: strings
 [PASS] STRINGS_01
 [PASS] STRINGS_02
@@ -1705,8 +1661,7 @@ UTILITY: nice
 [PASS] NICE_05
 [FAIL] NICE_06: Negative (root)
        -> Exit Code: Expected 1, got 0
-[FAIL] NICE_07: Complex cmd
-       -> Exit Code: Expected 0, got 127
+[PASS] NICE_07
 [PASS] NICE_08
 [PASS] NICE_09
 [PASS] NICE_10
@@ -2979,9 +2934,9 @@ id            |    10 |    6 |    4 |     60.0%
 uname         |    10 |    8 |    2 |     80.0%
 logname       |    10 |    6 |    4 |     60.0%
 env           |    10 |    5 |    5 |     50.0%
-ar            |    10 |    1 |    9 |     10.0%
-make          |    10 |    1 |    9 |     10.0%
-sh            |    10 |    1 |    9 |     10.0%
+ar            |    10 |    4 |    6 |     40.0%
+make          |    10 |    8 |    2 |     80.0%
+sh            |    10 |    8 |    2 |     80.0%
 strings       |    10 |    4 |    6 |     40.0%
 time          |    10 |    8 |    2 |     80.0%
 fold          |    10 |    6 |    4 |     60.0%
@@ -3025,7 +2980,7 @@ export        |    10 |    5 |    5 |     50.0%
 eval          |    10 |    6 |    4 |     60.0%
 exec          |    10 |    6 |    4 |     60.0%
 ps            |    10 |    7 |    3 |     70.0%
-nice          |    10 |    7 |    3 |     70.0%
+nice          |    10 |    8 |    2 |     80.0%
 renice        |    10 |    7 |    3 |     70.0%
 nohup         |    10 |    8 |    2 |     80.0%
 logger        |    10 |    9 |    1 |     90.0%
@@ -3100,7 +3055,7 @@ uustat        |    10 |    9 |    1 |     90.0%
 uux           |    10 |    2 |    8 |     20.0%
 xgettext      |    10 |    6 |    4 |     60.0%
 
-TOTAL COMPLIANCE: 61.7% (1079/1750)
+TOTAL COMPLIANCE: 62.7% (1097/1750)
 
 === MISSING UTILITIES (Implemented but failing) ===
 None

@@ -81,6 +81,10 @@ export class ExecuteCommand {
     }
 
     async execute(input: string, state: TerminalState): Promise<CommandResponse> {
+        // Ensure state uses the FileSystem of this executor context
+        // This is crucial for tests where setup modifies the executor's FS, but state might have a different default FS.
+        state.fs = this.fs;
+
         const executeLogic = async (): Promise<CommandResponse> => {
             if (!input.trim()) {
                 return { output: '', newState: state, exitCode: 0 };

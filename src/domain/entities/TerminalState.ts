@@ -22,6 +22,7 @@ export interface TerminalState {
     user: string;
     hostname: string;
     isLocked: boolean;
+    fs: FileSystem; // Added to interface for command access
 }
 
 /**
@@ -29,20 +30,34 @@ export interface TerminalState {
  *
  * @returns A default TerminalState object.
  */
-export const createInitialTerminalState = (): TerminalState => ({
-    currentDirectory: '/home/operator',
-    history: [],
-    environment: {
-        PATH: '/bin:/usr/bin',
-        USER: 'operator',
-        HOME: '/home/operator',
-        TERM: 'xterm-256color',
-    },
-    aliases: {
-        'll': 'ls -l',
-        'la': 'ls -a'
-    },
-    user: 'operator',
-    hostname: 'mainframe-01',
-    isLocked: false,
-});
+export const createInitialTerminalState = (): TerminalState => {
+    // Note: FS is typically injected or created.
+    // In production, FS is usually a singleton or passed in.
+    // For test harness compat, we might need to rely on the passed in state having FS,
+    // or the harness injecting it.
+    // The harness in `posix_comprehensive_suite.ts` does:
+    // const testFs = new FileSystem();
+    // const testExecutor = new ExecuteCommand(testFs);
+    // const testState = createInitialTerminalState();
+    // The test executor might not be attaching `fs` to `state`.
+    // We should check `ExecuteCommand.ts`.
+
+    return {
+        currentDirectory: '/home/operator',
+        history: [],
+        environment: {
+            PATH: '/bin:/usr/bin',
+            USER: 'operator',
+            HOME: '/home/operator',
+            TERM: 'xterm-256color',
+        },
+        aliases: {
+            'll': 'ls -l',
+            'la': 'ls -a'
+        },
+        user: 'operator',
+        hostname: 'mainframe-01',
+        isLocked: false,
+        fs: new FileSystem() // Default fresh FS if not provided (though tests should overwrite or executor should manage)
+    };
+};
