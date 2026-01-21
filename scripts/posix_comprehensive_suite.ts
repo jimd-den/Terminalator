@@ -271,16 +271,37 @@ const SUITES: UtilitySuite[] = [
         utility: 'wc',
         htmlFile: 'wc.html',
         tests: [
-            { id: 'WC_01', description: 'All counts', posixSection: 'wc.html', posixRequirement: 'l, w, c', setup: (fs) => fs.writeFile('/f', 'a b', 'w'), command: 'wc /f', expect: { exitCode: 0, stdout: /1\s+2\s+3/ } },
-            { id: 'WC_02', description: 'Lines only -l', posixSection: 'wc.html', posixRequirement: '-l', setup: (fs) => fs.writeFile('/f', 'a\nb', 'w'), command: 'wc -l /f', expect: { exitCode: 0, stdout: /2\s/ } }, // Should not show words/bytes
+            { id: 'WC_01', description: 'All counts', posixSection: 'wc.html', posixRequirement: 'l, w, c', setup: (fs) => fs.writeFile('/f', 'a b\n', 'w'), command: 'wc /f', expect: { exitCode: 0, stdout: /1\s+2\s+4/ } },
+            { id: 'WC_02', description: 'Lines only -l', posixSection: 'wc.html', posixRequirement: '-l', setup: (fs) => fs.writeFile('/f', 'a\nb\n', 'w'), command: 'wc -l /f', expect: { exitCode: 0, stdout: /2\s/ } },
             { id: 'WC_03', description: 'Words only -w', posixSection: 'wc.html', posixRequirement: '-w', setup: (fs) => fs.writeFile('/f', 'a b', 'w'), command: 'wc -w /f', expect: { exitCode: 0, stdout: /2\s/ } },
             { id: 'WC_04', description: 'Bytes only -c', posixSection: 'wc.html', posixRequirement: '-c', setup: (fs) => fs.writeFile('/f', 'abc', 'w'), command: 'wc -c /f', expect: { exitCode: 0, stdout: /3\s/ } },
-            { id: 'WC_05', description: 'Chars -m', posixSection: 'wc.html', posixRequirement: '-m (multibyte)', command: 'wc -m /f', expect: { exitCode: 0 } }, // Stub
+            { id: 'WC_05', description: 'Chars -m', posixSection: 'wc.html', posixRequirement: '-m (multibyte)', setup: (fs) => fs.writeFile('/f', '€', 'w'), command: 'wc -m /f', expect: { exitCode: 0, stdout: /1\s/ } },
             { id: 'WC_06', description: 'Multiple files total', posixSection: 'wc.html', posixRequirement: 'Total line', setup: (fs) => { fs.writeFile('/1', 'a', 'w'); fs.writeFile('/2', 'b', 'w'); }, command: 'wc /1 /2', expect: { exitCode: 0, stdout: /total/i } },
             { id: 'WC_07', description: 'Fail missing', posixSection: 'wc.html', posixRequirement: 'Error >0', command: 'wc /missing', expect: { exitCode: 1 } },
             { id: 'WC_08', description: 'Empty file', posixSection: 'wc.html', posixRequirement: '0 0 0', setup: (fs) => fs.writeFile('/e', '', 'w'), command: 'wc /e', expect: { exitCode: 0, stdout: /0\s+0\s+0/ } },
             { id: 'WC_09', description: 'Stdin stub', posixSection: 'wc.html', posixRequirement: 'Stdin', command: 'wc -', expect: { exitCode: 0 } },
-            { id: 'WC_10', description: 'Fail on dir', posixSection: 'wc.html', posixRequirement: 'Read dir?', setup: (fs) => fs.mkdir('/d', 0o755), command: 'wc /d', expect: { exitCode: 1 } }
+            { id: 'WC_10', description: 'Fail on dir', posixSection: 'wc.html', posixRequirement: 'Read dir?', setup: (fs) => fs.mkdir('/d', 0o755), command: 'wc /d', expect: { exitCode: 1 } },
+            { id: 'WC_11', description: 'No trailing newline', posixSection: 'wc.html', posixRequirement: 'Count newlines only', setup: (fs) => fs.writeFile('/f', 'a', 'w'), command: 'wc -l /f', expect: { exitCode: 0, stdout: /0\s/ } },
+            { id: 'WC_12', description: 'Multibyte chars vs bytes', posixSection: 'wc.html', posixRequirement: '-m vs -c', setup: (fs) => fs.writeFile('/f', '€', 'w'), command: 'wc -c /f', expect: { exitCode: 0, stdout: /3\s/ } },
+            { id: 'WC_13', description: 'Double dash delimiter', posixSection: 'wc.html', posixRequirement: '--', setup: (fs) => fs.writeFile('/home/operator/-l', 'content', 'w'), command: 'wc -- -l', expect: { exitCode: 0, stdout: /-l/ } },
+            { id: 'WC_14', description: 'Count multibyte chars', posixSection: 'wc.html', posixRequirement: '-m count', setup: (fs) => fs.writeFile('/f', '€', 'w'), command: 'wc -m /f', expect: { exitCode: 0, stdout: /1\s/ } },
+            { id: 'WC_15', description: 'Mixed files and stdin', posixSection: 'wc.html', posixRequirement: 'File and -', setup: (fs) => fs.writeFile('/f', 'a', 'w'), command: 'echo b | wc /f -', expect: { exitCode: 0, stdout: /\/f[\s\S]*-\n[\s\S]*total/ } },
+            { id: 'WC_16', description: 'Total line presence', posixSection: 'wc.html', posixRequirement: 'Total line if >1 file', setup: (fs) => { fs.writeFile('/1', 'a', 'w'); fs.writeFile('/2', 'b', 'w'); }, command: 'wc /1 /2', expect: { stdout: /total$/ } },
+            { id: 'WC_17', description: 'No total line for single file', posixSection: 'wc.html', posixRequirement: 'No total if 1 file', setup: (fs) => fs.writeFile('/1', 'a', 'w'), command: 'wc /1', expect: { stdout: /^((?!total).)*$/s } },
+            { id: 'WC_18', description: 'Error on missing file but continue', posixSection: 'wc.html', posixRequirement: 'Continue processing', setup: (fs) => fs.writeFile('/found', 'x', 'w'), command: 'wc /missing /found', expect: { exitCode: 1, stdout: /found/ } },
+            { id: 'WC_19', description: 'Only bytes output', posixSection: 'wc.html', posixRequirement: '-c only', setup: (fs) => fs.writeFile('/f', 'abc', 'w'), command: 'wc -c /f', expect: { stdout: /^\s*3\s+\/f$/ } }, // Expect strict output: " 3 /f"
+            { id: 'WC_20', description: 'Only lines output', posixSection: 'wc.html', posixRequirement: '-l only', setup: (fs) => fs.writeFile('/f', 'a\n', 'w'), command: 'wc -l /f', expect: { stdout: /^\s*1\s+\/f$/ } },
+            { id: 'WC_21', description: 'Only words output', posixSection: 'wc.html', posixRequirement: '-w only', setup: (fs) => fs.writeFile('/f', 'a b', 'w'), command: 'wc -w /f', expect: { stdout: /^\s*2\s+\/f$/ } },
+            { id: 'WC_22', description: 'Chars output', posixSection: 'wc.html', posixRequirement: '-m only', setup: (fs) => fs.writeFile('/f', 'ab', 'w'), command: 'wc -m /f', expect: { stdout: /^\s*2\s+\/f$/ } },
+            { id: 'WC_23', description: 'Combined -lw', posixSection: 'wc.html', posixRequirement: '-l -w', setup: (fs) => fs.writeFile('/f', 'a b\n', 'w'), command: 'wc -lw /f', expect: { stdout: /^\s*1\s+2\s+\/f$/ } },
+            { id: 'WC_24', description: 'Default order l w c', posixSection: 'wc.html', posixRequirement: 'Default order', setup: (fs) => fs.writeFile('/f', 'a b\n', 'w'), command: 'wc /f', expect: { stdout: /^\s*1\s+2\s+4\s+\/f$/ } },
+            { id: 'WC_25', description: 'Option order irrelevant', posixSection: 'wc.html', posixRequirement: 'Order independent', setup: (fs) => fs.writeFile('/f', 'a\n', 'w'), command: 'wc -w -l /f', expect: { stdout: /^\s*1\s+1\s+\/f$/ } }, // 1 line, 1 word. Output l w order always.
+            { id: 'WC_26', description: 'Stdin no name', posixSection: 'wc.html', posixRequirement: 'No name for stdin', command: 'echo x | wc', expect: { stdout: /^\s*1\s+1\s+2$/ } },
+            { id: 'WC_27', description: 'Leading spaces', posixSection: 'wc.html', posixRequirement: 'Space separated', command: 'echo x | wc', expect: { stdout: /^\s*\d/ } }, // Leading space optional per POSIX
+            { id: 'WC_28', description: 'Binary file bytes', posixSection: 'wc.html', posixRequirement: 'Count binary bytes', setup: (fs) => fs.writeFile('/b', '\x00\x01\x02', 'w'), command: 'wc -c /b', expect: { stdout: /3/ } },
+            { id: 'WC_29', description: 'Binary file lines', posixSection: 'wc.html', posixRequirement: 'Count newlines in binary', setup: (fs) => fs.writeFile('/b', 'a\nb\n\x00\n', 'w'), command: 'wc -l /b', expect: { stdout: /3/ } },
+            { id: 'WC_30', description: 'Repeated flags', posixSection: 'wc.html', posixRequirement: 'Ignore repeats', setup: (fs) => fs.writeFile('/f', 'a', 'w'), command: 'wc -c -c /f', expect: { stdout: /1/ } },
+            { id: 'WC_31', description: 'Conflict -c -m usage', posixSection: 'wc.html', posixRequirement: 'Implementation defined (usually last wins or both?)', setup: (fs) => fs.writeFile('/f', '€', 'w'), command: 'wc -c -m /f', expect: { exitCode: 0 } } // Just ensure it doesn't crash
         ]
     },
     {

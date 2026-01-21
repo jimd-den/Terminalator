@@ -149,13 +149,33 @@ UTILITY: wc
 [PASS] WC_02
 [PASS] WC_03
 [PASS] WC_04
-[FAIL] WC_05: Chars -m
-       -> Exit Code: Expected 0, got 1
+[PASS] WC_05
 [PASS] WC_06
 [PASS] WC_07
 [PASS] WC_08
 [PASS] WC_09
 [PASS] WC_10
+[PASS] WC_11
+[PASS] WC_12
+[PASS] WC_13
+[PASS] WC_14
+[PASS] WC_15
+[PASS] WC_16
+[PASS] WC_17
+[PASS] WC_18
+[PASS] WC_19
+[PASS] WC_20
+[PASS] WC_21
+[PASS] WC_22
+[PASS] WC_23
+[PASS] WC_24
+[PASS] WC_25
+[PASS] WC_26
+[PASS] WC_27
+[PASS] WC_28
+[PASS] WC_29
+[PASS] WC_30
+[PASS] WC_31
 UTILITY: chmod
 [PASS] CHMOD_01
 [PASS] CHMOD_02
@@ -216,7 +236,7 @@ UTILITY: date
 [FAIL] DATE_06: Complex format
        -> Stdout Regex Mismatch.
    Expected: /Year: 20../
-   Got: "Wed Jan 21 2026 16:07:08 GMT+0000 (Coordinated Universal Time)"
+   Got: "Wed Jan 21 2026 19:32:39 GMT+0000 (Coordinated Universal Time)"
 [PASS] DATE_07
 [FAIL] DATE_08: Set date (fail/stub)
        -> Exit Code: Expected 1, got 0
@@ -2862,7 +2882,7 @@ pwd           |    10 |   10 |    0 |    100.0%
 grep          |    10 |   10 |    0 |    100.0%
 head          |    10 |   10 |    0 |    100.0%
 tail          |    10 |   10 |    0 |    100.0%
-wc            |    10 |    9 |    1 |     90.0%
+wc            |    31 |   31 |    0 |    100.0%
 chmod         |    10 |    7 |    3 |     70.0%
 awk           |    10 |    9 |    1 |     90.0%
 sed           |    10 |   10 |    0 |    100.0%
@@ -3025,7 +3045,7 @@ uustat        |    10 |    9 |    1 |     90.0%
 uux           |    10 |    2 |    8 |     20.0%
 xgettext      |    10 |    6 |    4 |     60.0%
 
-TOTAL COMPLIANCE: 64.7% (1132/1750)
+TOTAL COMPLIANCE: 65.2% (1154/1771)
 
 === MISSING UTILITIES (Implemented but failing) ===
 None
