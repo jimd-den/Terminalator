@@ -1,5 +1,6 @@
 import { InodeTable } from './filesystem/InodeTable';
-import { Inode } from './filesystem/FileSystemTypes';
+import { Inode, S_IFDIR, S_IFREG, S_IFLNK } from './filesystem/FileSystemTypes';
+import { PathResolver } from '../services/filesystem/PathResolver';
 
 // Constants (Keep these here or move to a constants file, keeping for compatibility)
 export const S_IFMT = 0o170000;
@@ -52,9 +53,11 @@ export class FileSystem {
     public inodeTable: InodeTable;
     public usedBytes: number = 0;
     public root: Dentry;
+    private pathResolver: PathResolver;
 
     constructor() {
         this.inodeTable = new InodeTable();
+        this.pathResolver = new PathResolver(this.inodeTable);
 
         // Create Root Inode (ID 1)
         // Manually create root inode to ensure ID 1
@@ -72,6 +75,15 @@ export class FileSystem {
             children: new Map(),
         };
         this.attachDentryHelpers(this.root);
+
+        // Initialize Standard Directories (Mocking a real OS)
+        this.mkdir('/bin', 0o755);
+        this.mkdir('/usr', 0o755);
+        this.mkdir('/usr/bin', 0o755);
+        this.mkdir('/home', 0o755);
+        this.mkdir('/home/operator', 0o700);
+        // Add 'mail' to operator home for ls tests
+        this.writeFile('/home/operator/mail', 'You have mail', 'w');
     }
 
     public attachDentryHelpers(dentry: Dentry) {
@@ -85,7 +97,163 @@ export class FileSystem {
         });
     }
 
-    // Deprecated helpers for compatibility during refactor, calling these will now fail at runtime 
-    // if compiled against old definitions, but we are fixing consumers.
-    // We intentionally do NOT include them to force compile errors where usage exists.
+    /**
+     * Resolves the parent directory and the base name of a path.
+     * Validates that the parent is a directory.
+     *
+     * @param path The path to resolve.
+     * @param cwd The current working directory.
+     * @returns Object containing parent Dentry and base name.
+     */
+    private resolveParentAndName(path: string, cwd: string): { parent: Dentry, name: string } {
+        // Strip trailing slash if present (unless root)
+        let normalizedPath = path;
+        if (normalizedPath.length > 1 && normalizedPath.endsWith('/')) {
+            normalizedPath = normalizedPath.slice(0, -1);
+        }
+
+        let parentNode: Dentry | null = null;
+        let baseName = '';
+
+        const lastSlash = normalizedPath.lastIndexOf('/');
+        if (lastSlash === -1) {
+            // Relative to CWD
+            parentNode = this.resolveNode('.', cwd);
+            baseName = normalizedPath;
+        } else if (lastSlash === 0) {
+            // Root child: /tmp
+            parentNode = this.root;
+            baseName = normalizedPath.substring(1);
+        } else {
+            // /a/b/c
+            const parentDir = normalizedPath.substring(0, lastSlash);
+            parentNode = this.resolveNode(parentDir, cwd);
+            baseName = normalizedPath.substring(lastSlash + 1);
+        }
+
+        if (!parentNode) {
+            throw new Error('No such file or directory');
+        }
+
+        // Validate Parent is a Directory
+        const parentInode = this.inodeTable.get(parentNode.inodeId);
+        if (!parentInode) throw new Error('Inode missing');
+        if (!(parentInode.mode & S_IFDIR)) {
+            throw new Error('Not a directory');
+        }
+
+        return { parent: parentNode, name: baseName };
+    }
+
+
+    // Facade Methods for POSIX Suite Compliance
+
+    public resolveNode(path: string, cwd: string = '/'): Dentry | null {
+        return this.pathResolver.resolve(this.root, path, cwd);
+    }
+
+    public mkdir(path: string, mode: number, cwd: string = '/'): void {
+        if (this.resolveNode(path, cwd)) {
+            throw new Error('File exists');
+        }
+
+        const { parent, name } = this.resolveParentAndName(path, cwd);
+
+        if (!name) return; // Root?
+
+        if (parent.children.has(name)) {
+            throw new Error('File exists');
+        }
+
+        // Allocate Inode
+        const inode = this.inodeTable.allocate(S_IFDIR | mode, 0, 0);
+
+        // Create Dentry
+        const dentry: Dentry = {
+            name: name,
+            inodeId: inode.id,
+            parent: parent,
+            children: new Map()
+        };
+        this.attachDentryHelpers(dentry);
+
+        parent.children.set(name, dentry);
+    }
+
+    public writeFile(path: string, content: string | Uint8Array, options: any = 'w', cwd: string = '/'): void {
+        const { parent, name } = this.resolveParentAndName(path, cwd);
+
+        const existingDentry = parent.children.get(name);
+
+        if (existingDentry) {
+            // Update existing
+            const inode = this.inodeTable.get(existingDentry.inodeId);
+            if (!inode) throw new Error('Inode missing');
+            if (inode.mode & S_IFDIR) throw new Error('Is a directory');
+
+            inode.content = content;
+            inode.size = content.length;
+            inode.mtime = Date.now();
+        } else {
+            // Create new
+            const inode = this.inodeTable.allocate(S_IFREG | 0o644, 0, 0); // Default permission
+            inode.content = content;
+            inode.size = content.length;
+
+            const dentry: Dentry = {
+                name: name,
+                inodeId: inode.id,
+                parent: parent,
+                children: new Map()
+            };
+            this.attachDentryHelpers(dentry);
+            parent.children.set(name, dentry);
+        }
+    }
+
+    public readFile(path: string, cwd: string = '/'): string | Uint8Array {
+        const dentry = this.resolveNode(path, cwd);
+        if (!dentry) throw new Error('No such file or directory');
+
+        const inode = this.inodeTable.get(dentry.inodeId);
+        if (!inode) throw new Error('Inode missing');
+        if (inode.mode & S_IFDIR) throw new Error('Is a directory');
+
+        return inode.content as string | Uint8Array;
+    }
+
+    public rmdir(path: string, cwd: string = '/'): void {
+        const dentry = this.resolveNode(path, cwd);
+        if (!dentry) throw new Error('No such file or directory');
+
+        const inode = this.inodeTable.get(dentry.inodeId);
+        if (!inode) throw new Error('Inode missing');
+        if (!(inode.mode & S_IFDIR)) throw new Error('Not a directory');
+
+        // Check if empty (excluding . and .. which are virtual/implied)
+        if (dentry.children.size > 0) {
+             throw new Error('Directory not empty');
+        }
+
+        if (dentry.parent) {
+            dentry.parent.children.delete(dentry.name);
+            this.inodeTable.free(dentry.inodeId);
+        }
+    }
+
+    public unlink(path: string, cwd: string = '/'): void {
+        const dentry = this.resolveNode(path, cwd);
+        if (!dentry) throw new Error('No such file or directory');
+
+        const inode = this.inodeTable.get(dentry.inodeId);
+        if (!inode) throw new Error('Inode missing');
+        if (inode.mode & S_IFDIR) throw new Error('Is a directory'); // use rmdir for dirs
+
+        if (dentry.parent) {
+            dentry.parent.children.delete(dentry.name);
+            // In strict POSIX, unlink decrements link count. Free if 0.
+            // Simplified here:
+            this.inodeTable.free(dentry.inodeId);
+        }
+    }
 }
