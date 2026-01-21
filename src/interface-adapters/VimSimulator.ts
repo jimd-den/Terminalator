@@ -14,6 +14,7 @@
  */
 
 import { FileSystem } from '../domain/entities/FileSystem';
+import { FileSystemService } from '../domain/services/FileSystemService';
 import { EditorBuffer } from '../domain/entities/EditorBuffer';
 import { VimEngine, VimState } from '../domain/entities/VimEngine';
 import { CheckerRegistry } from './vim/CheckerRegistry';
@@ -22,20 +23,22 @@ export class VimSimulator {
     private engine: VimEngine;
     private buffer: EditorBuffer;
     private fs: FileSystem;
+    private fsService: FileSystemService;
     private filename: string;
     private checkerRegistry = new CheckerRegistry();
 
     constructor(fs: FileSystem, filename: string) {
         this.fs = fs;
+        this.fsService = new FileSystemService(fs);
         this.filename = filename;
 
         // Load content from FileSystem
         const path = filename.startsWith('/') ? filename : `/home/operator/${filename}`;
-        const node = fs.resolveNode(path);
+        const node = this.fsService.resolve(path);
         let content = '';
 
-        if (node && !fs.isDirectory(node)) {
-            const inode = fs.getInode(node.inodeId);
+        if (node && !this.fsService.isDirectory(node)) {
+            const inode = this.fsService.getInode(node.inodeId);
             content = (inode && typeof inode.content === 'string') ? inode.content : '';
         }
 
@@ -91,7 +94,7 @@ export class VimSimulator {
     private save(): void {
         const path = this.filename.startsWith('/') ? this.filename : `/home/operator/${this.filename}`;
         const content = this.buffer.toString();
-        this.fs.writeFile(path, content, 'w');
+        this.fsService.writeFile(path, content, 'w');
     }
 
     /**

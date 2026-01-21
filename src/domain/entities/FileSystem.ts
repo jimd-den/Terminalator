@@ -1,4 +1,5 @@
-import { InodeTable, Inode } from '../entities/InodeTable';
+import { InodeTable } from './filesystem/InodeTable';
+import { Inode } from './filesystem/FileSystemTypes';
 
 // Constants (Keep these here or move to a constants file, keeping for compatibility)
 export const S_IFMT = 0o170000;

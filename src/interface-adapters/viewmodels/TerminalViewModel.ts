@@ -15,6 +15,7 @@
 import { useState, useCallback } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { FileSystem } from '../../domain/entities/FileSystem';
+import { FileSystemService } from '../../domain/services/FileSystemService';
 import { ExecuteCommand, CommandResponse } from '../../domain/usecases/ExecuteCommand';
 import { GameManager } from '../GameManager';
 import { createInitialTerminalState, TerminalState } from '../../domain/entities/TerminalState';
@@ -48,6 +49,8 @@ export const useTerminalViewModel = (
 
     // -- Logic --
 
+    // -- Logic --
+
     const suggestions = ['help', 'ls', 'cd', 'cat', 'whoami', 'mail', 'check-comms', 'clear', 'vim', 'man', 'grep'];
 
     const getAutocompleteSuggestion = useCallback((inputText: string): string => {
@@ -74,10 +77,15 @@ export const useTerminalViewModel = (
         }
 
         if (lookingForFile) {
+            const fsService = new FileSystemService(fs);
             const targetDir = state.currentDirectory;
-            const node = fs.getNode(targetDir);
+            // resolve returns Dentry | null. 
+            // We want to List the directory.
+            // fsService has resolve(path). 
+            // We need to access children of the directory.
+            const node = fsService.resolve(targetDir);
 
-            if (node && fs.isDirectory(node)) {
+            if (node && fsService.isDirectory(node)) {
                 const files = Array.from(node.children.keys());
                 const match = files.find(f => f.startsWith(partialName) && f !== partialName);
                 return match ? match.substring(partialName.length) : '';
