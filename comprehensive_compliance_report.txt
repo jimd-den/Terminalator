@@ -216,7 +216,7 @@ UTILITY: date
 [FAIL] DATE_06: Complex format
        -> Stdout Regex Mismatch.
    Expected: /Year: 20../
-   Got: "Tue Jan 20 2026 18:06:59 GMT-0700 (Mountain Standard Time)"
+   Got: "Tue Jan 20 2026 18:13:37 GMT-0700 (Mountain Standard Time)"
 [PASS] DATE_07
 [FAIL] DATE_08: Set date (fail/stub)
        -> Exit Code: Expected 1, got 0
