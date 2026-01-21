@@ -243,10 +243,29 @@ UTILITY: find
 [PASS] FIND_05
 [PASS] FIND_06
 [PASS] FIND_07
-[FAIL] FIND_08: Exec (stub)
-       -> Exit Code: Expected 0, got 1
-[FAIL] FIND_10: Prune (stub)
-       -> Exit Code: Expected 0, got 1
+[PASS] FIND_08
+[PASS] FIND_09
+[PASS] FIND_10
+[PASS] FIND_11
+[PASS] FIND_12
+[PASS] FIND_13
+[PASS] FIND_14
+[PASS] FIND_15
+[PASS] FIND_16
+[PASS] FIND_17
+[PASS] FIND_18
+[PASS] FIND_19
+[PASS] FIND_20
+[PASS] FIND_21
+[PASS] FIND_22
+[PASS] FIND_23
+[PASS] FIND_24
+[PASS] FIND_25
+[PASS] FIND_26
+[PASS] FIND_27
+[PASS] FIND_28
+[PASS] FIND_29
+[PASS] FIND_30
 UTILITY: date
 [PASS] DATE_01
 [PASS] DATE_02
@@ -256,7 +275,7 @@ UTILITY: date
 [FAIL] DATE_06: Complex format
        -> Stdout Regex Mismatch.
    Expected: /Year: 20../
-   Got: "Wed Jan 21 2026 21:51:13 GMT+0000 (Coordinated Universal Time)"
+   Got: "Wed Jan 21 2026 22:21:52 GMT+0000 (Coordinated Universal Time)"
 [PASS] DATE_07
 [FAIL] DATE_08: Set date (fail/stub)
        -> Exit Code: Expected 1, got 0
@@ -267,22 +286,33 @@ UTILITY: diff
 [PASS] DIFF_01
 [PASS] DIFF_02
 [PASS] DIFF_03
-[FAIL] DIFF_04: Directory diff (stub)
-       -> Exit Code: Expected 0, got 2
-[FAIL] DIFF_05: Ignore whitespace -w (stub)
-       -> Exit Code: Expected 0, got 1
-[FAIL] DIFF_06: Unified -u (Extension)
-       -> Stdout Regex Mismatch.
-   Expected: /---/
-   Got: "< a\n> b"
-[FAIL] DIFF_07: Brief -q
-       -> Stdout Regex Mismatch.
-   Expected: /differ/
-   Got: "< a\n> b"
-[FAIL] DIFF_08: Recursive -r
-       -> Exit Code: Expected 0, got 2
+[PASS] DIFF_04
+[PASS] DIFF_05
+[PASS] DIFF_06
+[PASS] DIFF_07
+[PASS] DIFF_08
 [PASS] DIFF_09
 [PASS] DIFF_10
+[PASS] DIFF_11
+[PASS] DIFF_12
+[PASS] DIFF_13
+[PASS] DIFF_14
+[PASS] DIFF_15
+[PASS] DIFF_16
+[PASS] DIFF_17
+[PASS] DIFF_18
+[PASS] DIFF_19
+[PASS] DIFF_20
+[PASS] DIFF_21
+[PASS] DIFF_22
+[PASS] DIFF_23
+[PASS] DIFF_24
+[PASS] DIFF_25
+[PASS] DIFF_26
+[PASS] DIFF_27
+[PASS] DIFF_28
+[PASS] DIFF_29
+[PASS] DIFF_30
 UTILITY: sort
 [PASS] SORT_01
 [PASS] SORT_02
@@ -2927,9 +2957,9 @@ wc            |    31 |   31 |    0 |    100.0%
 chmod         |    10 |    7 |    3 |     70.0%
 awk           |    10 |    9 |    1 |     90.0%
 sed           |    10 |   10 |    0 |    100.0%
-find          |    10 |    7 |    2 |     70.0%
+find          |    30 |   30 |    0 |    100.0%
 date          |    10 |    7 |    3 |     70.0%
-diff          |    10 |    5 |    5 |     50.0%
+diff          |    30 |   30 |    0 |    100.0%
 sort          |    10 |   10 |    0 |    100.0%
 uniq          |    31 |   31 |    0 |    100.0%
 tr            |    10 |    8 |    2 |     80.0%
@@ -3086,7 +3116,7 @@ uustat        |    10 |    9 |    1 |     90.0%
 uux           |    10 |    2 |    8 |     20.0%
 xgettext      |    10 |    6 |    4 |     60.0%
 
-TOTAL COMPLIANCE: 65.9% (1195/1812)
+TOTAL COMPLIANCE: 67.1% (1243/1852)
 
 === MISSING UTILITIES (Implemented but failing) ===
 None

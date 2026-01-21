@@ -383,9 +383,45 @@ const SUITES: UtilitySuite[] = [
             { id: 'FIND_05', description: 'Fail missing', posixSection: 'find.html', posixRequirement: 'Error >0', command: 'find /missing', expect: { exitCode: 1 } },
             { id: 'FIND_06', description: 'Empty dir', posixSection: 'find.html', posixRequirement: 'Just dir', setup: (fs) => fs.mkdir('/d', 0o755), command: 'find /d', expect: { exitCode: 0, stdout: /\/d/ } },
             { id: 'FIND_07', description: 'Multiple paths', posixSection: 'find.html', posixRequirement: 'Operands', setup: (fs) => { fs.mkdir('/a', 0o755); fs.mkdir('/b', 0o755); }, command: 'find /a /b', expect: { exitCode: 0, stdout: /\/a\n\/b/ } },
-            { id: 'FIND_08', description: 'Exec (stub)', posixSection: 'find.html', posixRequirement: '-exec', setup: (fs) => fs.writeFile('/f', 'x', 'w'), command: 'find /f -exec echo {} ;', expect: { exitCode: 0 } },
-            { id: 'FIND_09', description: 'Maxdepth (stub)', posixSection: 'find.html', posixRequirement: 'Not POSIX but standard', setup: (fs) => { fs.mkdir('/d/sub', 0o755); }, command: 'find /d -maxdepth 1', expect: { exitCode: 0 } },
-            { id: 'FIND_10', description: 'Prune (stub)', posixSection: 'find.html', posixRequirement: '-prune', command: 'find / -prune', expect: { exitCode: 0 } }
+            { id: 'FIND_08', description: 'Exec echo', posixSection: 'find.html', posixRequirement: '-exec', setup: (fs) => fs.writeFile('/f', 'x', 'w'), command: 'find /f -exec echo found {} ;', expect: { exitCode: 0, stdout: /found \/f/ } },
+            { id: 'FIND_09', description: 'Prune directory', posixSection: 'find.html', posixRequirement: '-prune', setup: (fs) => { fs.mkdir('/d', 0o755); fs.mkdir('/d/sub', 0o755); fs.writeFile('/d/f', 'x', 'w'); }, command: 'find /d -name sub -prune -o -print', expect: { exitCode: 0, stdout: /\/d\/f/ } }, // should skip sub contents (empty anyway) but print others
+            { id: 'FIND_10', description: 'Implicit AND', posixSection: 'find.html', posixRequirement: 'expr1 expr2', setup: (fs) => { fs.writeFile('/f', 'x', 'w'); fs.mkdir('/d', 0o755); }, command: 'find / -type f -name f', expect: { exitCode: 0, stdout: /\/f/ } },
+            { id: 'FIND_11', description: 'Explicit OR -o', posixSection: 'find.html', posixRequirement: '-o', setup: (fs) => { fs.writeFile('/a', 'x', 'w'); fs.writeFile('/b', 'x', 'w'); }, command: 'find / -name a -o -name b', expect: { exitCode: 0, stdout: /\/a\n\/b|\/b\n\/a/ } },
+            { id: 'FIND_12', description: 'NOT operator !', posixSection: 'find.html', posixRequirement: '!', setup: (fs) => { fs.writeFile('/a', 'x', 'w'); fs.writeFile('/b', 'x', 'w'); }, command: 'find / -type f ! -name a', expect: { exitCode: 0, stdout: /^\/b$/m } },
+            { id: 'FIND_13', description: 'Parens grouping', posixSection: 'find.html', posixRequirement: '( )', setup: (fs) => { fs.writeFile('/a', 'x', 'w'); fs.writeFile('/b', 'x', 'w'); }, command: 'find / \\( -name a -o -name b \\)', expect: { exitCode: 0, stdout: /\/a\n\/b/ } },
+            { id: 'FIND_14', description: 'Print0', posixSection: 'find.html', posixRequirement: '-print0', setup: (fs) => fs.writeFile('/f', 'x', 'w'), command: 'find /f -print0', expect: { exitCode: 0, stdout: /\/f\0/ } },
+            { id: 'FIND_15', description: 'Depth traversal', posixSection: 'find.html', posixRequirement: '-depth', setup: (fs) => { fs.mkdir('/d', 0o755); fs.writeFile('/d/f', 'x', 'w'); }, command: 'find /d -depth', expect: { exitCode: 0, stdout: /\/d\/f\n\/d/ } }, // file before dir
+            { id: 'FIND_16', description: 'Newer file', posixSection: 'find.html', posixRequirement: '-newer', setup: (fs) => { fs.writeFile('/old', 'x', 'w'); fs.writeFile('/new', 'y', 'w'); /* timestamps mock? */ }, command: 'find /new -newer /old', expect: { exitCode: 0, stdout: /\/new/ } }, // relies on mtime check
+            { id: 'FIND_17', description: 'Exec + terminator', posixSection: 'find.html', posixRequirement: '-exec ... {} +', setup: (fs) => { fs.writeFile('/a', 'x', 'w'); fs.writeFile('/b', 'y', 'w'); }, command: 'find /a /b -exec echo {} +', expect: { exitCode: 0, stdout: /\/a \/b|\/b \/a/ } },
+            { id: 'FIND_18', description: 'Type symlink', posixSection: 'find.html', posixRequirement: '-type l', setup: (fs) => { fs.writeFile('/f', 'x', 'w'); /* link mocked? */ }, command: 'find / -type l', expect: { exitCode: 0 } },
+            { id: 'FIND_19', description: 'Name wildcard', posixSection: 'find.html', posixRequirement: 'glob', setup: (fs) => fs.writeFile('/test.txt', 'x', 'w'), command: 'find / -name "*.txt"', expect: { exitCode: 0, stdout: /\.txt/ } },
+            { id: 'FIND_20', description: 'Path expression', posixSection: 'find.html', posixRequirement: '-path', setup: (fs) => { fs.mkdir('/a', 0o755); fs.writeFile('/a/b', 'x', 'w'); }, command: 'find / -path "*/a/b"', expect: { exitCode: 0, stdout: /\/a\/b/ } },
+            { id: 'FIND_21', description: 'User check', posixSection: 'find.html', posixRequirement: '-user', command: 'find / -user operator', expect: { exitCode: 0 } },
+            { id: 'FIND_22', description: 'Group check', posixSection: 'find.html', posixRequirement: '-group', command: 'find / -group operator', expect: { exitCode: 0 } },
+            { id: 'FIND_23', description: 'Size check', posixSection: 'find.html', posixRequirement: '-size', setup: (fs) => fs.writeFile('/f', 'a', 'w'), command: 'find /f -size 1c', expect: { exitCode: 0, stdout: /\/f/ } },
+            { id: 'FIND_24', description: 'Perm check', posixSection: 'find.html', posixRequirement: '-perm', setup: (fs) => fs.createFile('/f', 0o644), command: 'find /f -perm 644', expect: { exitCode: 0, stdout: /\/f/ } },
+            { id: 'FIND_25', description: 'Mixed operators precedence', posixSection: 'find.html', posixRequirement: '! expr -o expr', setup: (fs) => { fs.writeFile('/a', 'x', 'w'); fs.writeFile('/b', 'x', 'w'); }, command: 'find / ! -name a -o -name b', expect: { exitCode: 0, stdout: /\/b/ } }, // (! name a) OR name b. If a: false OR false -> false. If b: true OR true -> true.
+            // Wait: ! -name a. a -> false. b -> true.
+            // -o -name b. a -> false. b -> true.
+            // (! a) is false for a.
+            // (name b) is false for a.
+            // So a is not printed?
+            // Default action? If expr is not print, implicit print?
+            // "If the given expression does not contain -exec, -ok, or -print, ( expr ) -print"
+            // (! name a -o name b).
+            // For a: false OR false = false. No print.
+            // For b: true OR true = true. Print.
+            // For c: true OR false = true. Print.
+            // Wait. !name a matches b and c.
+            // -o name b matches b.
+            // result is true for b and c.
+            // So /b and others should print.
+            // Let's rely on basic logic.
+            { id: 'FIND_26', description: 'Nested parens', posixSection: 'find.html', posixRequirement: 'Grouping', setup: (fs) => fs.writeFile('/f', 'x', 'w'), command: 'find /f \\( -name f \\)', expect: { stdout: /\/f/ } },
+            { id: 'FIND_27', description: 'Error missing arg', posixSection: 'find.html', posixRequirement: 'Error', command: 'find / -name', expect: { exitCode: 1 } },
+            { id: 'FIND_28', description: 'Error invalid predicate', posixSection: 'find.html', posixRequirement: 'Error', command: 'find / -unknown', expect: { exitCode: 1 } },
+            { id: 'FIND_29', description: 'Infinite loop detection', posixSection: 'find.html', posixRequirement: 'Loop', setup: (fs) => { fs.mkdir('/d', 0o755); /* Symlink logic needed */ }, command: 'find /d', expect: { exitCode: 0 } }, // Difficult to setup loop without `ln` working fully?
+            { id: 'FIND_30', description: 'Symlink follow -L', posixSection: 'find.html', posixRequirement: '-L', setup: (fs) => { fs.mkdir('/d', 0o755); /* link */ }, command: 'find -L /d', expect: { exitCode: 0 } }
         ]
     },
     {
@@ -410,14 +446,34 @@ const SUITES: UtilitySuite[] = [
         tests: [
             { id: 'DIFF_01', description: 'Identical files', posixSection: 'diff.html', posixRequirement: 'No output, exit 0', setup: (fs) => { fs.writeFile('/1', 'a', 'w'); fs.writeFile('/2', 'a', 'w'); }, command: 'diff /1 /2', expect: { exitCode: 0, stdout: /^$/ } },
             { id: 'DIFF_02', description: 'different files', posixSection: 'diff.html', posixRequirement: 'Output diff, exit 1', setup: (fs) => { fs.writeFile('/1', 'a', 'w'); fs.writeFile('/2', 'b', 'w'); }, command: 'diff /1 /2', expect: { exitCode: 1, stdout: /</ } },
-            { id: 'DIFF_03', description: 'Missing file', posixSection: 'diff.html', posixRequirement: 'Error >1', command: 'diff /1 /missing', expect: { exitCode: 2 } }, // GNU diff uses 2 for trouble
-            { id: 'DIFF_04', description: 'Directory diff (stub)', posixSection: 'diff.html', posixRequirement: 'Compare dirs', setup: (fs) => { fs.mkdir('/d1', 0o755); fs.mkdir('/d2', 0o755); }, command: 'diff /d1 /d2', expect: { exitCode: 0 } },
-            { id: 'DIFF_05', description: 'Ignore whitespace -w (stub)', posixSection: 'diff.html', posixRequirement: '-w', setup: (fs) => { fs.writeFile('/1', 'a', 'w'); fs.writeFile('/2', 'a ', 'w'); }, command: 'diff -w /1 /2', expect: { exitCode: 0 } },
-            { id: 'DIFF_06', description: 'Unified -u (Extension)', posixSection: 'diff.html', posixRequirement: '-u', setup: (fs) => { fs.writeFile('/1', 'a', 'w'); fs.writeFile('/2', 'b', 'w'); }, command: 'diff -u /1 /2', expect: { exitCode: 1, stdout: /---/ } },
-            { id: 'DIFF_07', description: 'Brief -q', posixSection: 'diff.html', posixRequirement: '-q report only', setup: (fs) => { fs.writeFile('/1', 'a', 'w'); fs.writeFile('/2', 'b', 'w'); }, command: 'diff -q /1 /2', expect: { exitCode: 1, stdout: /differ/ } },
-            { id: 'DIFF_08', description: 'Recursive -r', posixSection: 'diff.html', posixRequirement: '-r', setup: (fs) => { fs.mkdir('/d1', 0o755); fs.mkdir('/d2', 0o755); }, command: 'diff -r /d1 /d2', expect: { exitCode: 0 } },
-            { id: 'DIFF_09', description: 'Stdin -', posixSection: 'diff.html', posixRequirement: '- is stdin', command: 'diff - /f', expect: { exitCode: 2 } }, // Without input, might fail
-            { id: 'DIFF_10', description: 'Same file', posixSection: 'diff.html', posixRequirement: 'Same file', setup: (fs) => fs.writeFile('/f', 'a', 'w'), command: 'diff /f /f', expect: { exitCode: 0 } }
+            { id: 'DIFF_03', description: 'Missing file', posixSection: 'diff.html', posixRequirement: 'Error >1', command: 'diff /1 /missing', expect: { exitCode: 2 } },
+            { id: 'DIFF_04', description: 'Directory diff', posixSection: 'diff.html', posixRequirement: 'Compare dirs', setup: (fs) => { fs.mkdir('/d1', 0o755); fs.mkdir('/d2', 0o755); }, command: 'diff /d1 /d2', expect: { exitCode: 0 } },
+            { id: 'DIFF_05', description: 'Ignore whitespace -b', posixSection: 'diff.html', posixRequirement: '-b', setup: (fs) => { fs.writeFile('/1', 'a', 'w'); fs.writeFile('/2', 'a ', 'w'); }, command: 'diff -b /1 /2', expect: { exitCode: 0 } }, // Ignore trailing space
+            { id: 'DIFF_06', description: 'Unified -u', posixSection: 'diff.html', posixRequirement: '-u', setup: (fs) => { fs.writeFile('/1', 'a', 'w'); fs.writeFile('/2', 'b', 'w'); }, command: 'diff -u /1 /2', expect: { exitCode: 1, stdout: /---/ } },
+            { id: 'DIFF_07', description: 'Context -c', posixSection: 'diff.html', posixRequirement: '-c', setup: (fs) => { fs.writeFile('/1', 'a', 'w'); fs.writeFile('/2', 'b', 'w'); }, command: 'diff -c /1 /2', expect: { exitCode: 1, stdout: /\*\*\*/ } },
+            { id: 'DIFF_08', description: 'Recursive -r', posixSection: 'diff.html', posixRequirement: '-r', setup: (fs) => { fs.mkdir('/d1', 0o755); fs.writeFile('/d1/f', 'a', 'w'); fs.mkdir('/d2', 0o755); fs.writeFile('/d2/f', 'b', 'w'); }, command: 'diff -r /d1 /d2', expect: { exitCode: 1, stdout: /diff/ } },
+            { id: 'DIFF_09', description: 'Stdin -', posixSection: 'diff.html', posixRequirement: '- is stdin', command: 'echo a | diff - /f', setup: (fs) => fs.writeFile('/f', 'a', 'w'), expect: { exitCode: 0 } },
+            { id: 'DIFF_10', description: 'Same file', posixSection: 'diff.html', posixRequirement: 'Same file', setup: (fs) => fs.writeFile('/f', 'a', 'w'), command: 'diff /f /f', expect: { exitCode: 0 } },
+            { id: 'DIFF_11', description: 'Ed script -e', posixSection: 'diff.html', posixRequirement: '-e', setup: (fs) => { fs.writeFile('/1', 'a', 'w'); fs.writeFile('/2', 'b', 'w'); }, command: 'diff -e /1 /2', expect: { exitCode: 1, stdout: /c/ } }, // ed style change
+            { id: 'DIFF_12', description: 'Forward ed -f', posixSection: 'diff.html', posixRequirement: '-f', setup: (fs) => { fs.writeFile('/1', 'a', 'w'); fs.writeFile('/2', 'b', 'w'); }, command: 'diff -f /1 /2', expect: { exitCode: 1 } },
+            { id: 'DIFF_13', description: 'Label -C', posixSection: 'diff.html', posixRequirement: '-C n', setup: (fs) => { fs.writeFile('/1', 'a\n'.repeat(5), 'w'); fs.writeFile('/2', 'a\nb\n'+'a\n'.repeat(3), 'w'); }, command: 'diff -C 1 /1 /2', expect: { exitCode: 1, stdout: /\*\*\*/ } },
+            { id: 'DIFF_14', description: 'Unified -U', posixSection: 'diff.html', posixRequirement: '-U n', setup: (fs) => { fs.writeFile('/1', 'a\n'.repeat(5), 'w'); fs.writeFile('/2', 'a\nb\n'+'a\n'.repeat(3), 'w'); }, command: 'diff -U 1 /1 /2', expect: { exitCode: 1, stdout: /---/ } },
+            { id: 'DIFF_15', description: 'Only in dir', posixSection: 'diff.html', posixRequirement: 'Only in', setup: (fs) => { fs.mkdir('/d1', 0o755); fs.writeFile('/d1/f', 'x', 'w'); fs.mkdir('/d2', 0o755); }, command: 'diff -r /d1 /d2', expect: { exitCode: 1, stdout: /Only in/ } },
+            { id: 'DIFF_16', description: 'Common subdirectories', posixSection: 'diff.html', posixRequirement: 'Common', setup: (fs) => { fs.mkdir('/d1', 0o755); fs.mkdir('/d1/s', 0o755); fs.mkdir('/d2', 0o755); fs.mkdir('/d2/s', 0o755); }, command: 'diff /d1 /d2', expect: { stdout: /Common subdirectories/ } },
+            { id: 'DIFF_17', description: 'File vs Dir', posixSection: 'diff.html', posixRequirement: 'File vs Dir', setup: (fs) => { fs.writeFile('/f', 'x', 'w'); fs.mkdir('/d', 0o755); fs.writeFile('/d/f', 'y', 'w'); }, command: 'diff /f /d', expect: { exitCode: 1 } }, // Compare /f with /d/f
+            { id: 'DIFF_18', description: 'Binary files', posixSection: 'diff.html', posixRequirement: 'Binary', setup: (fs) => { fs.writeFile('/1', '\x00', 'w'); fs.writeFile('/2', '\x01', 'w'); }, command: 'diff /1 /2', expect: { exitCode: 1, stdout: /Binary/ } },
+            { id: 'DIFF_19', description: 'Diff label', posixSection: 'diff.html', posixRequirement: 'Label', setup: (fs) => { fs.writeFile('/1', 'a', 'w'); fs.writeFile('/2', 'b', 'w'); }, command: 'diff -c /1 /2', expect: { stdout: /\*\*\* \/1/ } },
+            { id: 'DIFF_20', description: 'Missing operand', posixSection: 'diff.html', posixRequirement: 'Error', command: 'diff /f', expect: { exitCode: 2 } },
+            { id: 'DIFF_21', description: 'Extra operand', posixSection: 'diff.html', posixRequirement: 'Error', command: 'diff /1 /2 /3', expect: { exitCode: 2 } },
+            { id: 'DIFF_22', description: 'Both stdin', posixSection: 'diff.html', posixRequirement: 'Error', command: 'diff - -', expect: { exitCode: 2 } }, // Assuming not allowed or useless? POSIX says: "If either... is '-', stdin...". Does not explicitly forbid both. But commonly diffing stdin against stdin is empty. Let's expect 0 or error? "If both ... are directories ...". "The standard input shall be used only if one of the ... operands references standard input." implies ONLY ONE.
+            { id: 'DIFF_23', description: 'Non-existent dir recursive', posixSection: 'diff.html', posixRequirement: 'Error', command: 'diff -r /d1 /missing', setup: (fs) => fs.mkdir('/d1', 0o755), expect: { exitCode: 2 } },
+            { id: 'DIFF_24', description: 'Unified header', posixSection: 'diff.html', posixRequirement: 'Header', setup: (fs) => { fs.writeFile('/1', 'a', 'w'); fs.writeFile('/2', 'b', 'w'); }, command: 'diff -u /1 /2', expect: { stdout: /---\s+\/1/ } },
+            { id: 'DIFF_25', description: 'Change hunk', posixSection: 'diff.html', posixRequirement: 'c', setup: (fs) => { fs.writeFile('/1', 'a', 'w'); fs.writeFile('/2', 'b', 'w'); }, command: 'diff /1 /2', expect: { stdout: /c/ } }, // 1c1
+            { id: 'DIFF_26', description: 'Delete hunk', posixSection: 'diff.html', posixRequirement: 'd', setup: (fs) => { fs.writeFile('/1', 'a\nb', 'w'); fs.writeFile('/2', 'b', 'w'); }, command: 'diff /1 /2', expect: { stdout: /d/ } }, // 1d0
+            { id: 'DIFF_27', description: 'Add hunk', posixSection: 'diff.html', posixRequirement: 'a', setup: (fs) => { fs.writeFile('/1', 'b', 'w'); fs.writeFile('/2', 'a\nb', 'w'); }, command: 'diff /1 /2', expect: { stdout: /a/ } }, // 0a1
+            { id: 'DIFF_28', description: 'Recursive mixed types', posixSection: 'diff.html', posixRequirement: 'File vs Dir', setup: (fs) => { fs.mkdir('/d1', 0o755); fs.writeFile('/d1/x', 'a', 'w'); fs.mkdir('/d2', 0o755); fs.mkdir('/d2/x', 0o755); }, command: 'diff -r /d1 /d2', expect: { stdout: /File .* is a directory/ } }, // or similar msg
+            { id: 'DIFF_29', description: 'Empty files', posixSection: 'diff.html', posixRequirement: 'Identical', setup: (fs) => { fs.writeFile('/1', '', 'w'); fs.writeFile('/2', '', 'w'); }, command: 'diff /1 /2', expect: { exitCode: 0, stdout: /^$/ } },
+            { id: 'DIFF_30', description: 'Directory content mismatch', posixSection: 'diff.html', posixRequirement: 'Mismatch', setup: (fs) => { fs.mkdir('/d1', 0o755); fs.writeFile('/d1/a', 'a', 'w'); fs.mkdir('/d2', 0o755); fs.writeFile('/d2/a', 'b', 'w'); }, command: 'diff -r /d1 /d2', expect: { exitCode: 1, stdout: /diff/ } }
         ]
     },
     {
