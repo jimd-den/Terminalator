@@ -436,7 +436,7 @@ export class FileSystem {
     private initializeDefaultStructure() {
         const dirs = [
             '/bin', '/dev', '/etc', '/home', '/home/operator',
-            '/lib', '/proc', '/root', '/tmp', '/usr', '/var',
+            '/lib', '/proc', '/tmp', '/usr', '/var',
             '/usr/bin', '/usr/lib', '/var/log'
         ];
 

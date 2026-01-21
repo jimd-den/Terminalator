@@ -2166,15 +2166,15 @@ const SUITES: UtilitySuite[] = [
         utility: 'rmdir',
         htmlFile: 'rmdir.html',
         tests: [
-            { id: 'RMDIR_01', description: 'Remove dir', posixSection: 'rmdir.html', posixRequirement: 'Remove', setup: (fs) => fs.mkdir('d', 0o755), command: 'rmdir d', expect: { exitCode: 0 } }, // verify gone?
-            { id: 'RMDIR_02', description: 'Fail non-empty', posixSection: 'rmdir.html', posixRequirement: 'ENOTEMPTY', setup: (fs) => { fs.mkdir('d', 0o755); fs.writeFile('d/f', 'x', 'w'); }, command: 'rmdir d', expect: { exitCode: 1 } },
-            { id: 'RMDIR_03', description: 'Parents -p', posixSection: 'rmdir.html', posixRequirement: '-p', setup: (fs) => { fs.mkdir('p/c', 0o755); }, command: 'rmdir -p p/c', expect: { exitCode: 0 } },
+            { id: 'RMDIR_01', description: 'Remove dir', posixSection: 'rmdir.html', posixRequirement: 'Remove', setup: (fs) => fs.mkdir('/home/operator/d', 0o755), command: 'rmdir d', expect: { exitCode: 0 } },
+            { id: 'RMDIR_02', description: 'Fail non-empty', posixSection: 'rmdir.html', posixRequirement: 'ENOTEMPTY', setup: (fs) => { fs.mkdir('/home/operator/d', 0o755); fs.writeFile('/home/operator/d/f', 'x', 'w'); }, command: 'rmdir d', expect: { exitCode: 1 } },
+            { id: 'RMDIR_03', description: 'Parents -p', posixSection: 'rmdir.html', posixRequirement: '-p', setup: (fs) => { fs.mkdir('/home/operator/p', 0o755); fs.mkdir('/home/operator/p/c', 0o755); }, command: 'rmdir -p p/c', expect: { exitCode: 0 } },
             { id: 'RMDIR_04', description: 'Fail missing', posixSection: 'rmdir.html', posixRequirement: 'ENOENT', command: 'rmdir missing', expect: { exitCode: 1 } },
-            { id: 'RMDIR_05', description: 'Fail not dir', posixSection: 'rmdir.html', posixRequirement: 'ENOTDIR', setup: (fs) => fs.writeFile('f', 'x', 'w'), command: 'rmdir f', expect: { exitCode: 1 } },
-            { id: 'RMDIR_06', description: 'Multiple', posixSection: 'rmdir.html', posixRequirement: 'Args', setup: (fs) => { fs.mkdir('d1', 0o755); fs.mkdir('d2', 0o755); }, command: 'rmdir d1 d2', expect: { exitCode: 0 } },
+            { id: 'RMDIR_05', description: 'Fail not dir', posixSection: 'rmdir.html', posixRequirement: 'ENOTDIR', setup: (fs) => fs.writeFile('/home/operator/f', 'x', 'w'), command: 'rmdir f', expect: { exitCode: 1 } },
+            { id: 'RMDIR_06', description: 'Multiple', posixSection: 'rmdir.html', posixRequirement: 'Args', setup: (fs) => { fs.mkdir('/home/operator/d1', 0o755); fs.mkdir('/home/operator/d2', 0o755); }, command: 'rmdir d1 d2', expect: { exitCode: 0 } },
             { id: 'RMDIR_07', description: 'Fail root', posixSection: 'rmdir.html', posixRequirement: 'EBUSY/EPERM', command: 'rmdir /', expect: { exitCode: 1 } },
             { id: 'RMDIR_08', description: 'Fail cwd', posixSection: 'rmdir.html', posixRequirement: 'EINVAL?', command: 'rmdir .', expect: { exitCode: 1 } },
-            { id: 'RMDIR_09', description: 'Consistency', posixSection: 'rmdir.html', posixRequirement: 'Stable', setup: (fs) => fs.mkdir('d', 0o755), command: 'rmdir d', expect: { exitCode: 0 } },
+            { id: 'RMDIR_09', description: 'Consistency', posixSection: 'rmdir.html', posixRequirement: 'Stable', setup: (fs) => fs.mkdir('/home/operator/d', 0o755), command: 'rmdir d', expect: { exitCode: 0 } },
             { id: 'RMDIR_10', description: 'Silent ignore?', posixSection: 'rmdir.html', posixRequirement: 'Strict', command: 'rmdir missing', expect: { exitCode: 1 } }
         ]
     },

@@ -8,6 +8,7 @@ UTILITY: mkdir
 [PASS] MKDIR_07
 [PASS] MKDIR_08
 [PASS] MKDIR_09
+[PASS] MKDIR_10
 UTILITY: cd
 [PASS] CD_01
 [PASS] CD_02
@@ -83,10 +84,7 @@ UTILITY: echo
 [PASS] ECHO_03
 [PASS] ECHO_04
 [PASS] ECHO_05
-[FAIL] ECHO_06: Variable expansion (shell)
-       -> Stdout Regex Mismatch.
-   Expected: /\/home/
-   Got: "$HOME"
+[PASS] ECHO_06
 [PASS] ECHO_07
 [PASS] ECHO_08
 [PASS] ECHO_09
@@ -192,8 +190,7 @@ UTILITY: sed
 [PASS] SED_03
 [PASS] SED_04
 [PASS] SED_05
-[FAIL] SED_06: Multiple commands -e
-       -> Exit Code: Expected 0, got 1
+[PASS] SED_06
 [PASS] SED_07
 [PASS] SED_08
 [PASS] SED_09
@@ -219,7 +216,7 @@ UTILITY: date
 [FAIL] DATE_06: Complex format
        -> Stdout Regex Mismatch.
    Expected: /Year: 20../
-   Got: "Mon Jan 19 2026 20:08:21 GMT-0700 (Mountain Standard Time)"
+   Got: "Tue Jan 20 2026 18:06:59 GMT-0700 (Mountain Standard Time)"
 [PASS] DATE_07
 [FAIL] DATE_08: Set date (fail/stub)
        -> Exit Code: Expected 1, got 0
@@ -275,7 +272,7 @@ UTILITY: tr
 [FAIL] TR_04: Complement -c
        -> Stdout Regex Mismatch.
    Expected: /xexxox/
-   Got: "xellx"
+   Got: "xellxx"
 [PASS] TR_05
 [PASS] TR_06
 [FAIL] TR_07: Fail one arg (delete needs -d)
@@ -304,8 +301,7 @@ UTILITY: tee
 [PASS] TEE_07
 [PASS] TEE_08
 [PASS] TEE_09
-[FAIL] TEE_10: Fail permission (stub)
-       -> Exit Code: Expected 1, got 0
+[PASS] TEE_10
 UTILITY: alias
 [PASS] ALIAS_01
 [PASS] ALIAS_02
@@ -882,7 +878,7 @@ UTILITY: fold
 [FAIL] FOLD_04: Space break -s
        -> Stdout Regex Mismatch.
    Expected: /a b\nc d/
-   Got: "a b\n c \nd"
+   Got: "a b\n c \nd\n"
 [PASS] FOLD_05
 [FAIL] FOLD_06: Multiple files
        -> Exit Code: Expected 0, got 1
@@ -918,7 +914,7 @@ UTILITY: du
 [FAIL] DU_04: Human readable -h (Ext)
        -> Stdout Regex Mismatch.
    Expected: /[KMG]/
-   Got: "9	/bin\n8	/dev\n10	/etc\n8	/home/operator/mail\n17	/home/operator\n25	/home\n8	/lib\n8	/proc\n8	/root\n8	/tmp\n8	/usr/bin\n8	/usr/lib\n24	/usr\n8	/var/log\n16	/var\n132	/"
+   Got: "9	/bin\n8	/dev\n10	/etc\n8	/home/operator/mail\n17	/home/operator\n25	/home\n8	/lib\n8	/proc\n8	/tmp\n8	/usr/bin\n8	/usr/lib\n24	/usr\n8	/var/log\n16	/var\n124	/"
 [PASS] DU_05
 [PASS] DU_06
 [PASS] DU_07
@@ -1762,13 +1758,13 @@ UTILITY: who
 [FAIL] WHO_02: Headers -H
        -> Stdout Regex Mismatch.
    Expected: /NAME/
-   Got: "operator  tty1  1/19/2026"
+   Got: "operator  tty1  1/20/2026"
 [PASS] WHO_03
 [PASS] WHO_04
 [FAIL] WHO_05: Message status -T
        -> Stdout Regex Mismatch.
    Expected: /[+\-?]/
-   Got: "operator  tty1  1/19/2026"
+   Got: "operator  tty1  1/20/2026"
 [PASS] WHO_06
 [PASS] WHO_07
 [PASS] WHO_08
@@ -2035,7 +2031,7 @@ UTILITY: asa
 [FAIL] ASA_05: Page eject
        -> Stdout Regex Mismatch.
    Expected: /\f/
-   Got: "NewPage"
+   Got: "NewPage\n"
 [FAIL] ASA_06: Double space
        -> Exit Code: Expected 0, got 1
 [FAIL] ASA_07: Overprint
@@ -2084,17 +2080,15 @@ UTILITY: chown
 [FAIL] CHOWN_10: Multiple
        -> Exit Code: Expected 0, got 1
 UTILITY: rmdir
-[FAIL] RMDIR_01: Remove dir
-       -> Exit Code: Expected 0, got 1
+[PASS] RMDIR_01
 [PASS] RMDIR_02
+[PASS] RMDIR_03
 [PASS] RMDIR_04
 [PASS] RMDIR_05
-[FAIL] RMDIR_06: Multiple
-       -> Exit Code: Expected 0, got 1
+[PASS] RMDIR_06
 [PASS] RMDIR_07
 [PASS] RMDIR_08
-[FAIL] RMDIR_09: Consistency
-       -> Exit Code: Expected 0, got 1
+[PASS] RMDIR_09
 [PASS] RMDIR_10
 UTILITY: mkfifo
 [PASS] MKFIFO_01
@@ -2822,14 +2816,14 @@ UTILITY: xgettext
 === COMPLIANCE SUMMARY ===
 UTILITY       | TESTS | PASS | FAIL | COMPLIANCE
 --------------|-------|------|------|-----------
-mkdir         |    10 |    9 |    0 |     90.0%
+mkdir         |    10 |   10 |    0 |    100.0%
 cd            |    10 |   10 |    0 |    100.0%
 ls            |    10 |    9 |    1 |     90.0%
 touch         |    10 |   10 |    0 |    100.0%
 rm            |    10 |   10 |    0 |    100.0%
 cp            |    10 |   10 |    0 |    100.0%
 mv            |    10 |   10 |    0 |    100.0%
-echo          |    10 |    9 |    1 |     90.0%
+echo          |    10 |   10 |    0 |    100.0%
 cat           |    10 |   10 |    0 |    100.0%
 pwd           |    10 |   10 |    0 |    100.0%
 grep          |    10 |   10 |    0 |    100.0%
@@ -2838,7 +2832,7 @@ tail          |    10 |   10 |    0 |    100.0%
 wc            |    10 |    9 |    1 |     90.0%
 chmod         |    10 |    7 |    3 |     70.0%
 awk           |    10 |    9 |    1 |     90.0%
-sed           |    10 |    9 |    1 |     90.0%
+sed           |    10 |   10 |    0 |    100.0%
 find          |    10 |    7 |    2 |     70.0%
 date          |    10 |    7 |    3 |     70.0%
 diff          |    10 |    5 |    5 |     50.0%
@@ -2846,7 +2840,7 @@ sort          |    10 |   10 |    0 |    100.0%
 uniq          |    10 |   10 |    0 |    100.0%
 tr            |    10 |    8 |    2 |     80.0%
 cut           |    10 |   10 |    0 |    100.0%
-tee           |    10 |    9 |    1 |     90.0%
+tee           |    10 |   10 |    0 |    100.0%
 alias         |    10 |    7 |    3 |     70.0%
 unalias       |    10 |    8 |    2 |     80.0%
 bg            |    10 |    8 |    2 |     80.0%
@@ -2952,7 +2946,7 @@ ctags         |    10 |    6 |    4 |     60.0%
 asa           |    10 |    3 |    7 |     30.0%
 chgrp         |    10 |    2 |    8 |     20.0%
 chown         |    10 |    3 |    7 |     30.0%
-rmdir         |    10 |    6 |    3 |     60.0%
+rmdir         |    10 |   10 |    0 |    100.0%
 mkfifo        |    10 |    8 |    2 |     80.0%
 unlink        |    10 |    8 |    2 |     80.0%
 patch         |    10 |    8 |    2 |     80.0%
@@ -2998,7 +2992,7 @@ uustat        |    10 |    9 |    1 |     90.0%
 uux           |    10 |    2 |    8 |     20.0%
 xgettext      |    10 |    6 |    4 |     60.0%
 
-TOTAL COMPLIANCE: 65.0% (1137/1750)
+TOTAL COMPLIANCE: 65.4% (1145/1750)
 
 === MISSING UTILITIES (Implemented but failing) ===
 None

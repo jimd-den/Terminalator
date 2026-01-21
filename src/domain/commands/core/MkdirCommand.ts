@@ -1,7 +1,7 @@
 /**
  * MkdirCommand - Core Command
  *
- * Creates directories, supporting parent creation with -p.
+ * Creates directories, supporting parent creation with -p and mode setting with -m.
  *
  * Pillar: The Four-Fold Shield (Strict Architecture)
  * Pillar: The Swift Stream (Performance)
@@ -15,16 +15,24 @@ import { ICommand } from '../ICommand';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
 import { FileSystem } from '../../entities/FileSystem';
+import { ModeParser } from '../../services/ModeParser';
 
 export class MkdirCommand implements ICommand {
     constructor(private fs: FileSystem) { }
 
     execute(args: string[], state: TerminalState, input?: string): CommandResponse {
-        const flags = args.filter(arg => arg.startsWith('-'));
-        const targets = args.filter(arg => !arg.startsWith('-'));
-        const createParents = flags.some(f => f.includes('p'));
+        this.logExecution('MkdirCommand.execute', { args, state });
 
-        if (targets.length === 0) {
+        const options = this.parseOptions(args);
+        if (options.error) {
+            return {
+                output: `mkdir: ${options.error}`,
+                newState: state,
+                exitCode: 1
+            };
+        }
+
+        if (options.targets.length === 0) {
             return {
                 output: 'mkdir: missing operand',
                 newState: state,
@@ -35,46 +43,10 @@ export class MkdirCommand implements ICommand {
         let exitCode = 0;
         let outputString = '';
 
-        for (const target of targets) {
-            // Resolve path absolute or relative
-            let path = target;
-            if (!target.startsWith('/')) {
-                path = state.currentDirectory === '/'
-                    ? `/${target}`
-                    : `${state.currentDirectory}/${target}`;
-            }
-
-            // Check existence
-            const existing = this.fs.resolveNode(path);
-            if (existing) {
-                if (createParents && this.fs.isDirectory(existing)) {
-                    continue; // -p suppresses error if dir exists
-                }
-                outputString += `mkdir: cannot create directory '${target}': File exists\n`;
-                exitCode = 1;
-                continue;
-            }
-
-            try {
-                if (createParents) {
-                    this.mkdirParents(path);
-                } else {
-                    // Strict mkdir: parent must exist
-                    // Special case: if parent is root '/', it always exists.
-                    // But we must resolve parent properly.
-                    const lastSlash = path.lastIndexOf('/');
-                    const parentPath = lastSlash <= 0 ? '/' : path.substring(0, lastSlash);
-
-                    const parent = this.fs.resolveNode(parentPath);
-                    if (!parent || !this.fs.isDirectory(parent)) {
-                        outputString += `mkdir: cannot create directory '${target}': No such file or directory\n`;
-                        exitCode = 1;
-                        continue;
-                    }
-                    this.fs.mkdir(path, 0o755);
-                }
-            } catch (e: any) {
-                outputString += `mkdir: cannot create directory '${target}': ${e.message}\n`;
+        for (const target of options.targets) {
+            const result = this.createPath(target, options, state);
+            if (result.error) {
+                outputString += `mkdir: ${result.error}\n`;
                 exitCode = 1;
             }
         }
@@ -88,18 +60,179 @@ export class MkdirCommand implements ICommand {
         };
     }
 
-    private mkdirParents(path: string) {
-        const parts = path.split('/').filter(p => p.length > 0);
-        let currentPath = '';
+    private parseOptions(args: string[]): { parents: boolean, modeStr?: string, targets: string[], error?: string } {
+        let parents = false;
+        let modeStr: string | undefined;
+        let targets: string[] = [];
+        let i = 0;
 
-        for (const part of parts) {
-            currentPath += `/${part}`;
-            const node = this.fs.resolveNode(currentPath);
-            if (!node) {
-                this.fs.mkdir(currentPath, 0o755);
-            } else if (!this.fs.isDirectory(node)) {
-                throw new Error(`'${currentPath}' exists and is not a directory`);
+        while (i < args.length) {
+            const arg = args[i];
+            if (arg === '--') {
+                targets.push(...args.slice(i + 1));
+                break;
+            }
+            if (arg.startsWith('-') && arg.length > 1) {
+                const flagPart = arg.slice(1);
+                if (flagPart.startsWith('-')) { // Long options (not required by POSIX but good practice)
+                    // No long options for mkdir in POSIX
+                    return { parents: false, targets: [], error: `invalid option -- '${arg}'` };
+                }
+
+                let stop = false;
+                for (let j = 0; j < flagPart.length; j++) {
+                    const char = flagPart[j];
+                    if (char === 'p') {
+                        parents = true;
+                    } else if (char === 'm') {
+                        // Mode can be in next arg or rest of this arg
+                        if (j + 1 < flagPart.length) {
+                            modeStr = flagPart.slice(j + 1);
+                            stop = true;
+                        } else if (i + 1 < args.length) {
+                            modeStr = args[++i];
+                            stop = true;
+                        } else {
+                            return { parents: false, targets: [], error: "option requires an argument -- 'm'" };
+                        }
+                    } else {
+                        return { parents: false, targets: [], error: `invalid option -- '${char}'` };
+                    }
+                    if (stop) break;
+                }
+            } else {
+                targets.push(arg);
+            }
+            i++;
+        }
+
+        return { parents, modeStr, targets };
+    }
+
+    private createPath(target: string, options: any, state: TerminalState): { error?: string } {
+        const fullPath = this.resolvePath(target, state);
+        const components = this.getPathComponents(fullPath);
+
+        // Check search permissions for all but the last component
+        let current = '/';
+        for (let i = 0; i < components.length; i++) {
+            const node = this.fs.resolveNode(current);
+            if (node && !this.hasSearchPermission(node, state.user)) {
+                return { error: `cannot create directory '${target}': Permission denied` };
+            }
+            if (i === components.length - 1) break;
+
+            current += (current === '/' ? '' : '/') + components[i];
+
+            // If component exists and is not a directory, that's an error for mkdir -p too if it's intermediate
+            const existingNode = this.fs.resolveNode(current);
+            if (existingNode && !this.fs.isDirectory(existingNode)) {
+                return { error: `cannot create directory '${target}': File exists` };
             }
         }
+
+        if (options.parents) {
+            return this.createPathWithParents(components, options.modeStr, state.user);
+        } else {
+            return this.createSinglePath(fullPath, options.modeStr, state.user);
+        }
+    }
+
+    private createSinglePath(path: string, modeStr: string | undefined, user: string): { error?: string } {
+        const node = this.fs.resolveNode(path);
+        if (node) {
+            return { error: `cannot create directory '${path}': File exists` };
+        }
+
+        const parentPath = this.getParentPath(path);
+        const parent = this.fs.resolveNode(parentPath);
+        if (!parent || !this.fs.isDirectory(parent)) {
+            return { error: `cannot create directory '${path}': No such file or directory` };
+        }
+
+        try {
+            // Default POSIX mode for mkdir is a=rwx (0777) modified by umask.
+            // Our sim uses 0755 as default.
+            const mode = modeStr ? ModeParser.parse(modeStr, 0o777) : 0o755;
+            this.fs.mkdir(path, mode);
+            return {};
+        } catch (e: any) {
+            return { error: `cannot create directory '${path}': ${e.message}` };
+        }
+    }
+
+    private createPathWithParents(components: string[], modeStr: string | undefined, user: string): { error?: string } {
+        let currentPath = '';
+        const len = components.length;
+
+        for (let i = 0; i < len; i++) {
+            currentPath += `/${components[i]}`;
+            const node = this.fs.resolveNode(currentPath);
+
+            if (!node) {
+                try {
+                    // POSIX: intermediate dirs created with mode 0 modified by u+wx
+                    // Final dir created with specified mode (or default)
+                    const isLast = (i === len - 1);
+                    const mode = isLast
+                        ? (modeStr ? ModeParser.parse(modeStr, 0o777) : 0o755)
+                        : 0o755; // Intermediate default
+
+                    this.fs.mkdir(currentPath, mode);
+                } catch (e: any) {
+                    return { error: `cannot create directory '${currentPath}': ${e.message}` };
+                }
+            } else if (!this.fs.isDirectory(node)) {
+                return { error: `cannot create directory '${currentPath}': File exists` };
+            }
+        }
+        return {};
+    }
+
+    private hasSearchPermission(dentry: any, user: string): boolean {
+        if (user === 'root') return true;
+        const inode = this.fs.getInode(dentry.inodeId);
+        if (!inode) return false;
+
+        // Simplified permission check:
+        // Since we don't have UID/GID mapping for 'testuser', 
+        // we check if 'other' has execute or if it's the owner (assume creator is operator).
+        // For test purposes, we'll check S_IXOTH if not root.
+        const mode = inode.mode;
+        return (mode & 0o001) !== 0 || (user === 'operator' && (mode & 0o100) !== 0);
+    }
+
+    private resolvePath(path: string, state: TerminalState): string {
+        if (path.startsWith('/')) return this.normalizePath(path);
+        const base = state.currentDirectory === '/' ? '' : state.currentDirectory;
+        return this.normalizePath(`${base}/${path}`);
+    }
+
+    private normalizePath(path: string): string {
+        const parts = path.split('/').filter(p => p.length > 0 && p !== '.');
+        const stack: string[] = [];
+        for (const part of parts) {
+            if (part === '..') {
+                if (stack.length > 0) stack.pop();
+            } else {
+                stack.push(part);
+            }
+        }
+        return '/' + stack.join('/');
+    }
+
+    private getPathComponents(path: string): string[] {
+        return path.split('/').filter(p => p.length > 0);
+    }
+
+    private getParentPath(path: string): string {
+        const parts = path.split('/').filter(p => p.length > 0);
+        if (parts.length <= 1) return '/';
+        return '/' + parts.slice(0, -1).join('/');
+    }
+
+    private logExecution(fn: string, data: any) {
+        const timestamp = new Date().toISOString();
+        console.log(`[${timestamp}] ${fn} input:`, JSON.stringify(data));
     }
 }

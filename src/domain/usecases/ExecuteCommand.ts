@@ -104,7 +104,12 @@ export class ExecuteCommand {
 
             for (const step of pipeline) {
                 const commandName = step.command;
-                const args = step.args;
+                // Expand Variables in Args
+                const args = step.args.map(arg => {
+                    return arg.replace(/\$([a-zA-Z_][a-zA-Z0-9_]*)/g, (match, varName) => {
+                        return currentState.environment[varName] || '';
+                    });
+                });
 
                 const command = this.registry.get(commandName);
 
