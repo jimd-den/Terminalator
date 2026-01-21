@@ -31,7 +31,7 @@ UTILITY: ls
 [FAIL] LS_08: Recursive listing -R
        -> Stdout Regex Mismatch.
    Expected: /\/sub/
-   Got: ".:"
+   Got: ".:\nmail"
 [PASS] LS_09
 [PASS] LS_10
 UTILITY: touch
@@ -216,7 +216,7 @@ UTILITY: date
 [FAIL] DATE_06: Complex format
        -> Stdout Regex Mismatch.
    Expected: /Year: 20../
-   Got: "Wed Jan 21 2026 16:07:08 GMT+0000 (Coordinated Universal Time)"
+   Got: "Wed Jan 21 2026 17:35:43 GMT+0000 (Coordinated Universal Time)"
 [PASS] DATE_07
 [FAIL] DATE_08: Set date (fail/stub)
        -> Exit Code: Expected 1, got 0
@@ -272,7 +272,7 @@ UTILITY: tr
 [FAIL] TR_04: Complement -c
        -> Stdout Regex Mismatch.
    Expected: /xexxox/
-   Got: "xellxx"
+   Got: "xellx"
 [PASS] TR_05
 [PASS] TR_06
 [FAIL] TR_07: Fail one arg (delete needs -d)
@@ -909,7 +909,7 @@ UTILITY: fold
 [FAIL] FOLD_04: Space break -s
        -> Stdout Regex Mismatch.
    Expected: /a b\nc d/
-   Got: "a b\n c \nd\n"
+   Got: "a b\n c \nd"
 [PASS] FOLD_05
 [FAIL] FOLD_06: Multiple files
        -> Exit Code: Expected 0, got 1
@@ -945,7 +945,7 @@ UTILITY: du
 [FAIL] DU_04: Human readable -h (Ext)
        -> Stdout Regex Mismatch.
    Expected: /[KMG]/
-   Got: "8	/home/operator\n16	/home\n8	/bin\n32	/"
+   Got: "8	/bin\n8	/usr/bin\n16	/usr\n9	/home/operator\n17	/home\n49	/"
 [PASS] DU_05
 [PASS] DU_06
 [PASS] DU_07
@@ -2063,7 +2063,7 @@ UTILITY: asa
 [FAIL] ASA_05: Page eject
        -> Stdout Regex Mismatch.
    Expected: /\f/
-   Got: "NewPage\n"
+   Got: "NewPage"
 [FAIL] ASA_06: Double space
        -> Exit Code: Expected 0, got 1
 [FAIL] ASA_07: Overprint
@@ -2119,8 +2119,7 @@ UTILITY: rmdir
 [PASS] RMDIR_05
 [PASS] RMDIR_06
 [PASS] RMDIR_07
-[FAIL] RMDIR_08: Fail cwd
-       -> Exit Code: Expected 1, got 0
+[PASS] RMDIR_08
 [PASS] RMDIR_09
 [PASS] RMDIR_10
 UTILITY: mkfifo
@@ -2979,7 +2978,7 @@ ctags         |    10 |    6 |    4 |     60.0%
 asa           |    10 |    3 |    7 |     30.0%
 chgrp         |    10 |    2 |    8 |     20.0%
 chown         |    10 |    3 |    7 |     30.0%
-rmdir         |    10 |    9 |    1 |     90.0%
+rmdir         |    10 |   10 |    0 |    100.0%
 mkfifo        |    10 |    8 |    2 |     80.0%
 unlink        |    10 |    8 |    2 |     80.0%
 patch         |    10 |    8 |    2 |     80.0%
@@ -3025,7 +3024,7 @@ uustat        |    10 |    9 |    1 |     90.0%
 uux           |    10 |    2 |    8 |     20.0%
 xgettext      |    10 |    6 |    4 |     60.0%
 
-TOTAL COMPLIANCE: 64.7% (1132/1750)
+TOTAL COMPLIANCE: 64.7% (1133/1750)
 
 === MISSING UTILITIES (Implemented but failing) ===
 None
