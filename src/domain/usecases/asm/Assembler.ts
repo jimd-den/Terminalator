@@ -95,26 +95,26 @@ export class Assembler {
             case 'li': { // li rd, imm -> addi rd, x0, imm
                 const rd = this.regToIndex(parts[1]);
                 const imm = parseInt(parts[2]);
-                return makeInstruction('addi', Opcode.OP_IMM, { rd, rs1: 0, imm, funct3: Funct3.ADD_SUB });
+                return makeInstruction('addi', Opcode.OP_IMM, address, { rd, rs1: 0, imm, funct3: Funct3.ADD_SUB });
             }
             case 'mv': { // mv rd, rs -> addi rd, rs, 0
                 const rd = this.regToIndex(parts[1]);
                 const rs1 = this.regToIndex(parts[2]);
-                return makeInstruction('addi', Opcode.OP_IMM, { rd, rs1, imm: 0, funct3: Funct3.ADD_SUB });
+                return makeInstruction('addi', Opcode.OP_IMM, address, { rd, rs1, imm: 0, funct3: Funct3.ADD_SUB });
             }
             case 'nop': {
-                return makeInstruction('addi', Opcode.OP_IMM, { rd: 0, rs1: 0, imm: 0, funct3: Funct3.ADD_SUB });
+                return makeInstruction('addi', Opcode.OP_IMM, address, { rd: 0, rs1: 0, imm: 0, funct3: Funct3.ADD_SUB });
             }
 
             // --- Real Ops (Subset of RV32I) ---
             case 'add': {
-                return this.makeROp(mnemonic, Opcode.OP, Funct3.ADD_SUB, 0x00, parts);
+                return this.makeROp(mnemonic, Opcode.OP, Funct3.ADD_SUB, 0x00, parts, address);
             }
             case 'sub': {
-                return this.makeROp(mnemonic, Opcode.OP, Funct3.ADD_SUB, 0x20, parts);
+                return this.makeROp(mnemonic, Opcode.OP, Funct3.ADD_SUB, 0x20, parts, address);
             }
             case 'addi': {
-                return this.makeIOp(mnemonic, Opcode.OP_IMM, Funct3.ADD_SUB, parts);
+                return this.makeIOp(mnemonic, Opcode.OP_IMM, Funct3.ADD_SUB, parts, address);
             }
             case 'lw': {
                 // lw rd, offset(rs1)
@@ -123,7 +123,7 @@ export class Assembler {
                 if (!memMatch) throw new Error(`Invalid lw syntax: ${line}`);
                 const imm = parseInt(memMatch[1]);
                 const rs1 = this.regToIndex(memMatch[2]);
-                return makeInstruction(mnemonic, Opcode.LOAD, { rd, rs1, imm, funct3: Funct3.W });
+                return makeInstruction(mnemonic, Opcode.LOAD, address, { rd, rs1, imm, funct3: Funct3.W });
             }
             case 'sw': {
                 // sw rs2, offset(rs1)
@@ -132,7 +132,7 @@ export class Assembler {
                 if (!memMatch) throw new Error(`Invalid sw syntax: ${line}`);
                 const imm = parseInt(memMatch[1]);
                 const rs1 = this.regToIndex(memMatch[2]);
-                return makeInstruction(mnemonic, Opcode.STORE, { rs1, rs2, imm, funct3: Funct3.W });
+                return makeInstruction(mnemonic, Opcode.STORE, address, { rs1, rs2, imm, funct3: Funct3.W });
             }
             case 'beq': {
                 return this.makeBOp(mnemonic, Opcode.BRANCH, Funct3.BEQ, parts, address);
@@ -143,20 +143,20 @@ export class Assembler {
             case 'jal': {
                 const rd = this.regToIndex(parts[1]);
                 const label = parts[2];
-                return makeInstruction(mnemonic, Opcode.JAL, { rd, label });
+                return makeInstruction(mnemonic, Opcode.JAL, address, { rd, label });
             }
             case 'la': { // la rd, label -> li rd, address
                 const rd = this.regToIndex(parts[1]);
                 const label = parts[2];
                 const addr = this.labels.get(label) || 0;
-                return makeInstruction('addi', Opcode.OP_IMM, { rd, rs1: 0, imm: addr, funct3: Funct3.ADD_SUB });
+                return makeInstruction('addi', Opcode.OP_IMM, address, { rd, rs1: 0, imm: addr, funct3: Funct3.ADD_SUB });
             }
             case 'ecall': {
-                return makeInstruction(mnemonic, Opcode.SYSTEM, {});
+                return makeInstruction(mnemonic, Opcode.SYSTEM, address, {});
             }
 
             default:
-                return makeInstruction(mnemonic, Opcode.UNKNOWN, {});
+                return makeInstruction(mnemonic, Opcode.UNKNOWN, address, {});
         }
     }
 
@@ -173,8 +173,8 @@ export class Assembler {
         throw new Error(`Unknown register: ${name}`);
     }
 
-    private makeROp(mnemonic: string, opcode: Opcode, f3: number, f7: number, parts: string[]): Instruction {
-        return makeInstruction(mnemonic, opcode, {
+    private makeROp(mnemonic: string, opcode: Opcode, f3: number, f7: number, parts: string[], address: number): Instruction {
+        return makeInstruction(mnemonic, opcode, address, {
             rd: this.regToIndex(parts[1]),
             rs1: this.regToIndex(parts[2]),
             rs2: this.regToIndex(parts[3]),
@@ -183,8 +183,8 @@ export class Assembler {
         });
     }
 
-    private makeIOp(mnemonic: string, opcode: Opcode, f3: number, parts: string[]): Instruction {
-        return makeInstruction(mnemonic, opcode, {
+    private makeIOp(mnemonic: string, opcode: Opcode, f3: number, parts: string[], address: number): Instruction {
+        return makeInstruction(mnemonic, opcode, address, {
             rd: this.regToIndex(parts[1]),
             rs1: this.regToIndex(parts[2]),
             imm: parseInt(parts[3]),
@@ -193,7 +193,7 @@ export class Assembler {
     }
 
     private makeBOp(mnemonic: string, opcode: Opcode, f3: number, parts: string[], address: number): Instruction {
-        return makeInstruction(mnemonic, opcode, {
+        return makeInstruction(mnemonic, opcode, address, {
             rs1: this.regToIndex(parts[1]),
             rs2: this.regToIndex(parts[2]),
             label: parts[3],

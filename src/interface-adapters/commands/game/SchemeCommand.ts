@@ -13,15 +13,17 @@
  */
 
 import { ICommand } from '../../../domain/commands/ICommand';
+
 import { CommandResponse } from '../../../domain/usecases/ExecuteCommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../../domain/entities/TerminalState';
-import { FileSystem } from '../../../domain/entities/FileSystem';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { SchemeParser } from '../../../domain/usecases/SchemeParser';
 import { SchemeEvaluator } from '../../../domain/usecases/SchemeEvaluator';
 import { Environment } from '../../../domain/entities/Environment';
 import { ProcedureRegistry } from '../../../domain/entities/ProcedureRegistry';
 import { schemeToString } from '../../../domain/entities/SchemeValue';
-import { registerStandardLibrary } from '../../scheme/StandardLibrary';
+import { registerStandardLibrary, getPrelude } from '../../scheme/StandardLibrary';
 
 export class SchemeCommand implements ICommand {
     readonly name = 'scheme';
@@ -31,7 +33,7 @@ export class SchemeCommand implements ICommand {
     private evaluator = new SchemeEvaluator();
     private globalEnv: Environment | null = null;
 
-    constructor(private fs: FileSystem) {
+    constructor(private fs: FileSystemService) {
         // Register built-ins once
         registerStandardLibrary();
     }
@@ -40,18 +42,44 @@ export class SchemeCommand implements ICommand {
         if (!this.globalEnv) {
             this.globalEnv = new Environment();
             ProcedureRegistry.getInstance().populate(this.globalEnv);
+
+            // Load Prelude (Base Library)
+            const prelude = getPrelude();
+            const exprs = this.parser.parse(prelude);
+            for (const expr of exprs) {
+                this.evaluator.evaluate(expr, this.globalEnv);
+            }
         }
         return this.globalEnv;
     }
 
-    async execute(args: string[], state: TerminalState, fullInput?: string): Promise<CommandResponse> {
+    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         const env = this.getEnv();
+        const fs = this.fs;
 
-        // 1. Script Execution: scheme filename.scm
-        if (args.length === 1 && !args[0].startsWith('(')) {
-            const filename = args[0];
+        let exprCode = '';
+        let filename = '';
+
+        if (args[0] === '-e' && args.length > 1) {
+            exprCode = args.slice(1).join(' ');
+        } else if (args.length > 0 && args[0].startsWith('(')) {
+            // Fallback for direct expression passing: scheme "(+ 1 2)"
+            exprCode = args.join(' ');
+        } else if (args.length === 1) {
+            filename = args[0];
+        } else {
+            return {
+                output: 'MAINFRAME SCHEME v1.0\nUsage: scheme <file.scm> or scheme -e "(expr)"',
+                newState: state,
+                exitCode: 0
+            };
+        }
+
+        if (filename) {
             try {
-                const content = this.fs.readFile(filename, state.currentDirectory);
+                // Resolve path using context.cwd
+                const content = fs.readFile(filename, state.currentDirectory);
                 const expressions = this.parser.parse(content);
                 let lastResult = '';
                 for (const expr of expressions) {
@@ -64,11 +92,9 @@ export class SchemeCommand implements ICommand {
             }
         }
 
-        // 2. Expression eval: scheme "(+ 1 2)"
-        const code = args.join(' ').trim();
-        if (code) {
+        if (exprCode) {
             try {
-                const expressions = this.parser.parse(code);
+                const expressions = this.parser.parse(exprCode);
                 if (expressions.length === 0) return { output: '', newState: state, exitCode: 0 };
 
                 const result = this.evaluator.evaluate(expressions[0], env);
@@ -78,10 +104,6 @@ export class SchemeCommand implements ICommand {
             }
         }
 
-        return {
-            output: 'MAINFRAME SCHEME v1.0\nUsage: scheme <file.scm> or scheme "(expr)"',
-            newState: state,
-            exitCode: 0
-        };
+        return { output: '', newState: state, exitCode: 0 };
     }
 }

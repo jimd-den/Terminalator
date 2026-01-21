@@ -1,6 +1,7 @@
 import { ICommand, CommandResponse } from '../../../domain/entities/Command';
 import { FileSystem } from '../../../domain/entities/FileSystem';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../../domain/entities/TerminalState';
 
 interface WcOptions {
@@ -15,9 +16,10 @@ export class WcCommand implements ICommand {
     name = 'wc';
     description = 'Print newline, word, and byte counts for each file';
 
-    constructor(/* private fs: FileSystem */) { }
+    constructor(/* private fs: FileSystemService */) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         const options = this.parseArgs(args);
 
         // Default behavior: -l -w -c if no flags specified
@@ -47,13 +49,13 @@ export class WcCommand implements ICommand {
             }
         } else {
             for (const file of options.files) {
-                const node = context.fs.resolveNode(file, context.cwd);
+                const node = context.fileSystemService.resolve(file, context.cwd);
                 if (!node) {
                     outputLines.push(`wc: ${file}: No such file or directory`);
                     exitCode = 1;
                     continue;
                 }
-                if (context.fs.isDirectory(node)) {
+                if (context.fileSystemService.isDirectory(node)) {
                     outputLines.push(`wc: ${file}: Is a directory`);
                     // wc usually prints 0 0 0 for dir
                     outputLines.push(this.formatOutput({ lines: 0, words: 0, bytes: 0, chars: 0 }, file, options));
@@ -61,7 +63,7 @@ export class WcCommand implements ICommand {
                     continue;
                 }
 
-                const inode = context.fs.getInode(node.inodeId);
+                const inode = context.fileSystemService.getInode(node.inodeId);
                 const content = (inode && typeof inode.content === 'string') ? inode.content : '';
                 const result = this.countStats(content);
 

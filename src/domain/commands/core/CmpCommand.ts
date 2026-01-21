@@ -11,20 +11,22 @@
  */
 
 import { ICommand } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 export class CmpCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
-    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const input = context.stdin;
         // POSIX: cmp [options] file1 file2 [skip1 [skip2]]
         // Simplified: cmp file1 file2
 
         const files = args.filter(a => !a.startsWith('-'));
         if (files.length < 2) {
-             return { output: 'cmp: missing operand', newState: state, exitCode: 2 };
+            return { output: 'cmp: missing operand', newState: state, exitCode: 2 };
         }
 
         const file1 = files[0];

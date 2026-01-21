@@ -11,31 +11,34 @@
  */
 
 import { ICommand } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
 import { FileSystem } from '../../entities/FileSystem';
 
 export class UnlinkCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
-    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const input = context.stdin;
         const files = args.filter(a => !a.startsWith('-'));
         if (files.length === 0) {
-             return { output: 'unlink: missing operand', newState: state, exitCode: 1 };
+            return { output: 'unlink: missing operand', newState: state, exitCode: 1 };
         }
 
         const file = files[0]; // unlink takes exactly one argument usually? POSIX says "file". Singular.
 
         try {
             const path = this.resolvePath(file, state);
-            const node = this.fs.resolveNode(path);
+            const node = this.fs.resolve(path);
             if (!node) {
                 return { output: `unlink: cannot unlink '${file}': No such file or directory`, newState: state, exitCode: 1 };
             }
 
             // Check if directory
             const inode = this.fs.getInode(node.inodeId);
-            if (inode.mode & 0o040000) {
+            if (inode!.mode & 0o040000) {
                 return { output: `unlink: cannot unlink '${file}': Is a directory`, newState: state, exitCode: 1 };
             }
 

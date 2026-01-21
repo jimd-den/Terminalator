@@ -13,8 +13,9 @@
  * 8. SOLID / KISS: Simple implementation.
  */
 import { ICommand, CommandResponse } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 interface ArHeader {
     name: string;
@@ -31,10 +32,11 @@ interface ArEntry {
 }
 
 export class ArCommand implements ICommand {
-    private fs: FileSystem;
+    constructor(private fs: FileSystemService) { }
 
-    async execute(args: string[], state: TerminalState, _input?: string): Promise<CommandResponse> {
-        this.fs = state.fs;
+    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
+        // this.fs = state.fs; // Already injected
 
         let mode = '';
         let archiveName = '';
@@ -70,10 +72,11 @@ export class ArCommand implements ICommand {
         let created = false;
 
         // Read existing archive
-        const node = this.fs.resolveNode(archivePath);
+        // Read existing archive
+        const node = this.fs.resolve(archivePath);
         if (node && !this.fs.isDirectory(node)) {
             try {
-                const content = this.fs.readFile(this.fs.getAbsolutePath(node));
+                const content = this.fs.readFile(archivePath);
                 entries = this.parseArchive(content);
             } catch (e) {
                 return {
@@ -84,12 +87,8 @@ export class ArCommand implements ICommand {
             }
         } else if (mode.includes('r') || mode.includes('q') || mode.includes('c')) {
             created = true;
-            if (verbose) {
-                // 'ar: creating archive.a' is standard sometimes, but tests might check stderr?
-                // We'll return it in output if verbose.
-            }
         } else {
-             return {
+            return {
                 output: `ar: ${archiveName}: No such file or directory`,
                 newState: state,
                 exitCode: 1
@@ -100,19 +99,10 @@ export class ArCommand implements ICommand {
 
         // Operations
         if (mode.includes('t')) { // List
-            if (files.length > 0) {
-                for (const f of files) {
-                    const entry = entries.find(e => e.header.name === f);
-                    if (entry) {
-                        if (verbose) outputLines.push(this.formatVerbose(entry));
-                        else outputLines.push(entry.header.name);
-                    }
-                }
-            } else {
-                for (const entry of entries) {
-                    if (verbose) outputLines.push(this.formatVerbose(entry));
-                    else outputLines.push(entry.header.name);
-                }
+            const targets = files.length > 0 ? entries.filter(e => files.includes(e.header.name)) : entries;
+            for (const entry of targets) {
+                if (verbose) outputLines.push(this.formatVerbose(entry));
+                else outputLines.push(entry.header.name);
             }
         } else if (mode.includes('d')) { // Delete
             for (const f of files) {
@@ -127,18 +117,18 @@ export class ArCommand implements ICommand {
             const targets = files.length > 0 ? entries.filter(e => files.includes(e.header.name)) : entries;
             for (const entry of targets) {
                 const outPath = state.currentDirectory + '/' + entry.header.name;
-                this.fs.writeFile(outPath, entry.content, 'w', state.currentDirectory);
+                this.fs.writeFile(outPath, entry.content, state.currentDirectory);
                 if (verbose) outputLines.push(`x - ${entry.header.name}`);
             }
         } else if (mode.includes('r') || mode.includes('q')) { // Append/Replace
             for (const f of files) {
                 const srcPath = f.startsWith('/') ? f : state.currentDirectory + '/' + f;
-                const srcNode = this.fs.resolveNode(srcPath);
+                const srcNode = this.fs.resolve(srcPath);
                 if (!srcNode || this.fs.isDirectory(srcNode)) {
                     outputLines.push(`ar: ${f}: No such file or directory`);
                     continue;
                 }
-                const content = this.fs.readFile(this.fs.getAbsolutePath(srcNode));
+                const content = this.fs.readFile(srcPath);
                 const inode = this.fs.getInode(srcNode.inodeId);
 
                 const newEntry: ArEntry = {
@@ -164,11 +154,11 @@ export class ArCommand implements ICommand {
             }
             this.writeArchive(archivePath, entries, state.currentDirectory);
         } else if (mode.includes('p')) { // Print
-             const targets = files.length > 0 ? entries.filter(e => files.includes(e.header.name)) : entries;
-             for (const entry of targets) {
-                 if (verbose) outputLines.push(`\n<${entry.header.name}>\n`);
-                 outputLines.push(entry.content);
-             }
+            const targets = files.length > 0 ? entries.filter(e => files.includes(e.header.name)) : entries;
+            for (const entry of targets) {
+                if (verbose) outputLines.push(`\n<${entry.header.name}>\n`);
+                outputLines.push(entry.content);
+            }
         }
 
         return {
@@ -178,9 +168,6 @@ export class ArCommand implements ICommand {
         };
     }
 
-    // Simple JSON-based format for simulation
-    // "Real" ar uses binary headers, but we store text.
-    // Format: !<arch>\nJSON_ARRAY
     private parseArchive(content: string): ArEntry[] {
         if (!content.startsWith('!<arch>\n')) return [];
         try {
@@ -193,12 +180,10 @@ export class ArCommand implements ICommand {
 
     private writeArchive(path: string, entries: ArEntry[], cwd: string) {
         const json = JSON.stringify(entries);
-        this.fs.writeFile(path, '!<arch>\n' + json, 'w', cwd);
+        this.fs.writeFile(path, '!<arch>\n' + json, cwd);
     }
 
     private formatVerbose(entry: ArEntry): string {
-        // rw-r--r-- 0/0 4 Nov 1 12:00 2023 file
-        // Simplified
         return `rw-r--r-- ${entry.header.uid}/${entry.header.gid} ${entry.header.size} ${entry.header.name}`;
     }
 }

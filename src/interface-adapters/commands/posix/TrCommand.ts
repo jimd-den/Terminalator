@@ -1,5 +1,6 @@
 import { ICommand, CommandResponse } from '../../../domain/entities/Command';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../../domain/entities/TerminalState';
 
 export class TrCommand implements ICommand {
@@ -7,6 +8,7 @@ export class TrCommand implements ICommand {
     description = 'Translate or delete characters';
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         let set1 = '';
         let set2 = '';
         const deleteMode = args.includes('-d');

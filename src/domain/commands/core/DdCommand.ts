@@ -3,10 +3,14 @@
  * @description The 'dd' command. Convert and copy a file.
  */
 import { ICommand, CommandResponse } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
 
 export class DdCommand implements ICommand {
-    async execute(args: string[], state: TerminalState, _input?: string): Promise<CommandResponse> {
+    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const _input = context.stdin;
+        const input = context.stdin;
         let inputFile = '';
         let outputFile = '';
 
@@ -19,7 +23,7 @@ export class DdCommand implements ICommand {
         let content = _input || '';
 
         if (inputFile) {
-            const node = fs.resolveNode(inputFile, state.currentDirectory);
+            const node = fs.resolve(inputFile, state.currentDirectory);
             if (!node || fs.isDirectory(node)) {
                  return { output: `dd: ${inputFile}: No such file`, newState: state, exitCode: 1 };
             }

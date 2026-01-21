@@ -13,6 +13,8 @@
  * 8. SOLID / KISS: Simple implementation.
  */
 import { ICommand, CommandResponse } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
 import { FileSystem, Dentry } from '../../entities/FileSystem';
 
@@ -33,7 +35,8 @@ interface Rule {
 }
 
 export class MakeCommand implements ICommand {
-    async execute(args: string[], state: TerminalState, _input?: string): Promise<CommandResponse> {
+    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         const options: MakeOptions = {
             ignoreErrors: false,
             dryRun: false,
@@ -79,16 +82,16 @@ export class MakeCommand implements ICommand {
         const fs = state.fs;
 
         // 1. Resolve Makefile
-        let makefileNode: Dentry | null = fs.resolveNode(options.file, state.currentDirectory);
+        let makefileNode: Dentry | null = fs.resolve(options.file, state.currentDirectory);
         if (!makefileNode && state.currentDirectory !== '/') {
-             makefileNode = fs.resolveNode(options.file, '/');
+             makefileNode = fs.resolve(options.file, '/');
         }
 
         if (!makefileNode || fs.isDirectory(makefileNode)) {
              // Try 'makefile' lowercase if default
              if (options.file === 'Makefile') {
-                 let lower = fs.resolveNode('makefile', state.currentDirectory);
-                 if (!lower && state.currentDirectory !== '/') lower = fs.resolveNode('makefile', '/');
+                 let lower = fs.resolve('makefile', state.currentDirectory);
+                 if (!lower && state.currentDirectory !== '/') lower = fs.resolve('makefile', '/');
 
                  if (lower && !fs.isDirectory(lower)) {
                      makefileNode = lower;
@@ -232,7 +235,7 @@ export class MakeCommand implements ICommand {
         };
 
         const getMtime = (path: string): number => {
-            const node = fs.resolveNode(path, state.currentDirectory);
+            const node = fs.resolve(path, state.currentDirectory);
             if (!node) return -1;
             const inode = fs.getInode(node.inodeId);
             return inode ? inode.mtime : -1;
@@ -295,7 +298,7 @@ export class MakeCommand implements ICommand {
                      const path = targetName.startsWith('/') ? targetName : state.currentDirectory + '/' + targetName;
                      fs.writeFile(path, '', 'a', state.currentDirectory); // append empty updates mtime?
                      // Actually force mtime update
-                     const node = fs.resolveNode(path, state.currentDirectory);
+                     const node = fs.resolve(path, state.currentDirectory);
                      if (node) {
                          const inode = fs.getInode(node.inodeId);
                          if (inode) {
@@ -350,7 +353,7 @@ export class MakeCommand implements ICommand {
                          const path = file.startsWith('/') ? file : state.currentDirectory + '/' + file;
                          fs.writeFile(path, '', 'a', state.currentDirectory); // ensure exists
                          // Update mtime
-                         const node = fs.resolveNode(path, state.currentDirectory);
+                         const node = fs.resolve(path, state.currentDirectory);
                          if (node) {
                              const inode = fs.getInode(node.inodeId);
                              if (inode) inode.mtime = Date.now();

@@ -1,15 +1,17 @@
 import { ICommand, CommandResponse } from '../../../domain/entities/Command';
 import { FileSystem } from '../../../domain/entities/FileSystem';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../../domain/entities/TerminalState';
 
 export class ChmodCommand implements ICommand {
     name = 'chmod';
     description = 'Change file mode bits';
 
-    constructor(/* private fs: FileSystem */) { }
+    constructor(/* private fs: FileSystemService */) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         if (args.length < 2) {
             return { output: 'chmod: missing operand', exitCode: 1 };
         }

@@ -12,14 +12,16 @@
  */
 
 import { ICommand } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 export class TailCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
-    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const input = context.stdin;
         let linesToPrint = 10;
         let bytesToPrint = -1;
 
@@ -48,7 +50,7 @@ export class TailCommand implements ICommand {
                     return { output: 'tail: option requires an argument -- c', newState: state, exitCode: 1 };
                 }
             } else if (arg.startsWith('-') && arg !== '-') {
-                 // ignore other flags
+                // ignore other flags
             } else {
                 targets.push(arg);
             }
@@ -70,7 +72,7 @@ export class TailCommand implements ICommand {
             const snippet = effectiveLines.slice(-linesToPrint);
             let output = snippet.join('\n');
             if (hasTrailing && snippet.length > 0) {
-                 output += '\n';
+                output += '\n';
             }
             return output;
         };

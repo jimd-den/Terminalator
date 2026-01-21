@@ -13,9 +13,10 @@
  */
 
 import { ICommand } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 export class EdCommand implements ICommand {
     private buffer: string[] = [];
@@ -24,9 +25,10 @@ export class EdCommand implements ICommand {
     private mode: 'command' | 'input' = 'command';
     private inputBuffer: string[] = []; // Lines collected during input mode
 
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
-    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const input = context.stdin;
         // Reset state for each execution
         this.buffer = [];
         this.currentLine = 0;
@@ -39,8 +41,8 @@ export class EdCommand implements ICommand {
             this.filename = args[0];
             const resolvedPath = this.resolvePath(this.filename, state);
             try {
-                // If file exists, load it
-                if (this.fs.resolveNode(resolvedPath)) {
+                try {
+                    // Try to read file directly. resolve() throws if not found.
                     const content = this.fs.readFile(resolvedPath);
                     if (content) {
                         this.buffer = content.split('\n');
@@ -49,6 +51,8 @@ export class EdCommand implements ICommand {
                         // We'll trust split for now but sanitize if needed.
                         this.currentLine = this.buffer.length;
                     }
+                } catch (e) {
+                    // File doesn't exist or read error, treat as new file
                 }
                 // Else new file, empty buffer
             } catch (e) {
@@ -75,7 +79,7 @@ export class EdCommand implements ICommand {
         // POSIX: "The number of bytes ... shall be written..."
 
         for (const line of scriptLines) {
-            if (this.mode === 'input') {
+            if ((this.mode as string) === 'input') {
                 if (line === '.') {
                     this.mode = 'command';
                     // Insert collected lines into buffer

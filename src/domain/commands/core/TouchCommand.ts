@@ -12,14 +12,17 @@
  */
 
 import { ICommand } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem, S_IFREG } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
+import { S_IFREG } from '../../entities/FileSystem';
 
 export class TouchCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
-    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const input = context.stdin;
         // Parse flags
         let noCreate = false; // -c
         const targets: string[] = [];
@@ -65,7 +68,7 @@ export class TouchCommand implements ICommand {
                 path = path.slice(0, -1);
             }
 
-            const existing = this.fs.resolveNode(path);
+            const existing = this.fs.resolve(path);
 
             if (existing) {
                 // Update timestamps
@@ -87,7 +90,7 @@ export class TouchCommand implements ICommand {
                 const lastSlashIndex = path.lastIndexOf('/');
                 const parentPath = lastSlashIndex === 0 ? '/' : path.substring(0, lastSlashIndex);
 
-                const parent = this.fs.resolveNode(parentPath);
+                const parent = this.fs.resolve(parentPath);
 
                 if (!parent || !this.fs.isDirectory(parent)) {
                     output += `touch: cannot touch '${target}': No such file or directory\n`;

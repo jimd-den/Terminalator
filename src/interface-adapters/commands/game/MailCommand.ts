@@ -1,5 +1,6 @@
 import { ICommand, CommandResponse } from '../../../domain/entities/Command';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../../domain/entities/TerminalState';
 import { MailSystem } from '../../../domain/usecases/MailSystem';
 
@@ -10,9 +11,10 @@ export class MailCommand implements ICommand {
     constructor(private mailSystem: MailSystem) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         // Simple list for now, could handle arguments later
         return {
-            output: this.mailSystem.listMail(context.fs),
+            output: this.mailSystem.listMail(),
             exitCode: 0,
             newState: state
         };

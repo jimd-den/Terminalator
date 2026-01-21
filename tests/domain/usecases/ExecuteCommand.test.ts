@@ -14,8 +14,8 @@ describe('ExecuteCommand', () => {
         executor = new ExecuteCommand(fs);
     });
 
-    it('should list files with ls', () => {
-        const result = executor.execute('ls', initialState);
+    it('should list files with ls', async () => {
+        const result = await executor.execute('ls', initialState);
         // /home/operator has 'mail' and 'notes.txt', but NOT 'bin'.
         // 'bin' is in root.
         assert.ok(result.output.includes('mail'));
@@ -23,20 +23,20 @@ describe('ExecuteCommand', () => {
         assert.strictEqual(result.exitCode, 0);
     });
 
-    it('should print working directory with pwd', () => {
-        const result = executor.execute('pwd', initialState);
+    it('should print working directory with pwd', async () => {
+        const result = await executor.execute('pwd', initialState);
         assert.strictEqual(result.output, '/home/operator');
         assert.strictEqual(result.exitCode, 0);
     });
 
-    it('should change directory with cd', () => {
-        const result = executor.execute('cd /', initialState);
+    it('should change directory with cd', async () => {
+        const result = await executor.execute('cd /', initialState);
         assert.strictEqual(result.newState.currentDirectory, '/');
         assert.strictEqual(result.exitCode, 0);
     });
 
-    it('should return error for unknown command', () => {
-        const result = executor.execute('unknown_cmd', initialState);
+    it('should return error for unknown command', async () => {
+        const result = await executor.execute('unknown_cmd', initialState);
         assert.ok(result.output.includes('command not found'));
         assert.strictEqual(result.exitCode, 127);
     });

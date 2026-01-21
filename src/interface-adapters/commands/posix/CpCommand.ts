@@ -1,6 +1,7 @@
 import { ICommand, CommandResponse } from '../../../domain/entities/Command';
 import { FileSystem, Dentry } from '../../../domain/entities/FileSystem';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../../domain/entities/TerminalState';
 
 interface CpOptions {
@@ -26,6 +27,7 @@ export class CpCommand implements ICommand {
     constructor() { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         const options = this.parseArgs(args);
 
         if (!options.destination || options.sources.length === 0) {
@@ -33,8 +35,8 @@ export class CpCommand implements ICommand {
         }
 
         const destPath = options.destination;
-        const destNode = context.fs.resolveNode(destPath, context.cwd);
-        const destIsDir = destNode ? context.fs.isDirectory(destNode) : false;
+        const destNode = context.fileSystemService.resolve(destPath, context.cwd);
+        const destIsDir = destNode ? context.fileSystemService.isDirectory(destNode) : false;
 
         if (options.sources.length > 1 && !destIsDir) {
             return { output: `cp: target '${destPath}' is not a directory`, exitCode: 1 };
@@ -45,14 +47,14 @@ export class CpCommand implements ICommand {
 
         for (const sourcePath of options.sources) {
             try {
-                const sourceNode = context.fs.resolveNode(sourcePath, context.cwd);
+                const sourceNode = context.fileSystemService.resolve(sourcePath, context.cwd);
                 if (!sourceNode) {
                     outputLines.push(`cp: cannot stat '${sourcePath}': No such file or directory`);
                     exitCode = 1;
                     continue;
                 }
 
-                if (context.fs.isDirectory(sourceNode) && !options.recursive) {
+                if (context.fileSystemService.isDirectory(sourceNode) && !options.recursive) {
                     outputLines.push(`cp: -r not specified; omitting directory '${sourcePath}'`);
                     exitCode = 1;
                     continue;
@@ -114,7 +116,7 @@ export class CpCommand implements ICommand {
         return options;
     }
 
-    private copyNode(fs: FileSystem, node: Dentry, destPath: string, cwd: string, recursive: boolean) {
+    private copyNode(fs: FileSystemService, node: Dentry, destPath: string, cwd: string, recursive: boolean) {
         if (fs.isDirectory(node)) {
             if (!recursive) {
                 throw new Error(`-r not specified; omitting directory '${node.name}'`);
@@ -145,7 +147,11 @@ export class CpCommand implements ICommand {
             // File
             const inode = fs.getInode(node.inodeId);
             const content = inode ? inode.content : '';
-            fs.writeFile(destPath, content || '', 'w', cwd);
+            if (content instanceof Map) {
+                // Should not happen for file
+            } else {
+                fs.writeFile(destPath, content || '', 'w', cwd);
+            }
         }
     }
 }

@@ -32,7 +32,7 @@ export class GameCommandExecutor extends ExecuteCommand {
     private compiler: CodeCompiler;
     private gameManager: GameManager;
 
-    constructor(fs: FileSystem, gameManager: GameManager, telemetry?: TelemetryPort) {
+    constructor(fs: FileSystemService, gameManager: GameManager, telemetry?: TelemetryPort) {
         super(fs, telemetry);
         this.mailSystem = new MailSystem(fs, telemetry);
         this.compiler = new CodeCompiler(fs, telemetry);

@@ -11,14 +11,17 @@
  */
 
 import { ICommand } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
 import { FileSystem } from '../../entities/FileSystem';
 
 export class TestCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
-    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const input = context.stdin;
         const res = this.evaluate(args, state);
         return {
             output: '',
@@ -42,18 +45,18 @@ export class TestCommand implements ICommand {
                 const path = state.currentDirectory === '/' ? `/${file}` : `${state.currentDirectory}/${file}`; // Naive resolve
                 // TODO: use proper resolvePath helper if available or duplicate logic?
                 // I'll duplicate simplified logic for now.
-                const node = this.fs.resolveNode(path);
+                const node = this.fs.resolve(path);
 
                 switch (op) {
                     case '-e': return !!node;
                     case '-d':
                         if (!node) return false;
                         const inode = this.fs.getInode(node.inodeId);
-                        return !!(inode.mode & 0o040000);
+                        return !!(inode!.mode & 0o040000);
                     case '-f':
                         if (!node) return false;
                         const inodeF = this.fs.getInode(node.inodeId);
-                        return !(inodeF.mode & 0o040000); // Rough check for file
+                        return !(inodeF!.mode & 0o040000); // Rough check for file
                     case '-z': return file.length === 0; // -z string? No, -z checks string length.
                     case '-n': return file.length > 0;
                 }

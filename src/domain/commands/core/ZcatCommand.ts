@@ -11,25 +11,27 @@
  */
 
 import { ICommand } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 export class ZcatCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
-    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const input = context.stdin;
         const files = args.filter(a => !a.startsWith('-'));
         if (files.length === 0) {
-             return { output: 'zcat: missing operand', newState: state, exitCode: 1 };
+            return { output: 'zcat: missing operand', newState: state, exitCode: 1 };
         }
 
         let output = '';
 
         for (const file of files) {
             try {
-                const path = this.resolvePath(file, state);
-                const content = this.fs.readFile(path);
+                const content = this.fs.readFile(file, state.currentDirectory);
+                // readFile now returns string automatically (decodes if binary)
 
                 if (content.startsWith('RLE:')) {
                     output += this.rleDecode(content.substring(4));
@@ -52,10 +54,7 @@ export class ZcatCommand implements ICommand {
         };
     }
 
-    private resolvePath(path: string, state: TerminalState): string {
-        if (path.startsWith('/')) return path;
-        return state.currentDirectory === '/' ? `/${path}` : `${state.currentDirectory}/${path}`;
-    }
+
 
     private rleDecode(input: string): string {
         let decoded = '';

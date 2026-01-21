@@ -11,14 +11,17 @@
  */
 
 import { ICommand } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
 import { FileSystem } from '../../entities/FileSystem';
 
 export class RealpathCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
-    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const input = context.stdin;
         const files = args.filter(a => !a.startsWith('-'));
         if (files.length === 0) {
              return { output: 'realpath: missing operand', newState: state, exitCode: 1 };
@@ -50,7 +53,7 @@ export class RealpathCommand implements ICommand {
             absPath = this.normalize(absPath);
 
             // Check existence? POSIX realpath fails if components don't exist.
-            const node = this.fs.resolveNode(absPath);
+            const node = this.fs.resolve(absPath);
             if (!node) {
                 return { output: `realpath: ${file}: No such file or directory`, newState: state, exitCode: 1 };
             }

@@ -18,10 +18,14 @@ export type SchemeType =
     | 'symbol'
     | 'boolean'
     | 'string'
+    | 'char'
     | 'pair'
     | 'null'
+    | 'vector'
+    | 'bytevector'
     | 'procedure'
-    | 'keyword'; // for internal use like 'define', 'lambda'
+    | 'keyword'
+    | 'eof';
 
 export interface SchemeValue {
     readonly type: SchemeType;
@@ -57,9 +61,29 @@ export const makePair = (car: SchemeValue, cdr: SchemeValue): SchemeValue => ({
 });
 
 /**
+ * Creates a Scheme Character
+ */
+export const makeChar = (c: string): SchemeValue => ({ type: 'char', value: c });
+
+/**
+ * Creates a Scheme Vector
+ */
+export const makeVector = (elements: SchemeValue[]): SchemeValue => ({ type: 'vector', value: elements });
+
+/**
+ * Creates a Scheme Bytevector
+ */
+export const makeBytevector = (bytes: Uint8Array): SchemeValue => ({ type: 'bytevector', value: bytes });
+
+/**
  * The Empty List (Null)
  */
 export const NIL: SchemeValue = { type: 'null', value: null };
+
+/**
+ * End of File object
+ */
+export const EOF: SchemeValue = { type: 'eof', value: null };
 
 /**
  * Creates a Scheme Procedure (Closure or Built-in)
@@ -127,6 +151,14 @@ export const schemeToString = (v: SchemeValue): string => {
                 return `(${schemeToString(v.value.car)} . ${schemeToString(v.value.cdr)})`;
             }
         }
+        case 'char': {
+            if (v.value === ' ') return '#\\space';
+            if (v.value === '\n') return '#\\newline';
+            return `#\\${v.value}`;
+        }
+        case 'vector': return `#(${v.value.map(schemeToString).join(' ')})`;
+        case 'bytevector': return `#u8(${Array.from(v.value as Uint8Array).join(' ')})`;
+        case 'eof': return '#<eof>';
         case 'procedure': return `#<procedure${v.value.name ? `:${v.value.name}` : ''}>`;
         default: return '#<unknown>';
     }

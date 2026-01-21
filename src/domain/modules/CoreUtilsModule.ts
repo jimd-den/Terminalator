@@ -9,6 +9,7 @@
 import { CommandModule } from './CommandModule';
 import { CommandRegistry } from '../commands/CommandRegistry';
 import { FileSystem } from '../entities/FileSystem';
+import { FileSystemService } from '../services/FileSystemService';
 
 import { LsCommand } from '../commands/core/LsCommand';
 import { CdCommand } from '../commands/core/CdCommand';
@@ -183,121 +184,130 @@ import { GzipCommand } from '../commands/core/GzipCommand';
 import { GunzipCommand } from '../commands/core/GunzipCommand';
 import { TarCommand } from '../commands/core/TarCommand';
 import { CpioCommand } from '../commands/core/CpioCommand';
+import { WasmCompilerService } from '../../infrastructure/services/WasmCompilerService';
+import { GccCommand } from '../commands/core/GccCommand';
+import { WhoamiCommand } from '../commands/core/WhoamiCommand';
+import { DateCommand } from '../commands/core/DateCommand';
 
 export class CoreUtilsModule implements CommandModule {
-    constructor(private fs: FileSystem) {}
+    private fsService: FileSystemService;
+
+    constructor(private fs: FileSystem) {
+        this.fsService = new FileSystemService(fs);
+    }
 
     register(registry: CommandRegistry): void {
-        const fs = this.fs;
+        const fsService = this.fsService;
+        const fs = this.fs; // Keep fs for Wasm/Legacy if needed
 
-        registry.register('ls', new LsCommand(fs));
-        registry.register('cd', new CdCommand(fs));
-        registry.register('pwd', new PwdCommand(fs));
-        registry.register('cat', new CatCommand(fs));
-        registry.register('grep', new GrepCommand(fs));
-        registry.register('mkdir', new MkdirCommand(fs));
-        registry.register('touch', new TouchCommand(fs));
-        registry.register('rm', new RmCommand(fs));
-        registry.register('cp', new CpCommand(fs));
-        registry.register('mv', new MvCommand(fs));
-        registry.register('echo', new EchoCommand(fs));
-        registry.register('head', new HeadCommand(fs));
-        registry.register('tail', new TailCommand(fs));
-        registry.register('wc', new WcCommand(fs));
-        registry.register('chmod', new ChmodCommand(fs));
-        registry.register('chown', new ChownCommand(fs));
-        registry.register('du', new DuCommand(fs));
-        registry.register('ln', new LnCommand(fs));
-        registry.register('df', new DfCommand(fs));
-        registry.register('find', new FindCommand(fs));
-        registry.register('sed', new SedCommand(fs));
-        registry.register('awk', new AwkCommand(fs));
-        registry.register('cut', new CutCommand(fs));
-        registry.register('tr', new TrCommand(fs));
-        registry.register('uniq', new UniqCommand(fs));
-        registry.register('sort', new SortCommand(fs));
-        registry.register('ed', new EdCommand(fs));
-        registry.register('cmp', new CmpCommand(fs));
-        registry.register('comm', new CommCommand(fs));
-        registry.register('diff', new DiffCommand(fs));
-        registry.register('paste', new PasteCommand(fs));
-        registry.register('tee', new TeeCommand(fs));
-        registry.register('cksum', new CksumCommand(fs));
-        registry.register('fold', new FoldCommand(fs));
-        registry.register('join', new JoinCommand(fs));
-        registry.register('nl', new NlCommand(fs));
-        registry.register('printf', new PrintfCommand(fs));
-        registry.register('split', new SplitCommand(fs));
-        registry.register('strings', new StringsCommand(fs));
-        registry.register('expand', new ExpandCommand(fs));
-        registry.register('unexpand', new UnexpandCommand(fs));
-        registry.register('tsort', new TsortCommand(fs));
-        registry.register('rmdir', new RmdirCommand(fs));
-        registry.register('link', new LinkCommand(fs));
-        registry.register('unlink', new UnlinkCommand(fs));
-        registry.register('readlink', new ReadlinkCommand(fs));
-        registry.register('realpath', new RealpathCommand(fs));
-        registry.register('sleep', new SleepCommand(fs));
-        registry.register('uname', new UnameCommand(fs));
-        registry.register('logname', new LognameCommand(fs));
-        registry.register('env', new EnvCommand(fs));
-        registry.register('cal', new CalCommand(fs));
-        registry.register('expr', new ExprCommand(fs));
-        registry.register('test', new TestCommand(fs)); // Often aliased as [
-        registry.register('[', new TestCommand(fs));
-        registry.register('od', new OdCommand(fs));
-        registry.register('uuencode', new UuencodeCommand(fs));
-        registry.register('uudecode', new UudecodeCommand(fs));
-        registry.register('who', new WhoCommand(fs));
-        registry.register('tty', new TtyCommand(fs));
-        registry.register('id', new IdCommand(fs));
-        registry.register('basename', new BasenameCommand(fs));
-        registry.register('dirname', new DirnameCommand(fs));
-        registry.register('pathchk', new PathchkCommand(fs));
+        registry.register('ls', new LsCommand(fsService));
+        registry.register('cd', new CdCommand(fsService));
+        registry.register('pwd', new PwdCommand(fsService));
+        registry.register('cat', new CatCommand(fsService));
+        registry.register('grep', new GrepCommand(fsService));
+        registry.register('mkdir', new MkdirCommand(fsService));
+        registry.register('touch', new TouchCommand(fsService));
+        registry.register('rm', new RmCommand(fsService));
+        registry.register('cp', new CpCommand(fsService));
+        registry.register('mv', new MvCommand(fsService));
+        registry.register('echo', new EchoCommand(fsService));
+        registry.register('head', new HeadCommand(fsService));
+        registry.register('tail', new TailCommand(fsService));
+        registry.register('wc', new WcCommand(fsService));
+        registry.register('chmod', new ChmodCommand(fsService));
+        registry.register('chown', new ChownCommand(fsService));
+        registry.register('du', new DuCommand(fsService));
+        registry.register('ln', new LnCommand(fsService));
+        registry.register('df', new DfCommand(fsService));
+        registry.register('find', new FindCommand(fsService));
+        registry.register('sed', new SedCommand(fsService));
+        registry.register('awk', new AwkCommand(fsService));
+        registry.register('cut', new CutCommand(fsService));
+        registry.register('tr', new TrCommand(fsService));
+        registry.register('uniq', new UniqCommand(fsService));
+        registry.register('sort', new SortCommand(fsService));
+        registry.register('ed', new EdCommand(fsService));
+        registry.register('cmp', new CmpCommand(fsService));
+        registry.register('comm', new CommCommand(fsService));
+        registry.register('diff', new DiffCommand(fsService));
+        registry.register('paste', new PasteCommand(fsService));
+        registry.register('tee', new TeeCommand(fsService));
+        registry.register('cksum', new CksumCommand(fsService));
+        registry.register('fold', new FoldCommand(fsService));
+        registry.register('join', new JoinCommand(fsService));
+        registry.register('nl', new NlCommand(fsService));
+        registry.register('printf', new PrintfCommand(fsService));
+        registry.register('split', new SplitCommand(fsService));
+        registry.register('strings', new StringsCommand(fsService));
+        registry.register('expand', new ExpandCommand(fsService));
+        registry.register('unexpand', new UnexpandCommand(fsService));
+        registry.register('tsort', new TsortCommand(fsService));
+        registry.register('rmdir', new RmdirCommand(fsService));
+        registry.register('link', new LinkCommand(fsService));
+        registry.register('unlink', new UnlinkCommand(fsService));
+        registry.register('readlink', new ReadlinkCommand(fsService));
+        registry.register('realpath', new RealpathCommand(fsService));
+        registry.register('sleep', new SleepCommand(fsService));
+        registry.register('uname', new UnameCommand(fsService));
+        registry.register('logname', new LognameCommand(fsService));
+        registry.register('env', new EnvCommand(fsService));
+        registry.register('cal', new CalCommand(fsService));
+        registry.register('expr', new ExprCommand(fsService));
+        registry.register('test', new TestCommand(fsService)); // Often aliased as [
+        registry.register('[', new TestCommand(fsService));
+        registry.register('od', new OdCommand(fsService));
+        registry.register('uuencode', new UuencodeCommand(fsService));
+        registry.register('uudecode', new UudecodeCommand(fsService));
+        registry.register('who', new WhoCommand(fsService));
+        registry.register('tty', new TtyCommand(fsService));
+        registry.register('id', new IdCommand(fsService));
+        registry.register('basename', new BasenameCommand(fsService));
+        registry.register('dirname', new DirnameCommand(fsService));
+        registry.register('pathchk', new PathchkCommand(fsService));
         registry.register('true', new TrueCommand());
         registry.register('false', new FalseCommand());
         // Time, Nohup, Nice need command provider
-        registry.register('time', new TimeCommand(fs, (name) => registry.get(name)));
-        registry.register('nohup', new NohupCommand(fs, (name) => registry.get(name)));
-        registry.register('nice', new NiceCommand(fs, (name) => registry.get(name)));
-        registry.register('mkfifo', new MkfifoCommand(fs));
-        registry.register('file', new FileCommand(fs));
-        registry.register('timeout', new TimeoutCommand(fs, (name) => registry.get(name)));
-        registry.register('chgrp', new ChgrpCommand(fs));
-        registry.register('alias', new AliasCommand(fs));
-        registry.register('unalias', new UnaliasCommand(fs));
-        registry.register('type', new TypeCommand(fs, registry));
-        registry.register('pr', new PrCommand(fs));
-        registry.register('compress', new CompressCommand(fs));
-        registry.register('uncompress', new UncompressCommand(fs));
-        registry.register('zcat', new ZcatCommand(fs));
-        registry.register('asa', new AsaCommand(fs));
-        registry.register('dd', new DdCommand(fs));
-        registry.register('iconv', new IconvCommand(fs));
-        registry.register('jobs', new JobsCommand(fs));
-        registry.register('kill', new KillCommand(fs));
-        registry.register('ps', new PsCommand(fs));
-        registry.register('wait', new WaitCommand(fs));
-        registry.register('at', new AtCommand(fs));
-        registry.register('batch', new BatchCommand(fs));
-        registry.register('crontab', new CrontabCommand(fs));
-        registry.register('mailx', new MailxCommand(fs));
-        registry.register('mesg', new MesgCommand(fs));
-        registry.register('talk', new TalkCommand(fs));
-        registry.register('write', new WriteCommand(fs));
-        registry.register('bc', new BcCommand(fs));
-        registry.register('getconf', new GetconfCommand(fs));
-        registry.register('logger', new LoggerCommand(fs));
-        registry.register('man', new ManCommand(fs));
-        registry.register('tabs', new TabsCommand(fs));
-        registry.register('tput', new TputCommand(fs));
+        registry.register('time', new TimeCommand(fsService, (name) => registry.get(name)));
+        registry.register('nohup', new NohupCommand(fsService, (name) => registry.get(name)));
+        registry.register('nice', new NiceCommand(fsService, (name) => registry.get(name)));
+        registry.register('mkfifo', new MkfifoCommand(fsService));
+        registry.register('file', new FileCommand(fsService));
+        registry.register('timeout', new TimeoutCommand(fsService, (name) => registry.get(name)));
+        registry.register('chgrp', new ChgrpCommand(fsService));
+        registry.register('alias', new AliasCommand(fsService));
+        registry.register('unalias', new UnaliasCommand(fsService));
+        registry.register('type', new TypeCommand(fsService, registry));
+        registry.register('pr', new PrCommand(fsService));
+        registry.register('compress', new CompressCommand());
+        registry.register('uncompress', new UncompressCommand());
+        registry.register('zcat', new ZcatCommand(fsService));
+        registry.register('asa', new AsaCommand(fsService));
+        registry.register('dd', new DdCommand());
+        registry.register('iconv', new IconvCommand(fsService));
+        registry.register('jobs', new JobsCommand(fsService));
+        registry.register('kill', new KillCommand(fsService));
+        registry.register('ps', new PsCommand(fsService));
+        registry.register('wait', new WaitCommand(fsService));
+        registry.register('at', new AtCommand(fsService));
+        registry.register('batch', new BatchCommand(fsService));
+        registry.register('crontab', new CrontabCommand(fsService));
+        registry.register('mailx', new MailxCommand(fsService));
+        registry.register('mesg', new MesgCommand(fsService));
+        registry.register('talk', new TalkCommand(fsService));
+        registry.register('write', new WriteCommand(fsService));
+        registry.register('bc', new BcCommand(fsService));
+        registry.register('getconf', new GetconfCommand(fsService));
+        registry.register('logger', new LoggerCommand(fsService));
+        registry.register('man', new ManCommand(fsService));
+        registry.register('tabs', new TabsCommand(fsService));
+        registry.register('tput', new TputCommand(fsService));
 
         registry.register(':', new NullCommand());
         registry.register('exit', new ExitCommand());
-        registry.register('sh', new ShCommand(fs));
+        registry.register('sh', new ShCommand());
         registry.register('umask', new UmaskCommand());
         registry.register('times', new TimesCommand());
-        registry.register('more', new MoreCommand(fs));
+        registry.register('more', new MoreCommand(fsService));
         registry.register('strip', new StripCommand());
         registry.register('unset', new UnsetCommand());
         registry.register('export', new ExportCommand());
@@ -318,12 +328,12 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('read', new ReadCommand());
         registry.register('return', new ReturnCommand());
         registry.register('command', new CommandCommand((name) => registry.get(name)));
-        registry.register('.', new DotCommand(fs));
+        registry.register('.', new DotCommand(fsService));
         registry.register('set', new SetCommand());
         registry.register('vi', new ViCommand());
         registry.register('ex', new ExCommand());
         registry.register('make', new MakeCommand());
-        registry.register('ar', new ArCommand());
+        registry.register('ar', new ArCommand(fsService));
         registry.register('lex', new LexCommand());
         registry.register('yacc', new YaccCommand());
         registry.register('m4', new M4Command());
@@ -333,14 +343,14 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('lp', new LpCommand());
         registry.register('renice', new ReniceCommand());
         registry.register('admin', new AdminCommand());
-        registry.register('c17', new C17Command());
-        registry.register('cflow', new CflowCommand());
+        registry.register('c17', new C17Command(new WasmCompilerService(fsService), fsService));
+        registry.register('cflow', new CflowCommand(fsService));
         registry.register('csplit', new CsplitCommand());
         registry.register('ctags', new CtagsCommand());
-        registry.register('cxref', new CxrefCommand());
+        registry.register('cxref', new CxrefCommand(fsService));
         registry.register('delta', new DeltaCommand());
-        registry.register('fuser', new FuserCommand());
-        registry.register('gencat', new GencatCommand());
+        registry.register('fuser', new FuserCommand(fsService));
+        registry.register('gencat', new GencatCommand(fsService));
         registry.register('get', new GetCommand());
         registry.register('gettext', new GettextCommand());
         registry.register('ipcrm', new IpcrmCommand());
@@ -365,13 +375,17 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('gunzip', new GunzipCommand());
         registry.register('tar', new TarCommand());
         registry.register('cpio', new CpioCommand());
+        registry.register('gcc', new GccCommand(new WasmCompilerService(fsService), fsService));
 
         // Factory-like registration for Xargs to avoid circular dependency in constructor
-        registry.register('xargs', new XargsCommand(fs, (name) => registry.get(name)));
+        registry.register('xargs', new XargsCommand(fsService, (name) => registry.get(name)));
+
+        registry.register('whoami', new WhoamiCommand());
+        registry.register('date', new DateCommand());
 
         // Clear (Simple inline)
         registry.register('clear', {
-            execute: (_args, state, _input) => ({
+            execute: (_args, _context, state) => ({
                 output: '',
                 newState: state,
                 exitCode: 0,

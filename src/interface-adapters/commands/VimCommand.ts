@@ -8,11 +8,14 @@
  */
 
 import { ICommand } from '../../domain/commands/ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../domain/entities/TerminalState';
 import { CommandResponse } from '../../domain/usecases/ExecuteCommand';
 
 export class VimCommand implements ICommand {
-    execute(args: string[], state: TerminalState): CommandResponse {
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const input = context.stdin;
         const filename = args[0] || 'scratchpad.24xx';
         return {
             output: `Opening ${filename} in editor...`,

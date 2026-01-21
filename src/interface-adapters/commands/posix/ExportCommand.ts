@@ -1,5 +1,6 @@
 import { ICommand, CommandResponse } from '../../../domain/entities/Command';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../../domain/entities/TerminalState';
 
 export class ExportCommand implements ICommand {
@@ -7,6 +8,7 @@ export class ExportCommand implements ICommand {
     description = 'Set environment variables';
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         if (args.length === 0) {
             // List exported variables
             // declare -x VAR="val" style

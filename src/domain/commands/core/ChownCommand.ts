@@ -12,14 +12,16 @@
  */
 
 import { ICommand } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 export class ChownCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
-    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const input = context.stdin;
         const operands = args.filter(arg => !arg.startsWith('-'));
 
         if (operands.length < 2) {
@@ -121,7 +123,7 @@ export class ChownCommand implements ICommand {
 
                 // BUT, `ChownCommand` is "Use Case". `FileSystem` is "Entity".
                 // I shouldn't pollute Entity for just this if possible.
-                // Actually `fs.resolveNode` returns Dentry.
+                // Actually `fs.resolve` returns Dentry.
                 // Does Dentry have Inode? Typically separated.
 
                 // Let's peek at `FileSystem` definition again to be sure what `resolveNode` returns.

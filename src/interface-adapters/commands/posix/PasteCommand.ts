@@ -2,15 +2,17 @@
 import { ICommand, CommandResponse } from '../../../domain/entities/Command';
 import { FileSystem } from '../../../domain/entities/FileSystem';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../../domain/entities/TerminalState';
 
 export class PasteCommand implements ICommand {
     name = 'paste';
     description = 'Merge lines of files';
 
-    constructor(/* private fs: FileSystem */) { }
+    constructor(/* private fs: FileSystemService */) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         let delimiter = '\t';
         const files: string[] = [];
 
@@ -37,12 +39,12 @@ export class PasteCommand implements ICommand {
                 // Stdin
                 fileContents.push((context.stdin || '').split('\n'));
             } else {
-                const node = context.fs.resolveNode(file, context.cwd);
-                if (!node || context.fs.isDirectory(node)) {
+                const node = context.fileSystemService.resolve(file, context.cwd);
+                if (!node || context.fileSystemService.isDirectory(node)) {
                     fileContents.push([]);
                     return { output: `paste: ${file}: No such file or directory`, exitCode: 1 };
                 }
-                const inode = context.fs.getInode(node.inodeId);
+                const inode = context.fileSystemService.getInode(node.inodeId);
                 const content = (inode && typeof inode.content === 'string') ? inode.content : '';
                 fileContents.push(content.split('\n'));
             }

@@ -9,6 +9,7 @@
 
 import { ICommand, CommandResponse } from '../../../domain/entities/Command';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../../domain/entities/TerminalState';
 import { NetworkMap } from '../../../domain/services/NetworkMap';
 
@@ -19,6 +20,7 @@ export class ConnectCommand implements ICommand {
     constructor(private networkMap: NetworkMap) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         if (args.length === 0) {
             return { output: 'usage: ssh [user@]hostname', exitCode: 1 };
         }

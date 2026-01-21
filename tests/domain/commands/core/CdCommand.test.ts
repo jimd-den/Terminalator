@@ -2,16 +2,19 @@ import { describe, it, before } from 'node:test';
 import assert from 'node:assert';
 import { CdCommand } from '../../../../src/domain/commands/core/CdCommand';
 import { FileSystem } from '../../../../src/domain/entities/FileSystem';
+import { FileSystemService } from '../../../../src/domain/services/FileSystemService';
 import { createInitialTerminalState } from '../../../../src/domain/entities/TerminalState';
 
 describe('CdCommand', () => {
     let fs: FileSystem;
+    let service: FileSystemService;
     let cdCommand: CdCommand;
     let initialState = createInitialTerminalState();
 
     before(() => {
         fs = new FileSystem();
-        cdCommand = new CdCommand(fs);
+        service = new FileSystemService(fs);
+        cdCommand = new CdCommand(service);
     });
 
     it('should change directory to valid child directory', () => {
@@ -49,18 +52,18 @@ describe('CdCommand', () => {
     });
 
     it('should support previous directory with -', () => {
-         // To support this, we need state to track previous directory (OLDPWD env var ideally)
-         // But our simulated state might just have history.
-         // Standard POSIX 'cd -' relies on OLDPWD.
-         // Let's mock OLDPWD in environment
-         const startState = {
-             ...initialState,
-             environment: { ...initialState.environment, OLDPWD: '/bin' }
-         };
-         const response = cdCommand.execute(['-'], startState);
-         assert.strictEqual(response.newState.currentDirectory, '/bin');
-         // And it should print the new directory
-         assert.strictEqual(response.output, '/bin');
+        // To support this, we need state to track previous directory (OLDPWD env var ideally)
+        // But our simulated state might just have history.
+        // Standard POSIX 'cd -' relies on OLDPWD.
+        // Let's mock OLDPWD in environment
+        const startState = {
+            ...initialState,
+            environment: { ...initialState.environment, OLDPWD: '/bin' }
+        };
+        const response = cdCommand.execute(['-'], startState);
+        assert.strictEqual(response.newState.currentDirectory, '/bin');
+        // And it should print the new directory
+        assert.strictEqual(response.output, '/bin');
     });
 
     it('should fail if directory does not exist', () => {

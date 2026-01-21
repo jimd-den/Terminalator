@@ -15,13 +15,15 @@
  */
 
 import { ICommand, CommandResponse } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 export class MoreCommand implements ICommand {
-    constructor(private fs: FileSystem) {}
+    constructor(private fs: FileSystemService) { }
 
-    async execute(args: string[], state: TerminalState, input?: string): Promise<CommandResponse> {
+    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         // Non-interactive simulation: just output content like cat
         if (args.length === 0) {
             return {
@@ -35,13 +37,25 @@ export class MoreCommand implements ICommand {
         let exitCode = 0;
 
         for (const file of args) {
-             const resolved = this.fs.resolveNode(file, state.currentDirectory);
-             if (!resolved || resolved.type !== 'file') {
-                 output += `more: ${file}: No such file or directory\n`;
-                 exitCode = 1;
-                 continue;
-             }
-             output += resolved.content || ''; // 'more' typically separates files, but basic cat behavior suffices for simple checks
+            const resolved = this.fs.resolve(file, state.currentDirectory);
+            if (!resolved) {
+                output += `more: ${file}: No such file or directory\n`;
+                exitCode = 1;
+                continue;
+            }
+            if (this.fs.isDirectory(resolved)) {
+                output += `more: ${file}: Is a directory\n`;
+                exitCode = 1;
+                continue;
+            }
+            // Read content via service
+            try {
+                const content = this.fs.readFile(file, state.currentDirectory);
+                output += content;
+            } catch (e: any) {
+                output += `more: ${file}: ${e.message}\n`;
+                exitCode = 1;
+            }
         }
 
         return {

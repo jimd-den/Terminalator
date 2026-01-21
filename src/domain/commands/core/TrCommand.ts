@@ -11,9 +11,10 @@
  */
 
 import { ICommand } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 interface TrOptions {
     delete: boolean;
@@ -24,9 +25,10 @@ interface TrOptions {
 }
 
 export class TrCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
-    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const input = context.stdin;
         const options: TrOptions = {
             delete: false,
             squeeze: false,
@@ -49,7 +51,7 @@ export class TrCommand implements ICommand {
         }
 
         if (sets.length === 0) {
-             return { output: 'tr: missing operand', newState: state, exitCode: 1 };
+            return { output: 'tr: missing operand', newState: state, exitCode: 1 };
         }
 
         options.set1 = this.expandSet(sets[0]);
@@ -58,24 +60,24 @@ export class TrCommand implements ICommand {
         }
 
         if (input === undefined) {
-             return { output: '', newState: state, exitCode: 0 };
+            return { output: '', newState: state, exitCode: 0 };
         }
 
         let output = input;
 
         if (options.delete) {
             if (options.squeeze && sets.length > 1) {
-                 output = this.deleteChars(output, options.set1, options.complement);
-                 output = this.squeezeChars(output, options.set2);
+                output = this.deleteChars(output, options.set1, options.complement);
+                output = this.squeezeChars(output, options.set2);
             } else {
-                 if (sets.length < 1) return { output: 'tr: missing operand', newState: state, exitCode: 1 };
-                 output = this.deleteChars(output, options.set1, options.complement);
+                if (sets.length < 1) return { output: 'tr: missing operand', newState: state, exitCode: 1 };
+                output = this.deleteChars(output, options.set1, options.complement);
             }
         } else if (options.squeeze && sets.length === 1) {
             output = this.squeezeChars(output, options.set1);
         } else {
             if (sets.length < 2) {
-                 return { output: 'tr: missing operand', newState: state, exitCode: 1 };
+                return { output: 'tr: missing operand', newState: state, exitCode: 1 };
             }
             output = this.translate(output, options.set1, options.set2, options.complement);
 
@@ -100,9 +102,9 @@ export class TrCommand implements ICommand {
         if (setStr === '0-9') return '0123456789';
 
         while (i < setStr.length) {
-            if (i + 2 < setStr.length && setStr[i+1] === '-') {
+            if (i + 2 < setStr.length && setStr[i + 1] === '-') {
                 const start = setStr.charCodeAt(i);
-                const end = setStr.charCodeAt(i+2);
+                const end = setStr.charCodeAt(i + 2);
                 if (start < end) {
                     for (let c = start; c <= end; c++) {
                         expanded += String.fromCharCode(c);
@@ -114,7 +116,7 @@ export class TrCommand implements ICommand {
 
             if (setStr[i] === '\\') {
                 if (i + 1 < setStr.length) {
-                    const next = setStr[i+1];
+                    const next = setStr[i + 1];
                     if (next === 'n') expanded += '\n';
                     else if (next === 't') expanded += '\t';
                     else if (next === '\\') expanded += '\\';

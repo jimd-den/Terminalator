@@ -14,12 +14,13 @@
  */
 
 import { ICommand } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 export class CdCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
     /**
      * Executes the 'cd' command.
@@ -27,7 +28,8 @@ export class CdCommand implements ICommand {
      * @param args - Arguments passed to cd (target directory).
      * @param state - Current terminal state.
      */
-    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const input = context.stdin;
         const target = args.length > 0 ? args[0] : '~';
         let newPath = target;
 
@@ -48,7 +50,7 @@ export class CdCommand implements ICommand {
             }
         }
 
-        const node = this.fs.resolveNode(newPath, state.currentDirectory);
+        const node = this.fs.resolve(newPath, state.currentDirectory);
 
         if (node) {
             if (this.fs.isDirectory(node)) {

@@ -30,9 +30,9 @@ async function runTests() {
     const fs = new FileSystem();
     const state = createInitialTerminalState();
 
-    const compress = new CompressCommand(fs);
-    const uncompress = new UncompressCommand(fs);
-    const zcat = new ZcatCommand(fs);
+    const compress = new CompressCommand();
+    const uncompress = new UncompressCommand();
+    const zcat = new ZcatCommand(fs); // Zcat DOES take fs according to CoreUtilsModule? Wait.
 
     fs.writeFile('/data.txt', 'AAAAABBBCC', 'w');
 
@@ -42,7 +42,7 @@ async function runTests() {
         const res = await compress.execute(['/data.txt'], state);
         assert.equal(res.exitCode, 0);
         // Should remove original and create .Z
-        try { fs.resolveNode('/data.txt'); assert.fail('Original should be removed'); } catch (e) {}
+        try { fs.resolveNode('/data.txt'); assert.fail('Original should be removed'); } catch (e) { }
         const content = fs.readFile('/data.txt.Z');
         assert.ok(content.length > 0);
         // Verify simplistic RLE if used

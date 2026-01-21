@@ -11,9 +11,10 @@
  */
 
 import { ICommand } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 interface UniqOptions {
     count: boolean;
@@ -27,9 +28,10 @@ interface UniqOptions {
 }
 
 export class UniqCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
-    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const input = context.stdin;
         const options: UniqOptions = {
             count: false,
             repeated: false,
@@ -87,7 +89,7 @@ export class UniqCommand implements ICommand {
         } else if (input !== undefined) {
             content = input;
         } else {
-             return { output: '', newState: state, exitCode: 0 };
+            return { output: '', newState: state, exitCode: 0 };
         }
 
         const lines = content.split('\n');
@@ -116,7 +118,7 @@ export class UniqCommand implements ICommand {
                 // But uniq fields include the separator?
                 // "Skip N fields".
                 let remaining = line;
-                for(let f=0; f<options.skipFields; f++) {
+                for (let f = 0; f < options.skipFields; f++) {
                     // Skip leading whitespace?
                     remaining = remaining.trimStart();
                     const spaceIdx = remaining.search(/\s/);

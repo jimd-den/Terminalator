@@ -1,6 +1,7 @@
 import { ICommand, CommandResponse } from '../../../domain/entities/Command';
 import { FileSystem } from '../../../domain/entities/FileSystem';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../../domain/entities/TerminalState';
 
 interface MvOptions {
@@ -29,6 +30,7 @@ export class MvCommand implements ICommand {
     constructor() { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         const options = this.parseArgs(args);
 
         if (!options.destination || options.sources.length === 0) {
@@ -36,8 +38,8 @@ export class MvCommand implements ICommand {
         }
 
         const destPath = options.destination;
-        const destNode = context.fs.resolveNode(destPath, context.cwd);
-        const destIsDir = destNode ? context.fs.isDirectory(destNode) : false;
+        const destNode = context.fileSystemService.resolve(destPath, context.cwd);
+        const destIsDir = destNode ? context.fileSystemService.isDirectory(destNode) : false;
 
         if (options.sources.length > 1 && !destIsDir) {
             return { output: `mv: target '${destPath}' is not a directory`, exitCode: 1 };
@@ -66,7 +68,7 @@ export class MvCommand implements ICommand {
                 }
 
                 // Check no-clobber
-                if (options.noClobber && context.fs.resolveNode(finalDest, context.cwd)) {
+                if (options.noClobber && context.fileSystemService.resolve(finalDest, context.cwd)) {
                     continue;
                 }
 

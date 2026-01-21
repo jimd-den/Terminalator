@@ -11,14 +11,16 @@
  */
 
 import { ICommand } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 export class TeeCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
-    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const input = context.stdin;
         const files: string[] = [];
         let append = false;
 
@@ -40,9 +42,9 @@ export class TeeCommand implements ICommand {
 
                 // Check parent dir
                 const parentPath = path.substring(0, path.lastIndexOf('/')) || '/';
-                const parent = this.fs.resolveNode(parentPath);
+                const parent = this.fs.resolve(parentPath);
                 if (!parent || !this.fs.isDirectory(parent)) {
-                     throw new Error('No such directory');
+                    throw new Error('No such directory');
                 }
 
                 if (append) {

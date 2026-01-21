@@ -12,9 +12,10 @@
  */
 
 import { ICommand } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 interface CutOptions {
     bytes?: string;
@@ -26,9 +27,10 @@ interface CutOptions {
 }
 
 export class CutCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
-    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const input = context.stdin;
         const options: CutOptions = {
             delimiter: '\t',
             suppress: false,
@@ -81,7 +83,7 @@ export class CutCommand implements ICommand {
                 }
                 try {
                     const resolvedPath = this.resolvePath(file, state);
-                    const node = this.fs.resolveNode(resolvedPath);
+                    const node = this.fs.resolve(resolvedPath);
                     if (!node) throw new Error();
                     inputContent += this.fs.readFile(resolvedPath) + '\n';
                 } catch (e) {
@@ -96,7 +98,7 @@ export class CutCommand implements ICommand {
         } else if (input !== undefined) {
             inputContent = input;
         } else {
-             return { output: '', newState: state, exitCode: 0 };
+            return { output: '', newState: state, exitCode: 0 };
         }
 
         const lines = inputContent.split('\n');

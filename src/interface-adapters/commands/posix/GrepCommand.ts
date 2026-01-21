@@ -1,6 +1,7 @@
 import { ICommand, CommandResponse } from '../../../domain/entities/Command';
 import { FileSystem } from '../../../domain/entities/FileSystem';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../../domain/entities/TerminalState';
 
 /**
@@ -48,6 +49,7 @@ export class GrepCommand implements ICommand {
      * @returns A distinct CommandResponse with output or error code.
      */
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         // 1. Parse Arguments
         const options = this.parseArgs(args);
 
@@ -162,9 +164,9 @@ export class GrepCommand implements ICommand {
      * @param cwd Current working directory for resolution.
      * @param accumulator Array to store found matching files.
      */
-    private collectSources(fs: FileSystem, path: string, recursive: boolean, cwd: string, accumulator: { name: string, content: string }[]): void {
+    private collectSources(fs: FileSystemService, path: string, recursive: boolean, cwd: string, accumulator: { name: string, content: string }[]): void {
         try {
-            const node = fs.resolveNode(path, cwd);
+            const node = fs.resolve(path, cwd);
             if (!node) return; // Skip non-existent
 
             if (!fs.isDirectory(node)) {

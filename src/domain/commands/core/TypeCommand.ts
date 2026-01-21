@@ -11,15 +11,18 @@
  */
 
 import { ICommand } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
 import { FileSystem } from '../../entities/FileSystem';
 import { CommandRegistry } from '../CommandRegistry'; // Need access to registry to check if command exists
 
 export class TypeCommand implements ICommand {
-    constructor(private fs: FileSystem, private registry?: CommandRegistry) { }
+    constructor(private fs: FileSystemService, private registry?: CommandRegistry) { }
 
-    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const input = context.stdin;
         if (args.length === 0) return { output: '', newState: state, exitCode: 0 };
 
         const outputs: string[] = [];

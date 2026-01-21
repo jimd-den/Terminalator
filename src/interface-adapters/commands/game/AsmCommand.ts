@@ -14,6 +14,8 @@
 
 import { ICommand } from '../../../domain/commands/ICommand';
 import { CommandResponse } from '../../../domain/usecases/ExecuteCommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../../domain/entities/TerminalState';
 import { FileSystem } from '../../../domain/entities/FileSystem';
 import { Assembler } from '../../../domain/usecases/asm/Assembler';
@@ -28,9 +30,10 @@ export class AsmCommand implements ICommand {
     private interpreter = new RISCVInterpreter();
     private cpu = new CpuState();
 
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
-    async execute(args: string[], state: TerminalState): Promise<CommandResponse> {
+    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         if (args.length < 2 || args[0] !== 'run') {
             return {
                 output: 'Usage: asm run <file.s>',

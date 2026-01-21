@@ -12,14 +12,16 @@
  */
 
 import { ICommand } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 export class MvCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
-    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const input = context.stdin;
         const flags = args.filter(arg => arg.startsWith('-')); // -f, -i ignored for now
         const operands = args.filter(arg => !arg.startsWith('-'));
 
@@ -36,7 +38,7 @@ export class MvCommand implements ICommand {
 
         // Process destination similar to CP
         let destPath = this.resolvePath(destination, state);
-        const destNode = this.fs.resolveNode(destPath);
+        const destNode = this.fs.resolve(destPath);
         const destIsDir = destNode ? this.fs.isDirectory(destNode) : destination.endsWith('/');
 
         // If multiple sources, dest MUST be a directory
@@ -50,7 +52,7 @@ export class MvCommand implements ICommand {
 
         for (const source of sources) {
             const srcPath = this.resolvePath(source, state);
-            const srcNode = this.fs.resolveNode(srcPath);
+            const srcNode = this.fs.resolve(srcPath);
 
             if (!srcNode) {
                 return {
@@ -65,11 +67,11 @@ export class MvCommand implements ICommand {
             // "mv dir file" -> rename dir to file. Valid.
             // "mv dir existing_file" -> fail (cannot overwrite file with dir).
             if (this.fs.isDirectory(srcNode) && destNode && !this.fs.isDirectory(destNode)) {
-                 return {
-                     output: `mv: cannot overwrite non-directory '${destination}' with directory '${source}'`,
-                     newState: state,
-                     exitCode: 1
-                 };
+                return {
+                    output: `mv: cannot overwrite non-directory '${destination}' with directory '${source}'`,
+                    newState: state,
+                    exitCode: 1
+                };
             }
 
             try {

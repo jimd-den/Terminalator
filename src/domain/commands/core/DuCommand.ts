@@ -12,14 +12,17 @@
  */
 
 import { ICommand } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem, Dentry } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
+import { Dentry } from '../../entities/FileSystem';
 
 export class DuCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
-    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const input = context.stdin;
         const files = args.filter(arg => !arg.startsWith('-'));
 
         // POSIX default: 512-byte units.
@@ -42,7 +45,7 @@ export class DuCommand implements ICommand {
                     : `${state.currentDirectory}/${filename}`;
             }
 
-            const node = this.fs.resolveNode(path);
+            const node = this.fs.resolve(path);
             if (!node) {
                 return {
                     output: `du: cannot access '${filename}': No such file or directory`,

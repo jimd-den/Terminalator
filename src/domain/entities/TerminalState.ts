@@ -22,7 +22,7 @@ export interface TerminalState {
     user: string;
     hostname: string;
     isLocked: boolean;
-    fs: FileSystem; // Added to interface for command access
+    fs: FileSystemService; // Added to interface for command access
 }
 
 /**

@@ -1,15 +1,17 @@
 import { ICommand, CommandResponse } from '../../../domain/entities/Command';
 import { FileSystem } from '../../../domain/entities/FileSystem';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../../domain/entities/TerminalState';
 
 export class CutCommand implements ICommand {
     name = 'cut';
     description = 'Remove sections from each line of files';
 
-    constructor(/* private fs: FileSystem */) { }
+    constructor(/* private fs: FileSystemService */) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         let delimiter = '\t';
         let fields: number[] = [];
         let chars: number[][] = []; // [start, end] inclusive
@@ -45,13 +47,13 @@ export class CutCommand implements ICommand {
         } else {
             // Read all files
             for (const file of files) {
-                const node = context.fs.resolveNode(file, context.cwd);
-                if (!node || context.fs.isDirectory(node)) {
+                const node = context.fileSystemService.resolve(file, context.cwd);
+                if (!node || context.fileSystemService.isDirectory(node)) {
                     // For simplicity, just append error or skip
                     // cut usually prints error
                     continue;
                 }
-                const inode = context.fs.getInode(node.inodeId);
+                const inode = context.fileSystemService.getInode(node.inodeId);
                 content += ((inode && typeof inode.content === 'string') ? inode.content : '') + '\n';
             }
             // remove last newline if added from loop

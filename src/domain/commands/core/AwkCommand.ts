@@ -17,14 +17,16 @@
  */
 
 import { ICommand } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 export class AwkCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
-    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const input = context.stdin;
         let program = '';
         const files: string[] = [];
         let fieldSeparator = ' ';
@@ -86,7 +88,7 @@ export class AwkCommand implements ICommand {
             }
 
             if (!hasInput && !beginBlock && !endBlock) {
-                 return { output: 'awk: no input', newState: state, exitCode: 1 };
+                return { output: 'awk: no input', newState: state, exitCode: 1 };
             }
 
             if (hasInput && content) {

@@ -12,14 +12,16 @@
  */
 
 import { ICommand } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 export class WcCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
-    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const input = context.stdin;
         let countLines = false;
         let countWords = false;
         let countBytes = false;
@@ -105,7 +107,7 @@ export class WcCommand implements ICommand {
                         : `${state.currentDirectory}/${filename}`;
                 }
 
-                const node = this.fs.resolveNode(path);
+                const node = this.fs.resolve(path);
 
                 if (!node) {
                     output += `wc: ${filename}: No such file or directory\n`;
@@ -121,7 +123,8 @@ export class WcCommand implements ICommand {
                 }
 
                 try {
-                    const content = this.fs.readFile(path);
+                    const raw = this.fs.readFileBuffer(path);
+                    const content = typeof raw === 'string' ? raw : new TextDecoder().decode(raw);
                     output += processContent(content, filename) + '\n';
                 } catch (e: any) {
                     output += `wc: ${filename}: ${e.message}\n`;

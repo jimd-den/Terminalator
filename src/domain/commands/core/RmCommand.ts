@@ -12,14 +12,16 @@
  */
 
 import { ICommand } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 export class RmCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
-    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const input = context.stdin;
         const flags = args.filter(arg => arg.startsWith('-'));
         const targets = args.filter(arg => !arg.startsWith('-'));
         const recursive = flags.some(f => f.includes('r') || f.includes('R'));
@@ -41,7 +43,7 @@ export class RmCommand implements ICommand {
                     : `${state.currentDirectory}/${target}`;
             }
 
-            const existing = this.fs.resolveNode(path);
+            const existing = this.fs.resolve(path);
 
             if (!existing) {
                 if (force) continue;
@@ -95,7 +97,7 @@ export class RmCommand implements ICommand {
     }
 
     private deleteRecursive(path: string) {
-        const node = this.fs.resolveNode(path);
+        const node = this.fs.resolve(path);
         if (!node) return;
 
         if (this.fs.isDirectory(node)) {

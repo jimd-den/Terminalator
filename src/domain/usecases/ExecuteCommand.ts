@@ -16,12 +16,15 @@
  */
 
 import { FileSystem } from '../entities/FileSystem';
+import { FileSystemService } from '../services/FileSystemService';
 import { TerminalState } from '../entities/TerminalState';
 import { TelemetryPort } from '../ports/TelemetryPort';
 import { CommandRegistry } from '../commands/CommandRegistry';
 import { ShellParser } from '../services/ShellParser';
 import { CoreUtilsModule } from '../modules/CoreUtilsModule';
 import { SystemUtilsModule } from '../modules/SystemUtilsModule';
+import { IBinaryRunner } from '../interfaces/IBinaryRunner';
+import { ProcessContext } from '../entities/ProcessContext';
 
 export interface CommandResponse {
     output: string;
@@ -38,21 +41,44 @@ export interface CommandResponse {
 export class ExecuteCommand {
     private registry: CommandRegistry;
     private parser: ShellParser;
+    private service: FileSystemService;
+    protected fs: FileSystem;
 
     /**
      * Initializes ExecuteCommand.
      * Optionally accepts a registry. If not provided, initializes a default one
      * with core commands (ls, cd, pwd, etc.).
      *
-     * @param fs - The FileSystem entity.
+     * @param fsOrService - The FileSystem entity OR FileSystemService.
      * @param telemetry - The Telemetry port.
      * @param registry - Optional CommandRegistry (for dependency injection/testing).
      */
     constructor(
-        protected fs: FileSystem,
+        fsOrService: FileSystem | FileSystemService,
         protected telemetry?: TelemetryPort,
-        registry?: CommandRegistry
+        registry?: CommandRegistry,
+        protected binaryRunner?: IBinaryRunner
     ) {
+        if (fsOrService instanceof FileSystemService) {
+            this.service = fsOrService;
+            // Hack to get FS from service if possible, or we need to change how we access FS.
+            // FileSystemService DOES NOT expose fs publicly in the version I saw.
+            // But checking the file `src/domain/services/FileSystemService.ts`
+            // `constructor(private fs: FileSystem)`
+            // It is private.
+            // However, we need `this.fs` to pass to `CoreUtilsModule` and `ProcessContext`.
+            // We can cast to any to retrieve it or assume it's available.
+            // Or better, we modify FileSystemService to expose it.
+            // For now, let's use `(fsOrService as any).fs` which is ugly but works if property exists.
+            // Or we check if `fs` is passed.
+            // Actually, for cleaner architecture, ExecuteCommand should ideally work with Service.
+            // But CoreUtilsModule needs FS.
+            this.fs = (fsOrService as any).fs;
+        } else {
+            this.fs = fsOrService;
+            this.service = new FileSystemService(this.fs);
+        }
+
         this.parser = new ShellParser();
 
         if (registry) {
@@ -102,11 +128,54 @@ export class ExecuteCommand {
 
             for (const step of pipeline) {
                 const commandName = step.command;
-                const args = step.args;
+                // Expand Variables in Args
+                const args = step.args.map(arg => {
+                    return arg.replace(/\$([a-zA-Z_][a-zA-Z0-9_]*)/g, (match, varName) => {
+                        return currentState.environment[varName] || '';
+                    });
+                });
 
                 const command = this.registry.get(commandName);
 
                 if (!command) {
+                    // Check if it is a file path (starts with / or ./ or ../)
+                    if (commandName.startsWith('/') || commandName.startsWith('./') || commandName.startsWith('../')) {
+                        const dentry = this.service.resolve(commandName, currentState.currentDirectory);
+                        if (dentry && !this.service.isDirectory(dentry)) {
+                            const inode = this.service.getInode(dentry.inodeId);
+                            // Check executable bit (0o111) - minimal check
+                            if (inode && (inode.mode & 0o111)) {
+                                if (this.binaryRunner && inode.content instanceof Uint8Array) {
+                                    try {
+                                        // Execute Binary
+                                        // Env should ideally come from state, passing empty for now or parser expansion
+                                        const response = await this.binaryRunner.run(inode.content, args, {});
+                                        previousOutput = response.output;
+                                        currentState = response.newState || currentState;
+                                        finalExitCode = response.exitCode;
+                                        continue;
+                                    } catch (e: any) {
+                                        return {
+                                            output: `sh: ${commandName}: cannot execute binary file: ${e.message}`,
+                                            newState: currentState,
+                                            exitCode: 126
+                                        };
+                                    }
+                                }
+                            }
+                            return {
+                                output: `sh: ${commandName}: Permission denied`,
+                                newState: currentState,
+                                exitCode: 126
+                            };
+                        }
+                        return {
+                            output: `sh: ${commandName}: No such file or directory`,
+                            newState: currentState,
+                            exitCode: 127
+                        };
+                    }
+
                     return {
                         output: `sh: command not found: ${commandName}`,
                         newState: currentState,
@@ -114,22 +183,34 @@ export class ExecuteCommand {
                     };
                 }
 
-                try {
-                    // Execute with input from previous command (if any)
-                    const response = await command.execute(args, currentState, previousOutput);
+                if (command) {
+                    try {
+                        // Create ProcessContext
+                        const context: ProcessContext = {
+                            fs: this.fs,
+                            fileSystemService: this.service,
+                            env: currentState.environment,
+                            cwd: currentState.currentDirectory,
+                            user: currentState.user,
+                            stdin: previousOutput
+                        };
 
-                    previousOutput = response.output;
-                    currentState = response.newState;
-                    finalExitCode = response.exitCode;
-                    if (response.uiAction) finalUiAction = response.uiAction;
-                    if (response.navigationAction) finalNavigationAction = response.navigationAction;
+                        // Execute with input from previous command (if any)
+                        const response = await command.execute(args, context, currentState);
 
-                } catch (error: any) {
-                    return {
-                        output: `sh: error executing ${commandName}: ${error.message}`,
-                        newState: currentState,
-                        exitCode: 1
-                    };
+                        previousOutput = response.output;
+                        currentState = response.newState || currentState; // Handle optional newState
+                        finalExitCode = response.exitCode;
+                        if (response.uiAction) finalUiAction = response.uiAction;
+                        if (response.navigationAction) finalNavigationAction = response.navigationAction;
+
+                    } catch (error: any) {
+                        return {
+                            output: `sh: error executing ${commandName}: ${error.message}`,
+                            newState: currentState,
+                            exitCode: 1
+                        };
+                    }
                 }
             }
 

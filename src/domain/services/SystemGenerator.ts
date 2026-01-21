@@ -1,4 +1,5 @@
 import { FileSystem, Dentry, Inode, FileType, S_IFDIR, S_IFREG, S_IRWXU, S_IRGRP, S_IXGRP, S_IROTH, S_IXOTH } from '../entities/FileSystem';
+import { FileSystemService } from './FileSystemService';
 
 export interface SystemGenerationOptions {
     difficulty: number; // 1-10
@@ -15,14 +16,15 @@ export class SystemGenerator {
      */
     generate(options: SystemGenerationOptions): FileSystem {
         const fs = new FileSystem();
+        const service = new FileSystemService(fs);
         const faction = options.faction || 'corporate';
         const hostname = this.generateHostname(faction);
         this.generatedSystems++;
 
-        this.populateSystem(fs, options);
+        this.populateSystem(service, options);
 
         // Set hostname in /etc/hostname
-        fs.writeFile('/etc/hostname', hostname, 'w');
+        service.writeFile('/etc/hostname', hostname, 'w');
 
         return fs;
     }
@@ -43,7 +45,7 @@ export class SystemGenerator {
         }
     }
 
-    private populateSystem(fs: FileSystem, options: SystemGenerationOptions) {
+    private populateSystem(service: FileSystemService, options: SystemGenerationOptions) {
         const faction = options.faction || 'corporate';
         const theme = this.getTheme(faction);
 
@@ -55,19 +57,19 @@ export class SystemGenerator {
             passwdContent += `${user.name}:x:${user.uid}:${user.gid}:${user.fullname}:/home/${user.name}:/bin/bash\n`;
             // Create home dir
             try {
-                fs.mkdir(`/home/${user.name}`, 0o750, user.uid, user.gid);
+                service.mkdir(`/home/${user.name}`, 0o750, user.uid, user.gid);
 
                 // Add some personal files
-                this.generateUserFiles(fs, `/home/${user.name}`, user, theme);
+                this.generateUserFiles(service, `/home/${user.name}`, user, theme);
             } catch (e) {
                 // ignore
             }
         });
 
-        fs.writeFile('/etc/passwd', passwdContent, 'w');
+        service.writeFile('/etc/passwd', passwdContent, 'w');
 
         // 2. Generate Logs (/var/log)
-        this.generateLogs(fs, theme);
+        this.generateLogs(service, theme);
     }
 
     private generateUsers(difficulty: number): { name: string, uid: number, gid: number, fullname: string }[] {
@@ -84,25 +86,25 @@ export class SystemGenerator {
         return baseUsers;
     }
 
-    private generateUserFiles(fs: FileSystem, homeDir: string, user: any, theme: NarrativeTheme) {
+    private generateUserFiles(service: FileSystemService, homeDir: string, user: any, theme: NarrativeTheme) {
         // Generate random email
         if (theme.emails.length > 0) {
             const email = theme.emails[Math.floor(Math.random() * theme.emails.length)];
-            fs.writeFile(`${homeDir}/mbox`, `From: ${email.from}\nSubject: ${email.subject}\n\n${email.body}`, 'w', '/');
-            fs.chown(`${homeDir}/mbox`, user.uid, user.gid);
+            service.writeFile(`${homeDir}/mbox`, `From: ${email.from}\nSubject: ${email.subject}\n\n${email.body}`, 'w', '/');
+            service.chown(`${homeDir}/mbox`, user.uid, user.gid);
         }
 
         if (theme.todos.length > 0) {
             // Pick random todos
             const todos = theme.todos.sort(() => 0.5 - Math.random()).slice(0, 3);
-            fs.writeFile(`${homeDir}/todo.list`, todos.join('\n'), 'w', '/');
-            fs.chown(`${homeDir}/todo.list`, user.uid, user.gid);
+            service.writeFile(`${homeDir}/todo.list`, todos.join('\n'), 'w', '/');
+            service.chown(`${homeDir}/todo.list`, user.uid, user.gid);
         }
     }
 
-    private generateLogs(fs: FileSystem, theme: NarrativeTheme) {
+    private generateLogs(service: FileSystemService, theme: NarrativeTheme) {
         // /var/log/syslog
-        fs.writeFile('/var/log/syslog', theme.logs.join('\n'), 'w');
+        service.writeFile('/var/log/syslog', theme.logs.join('\n'), 'w');
         // root owner default
     }
 }

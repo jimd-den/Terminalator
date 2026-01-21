@@ -1,17 +1,19 @@
 import { ICommand, CommandResponse } from '../../../domain/entities/Command';
 import { FileSystem } from '../../../domain/entities/FileSystem';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../../domain/entities/TerminalState';
 
 export class CdCommand implements ICommand {
     name = 'cd';
     description = 'Change the shell working directory';
 
-    constructor(/* private fs: FileSystem */) { }
+    constructor(/* private fs: FileSystemService */) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         const target = args[0] || state.environment.HOME || '/';
-        const node = context.fs.resolveNode(target, context.cwd);
+        const node = context.fileSystemService.resolve(target, context.cwd);
 
         if (!node) {
             return {
@@ -20,7 +22,7 @@ export class CdCommand implements ICommand {
             };
         }
 
-        if (!context.fs.isDirectory(node)) {
+        if (!context.fileSystemService.isDirectory(node)) {
             return {
                 output: `cd: not a directory: ${target}`,
                 exitCode: 1

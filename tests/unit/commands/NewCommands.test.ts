@@ -37,7 +37,7 @@ async function runTests() {
         const dentry = fs.resolveNode('/pipe');
         assert.ok(dentry, 'Dentry should exist');
         const inode = fs.getInode(dentry.inodeId);
-        assert.ok(inode?.mode & S_IFIFO, 'Inode should be FIFO');
+        assert.ok(inode!.mode & S_IFIFO, 'Inode should be FIFO');
     });
 
     await runTest('Mkfifo: handles -m mode', async () => {

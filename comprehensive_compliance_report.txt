@@ -8,6 +8,7 @@ UTILITY: mkdir
 [PASS] MKDIR_07
 [PASS] MKDIR_08
 [PASS] MKDIR_09
+[PASS] MKDIR_10
 UTILITY: cd
 [PASS] CD_01
 [PASS] CD_02
@@ -30,7 +31,7 @@ UTILITY: ls
 [FAIL] LS_08: Recursive listing -R
        -> Stdout Regex Mismatch.
    Expected: /\/sub/
-   Got: ".:\nmail  notes.txt\n\n./mail:"
+   Got: ".:"
 [PASS] LS_09
 [PASS] LS_10
 UTILITY: touch
@@ -83,10 +84,7 @@ UTILITY: echo
 [PASS] ECHO_03
 [PASS] ECHO_04
 [PASS] ECHO_05
-[FAIL] ECHO_06: Variable expansion (shell)
-       -> Stdout Regex Mismatch.
-   Expected: /\/home/
-   Got: "$HOME"
+[PASS] ECHO_06
 [PASS] ECHO_07
 [PASS] ECHO_08
 [PASS] ECHO_09
@@ -192,8 +190,7 @@ UTILITY: sed
 [PASS] SED_03
 [PASS] SED_04
 [PASS] SED_05
-[FAIL] SED_06: Multiple commands -e
-       -> Exit Code: Expected 0, got 1
+[PASS] SED_06
 [PASS] SED_07
 [PASS] SED_08
 [PASS] SED_09
@@ -219,7 +216,7 @@ UTILITY: date
 [FAIL] DATE_06: Complex format
        -> Stdout Regex Mismatch.
    Expected: /Year: 20../
-   Got: "Mon Jan 19 2026 23:38:32 GMT+0000 (Coordinated Universal Time)"
+   Got: "Wed Jan 21 2026 16:07:08 GMT+0000 (Coordinated Universal Time)"
 [PASS] DATE_07
 [FAIL] DATE_08: Set date (fail/stub)
        -> Exit Code: Expected 1, got 0
@@ -275,7 +272,7 @@ UTILITY: tr
 [FAIL] TR_04: Complement -c
        -> Stdout Regex Mismatch.
    Expected: /xexxox/
-   Got: "xellx"
+   Got: "xellxx"
 [PASS] TR_05
 [PASS] TR_06
 [FAIL] TR_07: Fail one arg (delete needs -d)
@@ -304,8 +301,7 @@ UTILITY: tee
 [PASS] TEE_07
 [PASS] TEE_08
 [PASS] TEE_09
-[FAIL] TEE_10: Fail permission (stub)
-       -> Exit Code: Expected 1, got 0
+[PASS] TEE_10
 UTILITY: alias
 [PASS] ALIAS_01
 [PASS] ALIAS_02
@@ -486,24 +482,16 @@ UTILITY: file
 UTILITY: join
 [PASS] JOIN_01
 [PASS] JOIN_02
-[FAIL] JOIN_03: Specific field -1 -2 (stub)
-       -> Exit Code: Expected 0, got 1
-[FAIL] JOIN_04: Output all -a
-       -> Exit Code: Expected 0, got 1
+[PASS] JOIN_03
+[PASS] JOIN_04
 [FAIL] JOIN_05: Output format -o
        -> Exit Code: Expected 0, got 1
-[FAIL] JOIN_06: Delimiter -t
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /1:a:b/
-   Got: "join: missing operand"
+[PASS] JOIN_06
 [PASS] JOIN_07
 [FAIL] JOIN_08: Unsorted input check (stub)
        -> Exit Code: Expected 0, got 1
-[FAIL] JOIN_09: Empty file
-       -> Exit Code: Expected 0, got 1
-[FAIL] JOIN_10: Case ignore -i
-       -> Exit Code: Expected 0, got 1
+[PASS] JOIN_09
+[PASS] JOIN_10
 UTILITY: paste
 [PASS] PASTE_01
 [PASS] PASTE_02
@@ -556,22 +544,16 @@ UTILITY: csplit
 [PASS] CSPLIT_10
 UTILITY: comm
 [PASS] COMM_01
-[FAIL] COMM_02: Suppress col 1 (-1)
-       -> Exit Code: Expected 0, got 1
-[FAIL] COMM_03: Suppress col 2 (-2)
-       -> Exit Code: Expected 0, got 1
-[FAIL] COMM_04: Suppress col 3 (-3)
-       -> Exit Code: Expected 0, got 1
+[PASS] COMM_02
+[PASS] COMM_03
+[PASS] COMM_04
 [PASS] COMM_05
-[FAIL] COMM_06: Fail un-sorted (stub)
-       -> Exit Code: Expected 0, got 1
+[PASS] COMM_06
 [PASS] COMM_07
 [FAIL] COMM_08: Stdin
        -> Exit Code: Expected 0, got 1
-[FAIL] COMM_09: Empty file
-       -> Exit Code: Expected 0, got 1
-[FAIL] COMM_10: Case ignore (Extension)
-       -> Exit Code: Expected 0, got 1
+[PASS] COMM_09
+[PASS] COMM_10
 UTILITY: cmp
 [PASS] CMP_01
 [PASS] CMP_02
@@ -831,31 +813,61 @@ UTILITY: ar
    Got: "ar: lib.a: No such file or directory"
 [PASS] AR_10
 UTILITY: make
-[PASS] MAKE_01
-[PASS] MAKE_02
-[PASS] MAKE_03
-[PASS] MAKE_04
-[PASS] MAKE_05
-[PASS] MAKE_06
+[FAIL] MAKE_01: Default target
+       -> Exit Code: Expected 0, got 1
+       -> Stdout Regex Mismatch.
+   Expected: /ok/
+   Got: "sh: error executing make: fs.resolve is not a function"
+[FAIL] MAKE_02: Specific target
+       -> Exit Code: Expected 0, got 1
+       -> Stdout Regex Mismatch.
+   Expected: /test/
+   Got: "sh: error executing make: fs.resolve is not a function"
+[FAIL] MAKE_03: Ignore errors -i
+       -> Exit Code: Expected 0, got 1
+       -> Stdout Regex Mismatch.
+   Expected: /ok/
+   Got: "sh: error executing make: fs.resolve is not a function"
+[FAIL] MAKE_04: Dry run -n
+       -> Exit Code: Expected 0, got 1
+[FAIL] MAKE_05: Keep going -k
+       -> Stdout Regex Mismatch.
+   Expected: /b/
+   Got: "sh: error executing make: fs.resolve is not a function"
+[FAIL] MAKE_06: Specific file -f
+       -> Exit Code: Expected 0, got 1
+       -> Stdout Regex Mismatch.
+   Expected: /other/
+   Got: "sh: error executing make: fs.resolve is not a function"
 [FAIL] MAKE_07: Touch -t
-       -> Exit Code: Expected 0, got 2
+       -> Exit Code: Expected 0, got 1
 [FAIL] MAKE_08: Env override -e
        -> Exit Code: Expected 0, got 127
-[PASS] MAKE_09
-[PASS] MAKE_10
+[FAIL] MAKE_09: Fail missing Makefile
+       -> Exit Code: Expected 2, got 1
+[FAIL] MAKE_10: Macro usage
+       -> Exit Code: Expected 0, got 1
+       -> Stdout Regex Mismatch.
+   Expected: /1/
+   Got: "sh: error executing make: fs.resolve is not a function"
 UTILITY: sh
-[PASS] SH_01
+[FAIL] SH_01: Run script
+       -> Exit Code: Expected 0, got 1
+       -> Stdout Regex Mismatch.
+   Expected: /hi/
+   Got: "sh: error executing sh: fs.resolve is not a function"
 [PASS] SH_02
 [PASS] SH_03
 [PASS] SH_04
 [FAIL] SH_05: Syntax check -n (stub)
-       -> Exit Code: Expected 0, got 127
-[PASS] SH_06
+       -> Exit Code: Expected 0, got 1
+[FAIL] SH_06: Fail missing file
+       -> Exit Code: Expected 127, got 1
 [FAIL] SH_07: Positional args
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
        -> Stdout Regex Mismatch.
    Expected: /123/
-   Got: "sh: sh: No such file or directory"
+   Got: "sh: error executing sh: fs.resolve is not a function"
 [PASS] SH_08
 [PASS] SH_09
 [PASS] SH_10
@@ -885,7 +897,8 @@ UTILITY: time
 [FAIL] TIME_06: No args?
        -> Exit Code: Expected 0, got 1
 [PASS] TIME_07
-[PASS] TIME_08
+[FAIL] TIME_08: Complex command
+       -> Exit Code: Expected 0, got 1
 [FAIL] TIME_09: Subshell
        -> Exit Code: Expected 0, got 127
 [PASS] TIME_10
@@ -896,7 +909,7 @@ UTILITY: fold
 [FAIL] FOLD_04: Space break -s
        -> Stdout Regex Mismatch.
    Expected: /a b\nc d/
-   Got: "a b\n c \nd"
+   Got: "a b\n c \nd\n"
 [PASS] FOLD_05
 [FAIL] FOLD_06: Multiple files
        -> Exit Code: Expected 0, got 1
@@ -932,7 +945,7 @@ UTILITY: du
 [FAIL] DU_04: Human readable -h (Ext)
        -> Stdout Regex Mismatch.
    Expected: /[KMG]/
-   Got: "9	/bin\n8	/dev\n10	/etc\n8	/home/operator/mail\n17	/home/operator\n25	/home\n8	/lib\n8	/proc\n8	/root\n8	/tmp\n8	/usr/bin\n8	/usr/lib\n24	/usr\n8	/var/log\n16	/var\n132	/"
+   Got: "8	/home/operator\n16	/home\n8	/bin\n32	/"
 [PASS] DU_05
 [PASS] DU_06
 [PASS] DU_07
@@ -1661,7 +1674,8 @@ UTILITY: nice
 [PASS] NICE_05
 [FAIL] NICE_06: Negative (root)
        -> Exit Code: Expected 1, got 0
-[PASS] NICE_07
+[FAIL] NICE_07: Complex cmd
+       -> Exit Code: Expected 0, got 1
 [PASS] NICE_08
 [PASS] NICE_09
 [PASS] NICE_10
@@ -1776,13 +1790,13 @@ UTILITY: who
 [FAIL] WHO_02: Headers -H
        -> Stdout Regex Mismatch.
    Expected: /NAME/
-   Got: "operator  tty1  1/19/2026"
+   Got: "operator  tty1  1/21/2026"
 [PASS] WHO_03
 [PASS] WHO_04
 [FAIL] WHO_05: Message status -T
        -> Stdout Regex Mismatch.
    Expected: /[+\-?]/
-   Got: "operator  tty1  1/19/2026"
+   Got: "operator  tty1  1/21/2026"
 [PASS] WHO_06
 [PASS] WHO_07
 [PASS] WHO_08
@@ -1961,7 +1975,7 @@ UTILITY: lex
        -> Exit Code: Expected 0, got 1
        -> Stdout Regex Mismatch.
    Expected: /int/
-   Got: "lex: missing input file"
+   Got: "sh: error executing lex: fs.resolve is not a function"
 [FAIL] LEX_03: Verbose -v
        -> Exit Code: Expected 0, got 1
 [PASS] LEX_04
@@ -2049,7 +2063,7 @@ UTILITY: asa
 [FAIL] ASA_05: Page eject
        -> Stdout Regex Mismatch.
    Expected: /\f/
-   Got: "NewPage"
+   Got: "NewPage\n"
 [FAIL] ASA_06: Double space
        -> Exit Code: Expected 0, got 1
 [FAIL] ASA_07: Overprint
@@ -2098,17 +2112,16 @@ UTILITY: chown
 [FAIL] CHOWN_10: Multiple
        -> Exit Code: Expected 0, got 1
 UTILITY: rmdir
-[FAIL] RMDIR_01: Remove dir
-       -> Exit Code: Expected 0, got 1
+[PASS] RMDIR_01
 [PASS] RMDIR_02
+[PASS] RMDIR_03
 [PASS] RMDIR_04
 [PASS] RMDIR_05
-[FAIL] RMDIR_06: Multiple
-       -> Exit Code: Expected 0, got 1
+[PASS] RMDIR_06
 [PASS] RMDIR_07
-[PASS] RMDIR_08
-[FAIL] RMDIR_09: Consistency
-       -> Exit Code: Expected 0, got 1
+[FAIL] RMDIR_08: Fail cwd
+       -> Exit Code: Expected 1, got 0
+[PASS] RMDIR_09
 [PASS] RMDIR_10
 UTILITY: mkfifo
 [PASS] MKFIFO_01
@@ -2481,8 +2494,7 @@ UTILITY: val
 [FAIL] VAL_02: Fail invalid
        -> Exit Code: Expected 1, got 0
 [PASS] VAL_03
-[FAIL] VAL_04: No args
-       -> Exit Code: Expected 0, got 1
+[PASS] VAL_04
 [FAIL] VAL_05: SID -r
        -> Exit Code: Expected 0, got 1
 [FAIL] VAL_06: Message -m
@@ -2545,24 +2557,17 @@ UTILITY: ipcs
 [PASS] IPCS_09
 [PASS] IPCS_10
 UTILITY: iconv
-[FAIL] ICONV_01: Convert
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /text/
-   Got: "iconv: f: No such file"
+[PASS] ICONV_01
 [PASS] ICONV_02
 [PASS] ICONV_03
 [PASS] ICONV_04
 [PASS] ICONV_05
-[FAIL] ICONV_06: Output -o (Ext)
-       -> Exit Code: Expected 0, got 1
+[PASS] ICONV_06
 [FAIL] ICONV_07: Fail args
        -> Exit Code: Expected 1, got 0
-[FAIL] ICONV_08: Silent -s
-       -> Exit Code: Expected 0, got 1
+[PASS] ICONV_08
 [PASS] ICONV_09
-[FAIL] ICONV_10: Omit -f -t?
-       -> Exit Code: Expected 0, got 1
+[PASS] ICONV_10
 UTILITY: locale
 [PASS] LOCALE_01
 [PASS] LOCALE_02
@@ -2593,56 +2598,34 @@ UTILITY: localedef
 [PASS] LOCALEDEF_09
 [PASS] LOCALEDEF_10
 UTILITY: c17
-[FAIL] C17_01: Compile C
-       -> Exit Code: Expected 0, got 1
-       -> Missing File: Expected /home/operator/a.out to be created.
-[FAIL] C17_02: Output -o
-       -> Exit Code: Expected 0, got 1
-       -> Missing File: Expected /home/operator/out to be created.
-[FAIL] C17_03: Compile only -c
-       -> Exit Code: Expected 0, got 1
-       -> Missing File: Expected /home/operator/f.o to be created.
-[FAIL] C17_04: Debug -g
-       -> Exit Code: Expected 0, got 1
-[FAIL] C17_05: Optimize -O
-       -> Exit Code: Expected 0, got 1
-[FAIL] C17_06: Fail syntax
-       -> Exit Code: Expected 1, got 0
+[PASS] C17_01
+[PASS] C17_02
+[PASS] C17_03
+[PASS] C17_04
+[PASS] C17_05
+[PASS] C17_06
 [PASS] C17_07
 [PASS] C17_08
-[FAIL] C17_09: Consistency
-       -> Exit Code: Expected 0, got 1
-[FAIL] C17_10: Link lib (stub)
-       -> Exit Code: Expected 0, got 1
+[PASS] C17_09
+[PASS] C17_10
 UTILITY: cflow
 [PASS] CFLOW_01
 [PASS] CFLOW_02
 [PASS] CFLOW_03
-[FAIL] CFLOW_04: Fail missing
-       -> Exit Code: Expected 1, got 0
-[FAIL] CFLOW_05: No args
-       -> Exit Code: Expected 1, got 0
+[PASS] CFLOW_04
+[PASS] CFLOW_05
 [PASS] CFLOW_06
 [FAIL] CFLOW_07: Fail syntax
        -> Exit Code: Expected 1, got 0
 [PASS] CFLOW_08
 [PASS] CFLOW_09
-[FAIL] CFLOW_10: Output fmt
-       -> Stdout Regex Mismatch.
-   Expected: /main/
-   Got: ""
+[PASS] CFLOW_10
 UTILITY: cxref
-[FAIL] CXREF_01: Gen xref
-       -> Stdout Regex Mismatch.
-   Expected: /main/
-   Got: ""
-[FAIL] CXREF_02: Output -o
-       -> Missing File: Expected /home/operator/out to be created.
+[PASS] CXREF_01
+[PASS] CXREF_02
 [PASS] CXREF_03
-[FAIL] CXREF_04: Fail missing
-       -> Exit Code: Expected 1, got 0
-[FAIL] CXREF_05: No args
-       -> Exit Code: Expected 1, got 0
+[PASS] CXREF_04
+[PASS] CXREF_05
 [PASS] CXREF_06
 [FAIL] CXREF_07: Fail syntax
        -> Exit Code: Expected 1, got 0
@@ -2653,63 +2636,50 @@ UTILITY: fuser
 [PASS] FUSER_01
 [PASS] FUSER_02
 [PASS] FUSER_03
-[FAIL] FUSER_04: Fail missing
-       -> Exit Code: Expected 1, got 0
-[FAIL] FUSER_05: No args
-       -> Exit Code: Expected 1, got 0
+[PASS] FUSER_04
+[PASS] FUSER_05
 [PASS] FUSER_06
 [PASS] FUSER_07
 [PASS] FUSER_08
 [PASS] FUSER_09
 [PASS] FUSER_10
 UTILITY: gencat
-[FAIL] GENCAT_01: Gen catalog
-       -> Missing File: Expected /home/operator/cat to be created.
-[FAIL] GENCAT_02: Fail missing
-       -> Exit Code: Expected 1, got 0
-[FAIL] GENCAT_03: No args
-       -> Exit Code: Expected 1, got 0
+[PASS] GENCAT_01
+[PASS] GENCAT_02
+[PASS] GENCAT_03
 [PASS] GENCAT_04
 [PASS] GENCAT_05
 [PASS] GENCAT_06
-[FAIL] GENCAT_07: Fail format
-       -> Exit Code: Expected 1, got 0
-[PASS] GENCAT_08
-[PASS] GENCAT_09
-[PASS] GENCAT_10
+[PASS] GENCAT_07
+[FAIL] GENCAT_08: Consistency
+       -> Exit Code: Expected 0, got 1
+[FAIL] GENCAT_09: Output check
+       -> Exit Code: Expected 0, got 1
+[FAIL] GENCAT_10: Multiple inputs
+       -> Exit Code: Expected 0, got 1
 UTILITY: getconf
 [PASS] GETCONF_01
-[FAIL] GETCONF_02: All -a
-       -> Exit Code: Expected 0, got 1
-[FAIL] GETCONF_03: Specific spec -v
-       -> Exit Code: Expected 0, got 1
+[PASS] GETCONF_02
+[PASS] GETCONF_03
 [PASS] GETCONF_04
-[FAIL] GETCONF_05: Fail path missing
-       -> Exit Code: Expected 1, got 0
+[PASS] GETCONF_05
 [PASS] GETCONF_06
 [PASS] GETCONF_07
 [PASS] GETCONF_08
-[FAIL] GETCONF_09: Legacy
-       -> Exit Code: Expected 0, got 1
+[PASS] GETCONF_09
 [PASS] GETCONF_10
 UTILITY: gettext
 [PASS] GETTEXT_01
 [PASS] GETTEXT_02
 [PASS] GETTEXT_03
-[FAIL] GETTEXT_04: No args
-       -> Exit Code: Expected 1, got 0
-[FAIL] GETTEXT_05: Expand -e
-       -> Stdout Regex Mismatch.
-   Expected: /a\nb/
-   Got: "-e"
-[FAIL] GETTEXT_06: Fail missing
-       -> Stdout Regex Mismatch.
-   Expected: /msg/
-   Got: "-d"
+[PASS] GETTEXT_04
+[PASS] GETTEXT_05
+[PASS] GETTEXT_06
 [FAIL] GETTEXT_07: Env vars
        -> Exit Code: Expected 0, got 127
 [PASS] GETTEXT_08
-[PASS] GETTEXT_09
+[FAIL] GETTEXT_09: Empty
+       -> Exit Code: Expected 0, got 1
 [PASS] GETTEXT_10
 UTILITY: msgfmt
 [FAIL] MSGFMT_01: Compile po
@@ -2879,14 +2849,14 @@ UTILITY: xgettext
 === COMPLIANCE SUMMARY ===
 UTILITY       | TESTS | PASS | FAIL | COMPLIANCE
 --------------|-------|------|------|-----------
-mkdir         |    10 |    9 |    0 |     90.0%
+mkdir         |    10 |   10 |    0 |    100.0%
 cd            |    10 |   10 |    0 |    100.0%
 ls            |    10 |    9 |    1 |     90.0%
 touch         |    10 |   10 |    0 |    100.0%
 rm            |    10 |   10 |    0 |    100.0%
 cp            |    10 |   10 |    0 |    100.0%
 mv            |    10 |   10 |    0 |    100.0%
-echo          |    10 |    9 |    1 |     90.0%
+echo          |    10 |   10 |    0 |    100.0%
 cat           |    10 |   10 |    0 |    100.0%
 pwd           |    10 |   10 |    0 |    100.0%
 grep          |    10 |   10 |    0 |    100.0%
@@ -2895,7 +2865,7 @@ tail          |    10 |   10 |    0 |    100.0%
 wc            |    10 |    9 |    1 |     90.0%
 chmod         |    10 |    7 |    3 |     70.0%
 awk           |    10 |    9 |    1 |     90.0%
-sed           |    10 |    9 |    1 |     90.0%
+sed           |    10 |   10 |    0 |    100.0%
 find          |    10 |    7 |    2 |     70.0%
 date          |    10 |    7 |    3 |     70.0%
 diff          |    10 |    5 |    5 |     50.0%
@@ -2903,7 +2873,7 @@ sort          |    10 |   10 |    0 |    100.0%
 uniq          |    10 |   10 |    0 |    100.0%
 tr            |    10 |    8 |    2 |     80.0%
 cut           |    10 |   10 |    0 |    100.0%
-tee           |    10 |    9 |    1 |     90.0%
+tee           |    10 |   10 |    0 |    100.0%
 alias         |    10 |    7 |    3 |     70.0%
 unalias       |    10 |    8 |    2 |     80.0%
 bg            |    10 |    8 |    2 |     80.0%
@@ -2917,11 +2887,11 @@ true          |    10 |   10 |    0 |    100.0%
 basename      |    10 |    7 |    3 |     70.0%
 dirname       |    10 |    8 |    2 |     80.0%
 file          |    10 |    6 |    4 |     60.0%
-join          |    10 |    3 |    7 |     30.0%
+join          |    10 |    8 |    2 |     80.0%
 paste         |    10 |    8 |    2 |     80.0%
 split         |    10 |    5 |    5 |     50.0%
 csplit        |    10 |    5 |    5 |     50.0%
-comm          |    10 |    3 |    7 |     30.0%
+comm          |    10 |    9 |    1 |     90.0%
 cmp           |    10 |    5 |    5 |     50.0%
 od            |    10 |    3 |    7 |     30.0%
 expr          |    10 |    5 |    5 |     50.0%
@@ -2935,10 +2905,10 @@ uname         |    10 |    8 |    2 |     80.0%
 logname       |    10 |    6 |    4 |     60.0%
 env           |    10 |    5 |    5 |     50.0%
 ar            |    10 |    4 |    6 |     40.0%
-make          |    10 |    8 |    2 |     80.0%
-sh            |    10 |    8 |    2 |     80.0%
+make          |    10 |    0 |   10 |      0.0%
+sh            |    10 |    6 |    4 |     60.0%
 strings       |    10 |    4 |    6 |     40.0%
-time          |    10 |    8 |    2 |     80.0%
+time          |    10 |    7 |    3 |     70.0%
 fold          |    10 |    6 |    4 |     60.0%
 cksum         |    10 |    4 |    6 |     40.0%
 du            |    10 |    9 |    1 |     90.0%
@@ -2980,7 +2950,7 @@ export        |    10 |    5 |    5 |     50.0%
 eval          |    10 |    6 |    4 |     60.0%
 exec          |    10 |    6 |    4 |     60.0%
 ps            |    10 |    7 |    3 |     70.0%
-nice          |    10 |    8 |    2 |     80.0%
+nice          |    10 |    7 |    3 |     70.0%
 renice        |    10 |    7 |    3 |     70.0%
 nohup         |    10 |    8 |    2 |     80.0%
 logger        |    10 |    9 |    1 |     90.0%
@@ -3009,7 +2979,7 @@ ctags         |    10 |    6 |    4 |     60.0%
 asa           |    10 |    3 |    7 |     30.0%
 chgrp         |    10 |    2 |    8 |     20.0%
 chown         |    10 |    3 |    7 |     30.0%
-rmdir         |    10 |    6 |    3 |     60.0%
+rmdir         |    10 |    9 |    1 |     90.0%
 mkfifo        |    10 |    8 |    2 |     80.0%
 unlink        |    10 |    8 |    2 |     80.0%
 patch         |    10 |    8 |    2 |     80.0%
@@ -3031,20 +3001,20 @@ rmdel         |    10 |    5 |    5 |     50.0%
 sact          |    10 |    2 |    8 |     20.0%
 sccs          |    10 |    2 |    8 |     20.0%
 unget         |    10 |    3 |    7 |     30.0%
-val           |    10 |    1 |    9 |     10.0%
+val           |    10 |    2 |    8 |     20.0%
 what          |    10 |    6 |    4 |     60.0%
 ipcrm         |    10 |    7 |    3 |     70.0%
 ipcs          |    10 |    9 |    1 |     90.0%
-iconv         |    10 |    5 |    5 |     50.0%
+iconv         |    10 |    9 |    1 |     90.0%
 locale        |    10 |    7 |    3 |     70.0%
 localedef     |    10 |    8 |    2 |     80.0%
-c17           |    10 |    2 |    8 |     20.0%
-cflow         |    10 |    6 |    4 |     60.0%
-cxref         |    10 |    5 |    5 |     50.0%
-fuser         |    10 |    8 |    2 |     80.0%
-gencat        |    10 |    6 |    4 |     60.0%
-getconf       |    10 |    6 |    4 |     60.0%
-gettext       |    10 |    6 |    4 |     60.0%
+c17           |    10 |   10 |    0 |    100.0%
+cflow         |    10 |    9 |    1 |     90.0%
+cxref         |    10 |    9 |    1 |     90.0%
+fuser         |    10 |   10 |    0 |    100.0%
+gencat        |    10 |    7 |    3 |     70.0%
+getconf       |    10 |   10 |    0 |    100.0%
+gettext       |    10 |    8 |    2 |     80.0%
 msgfmt        |    10 |    4 |    6 |     40.0%
 newgrp        |    10 |    6 |    4 |     60.0%
 ngettext      |    10 |    3 |    7 |     30.0%
@@ -3055,7 +3025,7 @@ uustat        |    10 |    9 |    1 |     90.0%
 uux           |    10 |    2 |    8 |     20.0%
 xgettext      |    10 |    6 |    4 |     60.0%
 
-TOTAL COMPLIANCE: 62.7% (1097/1750)
+TOTAL COMPLIANCE: 64.7% (1132/1750)
 
 === MISSING UTILITIES (Implemented but failing) ===
 None

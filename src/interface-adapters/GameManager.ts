@@ -28,7 +28,7 @@ export class GameManager {
      * @param fs - The file system entity.
      * @param telemetry - The telemetry port for logging events.
      */
-    constructor(fs: FileSystem, private telemetry?: TelemetryPort) {
+    constructor(fs: FileSystemService, private telemetry?: TelemetryPort) {
         this.mailSystem = new MailSystem(fs, telemetry);
         this.tutorEngine = new TutorEngine();
 

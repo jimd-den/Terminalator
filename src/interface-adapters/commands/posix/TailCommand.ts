@@ -1,6 +1,7 @@
 import { ICommand, CommandResponse } from '../../../domain/entities/Command';
 import { FileSystem } from '../../../domain/entities/FileSystem';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../../domain/entities/TerminalState';
 
 interface TailOptions {
@@ -13,9 +14,10 @@ export class TailCommand implements ICommand {
     name = 'tail';
     description = 'Output the last part of files';
 
-    constructor(/* private fs: FileSystem */) { }
+    constructor(/* private fs: FileSystemService */) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         const options = this.parseArgs(args);
         const outputLines: string[] = [];
         let exitCode = 0;
@@ -35,20 +37,20 @@ export class TailCommand implements ICommand {
                     outputLines.push(`==> ${file} <==`);
                 }
 
-                const node = context.fs.resolveNode(file, context.cwd);
+                const node = context.fileSystemService.resolve(file, context.cwd);
                 if (!node) {
                     outputLines.push(`tail: cannot open '${file}' for reading: No such file or directory`);
                     exitCode = 1;
                     continue;
                 }
 
-                if (context.fs.isDirectory(node)) {
+                if (context.fileSystemService.isDirectory(node)) {
                     outputLines.push(`tail: error reading '${file}': Is a directory`);
                     exitCode = 1;
                     continue;
                 }
 
-                const inode = context.fs.getInode(node.inodeId);
+                const inode = context.fileSystemService.getInode(node.inodeId);
                 const content = (inode && typeof inode.content === 'string') ? inode.content : '';
                 const lines = content.split('\n');
                 const start = Math.max(0, lines.length - options.lines);
