@@ -4,10 +4,10 @@
  */
 import { ICommand, CommandResponse } from '../ICommand';
 import { TerminalState } from '../../entities/TerminalState';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 export class CflowCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
     async execute(args: string[], state: TerminalState, _input?: string): Promise<CommandResponse> {
         const files: string[] = [];
@@ -44,15 +44,8 @@ export class CflowCommand implements ICommand {
                 return { output: `cflow: cannot open '${file}': No such file or directory`, newState: state, exitCode: 1 };
             }
 
-            const inode = this.fs.getInode(dentry.inodeId);
-            if (!inode) return { output: 'cflow: error reading file', newState: state, exitCode: 1 };
-
-            let content = '';
-            if (inode.content instanceof Uint8Array) {
-                content = new TextDecoder().decode(inode.content);
-            } else {
-                content = inode.content as string;
-            }
+            const rawContent = this.fs.readFile(file, state.currentDirectory);
+            const content = typeof rawContent === 'string' ? rawContent : new TextDecoder().decode(rawContent);
 
             // Basic Syntax Check (Naive)
             // If checking for "bad code", maybe check for basic C tokens?

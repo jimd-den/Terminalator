@@ -2,23 +2,26 @@ import { describe, it, before } from 'node:test';
 import assert from 'node:assert';
 import { LsCommand } from '../../../../src/domain/commands/core/LsCommand';
 import { FileSystem } from '../../../../src/domain/entities/FileSystem';
+import { FileSystemService } from '../../../../src/domain/services/FileSystemService';
 import { createInitialTerminalState } from '../../../../src/domain/entities/TerminalState';
 
 describe('LsCommand', () => {
     let fs: FileSystem;
+    let service: FileSystemService;
     let lsCommand: LsCommand;
     let initialState = createInitialTerminalState();
 
     before(() => {
         fs = new FileSystem();
+        service = new FileSystemService(fs);
         // Setup a test file structure
         // /home/operator has 'mail' (dir) and 'notes.txt' (file)
         // We will add a hidden file
         // Create hidden file
-        fs.writeFile('/home/operator/.hidden', 'secret', 'w', '/');
+        service.writeFile('/home/operator/.hidden', 'secret', 'w', '/');
         // Set permissions manually if writeFile doesn't allow (it defaults to 644 usually)
-        fs.chmod('/home/operator/.hidden', 0o600, '/');
-        lsCommand = new LsCommand(fs);
+        service.chmod('/home/operator/.hidden', 0o600, '/');
+        lsCommand = new LsCommand(service);
     });
 
     it('should list files in current directory', () => {

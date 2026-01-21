@@ -14,10 +14,10 @@
 import { ICommand } from '../ICommand';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 export class WcCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
     execute(args: string[], state: TerminalState, input?: string): CommandResponse {
         let countLines = false;
@@ -105,7 +105,7 @@ export class WcCommand implements ICommand {
                         : `${state.currentDirectory}/${filename}`;
                 }
 
-                const node = this.fs.resolveNode(path);
+                const node = this.fs.resolve(path);
 
                 if (!node) {
                     output += `wc: ${filename}: No such file or directory\n`;
@@ -121,7 +121,7 @@ export class WcCommand implements ICommand {
                 }
 
                 try {
-                    const raw = this.fs.readFile(path);
+                    const raw = this.fs.readFileBuffer(path);
                     const content = typeof raw === 'string' ? raw : new TextDecoder().decode(raw);
                     output += processContent(content, filename) + '\n';
                 } catch (e: any) {

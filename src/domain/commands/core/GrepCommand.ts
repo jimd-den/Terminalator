@@ -20,7 +20,8 @@
 import { ICommand } from '../ICommand';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem, Dentry, S_IFDIR } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
+import { S_IFDIR } from '../../entities/FileSystem';
 
 /**
  * GrepOptions encapsulates the configuration parsed from command line arguments.
@@ -104,7 +105,7 @@ class FixedStringStrategy implements MatchingStrategy {
 }
 
 export class GrepCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
     /**
      * Entry point for the grep command.
@@ -226,7 +227,7 @@ export class GrepCommand implements ICommand {
 
     private readPatternsFromFile(path: string, state: TerminalState): string[] {
         try {
-            const content = this.fs.readFile(path, state.currentDirectory);
+            const content = this.fs.readFile(path);
             return content.split('\n').filter(p => p.length > 0);
         } catch (e) {
             throw new Error(`could not read patterns from file ${path}`);
@@ -292,7 +293,7 @@ export class GrepCommand implements ICommand {
             for (const target of targets) {
                 const processNode = (path: string) => {
                     try {
-                        const node = this.fs.resolveNode(path, state.currentDirectory);
+                        const node = this.fs.resolve(path);
                         if (!node) {
                             if (!options.suppressErrors) {
                                 output += `grep: ${path}: No such file or directory\n`;
@@ -317,7 +318,7 @@ export class GrepCommand implements ICommand {
                                 anyError = true;
                             }
                         } else {
-                            const content = this.fs.readFile(path, state.currentDirectory);
+                            const content = this.fs.readFile(path);
                             processRows(content, path);
                         }
                     } catch (e: any) {

@@ -2,18 +2,21 @@ import { describe, it, before, beforeEach } from 'node:test';
 import assert from 'node:assert';
 import { SedCommand } from '../../../../src/domain/commands/core/SedCommand';
 import { FileSystem } from '../../../../src/domain/entities/FileSystem';
+import { FileSystemService } from '../../../../src/domain/services/FileSystemService';
 import { createInitialTerminalState, TerminalState } from '../../../../src/domain/entities/TerminalState';
 
 describe('SedCommand POSIX TDD Suite', () => {
     let fs: FileSystem;
+    let service: FileSystemService;
     let state: TerminalState;
     let cmd: SedCommand;
 
     beforeEach(() => {
         fs = new FileSystem();
+        service = new FileSystemService(fs);
         state = createInitialTerminalState();
         state.fs = fs;
-        cmd = new SedCommand(fs);
+        cmd = new SedCommand(service);
     });
 
     /**
@@ -241,15 +244,15 @@ describe('SedCommand POSIX TDD Suite', () => {
         });
 
         it('38. should read commands from file with -f', () => {
-            fs.writeFile("/cmds.sed", "s/a/b/g", "w");
+            service.writeFile("/cmds.sed", "s/a/b/g", "w");
             const res = cmd.execute(["-f", "/cmds.sed"], state, "aaa");
             assert.strictEqual(res.output, "bbb\n");
         });
 
         it('39. should support in-place edit with -i (extension)', () => {
-            fs.writeFile("/file.txt", "hello", "w");
+            service.writeFile("/file.txt", "hello", "w");
             const res = cmd.execute(["-i", "s/hello/hi/", "/file.txt"], state);
-            assert.strictEqual(fs.readFile("/file.txt"), "hi\n");
+            assert.strictEqual(service.readFile("/file.txt"), "hi\n");
             assert.strictEqual(res.exitCode, 0);
         });
 

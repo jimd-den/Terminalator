@@ -31,7 +31,7 @@ UTILITY: ls
 [FAIL] LS_08: Recursive listing -R
        -> Stdout Regex Mismatch.
    Expected: /\/sub/
-   Got: ".:\nmail  notes.txt\n\n./mail:"
+   Got: ".:"
 [PASS] LS_09
 [PASS] LS_10
 UTILITY: touch
@@ -216,7 +216,7 @@ UTILITY: date
 [FAIL] DATE_06: Complex format
        -> Stdout Regex Mismatch.
    Expected: /Year: 20../
-   Got: "Tue Jan 20 2026 18:18:57 GMT-0700 (Mountain Standard Time)"
+   Got: "Wed Jan 21 2026 04:04:31 GMT-0700 (Mountain Standard Time)"
 [PASS] DATE_07
 [FAIL] DATE_08: Set date (fail/stub)
        -> Exit Code: Expected 1, got 0
@@ -465,18 +465,35 @@ UTILITY: dirname
 [FAIL] DIRNAME_10: Multiple args fail?
        -> Exit Code: Expected 1, got 0
 UTILITY: file
-[PASS] FILE_01
-[PASS] FILE_02
+[FAIL] FILE_01: Check file
+       -> Exit Code: Expected 0, got 1
+       -> Stdout Regex Mismatch.
+   Expected: /text|ASCII/i
+   Got: "sh: error executing file: this.fs.resolveNode is not a function"
+[FAIL] FILE_02: Check dir
+       -> Exit Code: Expected 0, got 1
+       -> Stdout Regex Mismatch.
+   Expected: /directory/i
+   Got: "sh: error executing file: this.fs.resolveNode is not a function"
 [PASS] FILE_03
-[PASS] FILE_04
+[FAIL] FILE_04: Multiple files
+       -> Exit Code: Expected 0, got 1
+       -> Stdout Regex Mismatch.
+   Expected: /\/1.*\/2/s
+   Got: "sh: error executing file: this.fs.resolveNode is not a function"
 [FAIL] FILE_05: Brief -b (stub)
        -> Exit Code: Expected 0, got 1
 [FAIL] FILE_06: Helpers -h (stub)
        -> Exit Code: Expected 0, got 1
 [FAIL] FILE_07: Mime -i (Ext)
        -> Exit Code: Expected 0, got 1
-[PASS] FILE_08
-[PASS] FILE_09
+[FAIL] FILE_08: Empty file
+       -> Exit Code: Expected 0, got 1
+       -> Stdout Regex Mismatch.
+   Expected: /empty/i
+   Got: "sh: error executing file: this.fs.resolveNode is not a function"
+[FAIL] FILE_09: Binary? (stub)
+       -> Exit Code: Expected 0, got 1
 [FAIL] FILE_10: Special (stub)
        -> Exit Code: Expected 0, got 1
 UTILITY: join
@@ -654,7 +671,8 @@ UTILITY: test
 [FAIL] TEST_06: Dir exists -d
        -> Exit Code: Expected 0, got 1
 [PASS] TEST_07
-[PASS] TEST_08
+[FAIL] TEST_08: Non-zero length -n
+       -> Exit Code: Expected 0, got 1
 [PASS] TEST_09
 [FAIL] TEST_10: NOT !
        -> Exit Code: Expected 0, got 1
@@ -813,31 +831,61 @@ UTILITY: ar
    Got: "ar: lib.a: No such file or directory"
 [PASS] AR_10
 UTILITY: make
-[PASS] MAKE_01
-[PASS] MAKE_02
-[PASS] MAKE_03
-[PASS] MAKE_04
-[PASS] MAKE_05
-[PASS] MAKE_06
+[FAIL] MAKE_01: Default target
+       -> Exit Code: Expected 0, got 1
+       -> Stdout Regex Mismatch.
+   Expected: /ok/
+   Got: "sh: error executing make: fs.resolveNode is not a function"
+[FAIL] MAKE_02: Specific target
+       -> Exit Code: Expected 0, got 1
+       -> Stdout Regex Mismatch.
+   Expected: /test/
+   Got: "sh: error executing make: fs.resolveNode is not a function"
+[FAIL] MAKE_03: Ignore errors -i
+       -> Exit Code: Expected 0, got 1
+       -> Stdout Regex Mismatch.
+   Expected: /ok/
+   Got: "sh: error executing make: fs.resolveNode is not a function"
+[FAIL] MAKE_04: Dry run -n
+       -> Exit Code: Expected 0, got 1
+[FAIL] MAKE_05: Keep going -k
+       -> Stdout Regex Mismatch.
+   Expected: /b/
+   Got: "sh: error executing make: fs.resolveNode is not a function"
+[FAIL] MAKE_06: Specific file -f
+       -> Exit Code: Expected 0, got 1
+       -> Stdout Regex Mismatch.
+   Expected: /other/
+   Got: "sh: error executing make: fs.resolveNode is not a function"
 [FAIL] MAKE_07: Touch -t
-       -> Exit Code: Expected 0, got 2
+       -> Exit Code: Expected 0, got 1
 [FAIL] MAKE_08: Env override -e
        -> Exit Code: Expected 0, got 127
-[PASS] MAKE_09
-[PASS] MAKE_10
+[FAIL] MAKE_09: Fail missing Makefile
+       -> Exit Code: Expected 2, got 1
+[FAIL] MAKE_10: Macro usage
+       -> Exit Code: Expected 0, got 1
+       -> Stdout Regex Mismatch.
+   Expected: /1/
+   Got: "sh: error executing make: fs.resolveNode is not a function"
 UTILITY: sh
-[PASS] SH_01
+[FAIL] SH_01: Run script
+       -> Exit Code: Expected 0, got 1
+       -> Stdout Regex Mismatch.
+   Expected: /hi/
+   Got: "sh: error executing sh: fs.resolveNode is not a function"
 [PASS] SH_02
 [PASS] SH_03
 [PASS] SH_04
 [FAIL] SH_05: Syntax check -n (stub)
-       -> Exit Code: Expected 0, got 127
-[PASS] SH_06
+       -> Exit Code: Expected 0, got 1
+[FAIL] SH_06: Fail missing file
+       -> Exit Code: Expected 127, got 1
 [FAIL] SH_07: Positional args
-       -> Exit Code: Expected 0, got 127
+       -> Exit Code: Expected 0, got 1
        -> Stdout Regex Mismatch.
    Expected: /123/
-   Got: "sh: sh: No such file or directory"
+   Got: "sh: error executing sh: fs.resolveNode is not a function"
 [PASS] SH_08
 [PASS] SH_09
 [PASS] SH_10
@@ -914,7 +962,7 @@ UTILITY: du
 [FAIL] DU_04: Human readable -h (Ext)
        -> Stdout Regex Mismatch.
    Expected: /[KMG]/
-   Got: "9	/bin\n8	/dev\n10	/etc\n8	/home/operator/mail\n17	/home/operator\n25	/home\n8	/lib\n8	/proc\n8	/tmp\n8	/usr/bin\n8	/usr/lib\n24	/usr\n8	/var/log\n16	/var\n124	/"
+   Got: "8	/home/operator\n16	/home\n8	/bin\n32	/"
 [PASS] DU_05
 [PASS] DU_06
 [PASS] DU_07
@@ -1758,13 +1806,13 @@ UTILITY: who
 [FAIL] WHO_02: Headers -H
        -> Stdout Regex Mismatch.
    Expected: /NAME/
-   Got: "operator  tty1  1/20/2026"
+   Got: "operator  tty1  1/21/2026"
 [PASS] WHO_03
 [PASS] WHO_04
 [FAIL] WHO_05: Message status -T
        -> Stdout Regex Mismatch.
    Expected: /[+\-?]/
-   Got: "operator  tty1  1/20/2026"
+   Got: "operator  tty1  1/21/2026"
 [PASS] WHO_06
 [PASS] WHO_07
 [PASS] WHO_08
@@ -1943,7 +1991,7 @@ UTILITY: lex
        -> Exit Code: Expected 0, got 1
        -> Stdout Regex Mismatch.
    Expected: /int/
-   Got: "lex: l: No such file or directory"
+   Got: "sh: error executing lex: fs.resolveNode is not a function"
 [FAIL] LEX_03: Verbose -v
        -> Exit Code: Expected 0, got 1
 [PASS] LEX_04
@@ -2087,7 +2135,8 @@ UTILITY: rmdir
 [PASS] RMDIR_05
 [PASS] RMDIR_06
 [PASS] RMDIR_07
-[PASS] RMDIR_08
+[FAIL] RMDIR_08: Fail cwd
+       -> Exit Code: Expected 1, got 0
 [PASS] RMDIR_09
 [PASS] RMDIR_10
 UTILITY: mkfifo
@@ -2114,7 +2163,10 @@ UTILITY: unlink
 [PASS] UNLINK_05
 [FAIL] UNLINK_06: Consistency
        -> Exit Code: Expected 0, got 1
-[PASS] UNLINK_07
+[FAIL] UNLINK_07: Verify gone
+       -> Stdout Regex Mismatch.
+   Expected: /No such/
+   Got: "unlink: cannot unlink 'f;': this.fs.resolveNode is not a function"
 [PASS] UNLINK_08
 [PASS] UNLINK_09
 [PASS] UNLINK_10
@@ -2159,7 +2211,11 @@ UTILITY: readlink
    Expected: /d/
    Got: ""
 UTILITY: realpath
-[PASS] REALPATH_01
+[FAIL] REALPATH_01: Resolve path
+       -> Exit Code: Expected 0, got 1
+       -> Stdout Regex Mismatch.
+   Expected: /\/home\/operator/
+   Got: "realpath: .: this.fs.resolveNode is not a function"
 [FAIL] REALPATH_02: Resolve symlink
        -> Stdout Regex Mismatch.
    Expected: /\/f/
@@ -2169,10 +2225,16 @@ UTILITY: realpath
        -> Exit Code: Expected 0, got 1
 [PASS] REALPATH_05
 [PASS] REALPATH_06
-[PASS] REALPATH_07
-[PASS] REALPATH_08
-[PASS] REALPATH_09
-[PASS] REALPATH_10
+[FAIL] REALPATH_07: Physical -P
+       -> Exit Code: Expected 0, got 1
+[FAIL] REALPATH_08: Logical -L
+       -> Exit Code: Expected 0, got 1
+[FAIL] REALPATH_09: Consistency
+       -> Stdout Regex Mismatch.
+   Expected: /^\/$/
+   Got: "realpath: /: this.fs.resolveNode is not a function"
+[FAIL] REALPATH_10: Multiple
+       -> Exit Code: Expected 0, got 1
 UTILITY: timeout
 [PASS] TIMEOUT_01
 [PASS] TIMEOUT_02
@@ -2232,22 +2294,19 @@ UTILITY: colon
 UTILITY: dot
 [FAIL] DOT_01: Source file
        -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /x/
-   Got: ".: s: No such file or directory"
 [FAIL] DOT_02: Path lookup
        -> Exit Code: Expected 0, got 1
 [FAIL] DOT_03: Vars
        -> Stdout Regex Mismatch.
    Expected: /1/
-   Got: ".: s;: No such file or directory"
+   Got: "sh: error executing .: this.fs.resolveNode is not a function"
 [PASS] DOT_04
 [FAIL] DOT_05: Exit effect
        -> Exit Code: Expected 0, got 1
 [FAIL] DOT_06: Args
        -> Stdout Regex Mismatch.
    Expected: /arg/
-   Got: ".: s: No such file or directory"
+   Got: "sh: error executing .: this.fs.resolveNode is not a function"
 [PASS] DOT_07
 [PASS] DOT_08
 [FAIL] DOT_09: Consistency
@@ -2625,16 +2684,22 @@ UTILITY: gencat
 [FAIL] GENCAT_10: Multiple inputs
        -> Exit Code: Expected 0, got 1
 UTILITY: getconf
-[PASS] GETCONF_01
+[FAIL] GETCONF_01: Get var
+       -> Exit Code: Expected 0, got 1
+       -> Stdout Regex Mismatch.
+   Expected: /\d+/
+   Got: "sh: error executing getconf: this.fs.resolveNode is not a function"
 [PASS] GETCONF_02
 [PASS] GETCONF_03
 [PASS] GETCONF_04
 [PASS] GETCONF_05
 [PASS] GETCONF_06
 [PASS] GETCONF_07
-[PASS] GETCONF_08
+[FAIL] GETCONF_08: Consistency
+       -> Exit Code: Expected 0, got 1
 [PASS] GETCONF_09
-[PASS] GETCONF_10
+[FAIL] GETCONF_10: Directory arg
+       -> Exit Code: Expected 0, got 1
 UTILITY: gettext
 [PASS] GETTEXT_01
 [PASS] GETTEXT_02
@@ -2853,7 +2918,7 @@ false         |    10 |    9 |    1 |     90.0%
 true          |    10 |   10 |    0 |    100.0%
 basename      |    10 |    7 |    3 |     70.0%
 dirname       |    10 |    8 |    2 |     80.0%
-file          |    10 |    6 |    4 |     60.0%
+file          |    10 |    1 |    9 |     10.0%
 join          |    10 |    8 |    2 |     80.0%
 paste         |    10 |    8 |    2 |     80.0%
 split         |    10 |    5 |    5 |     50.0%
@@ -2863,7 +2928,7 @@ cmp           |    10 |    5 |    5 |     50.0%
 od            |    10 |    3 |    7 |     30.0%
 expr          |    10 |    5 |    5 |     50.0%
 printf        |    10 |    5 |    5 |     50.0%
-test          |    10 |    7 |    3 |     70.0%
+test          |    10 |    6 |    4 |     60.0%
 [             |    10 |    1 |    9 |     10.0%
 read          |    10 |    7 |    3 |     70.0%
 xargs         |    10 |    4 |    6 |     40.0%
@@ -2872,8 +2937,8 @@ uname         |    10 |    8 |    2 |     80.0%
 logname       |    10 |    6 |    4 |     60.0%
 env           |    10 |    5 |    5 |     50.0%
 ar            |    10 |    4 |    6 |     40.0%
-make          |    10 |    8 |    2 |     80.0%
-sh            |    10 |    8 |    2 |     80.0%
+make          |    10 |    0 |   10 |      0.0%
+sh            |    10 |    6 |    4 |     60.0%
 strings       |    10 |    4 |    6 |     40.0%
 time          |    10 |    8 |    2 |     80.0%
 fold          |    10 |    6 |    4 |     60.0%
@@ -2946,12 +3011,12 @@ ctags         |    10 |    6 |    4 |     60.0%
 asa           |    10 |    3 |    7 |     30.0%
 chgrp         |    10 |    2 |    8 |     20.0%
 chown         |    10 |    3 |    7 |     30.0%
-rmdir         |    10 |   10 |    0 |    100.0%
+rmdir         |    10 |    9 |    1 |     90.0%
 mkfifo        |    10 |    8 |    2 |     80.0%
-unlink        |    10 |    8 |    2 |     80.0%
+unlink        |    10 |    7 |    3 |     70.0%
 patch         |    10 |    8 |    2 |     80.0%
 readlink      |    10 |    3 |    7 |     30.0%
-realpath      |    10 |    8 |    2 |     80.0%
+realpath      |    10 |    3 |    7 |     30.0%
 timeout       |    10 |    7 |    3 |     70.0%
 break         |    10 |    6 |    4 |     60.0%
 continue      |    10 |    6 |    4 |     60.0%
@@ -2980,7 +3045,7 @@ cflow         |    10 |    9 |    1 |     90.0%
 cxref         |    10 |    9 |    1 |     90.0%
 fuser         |    10 |   10 |    0 |    100.0%
 gencat        |    10 |    7 |    3 |     70.0%
-getconf       |    10 |   10 |    0 |    100.0%
+getconf       |    10 |    7 |    3 |     70.0%
 gettext       |    10 |    8 |    2 |     80.0%
 msgfmt        |    10 |    4 |    6 |     40.0%
 newgrp        |    10 |    6 |    4 |     60.0%
@@ -2992,7 +3057,7 @@ uustat        |    10 |    9 |    1 |     90.0%
 uux           |    10 |    2 |    8 |     20.0%
 xgettext      |    10 |    6 |    4 |     60.0%
 
-TOTAL COMPLIANCE: 65.4% (1145/1750)
+TOTAL COMPLIANCE: 63.9% (1119/1750)
 
 === MISSING UTILITIES (Implemented but failing) ===
 None

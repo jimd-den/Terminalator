@@ -14,10 +14,10 @@
 import { ICommand } from '../ICommand';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem, S_IFREG, S_IFDIR } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 export class CpCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
     execute(args: string[], state: TerminalState, input?: string): CommandResponse {
         const flags = args.filter(arg => arg.startsWith('-'));
@@ -37,7 +37,7 @@ export class CpCommand implements ICommand {
 
         // Process destination
         let destPath = this.resolvePath(destination, state);
-        const destNode = this.fs.resolveNode(destPath);
+        const destNode = this.fs.resolve(destPath);
         const destIsDir = destNode ? this.fs.isDirectory(destNode) : destination.endsWith('/');
 
         // If multiple sources, dest MUST be a directory
@@ -51,7 +51,7 @@ export class CpCommand implements ICommand {
 
         for (const source of sources) {
             const srcPath = this.resolvePath(source, state);
-            const srcNode = this.fs.resolveNode(srcPath);
+            const srcNode = this.fs.resolve(srcPath);
 
             if (!srcNode) {
                 return {
@@ -137,11 +137,11 @@ export class CpCommand implements ICommand {
     private copyRecursive(srcPath: string, destPath: string) {
         // Create destination directory
         // Check if exists?
-        if (!this.fs.resolveNode(destPath)) {
+        if (!this.fs.resolve(destPath)) {
             this.fs.mkdir(destPath, 0o755);
         }
 
-        const srcNode = this.fs.resolveNode(srcPath);
+        const srcNode = this.fs.resolve(srcPath);
         if (!srcNode || !this.fs.isDirectory(srcNode)) return; // Should catch earlier
 
         const children = Array.from(srcNode.children.values());

@@ -16,11 +16,11 @@
 import { ICommand } from '../ICommand';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 import { SedParser, SedVM, SedState } from '../../services/SedEngine';
 
 export class SedCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
     execute(args: string[], state: TerminalState, input?: string): CommandResponse {
         const scripts: string[] = [];

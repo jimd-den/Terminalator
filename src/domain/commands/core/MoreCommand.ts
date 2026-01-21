@@ -16,10 +16,10 @@
 
 import { ICommand, CommandResponse } from '../ICommand';
 import { TerminalState } from '../../entities/TerminalState';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 export class MoreCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
     async execute(args: string[], state: TerminalState, input?: string): Promise<CommandResponse> {
         // Non-interactive simulation: just output content like cat
@@ -35,19 +35,25 @@ export class MoreCommand implements ICommand {
         let exitCode = 0;
 
         for (const file of args) {
-            const resolved = this.fs.resolveNode(file, state.currentDirectory);
+            const resolved = this.fs.resolve(file, state.currentDirectory);
             if (!resolved) {
                 output += `more: ${file}: No such file or directory\n`;
                 exitCode = 1;
                 continue;
             }
-            const inode = this.fs.getInode(resolved.inodeId);
-            if (!inode || !(inode.mode & 0o100000)) { // Check if file (S_IFREG)
-                output += `more: ${file}: Not a file\n`;
+            if (this.fs.isDirectory(resolved)) {
+                output += `more: ${file}: Is a directory\n`;
                 exitCode = 1;
                 continue;
             }
-            output += (inode.content as string) || '';
+            // Read content via service
+            try {
+                const content = this.fs.readFile(file, state.currentDirectory);
+                output += content;
+            } catch (e: any) {
+                output += `more: ${file}: ${e.message}\n`;
+                exitCode = 1;
+            }
         }
 
         return {

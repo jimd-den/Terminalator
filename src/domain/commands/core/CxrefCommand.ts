@@ -4,10 +4,10 @@
  */
 import { ICommand, CommandResponse } from '../ICommand';
 import { TerminalState } from '../../entities/TerminalState';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 export class CxrefCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
     async execute(args: string[], state: TerminalState, _input?: string): Promise<CommandResponse> {
         const inputFiles: string[] = [];
@@ -39,16 +39,8 @@ export class CxrefCommand implements ICommand {
 
         // 2. Process Files
         for (const file of inputFiles) {
-            const dentry = this.fs.resolve(file, state.currentDirectory);
-            if (!dentry) return { output: `cxref: cannot open '${file}'`, newState: state, exitCode: 1 };
-
-            const inode = this.fs.getInode(dentry.inodeId);
-            let content = '';
-            if (inode?.content instanceof Uint8Array) {
-                content = new TextDecoder().decode(inode.content);
-            } else {
-                content = inode?.content as string || '';
-            }
+            const rawContent = this.fs.readFile(file, state.currentDirectory);
+            const content = typeof rawContent === 'string' ? rawContent : new TextDecoder().decode(rawContent);
 
             // Syntax Check Hook
             if (content.includes('echo "bad"') || content.includes('echo x') || content.trim() === 'bad code') {
@@ -63,7 +55,7 @@ export class CxrefCommand implements ICommand {
 
         // 3. Output
         if (outputFile) {
-            this.fs.writeFile(outputFile, result, 'w', state.currentDirectory);
+            this.fs.writeFile(outputFile, result, state.currentDirectory);
             return { output: '', newState: state, exitCode: 0 };
         }
 

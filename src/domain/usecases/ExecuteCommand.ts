@@ -16,6 +16,7 @@
  */
 
 import { FileSystem } from '../entities/FileSystem';
+import { FileSystemService } from '../services/FileSystemService';
 import { TerminalState } from '../entities/TerminalState';
 import { TelemetryPort } from '../ports/TelemetryPort';
 import { CommandRegistry } from '../commands/CommandRegistry';
@@ -39,6 +40,7 @@ export interface CommandResponse {
 export class ExecuteCommand {
     private registry: CommandRegistry;
     private parser: ShellParser;
+    private service: FileSystemService;
 
     /**
      * Initializes ExecuteCommand.
@@ -55,6 +57,7 @@ export class ExecuteCommand {
         registry?: CommandRegistry,
         protected binaryRunner?: IBinaryRunner
     ) {
+        this.service = new FileSystemService(fs);
         this.parser = new ShellParser();
 
         if (registry) {
@@ -116,9 +119,9 @@ export class ExecuteCommand {
                 if (!command) {
                     // Check if it is a file path (starts with / or ./ or ../)
                     if (commandName.startsWith('/') || commandName.startsWith('./') || commandName.startsWith('../')) {
-                        const dentry = this.fs.resolve(commandName, currentState.currentDirectory);
-                        if (dentry && !dentry.isDirectory) {
-                            const inode = this.fs.getInode(dentry.inodeId);
+                        const dentry = this.service.resolve(commandName, currentState.currentDirectory);
+                        if (dentry && !this.service.isDirectory(dentry)) {
+                            const inode = this.service.getInode(dentry.inodeId);
                             // Check executable bit (0o111) - minimal check
                             if (inode && (inode.mode & 0o111)) {
                                 if (this.binaryRunner && inode.content instanceof Uint8Array) {

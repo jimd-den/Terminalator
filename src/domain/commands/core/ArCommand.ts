@@ -14,7 +14,7 @@
  */
 import { ICommand, CommandResponse } from '../ICommand';
 import { TerminalState } from '../../entities/TerminalState';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 interface ArHeader {
     name: string;
@@ -31,7 +31,7 @@ interface ArEntry {
 }
 
 export class ArCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
     async execute(args: string[], state: TerminalState, _input?: string): Promise<CommandResponse> {
         // this.fs = state.fs; // Already injected
@@ -70,10 +70,11 @@ export class ArCommand implements ICommand {
         let created = false;
 
         // Read existing archive
-        const node = this.fs.resolveNode(archivePath);
+        // Read existing archive
+        const node = this.fs.resolve(archivePath);
         if (node && !this.fs.isDirectory(node)) {
             try {
-                const content = this.fs.readFile(this.fs.getAbsolutePath(node));
+                const content = this.fs.readFile(archivePath);
                 entries = this.parseArchive(content);
             } catch (e) {
                 return {
@@ -114,18 +115,18 @@ export class ArCommand implements ICommand {
             const targets = files.length > 0 ? entries.filter(e => files.includes(e.header.name)) : entries;
             for (const entry of targets) {
                 const outPath = state.currentDirectory + '/' + entry.header.name;
-                this.fs.writeFile(outPath, entry.content, 'w', state.currentDirectory);
+                this.fs.writeFile(outPath, entry.content, state.currentDirectory);
                 if (verbose) outputLines.push(`x - ${entry.header.name}`);
             }
         } else if (mode.includes('r') || mode.includes('q')) { // Append/Replace
             for (const f of files) {
                 const srcPath = f.startsWith('/') ? f : state.currentDirectory + '/' + f;
-                const srcNode = this.fs.resolveNode(srcPath);
+                const srcNode = this.fs.resolve(srcPath);
                 if (!srcNode || this.fs.isDirectory(srcNode)) {
                     outputLines.push(`ar: ${f}: No such file or directory`);
                     continue;
                 }
-                const content = this.fs.readFile(this.fs.getAbsolutePath(srcNode));
+                const content = this.fs.readFile(srcPath);
                 const inode = this.fs.getInode(srcNode.inodeId);
 
                 const newEntry: ArEntry = {
@@ -177,7 +178,7 @@ export class ArCommand implements ICommand {
 
     private writeArchive(path: string, entries: ArEntry[], cwd: string) {
         const json = JSON.stringify(entries);
-        this.fs.writeFile(path, '!<arch>\n' + json, 'w', cwd);
+        this.fs.writeFile(path, '!<arch>\n' + json, cwd);
     }
 
     private formatVerbose(entry: ArEntry): string {

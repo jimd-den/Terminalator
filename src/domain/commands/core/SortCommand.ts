@@ -13,7 +13,7 @@
 import { ICommand } from '../ICommand';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 interface SortOptions {
     reverse: boolean;
@@ -26,7 +26,7 @@ interface SortOptions {
 }
 
 export class SortCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
     execute(args: string[], state: TerminalState, input?: string): CommandResponse {
         const options: SortOptions = {
@@ -88,7 +88,7 @@ export class SortCommand implements ICommand {
         } else if (input !== undefined) {
             content = input;
         } else {
-             return { output: '', newState: state, exitCode: 0 };
+            return { output: '', newState: state, exitCode: 0 };
         }
 
         let lines = content.split('\n');
@@ -128,9 +128,9 @@ export class SortCommand implements ICommand {
 
         if (options.check) {
             for (let i = 0; i < lines.length - 1; i++) {
-                if (compare(lines[i], lines[i+1]) > 0) {
+                if (compare(lines[i], lines[i + 1]) > 0) {
                     return {
-                        output: `sort: disorder: ${lines[i+1]}`,
+                        output: `sort: disorder: ${lines[i + 1]}`,
                         newState: state,
                         exitCode: 1
                     };

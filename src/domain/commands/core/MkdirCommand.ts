@@ -14,11 +14,11 @@
 import { ICommand } from '../ICommand';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 import { ModeParser } from '../../services/ModeParser';
 
 export class MkdirCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
     execute(args: string[], state: TerminalState, input?: string): CommandResponse {
         this.logExecution('MkdirCommand.execute', { args, state });
@@ -116,7 +116,7 @@ export class MkdirCommand implements ICommand {
         // Check search permissions for all but the last component
         let current = '/';
         for (let i = 0; i < components.length; i++) {
-            const node = this.fs.resolveNode(current);
+            const node = this.fs.resolve(current);
             if (node && !this.hasSearchPermission(node, state.user)) {
                 return { error: `cannot create directory '${target}': Permission denied` };
             }
@@ -125,7 +125,7 @@ export class MkdirCommand implements ICommand {
             current += (current === '/' ? '' : '/') + components[i];
 
             // If component exists and is not a directory, that's an error for mkdir -p too if it's intermediate
-            const existingNode = this.fs.resolveNode(current);
+            const existingNode = this.fs.resolve(current);
             if (existingNode && !this.fs.isDirectory(existingNode)) {
                 return { error: `cannot create directory '${target}': File exists` };
             }
@@ -139,13 +139,13 @@ export class MkdirCommand implements ICommand {
     }
 
     private createSinglePath(path: string, modeStr: string | undefined, user: string): { error?: string } {
-        const node = this.fs.resolveNode(path);
+        const node = this.fs.resolve(path);
         if (node) {
             return { error: `cannot create directory '${path}': File exists` };
         }
 
         const parentPath = this.getParentPath(path);
-        const parent = this.fs.resolveNode(parentPath);
+        const parent = this.fs.resolve(parentPath);
         if (!parent || !this.fs.isDirectory(parent)) {
             return { error: `cannot create directory '${path}': No such file or directory` };
         }
@@ -167,7 +167,7 @@ export class MkdirCommand implements ICommand {
 
         for (let i = 0; i < len; i++) {
             currentPath += `/${components[i]}`;
-            const node = this.fs.resolveNode(currentPath);
+            const node = this.fs.resolve(currentPath);
 
             if (!node) {
                 try {

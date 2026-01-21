@@ -17,7 +17,7 @@
 import { ICommand } from '../ICommand';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 /**
  * Pure function to process XSI escape sequences in a string.
@@ -78,7 +78,7 @@ export const processEscapeSequences = (input: string): { result: string, suppres
 };
 
 export class EchoCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
     /**
      * Executes the echo command.

@@ -13,15 +13,15 @@
 import { ICommand } from '../ICommand';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 export class DiffCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
     execute(args: string[], state: TerminalState, input?: string): CommandResponse {
         const files = args.filter(a => !a.startsWith('-'));
         if (files.length !== 2) {
-             return { output: 'diff: missing operand', newState: state, exitCode: 2 };
+            return { output: 'diff: missing operand', newState: state, exitCode: 2 };
         }
 
         try {

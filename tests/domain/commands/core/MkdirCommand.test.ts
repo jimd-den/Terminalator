@@ -2,23 +2,26 @@ import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert';
 import { MkdirCommand } from '../../../../src/domain/commands/core/MkdirCommand';
 import { FileSystem } from '../../../../src/domain/entities/FileSystem';
+import { FileSystemService } from '../../../../src/domain/services/FileSystemService';
 import { TerminalState } from '../../../../src/domain/entities/TerminalState';
 
 describe('MkdirCommand POSIX TDD Suite', () => {
     let fs: FileSystem;
+    let service: FileSystemService;
     let cmd: MkdirCommand;
     let state: TerminalState;
 
     function getPermissions(path: string): number {
-        const node = fs.resolveNode(path);
+        const node = service.resolve(path);
         if (!node) return -1;
-        const inode = fs.getInode(node.inodeId);
+        const inode = service.getInode(node.inodeId);
         return inode ? (inode.mode & 0o7777) : -1;
     }
 
     beforeEach(() => {
         fs = new FileSystem();
-        cmd = new MkdirCommand(fs);
+        service = new FileSystemService(fs);
+        cmd = new MkdirCommand(service);
         state = {
             currentDirectory: '/',
             environment: { 'USER': 'testuser' },
@@ -35,27 +38,27 @@ describe('MkdirCommand POSIX TDD Suite', () => {
         it('1. should create a single directory', () => {
             const res = cmd.execute(['dir1'], state);
             assert.strictEqual(res.exitCode, 0);
-            assert.ok(fs.resolveNode('/dir1'));
-            assert.ok(fs.isDirectory(fs.resolveNode('/dir1')!));
+            assert.ok(service.resolve('/dir1'));
+            assert.ok(service.isDirectory(service.resolve('/dir1')!));
         });
 
         it('2. should create multiple directories', () => {
             const res = cmd.execute(['a', 'b', 'c'], state);
             assert.strictEqual(res.exitCode, 0);
-            assert.ok(fs.resolveNode('/a'));
-            assert.ok(fs.resolveNode('/b'));
-            assert.ok(fs.resolveNode('/c'));
+            assert.ok(service.resolve('/a'));
+            assert.ok(service.resolve('/b'));
+            assert.ok(service.resolve('/c'));
         });
 
         it('3. should create directory in a subdirectory', () => {
-            fs.mkdir('/sub', 0o755);
+            service.mkdir('/sub', 0o755);
             const res = cmd.execute(['sub/newdir'], state);
             assert.strictEqual(res.exitCode, 0);
-            assert.ok(fs.resolveNode('/sub/newdir'));
+            assert.ok(service.resolve('/sub/newdir'));
         });
 
         it('4. should fail if directory already exists', () => {
-            fs.mkdir('/exists', 0o755);
+            service.mkdir('/exists', 0o755);
             const res = cmd.execute(['exists'], state);
             assert.strictEqual(res.exitCode, 1);
             assert.match(res.output, /File exists/);
@@ -72,11 +75,11 @@ describe('MkdirCommand POSIX TDD Suite', () => {
         it('6. should create intermediate directories', () => {
             const res = cmd.execute(['-p', 'a/b/c'], state);
             assert.strictEqual(res.exitCode, 0);
-            assert.ok(fs.resolveNode('/a/b/c'));
+            assert.ok(service.resolve('/a/b/c'));
         });
 
         it('7. should not fail if directory already exists with -p', () => {
-            fs.mkdir('/exists', 0o755);
+            service.mkdir('/exists', 0o755);
             const res = cmd.execute(['-p', 'exists'], state);
             assert.strictEqual(res.exitCode, 0);
             assert.strictEqual(res.output, '');
@@ -85,24 +88,24 @@ describe('MkdirCommand POSIX TDD Suite', () => {
         it('8. should create multiple levels of missing parents', () => {
             const res = cmd.execute(['-p', 'x/y/z', 'x/y/w'], state);
             assert.strictEqual(res.exitCode, 0);
-            assert.ok(fs.resolveNode('/x/y/z'));
-            assert.ok(fs.resolveNode('/x/y/w'));
+            assert.ok(service.resolve('/x/y/z'));
+            assert.ok(service.resolve('/x/y/w'));
         });
 
         it('9. should handle trailing slashes with -p', () => {
             const res = cmd.execute(['-p', 'trailing/'], state);
             assert.strictEqual(res.exitCode, 0);
-            assert.ok(fs.resolveNode('/trailing'));
+            assert.ok(service.resolve('/trailing'));
         });
 
         it('10. should handle absolute paths with -p', () => {
             const res = cmd.execute(['-p', '/abs/path/dir'], state);
             assert.strictEqual(res.exitCode, 0);
-            assert.ok(fs.resolveNode('/abs/path/dir'));
+            assert.ok(service.resolve('/abs/path/dir'));
         });
 
         it('11. should fail if a component is a file with -p', () => {
-            fs.writeFile('/somefile', 'content');
+            service.writeFile('/somefile', 'content');
             const res = cmd.execute(['-p', 'somefile/dir'], state);
             assert.strictEqual(res.exitCode, 1);
             assert.match(res.output, /File exists/);
@@ -157,8 +160,8 @@ describe('MkdirCommand POSIX TDD Suite', () => {
         it('18. should handle -- as end of options', () => {
             const res = cmd.execute(['--', '-p', 'dir'], state);
             assert.strictEqual(res.exitCode, 0);
-            assert.ok(fs.resolveNode('/-p')); // creates dir named -p
-            assert.ok(fs.resolveNode('/dir'));
+            assert.ok(service.resolve('/-p')); // creates dir named -p
+            assert.ok(service.resolve('/dir'));
         });
 
         it('19. should fail with exit code > 0 for missing operand', () => {
@@ -176,35 +179,35 @@ describe('MkdirCommand POSIX TDD Suite', () => {
             // If creation fails early, subsequent ones should still be tried?
             // "For each dir operand, the mkdir utility shall perform actions..."
             // Usually it continues but returns non-zero at end.
-            fs.mkdir('/fail', 0o755);
+            service.mkdir('/fail', 0o755);
             const res = cmd.execute(['ok1', 'fail', 'ok2'], state);
             assert.strictEqual(res.exitCode, 1);
-            assert.ok(fs.resolveNode('/ok1'));
-            assert.ok(fs.resolveNode('/ok2'));
+            assert.ok(service.resolve('/ok1'));
+            assert.ok(service.resolve('/ok2'));
         });
 
         it('22. should handle absolute paths', () => {
             const res = cmd.execute(['/absolute'], state);
             assert.strictEqual(res.exitCode, 0);
-            assert.ok(fs.resolveNode('/absolute'));
+            assert.ok(service.resolve('/absolute'));
         });
 
         it('23. should handle relative paths with ..', () => {
-            fs.mkdir('/base', 0o755);
+            service.mkdir('/base', 0o755);
             state.currentDirectory = '/base';
             const res = cmd.execute(['../outside'], state);
             assert.strictEqual(res.exitCode, 0);
-            assert.ok(fs.resolveNode('/outside'));
+            assert.ok(service.resolve('/outside'));
         });
 
         it('24. should handle very deep paths with -p', () => {
             const res = cmd.execute(['-p', '1/2/3/4/5/6/7/8/9/10'], state);
             assert.strictEqual(res.exitCode, 0);
-            assert.ok(fs.resolveNode('/1/2/3/4/5/6/7/8/9/10'));
+            assert.ok(service.resolve('/1/2/3/4/5/6/7/8/9/10'));
         });
 
         it('25. should fail if path component is not searchable', () => {
-            fs.mkdir('/locked', 0o000);
+            service.mkdir('/locked', 0o000);
             const res = cmd.execute(['locked/dir'], state);
             assert.strictEqual(res.exitCode, 1);
         });
@@ -234,7 +237,7 @@ describe('MkdirCommand POSIX TDD Suite', () => {
         it('29. should handle space in directory name', () => {
             const res = cmd.execute(['dir with spaces'], state);
             assert.strictEqual(res.exitCode, 0);
-            assert.ok(fs.resolveNode('/dir with spaces'));
+            assert.ok(service.resolve('/dir with spaces'));
         });
 
         it('30. should handle dot and dot-dot as operands (fail)', () => {
@@ -246,10 +249,10 @@ describe('MkdirCommand POSIX TDD Suite', () => {
 
         it('31. should not create anything if path resolution fails early', () => {
             // mkdir -p /tmp/a/b/c where /tmp exists but is a file
-            fs.writeFile('/myfile', 'file');
+            service.writeFile('/myfile', 'file');
             const res = cmd.execute(['-p', '/myfile/a/b/c'], state);
             assert.strictEqual(res.exitCode, 1);
-            assert.ok(!fs.resolveNode('/myfile/a'));
+            assert.ok(!service.resolve('/myfile/a'));
         });
 
         it('32. should handle multiple -m options (last one wins)', () => {
@@ -259,7 +262,7 @@ describe('MkdirCommand POSIX TDD Suite', () => {
         });
 
         it('33. should handle -p where the leaf already exists as a file (fail)', () => {
-            fs.writeFile('/a', 'file');
+            service.writeFile('/a', 'file');
             const res = cmd.execute(['-p', '/a'], state);
             assert.strictEqual(res.exitCode, 1);
         });
@@ -272,16 +275,16 @@ describe('MkdirCommand POSIX TDD Suite', () => {
         it('35. should be case sensitive', () => {
             cmd.execute(['Dir'], state);
             cmd.execute(['dir'], state);
-            assert.ok(fs.resolveNode('/Dir'));
-            assert.ok(fs.resolveNode('/dir'));
-            assert.notStrictEqual(fs.resolveNode('/Dir'), fs.resolveNode('/dir'));
+            assert.ok(service.resolve('/Dir'));
+            assert.ok(service.resolve('/dir'));
+            assert.notStrictEqual(service.resolve('/Dir'), service.resolve('/dir'));
         });
 
         it('36. should handle many operands', () => {
             const args = Array.from({ length: 100 }, (_, i) => `d${i}`);
             const res = cmd.execute(args, state);
             assert.strictEqual(res.exitCode, 0);
-            for (let i = 0; i < 100; i++) assert.ok(fs.resolveNode(`/d${i}`));
+            for (let i = 0; i < 100; i++) assert.ok(service.resolve(`/d${i}`));
         });
 
         it('37. should report error if unable to set permissions with -m', () => {
@@ -297,7 +300,7 @@ describe('MkdirCommand POSIX TDD Suite', () => {
         it('39. should handle redundant slashes', () => {
             const res = cmd.execute(['-p', 'a///b'], state);
             assert.strictEqual(res.exitCode, 0);
-            assert.ok(fs.resolveNode('/a/b'));
+            assert.ok(service.resolve('/a/b'));
         });
 
         it('40. should fail gracefully on file system errors', () => {

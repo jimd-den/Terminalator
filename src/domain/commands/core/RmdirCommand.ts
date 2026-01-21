@@ -18,7 +18,8 @@
 import { ICommand } from '../ICommand';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem, S_IFDIR } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
+import { S_IFDIR } from '../../entities/FileSystem';
 
 /**
  * Pure function to resolve an absolute path from a relative path and CWD.
@@ -44,7 +45,7 @@ export const getParentPaths = (path: string): string[] => {
 };
 
 export class RmdirCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
     /**
      * Executes the rmdir command.
@@ -129,7 +130,7 @@ export class RmdirCommand implements ICommand {
      * Validates and removes a single directory via the FileSystem.
      */
     private performRemoval(path: string): void {
-        const node = this.fs.resolveNode(path);
+        const node = this.fs.resolve(path);
         if (!node) {
             throw new Error('No such file or directory');
         }

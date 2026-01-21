@@ -13,10 +13,10 @@
 import { ICommand } from '../ICommand';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 export class IconvCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
     execute(args: string[], state: TerminalState, input?: string): CommandResponse {
         let inputFile: string | null = null;
@@ -53,8 +53,8 @@ export class IconvCommand implements ICommand {
         let content = '';
         if (inputFile && inputFile !== '-') {
             try {
-                const path = this.resolvePath(inputFile, state);
-                content = this.fs.readFile(path);
+                // FileSystemService.readFile resolves path internally
+                content = this.fs.readFile(inputFile, state.currentDirectory);
             } catch (e) {
                 if (!silent) return { output: `iconv: ${inputFile}: No such file or directory`, newState: state, exitCode: 1 };
                 return { output: '', newState: state, exitCode: 1 };
@@ -72,7 +72,8 @@ export class IconvCommand implements ICommand {
 
         if (outputFile) {
             try {
-                this.fs.writeFile(this.resolvePath(outputFile, state), content, 'w');
+                // FileSystemService.writeFile resolves path internally
+                this.fs.writeFile(outputFile, content, state.currentDirectory);
             } catch (e) {
                 if (!silent) return { output: `iconv: cannot write to ${outputFile}`, newState: state, exitCode: 1 };
                 return { output: '', newState: state, exitCode: 1 };
@@ -83,8 +84,5 @@ export class IconvCommand implements ICommand {
         return { output: content, newState: state, exitCode: 0 };
     }
 
-    private resolvePath(path: string, state: TerminalState): string {
-        if (path.startsWith('/')) return path;
-        return state.currentDirectory === '/' ? `/${path}` : `${state.currentDirectory}/${path}`;
-    }
+
 }

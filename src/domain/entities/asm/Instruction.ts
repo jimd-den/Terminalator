@@ -57,13 +57,15 @@ export interface Instruction {
     readonly funct7?: number;
     readonly label?: string; // For labels in assembly text
     readonly mnemonic: string;
+    readonly address: number; // Virtual address of this instruction
 }
 
 /**
  * Creates an instruction object.
  */
-export const makeInstruction = (mnemonic: string, opcode: Opcode, params: Partial<Instruction>): Instruction => ({
+export const makeInstruction = (mnemonic: string, opcode: Opcode, address: number, params: Partial<Instruction>): Instruction => ({
     mnemonic,
     opcode,
+    address,
     ...params
 });

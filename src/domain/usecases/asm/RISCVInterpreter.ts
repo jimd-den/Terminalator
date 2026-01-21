@@ -36,28 +36,20 @@ export class RISCVInterpreter {
         state.reset();
         state.loadMemory(memory);
 
-        // Convert instruction array to a map for faster lookup by byte address
-        // Assuming instructions are 4 bytes each and ordered by their position in codeLines
-        // Wait, the Assembler should ideally return a Map.
-        // For now, let's just use the index * 4 as the address if they are contiguous.
-        // Better: let's change the parameter to a Map.
-
-        // Actually, let's stick to the instruction list but have the Assembler 
-        // return which address corresponds to which instruction.
-
-        // For now, let's just find the instruction whose "index * 4" matches the PC.
-        // This is inefficient but okay for a simple VM.
-        // Actually, let's just pass a Map.
+        // Auto-detect entry point
+        if (labels.has('main')) {
+            state.pc = labels.get('main')!;
+        } else if (labels.has('start')) {
+            state.pc = labels.get('start')!;
+        }
 
         return this.runWithMap(this.buildInstructionMap(program), memory, state, labels);
     }
 
     private buildInstructionMap(program: Instruction[]): Map<number, Instruction> {
         const map = new Map<number, Instruction>();
-        let addr = 0;
         for (const instr of program) {
-            map.set(addr, instr);
-            addr += 4;
+            map.set(instr.address, instr);
         }
         return map;
     }

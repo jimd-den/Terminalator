@@ -6,7 +6,7 @@
 
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { TerminalScreen } from './src/presentation/screens/TerminalScreen';
+import { TerminalScreen } from './src/frameworks-drivers/ui/screens/TerminalScreen';
 
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts, SpaceMono_400Regular, SpaceMono_700Bold } from '@expo-google-fonts/space-mono';
@@ -15,10 +15,10 @@ import { Inconsolata_400Regular } from '@expo-google-fonts/inconsolata';
 import { UbuntuMono_400Regular } from '@expo-google-fonts/ubuntu-mono';
 
 import { NavigationContainer } from '@react-navigation/native';
-import { GameProvider } from './src/presentation/context/GameContext';
-import { ThemeProvider } from './src/presentation/context/ThemeContext';
-import { InputProvider } from './src/presentation/context/InputContext';
-import { AppNavigator } from './src/presentation/navigation/AppNavigator';
+import { GameProvider } from './src/frameworks-drivers/ui/context/GameContext';
+import { ThemeProvider } from './src/frameworks-drivers/ui/context/ThemeContext';
+import { InputProvider } from './src/frameworks-drivers/ui/context/InputContext';
+import { AppNavigator } from './src/frameworks-drivers/ui/navigation/AppNavigator';
 
 export default function App() {
   const [fontsLoaded] = useFonts({

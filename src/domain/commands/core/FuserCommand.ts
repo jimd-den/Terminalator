@@ -4,10 +4,10 @@
  */
 import { ICommand, CommandResponse } from '../ICommand';
 import { TerminalState } from '../../entities/TerminalState';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 export class FuserCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
     async execute(args: string[], state: TerminalState, _input?: string): Promise<CommandResponse> {
         const files: string[] = [];

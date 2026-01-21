@@ -14,10 +14,11 @@
 import { ICommand } from '../ICommand';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem, Dentry, S_IFDIR, S_IFREG, S_IFLNK } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
+import { Dentry, S_IFDIR, S_IFREG, S_IFLNK } from '../../entities/FileSystem';
 
 export class FindCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
     execute(args: string[], state: TerminalState, input?: string): CommandResponse {
         // Parse arguments
@@ -94,7 +95,7 @@ export class FindCommand implements ICommand {
             }
 
             // Resolve start node
-            const startNode = this.fs.resolveNode(startPath);
+            const startNode = this.fs.resolve(startPath);
             if (!startNode) {
                 return { output: `find: \`${path}\`: No such file or directory`, newState: state, exitCode: 1 };
             }

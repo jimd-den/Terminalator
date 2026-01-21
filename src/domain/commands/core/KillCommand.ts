@@ -13,14 +13,14 @@
 import { ICommand } from '../ICommand';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 export class KillCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
     execute(args: string[], state: TerminalState, input?: string): CommandResponse {
         if (args.length === 0) {
-             return { output: 'kill: missing operand', newState: state, exitCode: 1 };
+            return { output: 'kill: missing operand', newState: state, exitCode: 1 };
         }
         // Simulated kill
         // kill pid

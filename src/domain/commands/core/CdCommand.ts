@@ -16,10 +16,10 @@
 import { ICommand } from '../ICommand';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 export class CdCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
     /**
      * Executes the 'cd' command.
@@ -48,7 +48,7 @@ export class CdCommand implements ICommand {
             }
         }
 
-        const node = this.fs.resolveNode(newPath, state.currentDirectory);
+        const node = this.fs.resolve(newPath, state.currentDirectory);
 
         if (node) {
             if (this.fs.isDirectory(node)) {

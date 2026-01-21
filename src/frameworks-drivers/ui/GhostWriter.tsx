@@ -16,7 +16,7 @@ interface GhostWriterProps {
     onComplete?: () => void;
 }
 
-import { useTheme } from '../../presentation/context/ThemeContext';
+import { useTheme } from './context/ThemeContext';
 
 export const GhostWriter: React.FC<GhostWriterProps> = ({
     text,

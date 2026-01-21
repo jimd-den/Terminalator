@@ -4,10 +4,10 @@
  */
 import { ICommand, CommandResponse } from '../ICommand';
 import { TerminalState } from '../../entities/TerminalState';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 export class GencatCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
     async execute(args: string[], state: TerminalState, input?: string): Promise<CommandResponse> {
         if (args.length < 1) {
@@ -28,17 +28,8 @@ export class GencatCommand implements ICommand {
                     if (input) catalogContent += input + '\n';
                     continue;
                 }
-                const dentry = this.fs.resolve(file, state.currentDirectory);
-                if (!dentry) return { output: `gencat: ${file}: No such file or directory`, newState: state, exitCode: 1 };
-
-                const inode = this.fs.getInode(dentry.inodeId);
-                if (!inode) return { output: 'gencat: read error', newState: state, exitCode: 1 };
-
-                if (inode.content instanceof Uint8Array) {
-                    catalogContent += new TextDecoder().decode(inode.content) + '\n';
-                } else {
-                    catalogContent += (inode.content as string || '') + '\n';
-                }
+                const content = this.fs.readFile(file, state.currentDirectory);
+                catalogContent += content + '\n';
             }
         }
 
@@ -57,7 +48,7 @@ export class GencatCommand implements ICommand {
         }
 
         // Write output
-        this.fs.writeFile(catFile, catalogContent, 'w', state.currentDirectory);
+        this.fs.writeFile(catFile, catalogContent, state.currentDirectory);
 
         return { output: '', newState: state, exitCode: 0 };
     }

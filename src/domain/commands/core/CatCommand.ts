@@ -14,10 +14,10 @@
 import { ICommand } from '../ICommand';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 export class CatCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
     execute(args: string[], state: TerminalState, input?: string): CommandResponse {
         const files: string[] = [];
@@ -54,7 +54,7 @@ export class CatCommand implements ICommand {
                 }
 
                 try {
-                    const node = this.fs.resolveNode(path);
+                    const node = this.fs.resolve(path);
                     const inode = node ? this.fs.getInode(node.inodeId) : undefined;
                     if (node && inode && (inode.mode & 0o040000)) { // S_IFDIR
                         return { output: `cat: ${filename}: Is a directory`, newState: state, exitCode: 1 };

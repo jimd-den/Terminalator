@@ -19,10 +19,10 @@
 import { ICommand } from '../ICommand';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 export class AwkCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
     execute(args: string[], state: TerminalState, input?: string): CommandResponse {
         let program = '';
@@ -86,7 +86,7 @@ export class AwkCommand implements ICommand {
             }
 
             if (!hasInput && !beginBlock && !endBlock) {
-                 return { output: 'awk: no input', newState: state, exitCode: 1 };
+                return { output: 'awk: no input', newState: state, exitCode: 1 };
             }
 
             if (hasInput && content) {

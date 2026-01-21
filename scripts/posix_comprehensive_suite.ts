@@ -1,6 +1,7 @@
 
 import * as fsNode from 'fs';
 import { FileSystem } from '../src/domain/entities/FileSystem';
+import { FileSystemService } from '../src/domain/services/FileSystemService';
 import { ExecuteCommand } from '../src/domain/usecases/ExecuteCommand';
 import { createInitialTerminalState, TerminalState } from '../src/domain/entities/TerminalState';
 import { HostCompilerService } from '../src/infrastructure/services/HostCompilerService';
@@ -44,7 +45,7 @@ interface ComprehensiveTestCase {
     description: string;
     posixSection: string; // e.g., 'ls.html'
     posixRequirement: string; // e.g., "The ls utility shall..."
-    setup?: (fs: FileSystem) => void;
+    setup?: (service: FileSystemService) => void;
     command: string; // The command line to execute
     expect: TestExpectation;
 }
@@ -2920,22 +2921,31 @@ async function runSuite() {
             let failureReasons: string[] = [];
 
             const testFs = new FileSystem();
+            const service = new FileSystemService(testFs);
             let testExecutor: ExecuteCommand;
             if (suite.utility === 'c17') {
                 const compiler = new HostCompilerService();
                 const runner = new HostBinaryRunner();
                 // We need to register C17 with these
                 const registry = new ExecuteCommand(testFs).getRegistry();
-                registry.register('c17', new C17Command(compiler, testFs));
+                registry.register('c17', new C17Command(compiler, service));
                 testExecutor = new ExecuteCommand(testFs, undefined, registry, runner);
             } else {
                 testExecutor = new ExecuteCommand(testFs);
             }
             const testState = createInitialTerminalState();
 
+            // Initialize minimal FS structure to match State
+            try {
+                service.mkdir('/home');
+                service.mkdir('/home/operator');
+                service.mkdir('/bin');
+                service.mkdir('/usr/bin');
+            } catch (ignore) { }
+
             if (test.setup) {
                 try {
-                    test.setup(testFs);
+                    test.setup(service);
                 } catch (err) {
                     console.log(`${RED}[ERR ]${RESET} ${test.id} SETUP FAILED: ${err}`);
                     continue;
@@ -2972,15 +2982,12 @@ async function runSuite() {
                 // Files Created
                 if (test.expect.filesCreated) {
                     for (const fileReq of test.expect.filesCreated) {
-                        const node = testFs.resolveNode(fileReq.path);
+                        const node = service.resolve(fileReq.path);
                         if (!node) {
                             testFailed = true;
                             failureReasons.push(`Missing File: Expected ${fileReq.path} to be created.`);
                         } else {
-                            // Fix lint: Dentry might not have isDirectory directly if it's just a pointer.
-                            // We assume resolveNode returns a Dentry which might have an inode property or we check metadata.
-                            // For this script, we'll try to access it safely or cast.
-                            const isDir = (node as any).isDirectory || ((node as any).inode && (node as any).inode.isDirectory);
+                            const isDir = service.isDirectory(node);
 
                             if (fileReq.type === 'directory' && !isDir) {
                                 testFailed = true;
@@ -2997,7 +3004,7 @@ async function runSuite() {
                 // Files Deleted
                 if (test.expect.filesDeleted) {
                     for (const path of test.expect.filesDeleted) {
-                        if (testFs.resolveNode(path)) {
+                        if (service.resolve(path)) {
                             testFailed = true;
                             failureReasons.push(`Surviving File: ${path} should have been deleted.`);
                         }

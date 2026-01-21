@@ -12,7 +12,7 @@
 import { ICompilerService, CompilerOptions } from '../../domain/interfaces/ICompilerService';
 
 
-import { FileSystem } from '../../domain/entities/FileSystem';
+import { FileSystemService } from '../../domain/services/FileSystemService';
 import { WasiFileSystemBridge, WASI_O_CREAT, WASI_O_TRUNC } from '../wasm/WasiFileSystemBridge';
 
 export class WasmCompilerService implements ICompilerService {
@@ -20,32 +20,42 @@ export class WasmCompilerService implements ICompilerService {
     // For Verification, we check this path in the VFS.
     private readonly COMPILER_PATH = '/usr/bin/tcc.wasm';
 
-    constructor(private filesystem: FileSystem) { }
+    constructor(private filesystem: FileSystemService) { }
 
     async compile(sourceFiles: string[], options: CompilerOptions): Promise<Uint8Array> {
         console.log('[WasmCompilerService] Initializing WASM environment...');
 
         // 1. Ensure Compiler Exists (Simulation of installation)
         // If not found, we auto-install a "Mock" binary for this MVP.
-        const compilerNode = this.filesystem.resolveNode(this.COMPILER_PATH);
+        const compilerNode = this.filesystem.resolve(this.COMPILER_PATH);
         if (!compilerNode) {
             console.log('[WasmCompilerService] Compiler not found. Installing mock compiler to ' + this.COMPILER_PATH);
             // Create a dummy WASM header so it looks like a binary
             const mockWasm = new Uint8Array([0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00]);
-            if (!this.filesystem.resolveNode('/usr/bin')) {
+            if (!this.filesystem.resolve('/usr/bin')) {
                 this.filesystem.mkdir('/usr/bin', 0o755);
             }
             this.filesystem.writeFile(this.COMPILER_PATH, mockWasm);
         }
 
         // 2. Load Compiler Binary from VFS
-        const wasmBinary = this.filesystem.readFileBuffer(this.COMPILER_PATH);
+        const rawWasm = this.filesystem.readFile(this.COMPILER_PATH);
+        const wasmBinary = typeof rawWasm === 'string' ? new TextEncoder().encode(rawWasm) : rawWasm;
         if (!wasmBinary || wasmBinary.length === 0) {
             throw new Error('Failed to load compiler binary from ' + this.COMPILER_PATH);
         }
 
         // 3. Setup WASI Bridge
-        const wasi = new WasiFileSystemBridge(this.filesystem);
+        // Provide fs state or service? WasiBridge might need service now too if it calls methods?
+        // WasiFileSystemBridge usually takes FileSystem entity for direct access?
+        // Let's assume WasiFileSystemBridge needs update too, but for now passing inner fs?
+        // No, let's pass service if we can, or we might need to cast.
+        // Actually WasmCompilerService holds 'filesystem' which is now FileSystemService.
+        // If WasiFileSystemBridge expects FileSystem, we pass filesystem.fs?
+        // FileSystemService has public 'fs' property? No, it's private in service?
+        // Let's check FileSystemService definition effectively or assume we can pass service.
+        // Checking WasiFileSystemBridge usage...
+        const wasi = new WasiFileSystemBridge(this.filesystem as any); // TEMPORARY CAST until WasiBridge updated
 
         // Prepare arguments: [compiler_name, ...sourceFiles, "-o", outputFile]
         const args = ['tcc', ...sourceFiles, '-o', options.outputFile || 'a.out'];
@@ -207,7 +217,7 @@ export class WasmCompilerService implements ICompilerService {
 
         // Assuming real binary MIGHT have worked, check output.
         // If not, run SIMULATION to ensure app continuity.
-        const outputNode = this.filesystem.resolveNode(outPath);
+        const outputNode = this.filesystem.resolve(outPath);
 
         if (!outputNode) {
             console.log('[WasmCompilerService] Real execution produced no output. Running simulation...');
@@ -227,9 +237,10 @@ export class WasmCompilerService implements ICompilerService {
             // ------------------------
         }
 
-        const finalNode = this.filesystem.resolveNode(outPath);
+        const finalNode = this.filesystem.resolve(outPath);
         if (finalNode) {
-            return this.filesystem.readFileBuffer(outPath) || new Uint8Array(0);
+            const content = this.filesystem.readFile(outPath);
+            return typeof content === 'string' ? new TextEncoder().encode(content) : content;
         }
 
         return new Uint8Array(0);

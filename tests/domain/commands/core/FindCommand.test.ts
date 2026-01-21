@@ -2,18 +2,21 @@ import assert from 'node:assert';
 import { describe, it, beforeEach } from 'node:test';
 import { FindCommand } from '../../../../src/domain/commands/core/FindCommand';
 import { FileSystem } from '../../../../src/domain/entities/FileSystem';
+import { FileSystemService } from '../../../../src/domain/services/FileSystemService';
 import { InodeTable } from '../../../../src/domain/entities/filesystem/InodeTable';
 import { PathResolver } from '../../../../src/domain/services/filesystem/PathResolver';
 import { createInitialTerminalState, TerminalState } from '../../../../src/domain/entities/TerminalState';
 
 describe('FindCommand POSIX TDD Suite', () => {
     let fs: FileSystem;
+    let service: FileSystemService;
     let cmd: FindCommand;
     let state: TerminalState;
 
     beforeEach(() => {
         fs = new FileSystem();
-        cmd = new FindCommand(fs);
+        service = new FileSystemService(fs);
+        cmd = new FindCommand(service);
         state = {
             currentDirectory: '/',
             environment: { 'USER': 'operator' },
@@ -36,15 +39,15 @@ describe('FindCommand POSIX TDD Suite', () => {
         //   empty_dir (dir)
         //   .hidden (reg)
 
-        fs.mkdir('/root', 0o755);
-        fs.mkdir('/root/a', 0o755);
-        fs.createFile('/root/a/file1.txt', 0o644);
-        fs.createFile('/root/a/file2.log', 0o644);
-        fs.mkdir('/root/b', 0o700);
-        fs.createFile('/root/b/file3.txt', 0o644);
-        fs.symlink('/root/a', '/root/link_to_a');
-        fs.mkdir('/root/empty_dir', 0o755);
-        fs.createFile('/root/.hidden', 0o644);
+        service.mkdir('/root', 0o755);
+        service.mkdir('/root/a', 0o755);
+        service.createFile('/root/a/file1.txt', 0o644);
+        service.createFile('/root/a/file2.log', 0o644);
+        service.mkdir('/root/b', 0o700);
+        service.createFile('/root/b/file3.txt', 0o644);
+        service.symlink('/root/a', '/root/link_to_a');
+        service.mkdir('/root/empty_dir', 0o755);
+        service.createFile('/root/.hidden', 0o644);
     });
 
     const getOutputLines = (output: string) => output.split('\n').filter(l => l.length > 0).sort();
@@ -82,14 +85,14 @@ describe('FindCommand POSIX TDD Suite', () => {
         });
 
         it('5. should be case-sensitive with -name', () => {
-            fs.createFile('/root/FILE.TXT', 0o644);
+            service.createFile('/root/FILE.TXT', 0o644);
             const res = cmd.execute(['/root', '-name', 'file*.txt'], state);
             const lines = getOutputLines(res.output);
             assert.deepStrictEqual(lines, ['/root/a/file1.txt', '/root/b/file3.txt']);
         });
 
         it('6. should be case-insensitive with -iname', () => {
-            fs.createFile('/root/FILE.TXT', 0o644);
+            service.createFile('/root/FILE.TXT', 0o644);
             const res = cmd.execute(['/root', '-iname', 'file*.txt'], state);
             const lines = getOutputLines(res.output);
             assert.ok(lines.includes('/root/FILE.TXT'));
@@ -208,8 +211,8 @@ describe('FindCommand POSIX TDD Suite', () => {
             const inodeTable = (fs as any).inodeTable;
             const inode = inodeTable.allocate(0o644, 0, 0);
             inode.size = 1000; // 2 blocks
-            fs.mkdir('/root/big', 0o755);
-            (fs.resolveNode('/root/big') as any).children.set('bigfile', { name: 'bigfile', inodeId: inode.id, parent: fs.resolveNode('/root/big'), children: new Map() });
+            service.mkdir('/root/big', 0o755);
+            (service.resolve('/root/big') as any).children.set('bigfile', { name: 'bigfile', inodeId: inode.id, parent: service.resolve('/root/big'), children: new Map() });
 
             const res = cmd.execute(['/root/big', '-size', '2'], state);
             const lines = getOutputLines(res.output);
@@ -218,15 +221,15 @@ describe('FindCommand POSIX TDD Suite', () => {
 
         it('24. should support size in bytes with "c" suffix', () => {
             // file1.txt is 0 in sim unless content is written
-            (fs as any).getInode(fs.resolveNode('/root/a/file1.txt')!.inodeId)!.size = 100;
+            (service as any).getInode(service.resolve('/root/a/file1.txt')!.inodeId)!.size = 100;
             const res = cmd.execute(['/root/a', '-size', '100c'], state);
             const lines = getOutputLines(res.output);
             assert.deepStrictEqual(lines, ['/root/a/file1.txt']);
         });
 
         it('25. should support +n and -n for size', () => {
-            (fs as any).getInode(fs.resolveNode('/root/a/file1.txt')!.inodeId)!.size = 100;
-            (fs as any).getInode(fs.resolveNode('/root/a/file2.log')!.inodeId)!.size = 200;
+            (service as any).getInode(service.resolve('/root/a/file1.txt')!.inodeId)!.size = 100;
+            (service as any).getInode(service.resolve('/root/a/file2.log')!.inodeId)!.size = 200;
 
             const res = cmd.execute(['/root/a', '-size', '+150c'], state);
             assert.deepStrictEqual(getOutputLines(res.output), ['/root/a/file2.log']);
@@ -238,7 +241,7 @@ describe('FindCommand POSIX TDD Suite', () => {
         it('26. should support -mtime for modification days', () => {
             const now = Date.now();
             const oneDay = 86400 * 1000;
-            const inode1 = (fs as any).getInode(fs.resolveNode('/root/a/file1.txt')!.inodeId);
+            const inode1 = (service as any).getInode(service.resolve('/root/a/file1.txt')!.inodeId);
             inode1.mtime = now - (2 * oneDay) - 1000; // > 2 days
 
             const res = cmd.execute(['/root/a', '-mtime', '+1'], state);
@@ -264,7 +267,7 @@ describe('FindCommand POSIX TDD Suite', () => {
 
     describe('Primaries: -user and -group', () => {
         it('29. should filter by user name', () => {
-            const inode = (fs as any).getInode(fs.resolveNode('/root/a/file1.txt')!.inodeId);
+            const inode = (service as any).getInode(service.resolve('/root/a/file1.txt')!.inodeId);
             inode.uid = 1001; // Not root
             // Sim might need a way to map UIDs to names for this to work fully
             // For now, let's assume we can match UID if name fails
@@ -274,7 +277,7 @@ describe('FindCommand POSIX TDD Suite', () => {
 
         it('30. should support -nouser', () => {
             // If UID doesn't exist in /etc/passwd
-            const inode = (fs as any).getInode(fs.resolveNode('/root/a/file1.txt')!.inodeId);
+            const inode = (service as any).getInode(service.resolve('/root/a/file1.txt')!.inodeId);
             inode.uid = 9999;
             const res = cmd.execute(['/root', '-nouser'], state);
             assert.ok(getOutputLines(res.output).includes('/root/a/file1.txt'));
@@ -343,8 +346,8 @@ describe('FindCommand POSIX TDD Suite', () => {
         });
 
         it('39. should detect infinite loops in symlinks', () => {
-            fs.mkdir('/root/loop', 0o755);
-            fs.symlink('/root/loop', '/root/loop/child_link');
+            service.mkdir('/root/loop', 0o755);
+            service.symlink('/root/loop', '/root/loop/child_link');
             const res = cmd.execute(['-L', '/root/loop'], state);
             // Should not crash, should report error to stderr (captured in output string in our sim)
             assert.ok(res.output.toLowerCase().includes('loop') || res.exitCode !== 0);

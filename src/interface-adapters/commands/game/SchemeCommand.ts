@@ -12,11 +12,11 @@
  * Manages the global environment and persists bindings between calls.
  */
 
-import { ICommand } from '../../../domain/entities/Command';
-import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { ICommand } from '../../../domain/commands/ICommand';
+
 import { CommandResponse } from '../../../domain/usecases/ExecuteCommand';
 import { TerminalState } from '../../../domain/entities/TerminalState';
-import { FileSystem } from '../../../domain/entities/FileSystem';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { SchemeParser } from '../../../domain/usecases/SchemeParser';
 import { SchemeEvaluator } from '../../../domain/usecases/SchemeEvaluator';
 import { Environment } from '../../../domain/entities/Environment';
@@ -32,7 +32,7 @@ export class SchemeCommand implements ICommand {
     private evaluator = new SchemeEvaluator();
     private globalEnv: Environment | null = null;
 
-    constructor(private fs: FileSystem) {
+    constructor(private fs: FileSystemService) {
         // Register built-ins once
         registerStandardLibrary();
     }
@@ -52,9 +52,9 @@ export class SchemeCommand implements ICommand {
         return this.globalEnv;
     }
 
-    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+    async execute(args: string[], state: TerminalState, input?: string): Promise<CommandResponse> {
         const env = this.getEnv();
-        const fs = context.fs;
+        const fs = this.fs;
 
         let exprCode = '';
         let filename = '';
@@ -77,7 +77,7 @@ export class SchemeCommand implements ICommand {
         if (filename) {
             try {
                 // Resolve path using context.cwd
-                const content = fs.readFile(filename, context.cwd);
+                const content = fs.readFile(filename, state.currentDirectory);
                 const expressions = this.parser.parse(content);
                 let lastResult = '';
                 for (const expr of expressions) {

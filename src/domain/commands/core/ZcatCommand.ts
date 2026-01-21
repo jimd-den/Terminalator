@@ -13,10 +13,10 @@
 import { ICommand } from '../ICommand';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 export class ZcatCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
     execute(args: string[], state: TerminalState, input?: string): CommandResponse {
         const files = args.filter(a => !a.startsWith('-'));
@@ -28,9 +28,8 @@ export class ZcatCommand implements ICommand {
 
         for (const file of files) {
             try {
-                const path = this.resolvePath(file, state);
-                const rawContent = this.fs.readFile(path);
-                const content = typeof rawContent === 'string' ? rawContent : new TextDecoder().decode(rawContent);
+                const content = this.fs.readFile(file, state.currentDirectory);
+                // readFile now returns string automatically (decodes if binary)
 
                 if (content.startsWith('RLE:')) {
                     output += this.rleDecode(content.substring(4));
@@ -53,10 +52,7 @@ export class ZcatCommand implements ICommand {
         };
     }
 
-    private resolvePath(path: string, state: TerminalState): string {
-        if (path.startsWith('/')) return path;
-        return state.currentDirectory === '/' ? `/${path}` : `${state.currentDirectory}/${path}`;
-    }
+
 
     private rleDecode(input: string): string {
         let decoded = '';

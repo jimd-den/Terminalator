@@ -10,12 +10,12 @@
 import { ICommand, CommandResponse } from '../ICommand';
 import { TerminalState } from '../../entities/TerminalState';
 import { ICompilerService } from '../../interfaces/ICompilerService';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 export class GccCommand implements ICommand {
     constructor(
         private compilerService: ICompilerService,
-        private fs: FileSystem
+        private fs: FileSystemService
     ) { }
 
     async execute(args: string[], state: TerminalState): Promise<CommandResponse> {
@@ -49,8 +49,8 @@ export class GccCommand implements ICommand {
 
         // 2. Validate Inputs
         for (const file of inputFiles) {
-            const node = this.fs.resolveNode(file, state.currentDirectory);
-            if (!node || node.isDirectory) {
+            const node = this.fs.resolve(file, state.currentDirectory);
+            if (!node || this.fs.isDirectory(node)) {
                 return {
                     output: `gcc: error: ${file}: No such file or directory`,
                     newState: state,

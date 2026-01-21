@@ -24,7 +24,7 @@ async function runVerification() {
 
     // 1. Setup Services
     const fs = new FileSystem();
-    const compiler = new WasmCompilerService();
+    const compiler = new WasmCompilerService(fs);
     const mockRunner = new MockBinaryRunner();
 
     // 2. Setup Registry & Executor

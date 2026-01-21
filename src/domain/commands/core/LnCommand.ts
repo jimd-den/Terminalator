@@ -14,10 +14,10 @@
 import { ICommand } from '../ICommand';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
 export class LnCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
     execute(args: string[], state: TerminalState, input?: string): CommandResponse {
         let symbolic = false;
@@ -57,7 +57,7 @@ export class LnCommand implements ICommand {
 
         // Check if linkName exists and is a directory
         // Resolve it first?
-        let linkNode = this.fs.resolveNode(linkName.startsWith('/') ? linkName : (state.currentDirectory === '/' ? `/${linkName}` : `${state.currentDirectory}/${linkName}`));
+        let linkNode = this.fs.resolve(linkName.startsWith('/') ? linkName : (state.currentDirectory === '/' ? `/${linkName}` : `${state.currentDirectory}/${linkName}`));
 
         if (linkNode && this.fs.isDirectory(linkNode)) {
             // Append target basename
