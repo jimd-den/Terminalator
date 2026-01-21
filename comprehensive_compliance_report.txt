@@ -256,7 +256,7 @@ UTILITY: date
 [FAIL] DATE_06: Complex format
        -> Stdout Regex Mismatch.
    Expected: /Year: 20../
-   Got: "Wed Jan 21 2026 20:38:51 GMT+0000 (Coordinated Universal Time)"
+   Got: "Wed Jan 21 2026 21:51:13 GMT+0000 (Coordinated Universal Time)"
 [PASS] DATE_07
 [FAIL] DATE_08: Set date (fail/stub)
        -> Exit Code: Expected 1, got 0
@@ -305,6 +305,27 @@ UTILITY: uniq
 [PASS] UNIQ_08
 [PASS] UNIQ_09
 [PASS] UNIQ_10
+[PASS] UNIQ_11
+[PASS] UNIQ_12
+[PASS] UNIQ_13
+[PASS] UNIQ_14
+[PASS] UNIQ_15
+[PASS] UNIQ_16
+[PASS] UNIQ_17
+[PASS] UNIQ_18
+[PASS] UNIQ_19
+[PASS] UNIQ_20
+[PASS] UNIQ_21
+[PASS] UNIQ_22
+[PASS] UNIQ_23
+[PASS] UNIQ_23
+[PASS] UNIQ_24
+[PASS] UNIQ_25
+[PASS] UNIQ_26
+[PASS] UNIQ_27
+[PASS] UNIQ_28
+[PASS] UNIQ_29
+[PASS] UNIQ_30
 UTILITY: tr
 [PASS] TR_01
 [PASS] TR_02
@@ -2910,7 +2931,7 @@ find          |    10 |    7 |    2 |     70.0%
 date          |    10 |    7 |    3 |     70.0%
 diff          |    10 |    5 |    5 |     50.0%
 sort          |    10 |   10 |    0 |    100.0%
-uniq          |    10 |   10 |    0 |    100.0%
+uniq          |    31 |   31 |    0 |    100.0%
 tr            |    10 |    8 |    2 |     80.0%
 cut           |    10 |   10 |    0 |    100.0%
 tee           |    10 |   10 |    0 |    100.0%
@@ -3065,7 +3086,7 @@ uustat        |    10 |    9 |    1 |     90.0%
 uux           |    10 |    2 |    8 |     20.0%
 xgettext      |    10 |    6 |    4 |     60.0%
 
-TOTAL COMPLIANCE: 65.5% (1174/1791)
+TOTAL COMPLIANCE: 65.9% (1195/1812)
 
 === MISSING UTILITIES (Implemented but failing) ===
 None

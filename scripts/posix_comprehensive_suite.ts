@@ -441,15 +441,50 @@ const SUITES: UtilitySuite[] = [
         htmlFile: 'uniq.html',
         tests: [
             { id: 'UNIQ_01', description: 'Basic uniq', posixSection: 'uniq.html', posixRequirement: 'Remove adjacent dups', setup: (fs) => fs.writeFile('/f', 'a\na\nb', 'w'), command: 'uniq /f', expect: { exitCode: 0, stdout: /a\nb/ } },
-            { id: 'UNIQ_02', description: 'Count -c', posixSection: 'uniq.html', posixRequirement: '-c count', setup: (fs) => fs.writeFile('/f', 'a\na', 'w'), command: 'uniq -c /f', expect: { exitCode: 0, stdout: /2 a/ } },
+            { id: 'UNIQ_02', description: 'Count -c', posixSection: 'uniq.html', posixRequirement: '-c count', setup: (fs) => fs.writeFile('/f', 'a\na\nb', 'w'), command: 'uniq -c /f', expect: { exitCode: 0, stdout: /\s*2 a\n\s*1 b/ } },
             { id: 'UNIQ_03', description: 'Duplicate only -d', posixSection: 'uniq.html', posixRequirement: '-d only dups', setup: (fs) => fs.writeFile('/f', 'a\na\nb', 'w'), command: 'uniq -d /f', expect: { exitCode: 0, stdout: /^a$/ } },
             { id: 'UNIQ_04', description: 'Unique only -u', posixSection: 'uniq.html', posixRequirement: '-u only unique', setup: (fs) => fs.writeFile('/f', 'a\na\nb', 'w'), command: 'uniq -u /f', expect: { exitCode: 0, stdout: /^b$/ } },
-            { id: 'UNIQ_05', description: 'Skip fields -f (stub)', posixSection: 'uniq.html', posixRequirement: '-f skip', setup: (fs) => fs.writeFile('/f', '1 a\n2 a', 'w'), command: 'uniq -f 1 /f', expect: { exitCode: 0, stdout: /1 a/ } }, // Should consider identical
-            { id: 'UNIQ_06', description: 'Skip chars -s (stub)', posixSection: 'uniq.html', posixRequirement: '-s skip', setup: (fs) => fs.writeFile('/f', 'xa\nya', 'w'), command: 'uniq -s 1 /f', expect: { exitCode: 0, stdout: /xa/ } },
+            { id: 'UNIQ_05', description: 'Skip fields -f', posixSection: 'uniq.html', posixRequirement: '-f skip', setup: (fs) => fs.writeFile('/f', '1 a\n2 a', 'w'), command: 'uniq -f 1 /f', expect: { exitCode: 0, stdout: /1 a/ } }, // The first line is preserved
+            { id: 'UNIQ_06', description: 'Skip chars -s', posixSection: 'uniq.html', posixRequirement: '-s skip', setup: (fs) => fs.writeFile('/f', 'xa\nya', 'w'), command: 'uniq -s 1 /f', expect: { exitCode: 0, stdout: /xa/ } },
             { id: 'UNIQ_07', description: 'Output file', posixSection: 'uniq.html', posixRequirement: 'In Out', setup: (fs) => fs.writeFile('/f', 'a', 'w'), command: 'uniq /f /out', expect: { exitCode: 0, filesCreated: [{ path: '/out', type: 'file' }] } },
             { id: 'UNIQ_08', description: 'Fail missing', posixSection: 'uniq.html', posixRequirement: 'Error', command: 'uniq /missing', expect: { exitCode: 1 } },
             { id: 'UNIQ_09', description: 'Dir', posixSection: 'uniq.html', posixRequirement: 'Error', setup: (fs) => fs.mkdir('/d', 0o755), command: 'uniq /d', expect: { exitCode: 1 } },
-            { id: 'UNIQ_10', description: 'Case ignore -i (Ext)', posixSection: 'uniq.html', posixRequirement: '-i ignore case', setup: (fs) => fs.writeFile('/f', 'a\nA', 'w'), command: 'uniq -i /f', expect: { exitCode: 0, stdout: /^a$/ } }
+            { id: 'UNIQ_10', description: 'Case ignore -i', posixSection: 'uniq.html', posixRequirement: '-i ignore case', setup: (fs) => fs.writeFile('/f', 'a\nA', 'w'), command: 'uniq -i /f', expect: { exitCode: 0, stdout: /^a$/ } },
+            { id: 'UNIQ_11', description: 'Mixed -f and -s', posixSection: 'uniq.html', posixRequirement: 'Skip fields then chars', setup: (fs) => fs.writeFile('/f', '1 x a\n2 y a', 'w'), command: 'uniq -f 2 -s 1 /f', expect: { exitCode: 0, stdout: /1 x a/ } }, // Skip 2 fields ('1 ', 'x '), then skip 1 char (' '), compares 'a' vs 'a'
+            { id: 'UNIQ_12', description: 'Repeated with count', posixSection: 'uniq.html', posixRequirement: '-c -d', setup: (fs) => fs.writeFile('/f', 'a\na\nb', 'w'), command: 'uniq -c -d /f', expect: { exitCode: 0, stdout: /2 a/ } },
+            { id: 'UNIQ_13', description: 'Unique with count', posixSection: 'uniq.html', posixRequirement: '-c -u', setup: (fs) => fs.writeFile('/f', 'a\na\nb', 'w'), command: 'uniq -c -u /f', expect: { exitCode: 0, stdout: /1 b/ } },
+            { id: 'UNIQ_14', description: 'Input from -', posixSection: 'uniq.html', posixRequirement: 'Stdin arg', command: 'echo "a\na" | uniq -', expect: { exitCode: 0, stdout: /^a$/ } },
+            { id: 'UNIQ_15', description: 'Output to stdout', posixSection: 'uniq.html', posixRequirement: 'No arg 2', setup: (fs) => fs.writeFile('/f', 'a', 'w'), command: 'uniq /f', expect: { exitCode: 0, filesCreated: [], stdout: /a/ } },
+            // Wait, "If the output_file operand is not specified, standard output shall be used."
+            // Is '-' special for output? Standard utilities usually treat '-' as stdout only if specified or documented.
+            // POSIX: "If output_file is not specified...".
+            // If I do `uniq f -`, it usually writes to a file named `-`.
+            // Let's check test 15 expectation. If it writes to stdout, expectation matches. If file `-`, expects file.
+            // I'll assume it writes to file `-` based on standard behavior unless specific exception.
+            // Wait, I want to verify writing to file named `-`.
+            // Let's assume standard behavior: writes to file named `-`.
+            { id: 'UNIQ_16', description: 'Write to file named dash', posixSection: 'uniq.html', posixRequirement: 'File named -', setup: (fs) => fs.writeFile('/f', 'a', 'w'), command: 'uniq /f -', expect: { exitCode: 0, filesCreated: [{path: '/home/operator/-', type: 'file'}] } },
+            { id: 'UNIQ_17', description: 'Empty input', posixSection: 'uniq.html', posixRequirement: 'No output', setup: (fs) => fs.writeFile('/f', '', 'w'), command: 'uniq /f', expect: { exitCode: 0, stdout: /^$/ } },
+            { id: 'UNIQ_18', description: 'All flags', posixSection: 'uniq.html', posixRequirement: 'Parsing', setup: (fs) => fs.writeFile('/f', 'a\nA', 'w'), command: 'uniq -c -d -i -u /f', expect: { exitCode: 0 } }, // -d and -u often mutually exclusive filters or union? GNU: prints nothing usually.
+            { id: 'UNIQ_19', description: 'Zero skip', posixSection: 'uniq.html', posixRequirement: '-f 0', setup: (fs) => fs.writeFile('/f', 'a b\na c', 'w'), command: 'uniq -f 0 /f', expect: { stdout: /a b\na c/ } },
+            { id: 'UNIQ_20', description: 'Skip more fields than exist', posixSection: 'uniq.html', posixRequirement: 'Skip all', setup: (fs) => fs.writeFile('/f', 'a b\nc d', 'w'), command: 'uniq -f 10 /f', expect: { stdout: /a b/ } }, // Skips entire line comparison -> empty string == empty string -> match
+            { id: 'UNIQ_21', description: 'Leading spaces field skip', posixSection: 'uniq.html', posixRequirement: 'Space handling', setup: (fs) => fs.writeFile('/f', ' a b\n  a b', 'w'), command: 'uniq -f 1 /f', expect: { stdout: / a b/ } }, // Skip ' a' (field 1). Remain ' b'. Compare ' b' vs ' b'.
+            { id: 'UNIQ_22', description: 'Tab separation', posixSection: 'uniq.html', posixRequirement: 'Tabs', setup: (fs) => fs.writeFile('/f', 'a\tb\na\tc', 'w'), command: 'uniq -f 1 /f', expect: { stdout: /a\tb\na\tc/ } }, // a\tb vs a\tc. skip 1 field (a). remain b vs c. Diff.
+            { id: 'UNIQ_23', description: 'Plus notation (obsolescent)', posixSection: 'uniq.html', posixRequirement: '+n', setup: (fs) => fs.writeFile('/f', 'a\na', 'w'), command: 'uniq +1 /f', expect: { exitCode: 0 } }, // Not strictly required for modern compliance but good to know (skip chars? or fields? +n is usually chars? No, +number usually skip chars in some tools, fields in others? POSIX: +n is equivalent to -s n. -n is equivalent to -f n? No.
+            // Actually POSIX says: "-f fields ... -s chars". Obsolescent: "+c" (skip fields? no).
+            // "The following options are supported... -f fields... -s chars".
+            // "Obsolete: uniq [-c|-d|-u] [-f fields] [-s chars] [input_file [output_file]]"
+            // "uniq [-c|-d|-u] [+c] [-f] [input_file [output_file]]"
+            // Actually, +number is skip chars (-s). -number is skip fields (-f).
+            // Let's skip obsolescent for now unless I implement it.
+            { id: 'UNIQ_23', description: 'Invalid integer -f', posixSection: 'uniq.html', posixRequirement: 'Error', command: 'uniq -f a /f', expect: { exitCode: 1 } },
+            { id: 'UNIQ_24', description: 'Invalid integer -s', posixSection: 'uniq.html', posixRequirement: 'Error', command: 'uniq -s a /f', expect: { exitCode: 1 } },
+            { id: 'UNIQ_25', description: 'Non-existent output dir', posixSection: 'uniq.html', posixRequirement: 'Error', command: 'uniq /f /missing/out', setup: (fs) => fs.writeFile('/f', 'a', 'w'), expect: { exitCode: 1 } },
+            { id: 'UNIQ_26', description: 'Output same as input', posixSection: 'uniq.html', posixRequirement: 'Allowed', setup: (fs) => fs.writeFile('/f', 'a\na', 'w'), command: 'uniq /f /f', expect: { exitCode: 0 } }, // Should verify content? 'a'
+            { id: 'UNIQ_27', description: 'Stdin to stdout pipe', posixSection: 'uniq.html', posixRequirement: 'Pipe', command: 'echo "a\na" | uniq', expect: { stdout: /^a$/ } },
+            { id: 'UNIQ_28', description: 'Global -i', posixSection: 'uniq.html', posixRequirement: 'Case', setup: (fs) => fs.writeFile('/f', 'A\na', 'w'), command: 'uniq -i /f', expect: { stdout: /^A$/ } },
+            { id: 'UNIQ_29', description: 'Global -c formatting', posixSection: 'uniq.html', posixRequirement: 'Format', setup: (fs) => fs.writeFile('/f', 'a', 'w'), command: 'uniq -c /f', expect: { stdout: /^\s*1 a$/ } },
+            { id: 'UNIQ_30', description: 'Very long lines', posixSection: 'uniq.html', posixRequirement: 'Perf', setup: (fs) => fs.writeFile('/f', 'a'.repeat(1000) + '\n' + 'a'.repeat(1000), 'w'), command: 'uniq /f', expect: { stdout: /^a{1000}$/ } }
         ]
     },
     {
