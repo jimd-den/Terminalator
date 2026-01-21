@@ -33,7 +33,7 @@ import { CommandRegistry } from '../../commands/CommandRegistry'; // Need regist
 // I can change `ExecuteCommand` to pass registry to `XargsCommand` constructor.
 // But `XargsCommand` executes a string, so it needs `ExecuteCommand.execute` or similar to handle redirection/pipes in subcommands?
 // Usually xargs just runs simple commands.
-// Let's pass `CommandRegistry` to `XargsCommand` constructor?
+// Let's pass `CommandRegistry` to `XargsCommand` constructor.
 // No, circular dependency potential if implementation files import each other.
 // `CommandRegistry` is in `../commands/CommandRegistry`.
 // `XargsCommand` is in `../commands/core/XargsCommand`.
@@ -65,7 +65,7 @@ export class XargsCommand implements ICommand {
         this.getCommand = commandLookup;
     }
 
-    execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         const input = context.stdin;
         // Syntax: xargs [cmd [initial-args]]
         // Default cmd is echo.
@@ -100,7 +100,12 @@ export class XargsCommand implements ICommand {
         // Note: xargs usually runs command ONCE with all args, or multiple times if too many.
         // We run once with all args.
         try {
-            return await command.execute(finalArgs, state);
+            // Context for the inner command should ideally not have the consumed stdin.
+            const innerContext: ProcessContext = {
+                ...context,
+                stdin: undefined
+            };
+            return await command.execute(finalArgs, innerContext, state);
         } catch (e: any) {
             return { output: `xargs: error: ${e.message}`, newState: state, exitCode: 1 };
         }
