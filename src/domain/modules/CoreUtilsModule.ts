@@ -385,7 +385,7 @@ export class CoreUtilsModule implements CommandModule {
 
         // Clear (Simple inline)
         registry.register('clear', {
-            execute: (_args, state, _input) => ({
+            execute: (_args, _context, state) => ({
                 output: '',
                 newState: state,
                 exitCode: 0,

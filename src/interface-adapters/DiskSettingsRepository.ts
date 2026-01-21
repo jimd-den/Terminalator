@@ -13,10 +13,10 @@ import { UserSettings, DEFAULT_SETTINGS } from '../domain/entities/Settings';
 import { FileSystem } from '../domain/entities/FileSystem';
 
 export class DiskSettingsRepository implements SettingsRepository {
-    private fs: FileSystem;
+    private fs: FileSystemService;
     private readonly SETTINGS_PATH = '/etc/settings.json';
 
-    constructor(fs: FileSystem) {
+    constructor(fs: FileSystemService) {
         this.fs = fs;
     }
 

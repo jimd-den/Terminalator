@@ -3,12 +3,15 @@
  * @description The 'gettext' command. Retrieve text string from the message database.
  */
 import { ICommand, CommandResponse } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
 
 export class GettextCommand implements ICommand {
     constructor() { }
 
-    async execute(args: string[], state: TerminalState, _input?: string): Promise<CommandResponse> {
+    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         let expand = false;
         let noNewline = false; // standard doesn't strictly specify -n for gettext but it's common in echo/printf. 
         // Actually gettext usually just outputs the string.

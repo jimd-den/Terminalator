@@ -8,13 +8,16 @@
 
 import { ICommand } from '../../../domain/commands/ICommand';
 import { CommandResponse } from '../../../domain/usecases/ExecuteCommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../../domain/entities/TerminalState';
 
 export class SettingsCommand implements ICommand {
     readonly name = 'options';
     readonly description = 'Open terminal hardware settings';
 
-    async execute(args: string[], state: TerminalState): Promise<CommandResponse> {
+    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         return {
             output: 'ACCESSING HARDWARE FIRMWARE...',
             newState: state,

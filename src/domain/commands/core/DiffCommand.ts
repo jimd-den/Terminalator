@@ -11,6 +11,7 @@
  */
 
 import { ICommand } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
 import { FileSystemService } from '../../services/FileSystemService';
@@ -18,7 +19,8 @@ import { FileSystemService } from '../../services/FileSystemService';
 export class DiffCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
-    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const input = context.stdin;
         const files = args.filter(a => !a.startsWith('-'));
         if (files.length !== 2) {
             return { output: 'diff: missing operand', newState: state, exitCode: 2 };

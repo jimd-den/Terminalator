@@ -148,7 +148,7 @@ export class FileSystemService {
             parent: parent,
             children: new Map()
         };
-        this.fs.attachDentryHelpers(dentry); // Helper method on Entity, allowed for convenience or move here? 
+        this.fs.attachDentryHelpers(dentry);
         // Ideally strict entity shouldn't have helpers but for now relying on existing one to minimize breakage
 
         parent.children.set(name, dentry);

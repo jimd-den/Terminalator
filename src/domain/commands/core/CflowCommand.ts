@@ -3,13 +3,15 @@
  * @description The 'cflow' command. Generate a C-language flowgraph.
  */
 import { ICommand, CommandResponse } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { FileSystemService } from '../../services/FileSystemService';
 
 export class CflowCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
-    async execute(args: string[], state: TerminalState, _input?: string): Promise<CommandResponse> {
+    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         const files: string[] = [];
         let showInverse = false; // -i
         let defines: string[] = []; // -D

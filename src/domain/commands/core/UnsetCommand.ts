@@ -14,10 +14,12 @@
  */
 
 import { ICommand, CommandResponse } from '../ICommand';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 
 export class UnsetCommand implements ICommand {
-    async execute(_args: string[], state: TerminalState, _input?: string): Promise<CommandResponse> {
+    async execute(_args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         // TerminalState currently doesn't expose environment variables publicly for modification in this interface
         // except through specific methods if they existed.
         // We will assume success for compliance check.

@@ -8,6 +8,8 @@
  */
 
 import { ICommand } from '../../domain/commands/ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../domain/entities/TerminalState';
 import { CommandResponse } from '../../domain/usecases/ExecuteCommand';
 import { CodeCompiler } from '../../domain/usecases/CodeCompiler';
@@ -15,7 +17,8 @@ import { CodeCompiler } from '../../domain/usecases/CodeCompiler';
 export class CompileCommand implements ICommand {
     constructor(private compiler: CodeCompiler) {}
 
-    execute(args: string[], state: TerminalState): CommandResponse {
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const input = context.stdin;
         const res = this.compiler.compile(args[0] || '');
         return {
             output: res.output,

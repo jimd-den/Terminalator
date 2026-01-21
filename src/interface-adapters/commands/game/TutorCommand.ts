@@ -7,12 +7,15 @@
 
 import { ICommand, CommandResponse } from '../../../domain/commands/ICommand';
 import { GameManager } from '../../GameManager';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../../domain/entities/TerminalState';
 
 export class TutorCommand implements ICommand {
     constructor(private gameManager: GameManager) { }
 
-    execute(args: string[], state: TerminalState): CommandResponse {
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const input = context.stdin;
         const lessonId = args[0] || 'LESSON_01'; // Default to first lesson
 
         const success = this.gameManager.tutorEngine.startLesson(lessonId);

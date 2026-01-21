@@ -13,12 +13,16 @@
  * 8. SOLID / KISS: Simple implementation.
  */
 import { ICommand, CommandResponse } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
 import { ExecuteCommand } from '../../usecases/ExecuteCommand';
 import { Dentry } from '../../entities/FileSystem';
 
 export class ShCommand implements ICommand {
-    async execute(args: string[], state: TerminalState, _input?: string): Promise<CommandResponse> {
+    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const _input = context.stdin;
+        const input = context.stdin;
         let commandString = '';
         let scriptFile = '';
         let i = 0;
@@ -47,11 +51,11 @@ export class ShCommand implements ICommand {
         if (scriptFile) {
             // Read file
             const fs = state.fs;
-            let node: Dentry | null = fs.resolveNode(scriptFile, state.currentDirectory);
+            let node: Dentry | null = fs.resolve(scriptFile, state.currentDirectory);
 
             // HACK: Fallback to root for test suite compatibility
             if (!node && state.currentDirectory !== '/') {
-                node = fs.resolveNode(scriptFile, '/');
+                node = fs.resolve(scriptFile, '/');
             }
 
             if (!node || fs.isDirectory(node)) {

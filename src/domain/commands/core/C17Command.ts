@@ -7,6 +7,7 @@
 
 import { ICommand } from '../ICommand';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { ICompilerService, CompilerOptions } from '../../interfaces/ICompilerService';
 import { FileSystemService } from '../../services/FileSystemService';
@@ -14,7 +15,8 @@ import { FileSystemService } from '../../services/FileSystemService';
 export class C17Command implements ICommand {
     constructor(private compilerService: ICompilerService, private fs: FileSystemService) { }
 
-    async execute(args: string[], state: TerminalState, _input?: string): Promise<CommandResponse> {
+    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         let outputName = 'a.out';
         let compileOnly = false;
         let preprocessOnly = false;

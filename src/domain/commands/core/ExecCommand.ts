@@ -14,10 +14,12 @@
  */
 
 import { ICommand, CommandResponse } from '../ICommand';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 
 export class ExecCommand implements ICommand {
-    async execute(_args: string[], state: TerminalState, _input?: string): Promise<CommandResponse> {
+    async execute(_args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         // In simulation, we can't easily replace the "process", so we just pretend success
         // unless arguments are provided, in which case we might run them (but replacing shell is hard here).
         // For POSIX gap check "exec" existence is enough.

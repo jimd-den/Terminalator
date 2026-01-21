@@ -14,6 +14,7 @@
  */
 
 import { ICommand } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
 import { FileSystemService } from '../../services/FileSystemService';
@@ -27,7 +28,8 @@ export class CdCommand implements ICommand {
      * @param args - Arguments passed to cd (target directory).
      * @param state - Current terminal state.
      */
-    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const input = context.stdin;
         const target = args.length > 0 ? args[0] : '~';
         let newPath = target;
 

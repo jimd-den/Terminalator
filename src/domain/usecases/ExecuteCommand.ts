@@ -24,6 +24,7 @@ import { ShellParser } from '../services/ShellParser';
 import { CoreUtilsModule } from '../modules/CoreUtilsModule';
 import { SystemUtilsModule } from '../modules/SystemUtilsModule';
 import { IBinaryRunner } from '../interfaces/IBinaryRunner';
+import { ProcessContext } from '../entities/ProcessContext';
 
 export interface CommandResponse {
     output: string;
@@ -130,7 +131,7 @@ export class ExecuteCommand {
                                         // Env should ideally come from state, passing empty for now or parser expansion
                                         const response = await this.binaryRunner.run(inode.content, args, {});
                                         previousOutput = response.output;
-                                        currentState = response.newState; // State updates (state is mutable reference usually, but good to return)
+                                        currentState = response.newState || currentState;
                                         finalExitCode = response.exitCode;
                                         continue;
                                     } catch (e: any) {
@@ -162,22 +163,34 @@ export class ExecuteCommand {
                     };
                 }
 
-                try {
-                    // Execute with input from previous command (if any)
-                    const response = await command.execute(args, currentState, previousOutput);
+                if (command) {
+                    try {
+                        // Create ProcessContext
+                        const context: ProcessContext = {
+                            fs: this.fs,
+                            fileSystemService: this.service,
+                            env: currentState.environment,
+                            cwd: currentState.currentDirectory,
+                            user: currentState.user,
+                            stdin: previousOutput
+                        };
 
-                    previousOutput = response.output;
-                    currentState = response.newState;
-                    finalExitCode = response.exitCode;
-                    if (response.uiAction) finalUiAction = response.uiAction;
-                    if (response.navigationAction) finalNavigationAction = response.navigationAction;
+                        // Execute with input from previous command (if any)
+                        const response = await command.execute(args, context, currentState);
 
-                } catch (error: any) {
-                    return {
-                        output: `sh: error executing ${commandName}: ${error.message}`,
-                        newState: currentState,
-                        exitCode: 1
-                    };
+                        previousOutput = response.output;
+                        currentState = response.newState || currentState; // Handle optional newState
+                        finalExitCode = response.exitCode;
+                        if (response.uiAction) finalUiAction = response.uiAction;
+                        if (response.navigationAction) finalNavigationAction = response.navigationAction;
+
+                    } catch (error: any) {
+                        return {
+                            output: `sh: error executing ${commandName}: ${error.message}`,
+                            newState: currentState,
+                            exitCode: 1
+                        };
+                    }
                 }
             }
 

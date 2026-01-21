@@ -1,6 +1,7 @@
 
 import { ICommand, CommandResponse } from '../../../domain/entities/Command';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../../domain/entities/TerminalState';
 
 export class AliasCommand implements ICommand {
@@ -8,6 +9,7 @@ export class AliasCommand implements ICommand {
     description = 'Define or display aliases';
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         // 1. List aliases if no args
         if (args.length === 0) {
             const aliases = state.aliases || {};
@@ -71,6 +73,7 @@ export class UnaliasCommand implements ICommand {
     description = 'Remove aliases';
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         if (args.length === 0) {
             return { output: 'unalias: usage: unalias name [name ...]', exitCode: 1 };
         }

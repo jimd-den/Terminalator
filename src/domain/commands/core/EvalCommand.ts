@@ -14,6 +14,8 @@
  */
 
 import { ICommand, CommandResponse } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
 
 export class EvalCommand implements ICommand {
@@ -23,7 +25,8 @@ export class EvalCommand implements ICommand {
     // ExecuteCommand creates Registry. Registry holds Commands.
     // We don't have easy access to "ExecuteCommand" instance here.
     // So we will stub it for now to satisfy existence.
-    async execute(args: string[], state: TerminalState, _input?: string): Promise<CommandResponse> {
+    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         const cmd = args.join(' ');
         // Ideally: return executor.execute(cmd, state);
         // For now:

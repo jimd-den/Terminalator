@@ -11,14 +11,17 @@
  */
 
 import { ICommand } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
 import { FileSystem, S_IFDIR, S_IFLNK, S_IFREG, S_IFIFO, S_IFMT } from '../../entities/FileSystem';
 
 export class FileCommand implements ICommand {
-    constructor(private fs: FileSystem) {}
+    constructor(private fs: FileSystemService) {}
 
-    async execute(args: string[], state: TerminalState, input?: string): Promise<CommandResponse> {
+    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         if (args.length === 0) {
             return { output: 'usage: file file...', newState: state, exitCode: 1 };
         }
@@ -29,7 +32,7 @@ export class FileCommand implements ICommand {
         for (const arg of args) {
             if (arg.startsWith('-')) continue; // Ignore flags for now
 
-            const dentry = this.fs.resolveNode(arg, state.currentDirectory);
+            const dentry = this.fs.resolve(arg, state.currentDirectory);
             if (!dentry) {
                 results.push(`${arg}: cannot open '${arg}' (No such file or directory)`);
                 finalExitCode = 1;

@@ -11,14 +11,17 @@
  */
 
 import { ICommand } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
 import { FileSystem } from '../../entities/FileSystem';
 
 export class SplitCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
-    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const input = context.stdin;
         // split [-l line_count] [-a suffix_length] [file [prefix]]
         let lineCount = 1000;
         let suffixLength = 2;

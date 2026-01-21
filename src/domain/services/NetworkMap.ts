@@ -47,7 +47,7 @@ export class NetworkMap {
         return fs;
     }
 
-    registerSystem(hostname: string, fs: FileSystem) {
+    registerSystem(hostname: string, fs: FileSystemService) {
         this.systems.set(hostname, fs);
     }
 }

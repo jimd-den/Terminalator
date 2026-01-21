@@ -9,6 +9,7 @@
 
 import { FileSystem } from '../../domain/entities/FileSystem';
 import { Inode } from '../../domain/entities/FileSystem';
+import { FileSystemService } from '../../domain/services/FileSystemService';
 
 // WASI Constants
 export const WASI_ESUCCESS = 0;
@@ -35,8 +36,10 @@ export class WasiFileSystemBridge {
     private fileDescriptors: Map<number, FileDescriptor> = new Map();
     private nextFd = 3; // 0, 1, 2 reserved for stdin, stdout, stderr
     private args: string[] = [];
+    private service: FileSystemService;
 
     constructor(private fs: FileSystem) {
+        this.service = new FileSystemService(fs);
         // Initialize stdio placeholders
         this.fileDescriptors.set(0, { id: 0, inodeId: -1, position: 0, flags: 0, path: '<stdin>' });
         this.fileDescriptors.set(1, { id: 1, inodeId: -1, position: 0, flags: 0, path: '<stdout>' });
@@ -71,14 +74,14 @@ export class WasiFileSystemBridge {
         // The CompilerService should probably set CWD context.
         // We'll trust the FS to resolve the path string.
 
-        let dentry = this.fs.resolveNode(path);
+        let dentry = this.service.resolve(path);
 
         if ((oflags & WASI_O_CREAT)) {
             if (!dentry) {
                 // Create file
                 try {
                     // Default to creating as file
-                    dentry = this.fs.createFile(path);
+                    dentry = this.service.createFile(path);
                 } catch (e) {
                     return { code: WASI_ENOENT, fd: -1 };
                 }
@@ -92,7 +95,7 @@ export class WasiFileSystemBridge {
         }
 
         if ((oflags & WASI_O_TRUNC)) {
-            const inode = this.fs.getInode(dentry.inodeId);
+            const inode = this.service.getInode(dentry.inodeId);
             if (inode) {
                 inode.content = new Uint8Array(0);
                 inode.size = 0;
@@ -130,7 +133,7 @@ export class WasiFileSystemBridge {
         const desc = this.fileDescriptors.get(fd);
         if (!desc || desc.inodeId === -1) return { code: WASI_EBADF, nwritten: 0 };
 
-        const inode = this.fs.getInode(desc.inodeId);
+        const inode = this.service.getInode(desc.inodeId);
         if (!inode) return { code: WASI_EBADF, nwritten: 0 };
 
         // Append logic or overwrite based on position
@@ -172,7 +175,7 @@ export class WasiFileSystemBridge {
         const desc = this.fileDescriptors.get(fd);
         if (!desc || desc.inodeId === -1) return { code: WASI_EBADF, data: null };
 
-        const inode = this.fs.getInode(desc.inodeId);
+        const inode = this.service.getInode(desc.inodeId);
         if (!inode) return { code: WASI_EBADF, data: null };
 
         let content = inode.content instanceof Uint8Array
@@ -217,7 +220,7 @@ export class WasiFileSystemBridge {
         } else if (whence === 1) {
             newPos += off;
         } else if (whence === 2) {
-            const inode = this.fs.getInode(desc.inodeId);
+            const inode = this.service.getInode(desc.inodeId);
             if (inode) {
                 newPos = inode.size + off;
             }

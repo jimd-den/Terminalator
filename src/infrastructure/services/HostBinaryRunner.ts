@@ -7,6 +7,7 @@
 
 import { IBinaryRunner } from '../../domain/interfaces/IBinaryRunner';
 import { CommandResponse } from '../../domain/usecases/ExecuteCommand';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../domain/entities/TerminalState';
 import * as fs from 'fs';
 import * as path from 'path';

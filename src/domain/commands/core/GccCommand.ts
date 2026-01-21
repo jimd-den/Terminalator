@@ -8,6 +8,7 @@
  */
 
 import { ICommand, CommandResponse } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { ICompilerService } from '../../interfaces/ICompilerService';
 import { FileSystemService } from '../../services/FileSystemService';
@@ -18,7 +19,8 @@ export class GccCommand implements ICommand {
         private fs: FileSystemService
     ) { }
 
-    async execute(args: string[], state: TerminalState): Promise<CommandResponse> {
+    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         // 1. Parse Arguments (Minimal subset for verification)
         // gcc input.c -o output
 

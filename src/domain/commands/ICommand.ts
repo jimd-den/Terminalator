@@ -8,17 +8,15 @@
  * Pillar: The Four-Fold Shield (Strict Architecture)
  */
 
+import { FileSystemService } from '../../domain/services/FileSystemService';
 import { TerminalState } from '../entities/TerminalState';
 import { CommandResponse } from '../usecases/ExecuteCommand';
+import { ProcessContext } from '../entities/ProcessContext';
 
 export { CommandResponse };
 
-export interface CommandContext {
-    // Context can provide access to infrastructure or other domain services if needed
-    // For now, it might be empty or provide a way to access the file system if passed down
-    // But typically commands operate on the state and return a new state.
-    // However, commands like 'ls' need to read the FS.
-    // So we should pass the FS provider here or inject it into the command constructor.
+export interface CommandContext extends ProcessContext {
+    // Alias for backward compatibility if needed, or extend
 }
 
 export interface ICommand {
@@ -29,5 +27,5 @@ export interface ICommand {
      * @param state - The current terminal state.
      * @returns A promise resolving to the command response.
      */
-    execute(args: string[], state: TerminalState, input?: string): Promise<CommandResponse> | CommandResponse;
+    execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> | CommandResponse;
 }

@@ -1,6 +1,7 @@
 
 import { ICommand, CommandResponse } from '../../../domain/entities/Command';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../../domain/entities/TerminalState';
 import { ProcessManager } from '../../../domain/usecases/ProcessManager';
 
@@ -11,6 +12,7 @@ export class PsCommand implements ICommand {
     constructor(private processManager: ProcessManager) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         const processes = this.processManager.list();
 
         // Header
@@ -44,6 +46,7 @@ export class KillCommand implements ICommand {
     constructor(private processManager: ProcessManager) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         if (args.length === 0) {
             return { output: 'kill: usage: kill [-s signal_name] pid ...', exitCode: 1 };
         }

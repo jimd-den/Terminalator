@@ -13,13 +13,16 @@
  * 8. SOLID / KISS: Simple stub for compliance.
  */
 import { ICommand, CommandResponse } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
 import { FileSystem } from '../../entities/FileSystem';
 
 export class DotCommand implements ICommand {
-    constructor(private fs: FileSystem) {}
+    constructor(private fs: FileSystemService) {}
 
-    async execute(args: string[], state: TerminalState, _input?: string): Promise<CommandResponse> {
+    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         if (args.length === 0) {
             return {
                 output: '.: filename argument required',
@@ -30,7 +33,7 @@ export class DotCommand implements ICommand {
         // In full implementation, this reads the file and executes it in current context.
         // We will verify file existence for compliance.
         const file = args[0];
-        const node = this.fs.resolveNode(file, state.currentDirectory);
+        const node = this.fs.resolve(file, state.currentDirectory);
         if (!node) {
              return {
                 output: `.: ${file}: No such file or directory`,

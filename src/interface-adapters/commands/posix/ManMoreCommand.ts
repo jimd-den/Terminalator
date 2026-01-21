@@ -1,6 +1,7 @@
 
 import { ICommand, CommandResponse } from '../../../domain/entities/Command';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../../domain/entities/TerminalState';
 import { HelpCommand } from './HelpCommand';
 import { CatCommand } from './CatCommand';
@@ -12,6 +13,7 @@ export class ManCommand implements ICommand {
     constructor(private helpCmd: HelpCommand) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         // Delegate to help
         if (args.length === 0) {
             return { output: 'What manual page do you want?', exitCode: 1 };
@@ -27,6 +29,7 @@ export class MoreCommand implements ICommand {
     constructor(private catCmd: CatCommand) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         // Delegate to cat (UI handles scrolling)
         return this.catCmd.execute(args, context, state);
     }

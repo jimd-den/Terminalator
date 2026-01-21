@@ -2896,7 +2896,8 @@ async function runSuite() {
     console.log(`${CYAN}=================================================${RESET}\n`);
 
     const fs = new FileSystem();
-    const executor = new ExecuteCommand(fs);
+    const service = new FileSystemService(fs);
+    const executor = new ExecuteCommand(service);
 
     let totalTests = 0;
     let totalPassed = 0;
@@ -2927,11 +2928,11 @@ async function runSuite() {
                 const compiler = new HostCompilerService();
                 const runner = new HostBinaryRunner();
                 // We need to register C17 with these
-                const registry = new ExecuteCommand(testFs).getRegistry();
+                const registry = new ExecuteCommand(service).getRegistry();
                 registry.register('c17', new C17Command(compiler, service));
-                testExecutor = new ExecuteCommand(testFs, undefined, registry, runner);
+                testExecutor = new ExecuteCommand(service, undefined, registry, runner);
             } else {
-                testExecutor = new ExecuteCommand(testFs);
+                testExecutor = new ExecuteCommand(service);
             }
             const testState = createInitialTerminalState();
 

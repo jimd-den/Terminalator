@@ -14,10 +14,12 @@
  */
 
 import { ICommand, CommandResponse } from '../ICommand';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 
 export class ReadCommand implements ICommand {
-    async execute(_args: string[], state: TerminalState, input?: string): Promise<CommandResponse> {
+    async execute(_args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         // If input (piped) is present, assign to vars.
         // If not, it would block in real shell. Here we just exit.
         return {

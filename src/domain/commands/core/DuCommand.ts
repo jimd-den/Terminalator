@@ -12,6 +12,7 @@
  */
 
 import { ICommand } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
 import { FileSystemService } from '../../services/FileSystemService';
@@ -20,7 +21,8 @@ import { Dentry } from '../../entities/FileSystem';
 export class DuCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
-    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const input = context.stdin;
         const files = args.filter(arg => !arg.startsWith('-'));
 
         // POSIX default: 512-byte units.

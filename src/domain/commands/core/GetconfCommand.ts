@@ -11,14 +11,17 @@
  */
 
 import { ICommand } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
 import { FileSystem } from '../../entities/FileSystem';
 
 export class GetconfCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
-    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const input = context.stdin;
         // Parse args
         let showAll = false;
         let spec = '';
@@ -83,7 +86,7 @@ export class GetconfCommand implements ICommand {
         // Path validation per POSIX
         if (path) {
             if (varName === 'PATH_MAX' || varName === 'NAME_MAX' || varName.includes('_PATH') || varName.includes('_NAME')) {
-                const node = this.fs.resolveNode(path);
+                const node = this.fs.resolve(path);
                 if (!node) {
                     return { output: `getconf: ${path}: No such file or directory`, newState: state, exitCode: 1 };
                 }
@@ -93,7 +96,7 @@ export class GetconfCommand implements ICommand {
                 // Actually getconf: "If a path_var is specified, the value... for the file... path"
                 // If not a path var, "the value... for the system"
                 // We'll enforce existence if provided to match tests usually.
-                const node = this.fs.resolveNode(path);
+                const node = this.fs.resolve(path);
                 if (!node) {
                     return { output: `getconf: ${path}: No such file or directory`, newState: state, exitCode: 1 };
                 }

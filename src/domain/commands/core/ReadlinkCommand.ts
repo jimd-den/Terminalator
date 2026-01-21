@@ -11,14 +11,17 @@
  */
 
 import { ICommand } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
 import { FileSystem } from '../../entities/FileSystem';
 
 export class ReadlinkCommand implements ICommand {
-    constructor(private fs: FileSystem) { }
+    constructor(private fs: FileSystemService) { }
 
-    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const input = context.stdin;
         const files = args.filter(a => !a.startsWith('-'));
         if (files.length === 0) {
             return { output: 'readlink: missing operand', newState: state, exitCode: 1 };
@@ -28,7 +31,7 @@ export class ReadlinkCommand implements ICommand {
 
         try {
             const path = this.resolvePath(file, state);
-            const node = this.fs.resolveNode(path); // resolveNode typically resolves links?
+            const node = this.fs.resolve(path); // resolveNode typically resolves links?
             // We need to resolve the node WITHOUT following the link if it is the target.
             // FileSystem might resolve links automatically.
             // We need `lstat` or similar.

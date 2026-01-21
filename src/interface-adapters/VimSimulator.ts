@@ -22,12 +22,12 @@ import { CheckerRegistry } from './vim/CheckerRegistry';
 export class VimSimulator {
     private engine: VimEngine;
     private buffer: EditorBuffer;
-    private fs: FileSystem;
+    private fs: FileSystemService;
     private fsService: FileSystemService;
     private filename: string;
     private checkerRegistry = new CheckerRegistry();
 
-    constructor(fs: FileSystem, filename: string) {
+    constructor(fs: FileSystemService, filename: string) {
         this.fs = fs;
         this.fsService = new FileSystemService(fs);
         this.filename = filename;

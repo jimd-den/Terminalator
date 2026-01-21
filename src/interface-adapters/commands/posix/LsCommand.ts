@@ -1,5 +1,6 @@
-import { ICommand, CommandResponse } from '../../../domain/entities/Command';
+import { ICommand, CommandResponse } from '../../../domain/commands/ICommand';
 import { FileSystem, Dentry, S_IFDIR } from '../../../domain/entities/FileSystem';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../../domain/entities/TerminalState';
 
@@ -27,9 +28,10 @@ export class LsCommand implements ICommand {
     name = 'ls';
     description = 'List directory contents';
 
-    constructor() { }
+    constructor(private service: FileSystemService) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         const options = this.parseArgs(args);
 
         // Default target is CWD if none specified
@@ -48,19 +50,20 @@ export class LsCommand implements ICommand {
             const printHeader = options.targets.length > 1 || options.recursive;
 
             try {
-                const node = context.fs.resolveNode(targetPath, context.cwd);
+                // Use FileSystemService
+                const node = context.fileSystemService.resolve(targetPath, context.cwd);
                 if (!node) {
                     outputLines.push(`ls: cannot access '${targetPath}': No such file or directory`);
                     exitCode = 1;
                     continue;
                 }
 
-                if (context.fs.isDirectory(node)) {
+                if (context.fileSystemService.isDirectory(node)) {
                     // List directory content
-                    this.listDirectory(context.fs, node, targetPath, options, outputLines, printHeader);
+                    this.listDirectory(context.fileSystemService, node, targetPath, options, outputLines, printHeader);
                 } else {
                     // File: list it directly
-                    outputLines.push(this.formatItem(context.fs, node, options));
+                    outputLines.push(this.formatItem(context.fileSystemService, node, options));
                 }
 
             } catch (e: any) {
@@ -71,7 +74,8 @@ export class LsCommand implements ICommand {
 
         return {
             output: outputLines.join('\n'),
-            exitCode: exitCode
+            exitCode: exitCode,
+            newState: state
         };
     }
 
@@ -105,13 +109,13 @@ export class LsCommand implements ICommand {
         return options;
     }
 
-    private listDirectory(fs: FileSystem, node: Dentry, path: string, options: LsOptions, outputLines: string[], printHeader: boolean) {
+    private listDirectory(service: FileSystemService, node: Dentry, path: string, options: LsOptions, outputLines: string[], printHeader: boolean) {
         if (printHeader) {
             if (outputLines.length > 0) outputLines.push('');
             outputLines.push(`${path}:`);
         }
 
-        const inode = fs.getInode(node.inodeId);
+        const inode = service.getInode(node.inodeId);
         if (!inode) return;
 
         let files: Dentry[] = Array.from(node.children.values());
@@ -128,16 +132,16 @@ export class LsCommand implements ICommand {
 
         if (options.longFormat) {
             for (const file of files) {
-                outputLines.push(this.formatDetail(fs, file, options));
+                outputLines.push(this.formatDetail(service, file, options));
             }
         } else {
             if (options.oneLine) {
                 for (const file of files) {
-                    outputLines.push(this.formatItem(fs, file, options));
+                    outputLines.push(this.formatItem(service, file, options));
                 }
             } else {
                 // Space separated
-                const items = files.map(f => this.formatItem(fs, f, options));
+                const items = files.map(f => this.formatItem(service, f, options));
                 outputLines.push(items.join('  '));
             }
         }
@@ -145,18 +149,18 @@ export class LsCommand implements ICommand {
         // Recursive: Process subdirectories
         if (options.recursive) {
             for (const file of files) {
-                if (fs.isDirectory(file)) {
+                if (service.isDirectory(file)) {
                     const subPath = path.endsWith('/') ? `${path}${file.name}` : `${path}/${file.name}`;
                     if (file.name !== '.' && file.name !== '..') {
-                        this.listDirectory(fs, file, subPath, options, outputLines, true);
+                        this.listDirectory(service, file, subPath, options, outputLines, true);
                     }
                 }
             }
         }
     }
 
-    private formatDetail(fs: FileSystem, node: Dentry, options: LsOptions): string {
-        const inode = fs.getInode(node.inodeId);
+    private formatDetail(service: FileSystemService, node: Dentry, options: LsOptions): string {
+        const inode = service.getInode(node.inodeId);
         if (!inode) return `? ? ? ${node.name}`;
 
         const isDir = (inode.mode & S_IFDIR) !== 0;
@@ -189,10 +193,10 @@ export class LsCommand implements ICommand {
         return `${typeChar}${permissions} ${inode.links} ${owner} ${size} ${date} ${name}`;
     }
 
-    private formatItem(fs: FileSystem, node: Dentry, options: LsOptions): string {
+    private formatItem(service: FileSystemService, node: Dentry, options: LsOptions): string {
         let name = node.name;
         if (options.classify) {
-            const inode = fs.getInode(node.inodeId);
+            const inode = service.getInode(node.inodeId);
             if (inode) {
                 if (inode.mode & S_IFDIR) name += '/';
                 else if (inode.mode & 0o111) name += '*';

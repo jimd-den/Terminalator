@@ -18,6 +18,7 @@
  */
 
 import { ICommand } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
 import { FileSystemService } from '../../services/FileSystemService';
@@ -110,7 +111,8 @@ export class GrepCommand implements ICommand {
     /**
      * Entry point for the grep command.
      */
-    execute(args: string[], state: TerminalState, input?: string): CommandResponse {
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const input = context.stdin;
         const timestamp = new Date().toISOString();
         this.log(`[${timestamp}] GrepCommand.execute(args=${JSON.stringify(args)}, input=${input ? '(length ' + input.length + ')' : 'undefined'})`);
 

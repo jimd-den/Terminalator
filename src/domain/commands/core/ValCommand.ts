@@ -3,10 +3,14 @@
  * @description The 'val' command. Validate SCCS files.
  */
 import { ICommand, CommandResponse } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
 
 export class ValCommand implements ICommand {
-    async execute(args: string[], state: TerminalState, _input?: string): Promise<CommandResponse> {
+    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const _input = context.stdin;
+        const input = context.stdin;
         let file = '';
         let sid = '';
 
@@ -30,7 +34,7 @@ export class ValCommand implements ICommand {
         }
 
         const fs = state.fs;
-        const node = fs.resolveNode(file, state.currentDirectory);
+        const node = fs.resolve(file, state.currentDirectory);
         if (!node || fs.isDirectory(node)) {
              return { output: `val: ${file}: No such file or directory`, newState: state, exitCode: 1 };
         }

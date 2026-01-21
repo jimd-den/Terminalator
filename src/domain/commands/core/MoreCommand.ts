@@ -15,13 +15,15 @@
  */
 
 import { ICommand, CommandResponse } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { FileSystemService } from '../../services/FileSystemService';
 
 export class MoreCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
-    async execute(args: string[], state: TerminalState, input?: string): Promise<CommandResponse> {
+    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         // Non-interactive simulation: just output content like cat
         if (args.length === 0) {
             return {

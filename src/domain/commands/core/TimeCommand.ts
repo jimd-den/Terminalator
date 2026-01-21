@@ -11,17 +11,20 @@
  */
 
 import { ICommand } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
 import { FileSystem } from '../../entities/FileSystem';
 
 export class TimeCommand implements ICommand {
     constructor(
-        private fs: FileSystem,
+        private fs: FileSystemService,
         private commandProvider: (name: string) => ICommand | undefined
     ) { }
 
-    async execute(args: string[], state: TerminalState, input?: string): Promise<CommandResponse> {
+    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         // time [-p] utility [argument...]
         const cmdArgs = args.filter(a => a !== '-p'); // ignore -p flag for now
 

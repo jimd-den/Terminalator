@@ -1,6 +1,7 @@
 import { ICommand, CommandResponse } from '../../../domain/entities/Command';
 import { FileSystem } from '../../../domain/entities/FileSystem';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../../domain/entities/TerminalState';
 
 interface MkdirOptions {
@@ -22,9 +23,10 @@ export class MkdirCommand implements ICommand {
     name = 'mkdir';
     description = 'Create directories';
 
-    constructor(/* private fs: FileSystem */) { }
+    constructor(/* private fs: FileSystemService */) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         const options = this.parseArgs(args);
 
         if (options.directories.length === 0) {
@@ -39,13 +41,13 @@ export class MkdirCommand implements ICommand {
                 if (options.parents) {
                     this.createParents(context.fs, dirPath, context.cwd);
                 } else {
-                    context.fs.mkdir(dirPath, 0o755, 1000, 1000, context.cwd);
+                    context.fileSystemService.mkdir(dirPath, 0o755, 1000, 1000, context.cwd);
                 }
             } catch (e: any) {
                 // If -p is specified, no error if existing directory
                 if (options.parents && e.message.includes('File exists')) {
-                    const node = context.fs.resolveNode(dirPath, context.cwd);
-                    if (node && context.fs.isDirectory(node)) {
+                    const node = context.fileSystemService.resolve(dirPath, context.cwd);
+                    if (node && context.fileSystemService.isDirectory(node)) {
                         continue; // No error
                     }
                 }
@@ -82,7 +84,7 @@ export class MkdirCommand implements ICommand {
     /**
      * Creates directory and its parents if -p is specified.
      */
-    private createParents(fs: FileSystem, path: string, cwd: string): void {
+    private createParents(fs: FileSystemService, path: string, cwd: string): void {
         // Resolve absolute path parts
         // If path is relative, prepend cwd
         let absolutePath = path.startsWith('/') ? path : (cwd === '/' ? `/${path}` : `${cwd}/${path}`);
@@ -95,7 +97,7 @@ export class MkdirCommand implements ICommand {
             currentPath += `/${part}`;
 
             // Check if exists
-            const node = fs.resolveNode(currentPath);
+            const node = fs.resolve(currentPath);
             if (node) {
                 if (!fs.isDirectory(node)) {
                     throw new Error(`cannot create directory '${path}': File exists`);

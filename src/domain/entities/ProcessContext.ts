@@ -1,4 +1,5 @@
 import { FileSystem } from './FileSystem';
+import { FileSystemService } from '../services/FileSystemService';
 
 /**
  * ProcessContext Entity - Domain Layer
@@ -12,6 +13,11 @@ export interface ProcessContext {
      * FileSystem instance for this process (Local or Remote)
      */
     fs: FileSystem;
+
+    /**
+     * FileSystem Service for high-level operations
+     */
+    fileSystemService: FileSystemService;
 
     /**
      * Environment variables for the process

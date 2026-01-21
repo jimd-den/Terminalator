@@ -23,7 +23,7 @@ export interface MailMessage {
 }
 
 export class MailSystem {
-    constructor(private fs: FileSystem, private telemetry?: TelemetryPort) { }
+    constructor(private fs: FileSystemService, private telemetry?: TelemetryPort) { }
 
     /**
      * Sends a mail message from an NPC to the operator.
@@ -92,7 +92,7 @@ export class MailSystem {
      * @returns A string representation of the mail list.
      */
     listMail(): string {
-        const mailDirNode = this.fs.resolveNode('/home/operator/mail');
+        const mailDirNode = this.fs.resolve('/home/operator/mail');
         if (mailDirNode && this.fs.isDirectory(mailDirNode)) {
             const lines: string[] = [];
             mailDirNode.children.forEach((childNode) => {

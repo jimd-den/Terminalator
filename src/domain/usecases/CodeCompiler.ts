@@ -10,6 +10,7 @@
 
 import { TelemetryPort } from '../ports/TelemetryPort';
 import { FileSystem, S_IFREG, S_IFMT } from '../entities/FileSystem';
+import { FileSystemService } from '../services/FileSystemService';
 import { Interpreter } from '../interpreters/Interpreter';
 import { LispInterpreter } from '../interpreters/LispInterpreter';
 
@@ -20,8 +21,10 @@ export interface CompilationResult {
 
 export class CodeCompiler {
     private interpreters: Record<string, Interpreter>;
+    private service: FileSystemService;
 
     constructor(private fs: FileSystem, private telemetry?: TelemetryPort) {
+        this.service = new FileSystemService(fs);
         this.interpreters = {
             'lisp': new LispInterpreter(),
             // Future interpreters (python, js, etc.) can be added here
@@ -30,12 +33,12 @@ export class CodeCompiler {
 
     compile(path: string, cwd: string = '/'): CompilationResult {
         const compileLogic = () => {
-            const node = this.fs.resolveNode(path, cwd);
+            const node = this.service.resolve(path, cwd);
             if (!node) {
                 return { success: false, output: `Error: File ${path} not found.` };
             }
 
-            const inode = this.fs.getInode(node.inodeId);
+            const inode = this.service.getInode(node.inodeId);
             if (!inode || (inode.mode & S_IFMT) !== S_IFREG) {
                 return { success: false, output: `Error: ${path} is not a file.` };
             }

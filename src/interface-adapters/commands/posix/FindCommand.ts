@@ -1,6 +1,7 @@
 import { ICommand, CommandResponse } from '../../../domain/entities/Command';
 import { FileSystem, Dentry } from '../../../domain/entities/FileSystem';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../../domain/entities/TerminalState';
 
 export class FindCommand implements ICommand {
@@ -10,6 +11,7 @@ export class FindCommand implements ICommand {
     constructor() { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         // Usage: find [path] -name "pattern"
         // Simplest posix find. Default path is .
 
@@ -25,7 +27,7 @@ export class FindCommand implements ICommand {
             namePattern = args[1].replace(/['"]/g, ''); // strip quotes
         }
 
-        const startNode = context.fs.resolveNode(searchPath, context.cwd);
+        const startNode = context.fileSystemService.resolve(searchPath, context.cwd);
         if (!startNode) {
             return { output: `find: '${searchPath}': No such file or directory`, exitCode: 1 };
         }
@@ -39,7 +41,7 @@ export class FindCommand implements ICommand {
         };
     }
 
-    private traverse(fs: FileSystem, node: Dentry, currentPath: string, pattern: string, results: string[]) {
+    private traverse(fs: FileSystemService, node: Dentry, currentPath: string, pattern: string, results: string[]) {
         // Check if current matches
         // pattern usually has wildcards *.ts, but for now exact match or simple includes?
         // Let's implement basic wildcard * support regex.

@@ -1,6 +1,7 @@
 
 import { ICommand, CommandResponse } from '../../../domain/entities/Command';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../../domain/entities/TerminalState';
 
 /**
@@ -15,6 +16,7 @@ export class HelpCommand implements ICommand {
     constructor(private commands: ICommand[]) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         // If specific command requested: help <cmd>
         if (args.length > 0) {
             const cmdName = args[0];

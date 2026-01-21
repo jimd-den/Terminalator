@@ -6,6 +6,7 @@
  */
 
 import { ProcessContext } from './ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from './TerminalState';
 
 export interface CommandResponse {

@@ -15,6 +15,7 @@
 import { ICommand } from '../../../domain/commands/ICommand';
 
 import { CommandResponse } from '../../../domain/usecases/ExecuteCommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../../domain/entities/TerminalState';
 import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { SchemeParser } from '../../../domain/usecases/SchemeParser';
@@ -52,7 +53,8 @@ export class SchemeCommand implements ICommand {
         return this.globalEnv;
     }
 
-    async execute(args: string[], state: TerminalState, input?: string): Promise<CommandResponse> {
+    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         const env = this.getEnv();
         const fs = this.fs;
 

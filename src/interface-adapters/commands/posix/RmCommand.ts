@@ -1,6 +1,7 @@
 import { ICommand, CommandResponse } from '../../../domain/entities/Command';
 import { FileSystem } from '../../../domain/entities/FileSystem';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../../domain/entities/TerminalState';
 
 /**
@@ -30,12 +31,13 @@ export class RmCommand implements ICommand {
     name = 'rm';
     description = 'Remove files or directories';
 
-    constructor(/* private fs: FileSystem */) { }
+    constructor(/* private fs: FileSystemService */) { }
 
     /**
      * Executes the rm command.
      */
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         const options = this.parseArgs(args);
 
         if (options.files.length === 0 && !options.force) {
@@ -48,7 +50,7 @@ export class RmCommand implements ICommand {
         for (const target of options.files) {
             try {
                 // Check existence first to handle -f logic or directory check
-                const node = context.fs.resolveNode(target, context.cwd);
+                const node = context.fileSystemService.resolve(target, context.cwd);
 
                 if (!node) {
                     if (!options.force) {
@@ -58,7 +60,7 @@ export class RmCommand implements ICommand {
                     continue;
                 }
 
-                if (context.fs.isDirectory(node) && !options.recursive) {
+                if (context.fileSystemService.isDirectory(node) && !options.recursive) {
                     outputLines.push(`rm: cannot remove '${target}': Is a directory`);
                     exitCode = 1;
                     continue;
@@ -71,7 +73,7 @@ export class RmCommand implements ICommand {
                 }
 
                 // Execute Deletion
-                context.fs.deleteNode(target, context.cwd);
+                context.fileSystemService.deleteNode(target, context.cwd);
 
                 if (options.verbose) {
                     outputLines.push(`removed '${target}'`);

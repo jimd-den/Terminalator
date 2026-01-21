@@ -3,13 +3,15 @@
  * @description The 'fuser' command. Identify processes using files or sockets.
  */
 import { ICommand, CommandResponse } from '../ICommand';
+import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { FileSystemService } from '../../services/FileSystemService';
 
 export class FuserCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
-    async execute(args: string[], state: TerminalState, _input?: string): Promise<CommandResponse> {
+    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const input = context.stdin;
         const files: string[] = [];
         let kill = false;
         let silent = false;
