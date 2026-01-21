@@ -18,7 +18,6 @@ export class LsCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
         const flags = args.filter(arg => arg.startsWith('-'));
         const targets = args.filter(arg => !arg.startsWith('-'));
 
@@ -40,6 +39,10 @@ export class LsCommand implements ICommand {
                 outputParts.push(`\n${dirPath}:`);
             }
 
+            if (!dirNode || !dirNode.children) {
+                return;
+            }
+
             let files = Array.from(dirNode.children.values() as Iterable<any>);
 
             if (!showHidden) {
@@ -49,7 +52,6 @@ export class LsCommand implements ICommand {
             files.sort((a: any, b: any) => a.name.localeCompare(b.name));
 
             if (files.length === 0) {
-                // Even if empty, we might need to recurse if there were subdirs (but empty means no subdirs)
                 return;
             }
 

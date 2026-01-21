@@ -56,6 +56,10 @@ export class PathResolver {
                     current = current.parent;
                 }
             } else {
+                if (!current || !current.children) {
+                    return null;
+                }
+
                 const next = current.children.get(part);
                 if (!next) {
                     return null;

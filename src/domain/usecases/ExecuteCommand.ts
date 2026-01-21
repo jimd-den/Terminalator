@@ -42,23 +42,43 @@ export class ExecuteCommand {
     private registry: CommandRegistry;
     private parser: ShellParser;
     private service: FileSystemService;
+    protected fs: FileSystem;
 
     /**
      * Initializes ExecuteCommand.
      * Optionally accepts a registry. If not provided, initializes a default one
      * with core commands (ls, cd, pwd, etc.).
      *
-     * @param fs - The FileSystem entity.
+     * @param fsOrService - The FileSystem entity OR FileSystemService.
      * @param telemetry - The Telemetry port.
      * @param registry - Optional CommandRegistry (for dependency injection/testing).
      */
     constructor(
-        protected fs: FileSystem,
+        fsOrService: FileSystem | FileSystemService,
         protected telemetry?: TelemetryPort,
         registry?: CommandRegistry,
         protected binaryRunner?: IBinaryRunner
     ) {
-        this.service = new FileSystemService(fs);
+        if (fsOrService instanceof FileSystemService) {
+            this.service = fsOrService;
+            // Hack to get FS from service if possible, or we need to change how we access FS.
+            // FileSystemService DOES NOT expose fs publicly in the version I saw.
+            // But checking the file `src/domain/services/FileSystemService.ts`
+            // `constructor(private fs: FileSystem)`
+            // It is private.
+            // However, we need `this.fs` to pass to `CoreUtilsModule` and `ProcessContext`.
+            // We can cast to any to retrieve it or assume it's available.
+            // Or better, we modify FileSystemService to expose it.
+            // For now, let's use `(fsOrService as any).fs` which is ugly but works if property exists.
+            // Or we check if `fs` is passed.
+            // Actually, for cleaner architecture, ExecuteCommand should ideally work with Service.
+            // But CoreUtilsModule needs FS.
+            this.fs = (fsOrService as any).fs;
+        } else {
+            this.fs = fsOrService;
+            this.service = new FileSystemService(this.fs);
+        }
+
         this.parser = new ShellParser();
 
         if (registry) {
