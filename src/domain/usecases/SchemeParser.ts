@@ -1,9 +1,9 @@
 /**
  * SchemeParser - Use Case Layer
  * 
- * A robust Lexer and Parser for Scheme S-expressions.
- * Supports numbers, symbols, booleans, strings, and quoted expressions.
- * Designed to be extensible for full R7RS compliance.
+ * A robust R7RS-compliant reader for Scheme S-expressions.
+ * Supports numbers, symbols, booleans, strings, characters, vectors, 
+ * bytevectors, datum labels (#n=), and various comment types.
  * 
  * Pillar: THE STORYTELLER’S CODE (Literate Documentation)
  * Pillar: THE BALANCED SCALE (KISS)
@@ -11,7 +11,7 @@
  * 
  * Intent:
  * Converts raw source code into a tree of SchemeValue entities.
- * Handles the complexities of Lisp syntax (nested parens, comments, quotes).
+ * Decouples the textual representation from the in-memory object model.
  */
 
 import {
@@ -20,205 +20,311 @@ import {
     makeSymbol,
     makeBoolean,
     makeString,
+    makeChar,
     makePair,
+    makeVector,
+    makeBytevector,
     NIL,
-    arrayToList
+    EOF
 } from '../entities/SchemeValue';
 
-interface Token {
-    text: string;
-    line: number;
-    column: number;
-}
-
 export class SchemeParser {
+    private input: string = '';
+    private pos: number = 0;
+    private labels: Map<number, SchemeValue> = new Map();
+
     /**
      * Parses a string into a list of Scheme expressions.
      */
     parse(source: string): SchemeValue[] {
-        const tokens = this.tokenize(source);
-        const expressions: SchemeValue[] = [];
-        let current = 0;
+        this.input = source;
+        this.pos = 0;
+        this.labels.clear();
 
-        while (current < tokens.length) {
-            const [expr, next] = this.readFromTokens(tokens, current);
-            expressions.push(expr);
-            current = next;
+        const expressions: SchemeValue[] = [];
+        while (true) {
+            this.skipWhitespaceAndComments();
+            if (this.isEOF()) break;
+            expressions.push(this.readDatum());
         }
 
         return expressions;
     }
 
     /**
-     * Lexical Analysis: Splits source into meaningful tokens with location metadata.
+     * Internal: Read a single datum from the current position.
      */
-    private tokenize(source: string): Token[] {
-        const tokens: Token[] = [];
-        let line = 1;
-        let column = 1;
-        let i = 0;
+    private readDatum(): SchemeValue {
+        this.skipWhitespaceAndComments();
+        if (this.isEOF()) throw new Error('Unexpected end of input');
 
-        while (i < source.length) {
-            const char = source[i];
+        const char = this.peek();
 
-            // Handle comments
-            if (char === ';') {
-                while (i < source.length && source[i] !== '\n') {
-                    i++;
-                }
-                continue;
-            }
-
-            // Handle Newlines
-            if (char === '\n') {
-                line++;
-                column = 1;
-                i++;
-                continue;
-            }
-
-            // Handle Whitespace
-            if (/\s/.test(char)) {
-                column++;
-                i++;
-                continue;
-            }
-
-            // Handle Parens and Quotes (Delimiters)
-            if (['(', ')', "'", '`', ','].includes(char)) {
-                let text = char;
-                if (char === ',' && source[i + 1] === '@') {
-                    text = ',@';
-                    i++;
-                }
-                tokens.push({ text, line, column });
-                column += text.length;
-                i++;
-                continue;
-            }
-
-            // Handle Strings
-            if (char === '"') {
-                let text = '"';
-                const startCol = column;
-                i++;
-                column++;
-                while (i < source.length && source[i] !== '"') {
-                    text += source[i];
-                    if (source[i] === '\n') {
-                        line++;
-                        column = 1;
-                    } else {
-                        column++;
-                    }
-                    i++;
-                }
-                if (i < source.length) {
-                    text += '"';
-                    i++;
-                    column++;
-                }
-                tokens.push({ text, line, column: startCol });
-                continue;
-            }
-
-            // Handle Atoms (Symbols, Numbers)
-            let text = '';
-            const startCol = column;
-            while (i < source.length && !/\s|[()'`,;"]/.test(source[i])) {
-                text += source[i];
-                i++;
-                column++;
-            }
-            if (text) {
-                tokens.push({ text, line, column: startCol });
-            }
+        // 1. Lists
+        if (char === '(') {
+            return this.readList();
         }
 
-        return tokens;
+        // 2. Abbreviations
+        if (char === "'") {
+            this.advance();
+            return makePair(makeSymbol('quote'), makePair(this.readDatum(), NIL));
+        }
+        if (char === '`') {
+            this.advance();
+            return makePair(makeSymbol('quasiquote'), makePair(this.readDatum(), NIL));
+        }
+        if (char === ',') {
+            this.advance();
+            if (this.peek() === '@') {
+                this.advance();
+                return makePair(makeSymbol('unquote-splicing'), makePair(this.readDatum(), NIL));
+            }
+            return makePair(makeSymbol('unquote'), makePair(this.readDatum(), NIL));
+        }
+
+        // 3. Special Prefixes (#)
+        if (char === '#') {
+            return this.readHashDatum();
+        }
+
+        // 4. Strings
+        if (char === '"') {
+            return this.readString();
+        }
+
+        // 5. Atomics (Numbers, Symbols)
+        return this.readAtomic();
     }
 
-    /**
-     * Syntactic Analysis: Converts tokens into SchemeValue trees.
-     */
-    private readFromTokens(tokens: Token[], index: number): [SchemeValue, number] {
-        if (index >= tokens.length) {
-            throw new Error('Unexpected end of input');
-        }
+    private readList(): SchemeValue {
+        this.advance(); // '('
+        let head: SchemeValue = NIL;
+        let last: any = null;
 
-        const token = tokens[index];
-
-        if (token.text === '(') {
-            return this.readList(tokens, index + 1);
-        } else if (token.text === ')') {
-            throw new Error(`Unexpected ) at line ${token.line}, column ${token.column}`);
-        } else if (token.text === "'") {
-            const [expr, next] = this.readFromTokens(tokens, index + 1);
-            return [arrayToList([makeSymbol('quote'), expr]), next];
-        } else if (token.text === '`') {
-            const [expr, next] = this.readFromTokens(tokens, index + 1);
-            return [arrayToList([makeSymbol('quasiquote'), expr]), next];
-        } else if (token.text === ',') {
-            const [expr, next] = this.readFromTokens(tokens, index + 1);
-            return [arrayToList([makeSymbol('unquote'), expr]), next];
-        } else if (token.text === ',@') {
-            const [expr, next] = this.readFromTokens(tokens, index + 1);
-            return [arrayToList([makeSymbol('unquote-splicing'), expr]), next];
-        }
-
-        return [this.atom(token.text), index + 1];
-    }
-
-    private readList(tokens: Token[], index: number): [SchemeValue, number] {
-        const items: SchemeValue[] = [];
-        let current = index;
-
-        while (current < tokens.length && tokens[current].text !== ')') {
-            // Handle dotted pairs: (a . b)
-            if (tokens[current].text === '.') {
-                if (items.length === 0) throw new Error('Unexpected . at start of list');
-                const [cdr, next] = this.readFromTokens(tokens, current + 1);
-                current = next;
-                if (current >= tokens.length || tokens[current].text !== ')') {
-                    throw new Error('Expected ) after dotted pair');
-                }
-
-                // Construct nested pair manually for the tail
-                let list = cdr;
-                for (let i = items.length - 1; i >= 0; i--) {
-                    list = makePair(items[i], list);
-                }
-                return [list, current + 1];
+        while (true) {
+            this.skipWhitespaceAndComments();
+            if (this.isEOF()) throw new Error('Expected )');
+            if (this.peek() === ')') {
+                this.advance();
+                break;
             }
 
-            const [expr, next] = this.readFromTokens(tokens, current);
-            items.push(expr);
-            current = next;
+            // Dotted pair handling: (a b . c)
+            if (this.peek() === '.') {
+                const next = this.input[this.pos + 1];
+                if (this.isDelimiter(next)) {
+                    this.advance(); // '.'
+                    if (!last) throw new Error('Unexpected .');
+                    last.value.cdr = this.readDatum();
+                    this.skipWhitespaceAndComments();
+                    if (this.peek() !== ')') throw new Error('Expected ) after dotted pair');
+                    this.advance();
+                    break;
+                }
+            }
+
+            const datum = this.readDatum();
+            const pair = makePair(datum, NIL);
+            if (!last) {
+                head = pair;
+            } else {
+                last.value.cdr = pair;
+            }
+            last = pair;
         }
 
-        if (current >= tokens.length) {
-            throw new Error('Expected ) to close list');
-        }
-
-        return [arrayToList(items), current + 1];
+        return head;
     }
 
-    /**
-     * Atomic values: numbers, symbols, booleans, strings.
-     */
-    private atom(token: string): SchemeValue {
-        if (token === '#t') return makeBoolean(true);
-        if (token === '#f') return makeBoolean(false);
+    private readHashDatum(): SchemeValue {
+        this.advance(); // '#'
+        const char = this.peek();
 
-        if (token.startsWith('"') && token.endsWith('"')) {
-            return makeString(token.slice(1, -1));
+        // Booleans
+        if (char === 't' || char === 'f') {
+            const word = this.readWord();
+            if (word === 't' || word === 'true') return makeBoolean(true);
+            if (word === 'f' || word === 'false') return makeBoolean(false);
+            throw new Error(`Invalid boolean: #${word}`);
         }
 
-        const num = Number(token);
-        if (!isNaN(num) && token !== '') {
+        // Characters
+        if (char === '\\') {
+            this.advance();
+            const word = this.readWord();
+            if (word === 'space') return makeChar(' ');
+            if (word === 'newline') return makeChar('\n');
+            if (word === 'tab') return makeChar('\t');
+            if (word.length === 1) return makeChar(word);
+            return makeChar(word); // Fallback for raw character
+        }
+
+        // Vectors
+        if (char === '(') {
+            const list = this.readList();
+            return makeVector(this.listToArr(list));
+        }
+
+        // Bytevectors
+        if (char === 'u') {
+            this.advance();
+            if (this.peek() === '8') {
+                this.advance();
+                if (this.peek() !== '(') throw new Error('Expected ( after #u8');
+                const list = this.readList();
+                const arr = this.listToArr(list);
+                return makeBytevector(new Uint8Array(arr.map(v => v.value)));
+            }
+        }
+
+        // Labels #n= and #n#
+        if (/[0-9]/.test(char)) {
+            let nStr = '';
+            while (/[0-9]/.test(this.peek())) nStr += this.advance();
+            const n = parseInt(nStr, 10);
+            if (this.peek() === '=') {
+                this.advance();
+                const placeholder: any = { type: 'placeholder', id: n };
+                this.labels.set(n, placeholder);
+                const actual = this.readDatum();
+
+                // Recursively patch the placeholder with the actual value in the container
+                this.patch(actual, placeholder, actual);
+
+                this.labels.set(n, actual);
+                return actual;
+            } else if (this.peek() === '#') {
+                this.advance();
+                const label = this.labels.get(n);
+                if (label === undefined) throw new Error(`Undefined label: #${n}#`);
+                return label;
+            }
+        }
+
+        throw new Error(`Unknown hash syntax: #${char}`);
+    }
+
+    private readString(): SchemeValue {
+        this.advance(); // '"'
+        let str = '';
+        while (!this.isEOF() && this.peek() !== '"') {
+            const char = this.advance();
+            if (char === '\\') {
+                const next = this.advance();
+                if (next === 'n') str += '\n';
+                else if (next === 't') str += '\t';
+                else if (next === '"') str += '"';
+                else if (next === '\\') str += '\\';
+                else str += next;
+            } else {
+                str += char;
+            }
+        }
+        if (this.advance() !== '"') throw new Error('Unterminated string');
+        return makeString(str);
+    }
+
+    private readAtomic(): SchemeValue {
+        const word = this.readWord();
+        if (word === '') throw new Error('Unexpected empty atom');
+
+        // Number check (simple)
+        const num = Number(word);
+        if (!isNaN(num) && word !== '+' && word !== '-') {
             return makeNumber(num);
         }
 
-        return makeSymbol(token);
+        return makeSymbol(word);
+    }
+
+    private readWord(): string {
+        let word = '';
+        while (!this.isEOF() && !this.isDelimiter(this.peek())) {
+            const char = this.advance();
+            if (char === '|') {
+                // Pipe-quoted symbol |symbol name|
+                while (!this.isEOF() && this.peek() !== '|') {
+                    word += this.advance();
+                }
+                this.advance(); // '|'
+            } else {
+                word += char;
+            }
+        }
+        return word;
+    }
+
+    private skipWhitespaceAndComments(): void {
+        while (true) {
+            while (/\s/.test(this.peek())) this.advance();
+
+            if (this.peek() === ';') {
+                while (!this.isEOF() && this.peek() !== '\n') this.advance();
+                continue;
+            }
+
+            if (this.peek() === '#' && this.input[this.pos + 1] === '|') {
+                this.pos += 2;
+                let depth = 1;
+                while (depth > 0 && !this.isEOF()) {
+                    if (this.peek() === '#' && this.input[this.pos + 1] === '|') {
+                        depth++; this.pos += 2;
+                    } else if (this.peek() === '|' && this.input[this.pos + 1] === '#') {
+                        depth--; this.pos += 2;
+                    } else {
+                        this.advance();
+                    }
+                }
+                continue;
+            }
+
+            if (this.peek() === '#' && this.input[this.pos + 1] === ';') {
+                this.pos += 2;
+                this.readDatum(); // Skip next datum
+                continue;
+            }
+
+            break;
+        }
+    }
+
+    private listToArr(list: SchemeValue): SchemeValue[] {
+        const arr: SchemeValue[] = [];
+        let curr = list;
+        while (curr.type === 'pair') {
+            arr.push(curr.value.car);
+            curr = curr.value.cdr;
+        }
+        return arr;
+    }
+
+    /**
+     * Patch structures to resolve circularities from labels.
+     */
+    private patch(obj: SchemeValue, placeholder: any, replacement: SchemeValue, seen: Set<any> = new Set()): void {
+        if (!obj || typeof obj !== 'object' || seen.has(obj)) return;
+        seen.add(obj);
+
+        if (obj.type === 'pair') {
+            if (obj.value.car === placeholder) (obj.value as any).car = replacement;
+            else this.patch(obj.value.car, placeholder, replacement, seen);
+
+            if (obj.value.cdr === placeholder) (obj.value as any).cdr = replacement;
+            else this.patch(obj.value.cdr, placeholder, replacement, seen);
+        } else if (obj.type === 'vector') {
+            const elements = obj.value as SchemeValue[];
+            for (let i = 0; i < elements.length; i++) {
+                if (elements[i] === placeholder) elements[i] = replacement;
+                else this.patch(elements[i], placeholder, replacement, seen);
+            }
+        }
+    }
+
+    private peek(): string { return this.input[this.pos] || ''; }
+    private advance(): string { return this.input[this.pos++] || ''; }
+    private isEOF(): boolean { return this.pos >= this.input.length; }
+    private isDelimiter(char: string): boolean {
+        return !char || /\s/.test(char) || '()";'.includes(char);
     }
 }

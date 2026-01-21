@@ -2,130 +2,45 @@
  * SchemeEvaluator - Use Case Layer
  * 
  * The evaluation engine for Scheme expressions.
- * Implements lexical scoping, procedure application, and special forms.
- * Optimized for Tail-Call (TCO) via an iterative evaluation loop.
+ * Now powered by a Bytecode Compiler and Virtual Machine.
  * 
  * Pillar: THE SHADOW’S VEIL (Encapsulation)
- * Pillar: THE MASTER’S TOOL (TCO Pattern)
+ * Pillar: THE MASTER’S TOOL (VM & Compiler Patterns)
  * Pillar: THE STORYTELLER’S CODE (Literate Documentation)
  * 
  * Intent:
- * Processes SchemeValue trees and returns computed results.
- * Manages the transition from code to side-effects (e.g., FileSystem access).
+ * Orchestrates the compilation and execution of Scheme code.
+ * Ensures strict R7RS compliance for tail recursion and continuations.
  */
 
-import {
-    SchemeValue,
-    listToArray,
-    makeSymbol,
-    makeProcedure,
-    Procedure,
-    schemeToString
-} from '../entities/SchemeValue';
+import { SchemeValue } from '../entities/SchemeValue';
 import { Environment } from '../entities/Environment';
+import { SchemeCompiler } from './SchemeCompiler';
+import { SchemeVM } from './SchemeVM';
+import { MacroExpander } from '../services/scheme/MacroExpander';
 
 export class SchemeEvaluator {
+    private compiler: SchemeCompiler;
+    private macroExpander: MacroExpander;
+
+    constructor() {
+        this.compiler = new SchemeCompiler();
+        this.macroExpander = new MacroExpander();
+    }
+
     /**
      * Evaluates an expression in the given environment.
-     * Uses a loop to support Tail-Call Optimization (TCO).
+     * Compiles to bytecode and executes on the VM.
      */
     evaluate(expr: SchemeValue, env: Environment): SchemeValue {
-        let currentExpr = expr;
-        let currentEnv = env;
+        // 1. Expand Macros
+        const expanded = this.macroExpander.expand(expr);
 
-        while (true) {
-            // 1. Literal: Numbers, Strings, Booleans, Null
-            if (['number', 'string', 'boolean', 'null', 'procedure'].includes(currentExpr.type)) {
-                return currentExpr;
-            }
+        // 2. Compile
+        const code = this.compiler.compile(expanded);
 
-            // 2. Symbol: Variable Lookup
-            if (currentExpr.type === 'symbol') {
-                return currentEnv.lookup(currentExpr.value);
-            }
-
-            // 3. Lists: Special Forms or Procedure Application
-            if (currentExpr.type === 'pair') {
-                const arr = listToArray(currentExpr);
-                const first = arr[0];
-
-                if (first.type === 'symbol') {
-                    const op = first.value;
-
-                    // --- Special Forms ---
-
-                    // (quote <expr>)
-                    if (op === 'quote') {
-                        return arr[1];
-                    }
-
-                    // (if <test> <consequent> <alternate>)
-                    if (op === 'if') {
-                        const test = this.evaluate(arr[1], currentEnv);
-                        const isTrue = !(test.type === 'boolean' && test.value === false);
-                        currentExpr = isTrue ? arr[2] : (arr[3] || makeSymbol('unspecified'));
-                        continue; // TCO
-                    }
-
-                    // (define <name> <expr>)
-                    if (op === 'define') {
-                        const name = arr[1].value;
-                        const val = this.evaluate(arr[2], currentEnv);
-                        currentEnv.define(name, val);
-                        return makeSymbol(name);
-                    }
-
-                    // (set! <name> <expr>)
-                    if (op === 'set!') {
-                        const name = arr[1].value;
-                        const val = this.evaluate(arr[2], currentEnv);
-                        currentEnv.assign(name, val);
-                        return val;
-                    }
-
-                    // (lambda (<params>) <body>)
-                    if (op === 'lambda') {
-                        const params = listToArray(arr[1]).map(p => p.value);
-                        const body = arr[2]; // Simplified: one expression body
-                        const closure: Procedure = {
-                            isBuiltin: false,
-                            params,
-                            body,
-                            env: currentEnv
-                        };
-                        return makeProcedure(closure);
-                    }
-
-                    // (begin <expr1> <expr2> ...)
-                    if (op === 'begin') {
-                        for (let i = 1; i < arr.length - 1; i++) {
-                            this.evaluate(arr[i], currentEnv);
-                        }
-                        currentExpr = arr[arr.length - 1];
-                        continue; // TCO
-                    }
-                }
-
-                // --- Procedure Application ---
-                const procVal = this.evaluate(arr[0], currentEnv);
-                if (procVal.type !== 'procedure') {
-                    throw new Error(`Not a procedure: ${schemeToString(procVal)}`);
-                }
-
-                const proc: Procedure = procVal.value;
-                const args = arr.slice(1).map(a => this.evaluate(a, currentEnv));
-
-                if (proc.isBuiltin) {
-                    return proc.call!(args);
-                } else {
-                    // Application of Lambda: Extend env and loop (TCO)
-                    currentEnv = proc.env.extend(proc.params!, args);
-                    currentExpr = proc.body!;
-                    continue; // TCO
-                }
-            }
-
-            throw new Error(`Unknown expression type: ${currentExpr.type}`);
-        }
+        // 3. Execute
+        const vm = new SchemeVM(env);
+        return vm.execute(code);
     }
 }
