@@ -133,6 +133,26 @@ UTILITY: head
 [PASS] HEAD_08
 [PASS] HEAD_09
 [PASS] HEAD_10
+[PASS] HEAD_11
+[PASS] HEAD_12
+[PASS] HEAD_13
+[PASS] HEAD_14
+[PASS] HEAD_15
+[PASS] HEAD_16
+[PASS] HEAD_17
+[PASS] HEAD_18
+[PASS] HEAD_19
+[PASS] HEAD_20
+[PASS] HEAD_21
+[PASS] HEAD_22
+[PASS] HEAD_23
+[PASS] HEAD_24
+[PASS] HEAD_25
+[PASS] HEAD_26
+[PASS] HEAD_27
+[PASS] HEAD_28
+[PASS] HEAD_29
+[PASS] HEAD_30
 UTILITY: tail
 [PASS] TAIL_01
 [PASS] TAIL_02
@@ -236,7 +256,7 @@ UTILITY: date
 [FAIL] DATE_06: Complex format
        -> Stdout Regex Mismatch.
    Expected: /Year: 20../
-   Got: "Wed Jan 21 2026 19:32:39 GMT+0000 (Coordinated Universal Time)"
+   Got: "Wed Jan 21 2026 20:38:51 GMT+0000 (Coordinated Universal Time)"
 [PASS] DATE_07
 [FAIL] DATE_08: Set date (fail/stub)
        -> Exit Code: Expected 1, got 0
@@ -2880,7 +2900,7 @@ echo          |    10 |   10 |    0 |    100.0%
 cat           |    10 |   10 |    0 |    100.0%
 pwd           |    10 |   10 |    0 |    100.0%
 grep          |    10 |   10 |    0 |    100.0%
-head          |    10 |   10 |    0 |    100.0%
+head          |    30 |   30 |    0 |    100.0%
 tail          |    10 |   10 |    0 |    100.0%
 wc            |    31 |   31 |    0 |    100.0%
 chmod         |    10 |    7 |    3 |     70.0%
@@ -3045,7 +3065,7 @@ uustat        |    10 |    9 |    1 |     90.0%
 uux           |    10 |    2 |    8 |     20.0%
 xgettext      |    10 |    6 |    4 |     60.0%
 
-TOTAL COMPLIANCE: 65.2% (1154/1771)
+TOTAL COMPLIANCE: 65.5% (1174/1791)
 
 === MISSING UTILITIES (Implemented but failing) ===
 None

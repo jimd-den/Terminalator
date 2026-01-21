@@ -24,6 +24,13 @@ export class FileSystemService {
         return this.pathResolver.resolve(this.fs.root, path, cwd, followSymlinks);
     }
 
+    /**
+     * Checks if a path exists.
+     */
+    exists(path: string, cwd: string = '/'): boolean {
+        return this.resolve(path, cwd) !== null;
+    }
+
     getAbsolutePath(dentry: Dentry): string {
         return this.pathResolver.getAbsolutePath(dentry);
     }
