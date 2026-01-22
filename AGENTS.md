@@ -108,21 +108,43 @@ The codebase follows a strict **Clean Architecture** implementation, ensuring se
 
 ```
 src/
-├── domain/                  # PURE BUSINESS LOGIC & DATA
-│   ├── commands/            # Command implementations
-│   ├── entities/            # Pure data structures (FileSystem, TerminalState)
-│   ├── services/            # Domain logic (FileSystemService, ShellParser)
-│   ├── usecases/            # Application orchestration (ExecuteCommand)
-│   └── ports/               # Interfaces for external dependencies
-├── interface-adapters/      # LOGIC ADAPTERS
-│   ├── viewmodels/          # UI Logic (TerminalViewModel)
-│   ├── commands/            # Adapter-specific commands
-│   └── GameManager.ts       # Game Controller
-├── frameworks-drivers/      # I/O & UI
-│   ├── ui/                  # React Native Screens & Components
-│   └── telemetry/           # Telemetry implementations
-└── scripts/                 # TOOLING & TESTS
-    └── posix_comprehensive_suite.ts
+├── domain/                      # ENTITIES & LOGIC
+│   ├── commands/                # Command Implementations
+│   │   ├── core/                # StdLib (cp, ls, mv, rm, etc.)
+│   │   ├── system/              # System (shutdown, reboot)
+│   │   ├── CommandRegistry.ts   # Command Lookup Registry
+│   │   └── ICommand.ts          # Command Interface
+│   ├── entities/                # Pure Data Models
+│   │   ├── FileSystem.ts        # Inode/Dentry State
+│   │   ├── TerminalState.ts     # Global State Wrapper
+│   │   └── ProcessContext.ts    # Envrionment Context
+│   ├── modules/                 # DI Modules
+│   │   ├── CoreUtilsModule.ts   # Registers Core Commands
+│   │   └── SystemUtilsModule.ts # Registers System Commands
+│   ├── ports/                   # Interfaces (Ports)
+│   ├── services/                # Domain Services
+│   │   ├── FileSystemService.ts # POSIX Logic
+│   │   └── ShellParser.ts       # Input Parser
+│   └── usecases/                # Application Logic
+│       └── ExecuteCommand.ts    # Main Command Dispatcher
+├── interface-adapters/          # ADAPTERS
+│   ├── commands/                # Adaptive Commands
+│   │   └── game/                # Game Mechanics (asm, scheme, tutor, mail)
+│   ├── viewmodels/              # MVVM ViewModels
+│   │   └── TerminalViewModel.ts # UI State Logic
+│   ├── vim/                     # Vim Simulation Logic
+│   └── GameManager.ts           # Game Subsystem Coordinator
+├── frameworks-drivers/          # INFRASTRUCTURE
+│   ├── ui/                      # React Native UI
+│   │   ├── screens/             # Top-level Views
+│   │   └── components/          # Reusable UI Blocks
+│   ├── telemetry/               # Logging/Tracing
+│   └── wasm/                    # WebAssembly Drivers
+├── infrastructure/              # SERVICES
+│   └── services/                # Implementation details (HostBinaryRunner)
+└── scripts/                     # TESTS & TOOLS
+    ├── posix_comprehensive_suite.ts # Main Test Suite (Run this!)
+    └── ...
 ```
 
 ## 5. Critical Notes

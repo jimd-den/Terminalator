@@ -1,5 +1,6 @@
 import { FileSystem } from './FileSystem';
 import { FileSystemService } from '../services/FileSystemService';
+import { IShellExecutor } from '../interfaces/IShellExecutor';
 
 /**
  * ProcessContext Entity - Domain Layer
@@ -32,7 +33,7 @@ export interface ProcessContext {
     /**
      * ID of the user running the process
      */
-    user: string;
+    user: { uid: number, gid: number, groups: number[] };
 
     /**
      * Input stream (stdin) - Simple string buffer for now
@@ -48,4 +49,8 @@ export interface ProcessContext {
      * Error stream (stderr) - Not implemented yet (Project Phase 2)
      */
     // stderr: WritableStream;
+    /**
+     * Shell executor for running sub-commands
+     */
+    executor?: IShellExecutor;
 }

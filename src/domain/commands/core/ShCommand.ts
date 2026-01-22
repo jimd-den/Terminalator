@@ -16,7 +16,6 @@ import { ICommand, CommandResponse } from '../ICommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
-import { ExecuteCommand } from '../../usecases/ExecuteCommand';
 import { Dentry } from '../../entities/FileSystem';
 
 export class ShCommand implements ICommand {
@@ -80,15 +79,17 @@ export class ShCommand implements ICommand {
         }
 
         // Execute logic
-        const executor = new ExecuteCommand(state.fs);
         const normalized = commandString.replace(/\n/g, '; ');
 
-        const response = await executor.execute(normalized, state);
+        if (context.executor) {
+            const response = await context.executor.execute(normalized, state);
+            return {
+                output: response.output,
+                newState: response.newState,
+                exitCode: response.exitCode
+            };
+        }
 
-        return {
-            output: response.output,
-            newState: response.newState,
-            exitCode: response.exitCode
-        };
+        return { output: 'sh: executor not available', newState: state, exitCode: 1 };
     }
 }
