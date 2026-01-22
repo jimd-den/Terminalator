@@ -275,7 +275,7 @@ UTILITY: date
 [FAIL] DATE_06: Complex format
        -> Stdout Regex Mismatch.
    Expected: /Year: 20../
-   Got: "Wed Jan 21 2026 22:21:52 GMT+0000 (Coordinated Universal Time)"
+   Got: "Thu Jan 22 2026 00:12:16 GMT+0000 (Coordinated Universal Time)"
 [PASS] DATE_07
 [FAIL] DATE_08: Set date (fail/stub)
        -> Exit Code: Expected 1, got 0
@@ -905,60 +905,56 @@ UTILITY: ar
 [PASS] AR_10
 UTILITY: make
 [FAIL] MAKE_01: Default target
-       -> Exit Code: Expected 0, got 1
+       -> Exit Code: Expected 0, got 2
        -> Stdout Regex Mismatch.
    Expected: /ok/
-   Got: "sh: error executing make: fs.resolve is not a function"
+   Got: "make: *** No targets specified and no makefile found. Stop."
 [FAIL] MAKE_02: Specific target
-       -> Exit Code: Expected 0, got 1
+       -> Exit Code: Expected 0, got 2
        -> Stdout Regex Mismatch.
    Expected: /test/
-   Got: "sh: error executing make: fs.resolve is not a function"
+   Got: "make: *** No targets specified and no makefile found. Stop."
 [FAIL] MAKE_03: Ignore errors -i
-       -> Exit Code: Expected 0, got 1
+       -> Exit Code: Expected 0, got 2
        -> Stdout Regex Mismatch.
    Expected: /ok/
-   Got: "sh: error executing make: fs.resolve is not a function"
+   Got: "make: *** No targets specified and no makefile found. Stop."
 [FAIL] MAKE_04: Dry run -n
-       -> Exit Code: Expected 0, got 1
+       -> Exit Code: Expected 0, got 2
 [FAIL] MAKE_05: Keep going -k
+       -> Exit Code: Expected 1, got 2
        -> Stdout Regex Mismatch.
    Expected: /b/
-   Got: "sh: error executing make: fs.resolve is not a function"
+   Got: "make: *** No targets specified and no makefile found. Stop."
 [FAIL] MAKE_06: Specific file -f
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /other/
-   Got: "sh: error executing make: fs.resolve is not a function"
+       -> Exit Code: Expected 0, got 2
 [FAIL] MAKE_07: Touch -t
-       -> Exit Code: Expected 0, got 1
+       -> Exit Code: Expected 0, got 2
 [FAIL] MAKE_08: Env override -e
        -> Exit Code: Expected 0, got 127
-[FAIL] MAKE_09: Fail missing Makefile
-       -> Exit Code: Expected 2, got 1
+[PASS] MAKE_09
 [FAIL] MAKE_10: Macro usage
-       -> Exit Code: Expected 0, got 1
+       -> Exit Code: Expected 0, got 2
        -> Stdout Regex Mismatch.
    Expected: /1/
-   Got: "sh: error executing make: fs.resolve is not a function"
+   Got: "make: *** No targets specified and no makefile found. Stop."
 UTILITY: sh
 [FAIL] SH_01: Run script
-       -> Exit Code: Expected 0, got 1
+       -> Exit Code: Expected 0, got 127
        -> Stdout Regex Mismatch.
    Expected: /hi/
-   Got: "sh: error executing sh: fs.resolve is not a function"
+   Got: "sh: s.sh: No such file or directory"
 [PASS] SH_02
 [PASS] SH_03
 [PASS] SH_04
 [FAIL] SH_05: Syntax check -n (stub)
-       -> Exit Code: Expected 0, got 1
-[FAIL] SH_06: Fail missing file
-       -> Exit Code: Expected 127, got 1
+       -> Exit Code: Expected 0, got 127
+[PASS] SH_06
 [FAIL] SH_07: Positional args
-       -> Exit Code: Expected 0, got 1
+       -> Exit Code: Expected 0, got 127
        -> Stdout Regex Mismatch.
    Expected: /123/
-   Got: "sh: error executing sh: fs.resolve is not a function"
+   Got: "sh: sh: No such file or directory"
 [PASS] SH_08
 [PASS] SH_09
 [PASS] SH_10
@@ -1881,13 +1877,13 @@ UTILITY: who
 [FAIL] WHO_02: Headers -H
        -> Stdout Regex Mismatch.
    Expected: /NAME/
-   Got: "operator  tty1  1/21/2026"
+   Got: "operator  tty1  1/22/2026"
 [PASS] WHO_03
 [PASS] WHO_04
 [FAIL] WHO_05: Message status -T
        -> Stdout Regex Mismatch.
    Expected: /[+\-?]/
-   Got: "operator  tty1  1/21/2026"
+   Got: "operator  tty1  1/22/2026"
 [PASS] WHO_06
 [PASS] WHO_07
 [PASS] WHO_08
@@ -2066,7 +2062,7 @@ UTILITY: lex
        -> Exit Code: Expected 0, got 1
        -> Stdout Regex Mismatch.
    Expected: /int/
-   Got: "sh: error executing lex: fs.resolve is not a function"
+   Got: "lex: l: No such file or directory"
 [FAIL] LEX_03: Verbose -v
        -> Exit Code: Expected 0, got 1
 [PASS] LEX_04
@@ -2413,26 +2409,17 @@ UTILITY: readonly
 [FAIL] READONLY_10: Fail syntax
        -> Exit Code: Expected 1, got 0
 UTILITY: return
-[FAIL] RETURN_01: Return 0
-       -> Exit Code: Expected 0, got 127
-[FAIL] RETURN_02: Return N
-       -> Exit Code: Expected 5, got 127
-[FAIL] RETURN_03: Default status
-       -> Exit Code: Expected 1, got 127
-[FAIL] RETURN_04: Outside func
-       -> Exit Code: Expected 1, got 0
+[PASS] RETURN_01
+[PASS] RETURN_02
+[PASS] RETURN_03
+[PASS] RETURN_04
 [FAIL] RETURN_05: Source return
        -> Exit Code: Expected 2, got 1
-[FAIL] RETURN_06: Fail arg
-       -> Exit Code: Expected 0, got 127
-[FAIL] RETURN_07: Too many args
-       -> Exit Code: Expected 1, got 127
-[FAIL] RETURN_08: Consistency
-       -> Exit Code: Expected 0, got 127
-[FAIL] RETURN_09: Overflow
-       -> Exit Code: Expected 1, got 127
-[FAIL] RETURN_10: Simple
-       -> Exit Code: Expected 1, got 127
+[PASS] RETURN_06
+[PASS] RETURN_07
+[PASS] RETURN_08
+[PASS] RETURN_09
+[PASS] RETURN_10
 UTILITY: admin
 [FAIL] ADMIN_01: Create SCCS
        -> Exit Code: Expected 0, got 1
@@ -2996,8 +2983,8 @@ uname         |    10 |    8 |    2 |     80.0%
 logname       |    10 |    6 |    4 |     60.0%
 env           |    10 |    5 |    5 |     50.0%
 ar            |    10 |    4 |    6 |     40.0%
-make          |    10 |    0 |   10 |      0.0%
-sh            |    10 |    6 |    4 |     60.0%
+make          |    10 |    1 |    9 |     10.0%
+sh            |    10 |    7 |    3 |     70.0%
 strings       |    10 |    4 |    6 |     40.0%
 time          |    10 |    7 |    3 |     70.0%
 fold          |    10 |    6 |    4 |     60.0%
@@ -3083,7 +3070,7 @@ colon         |    10 |    9 |    1 |     90.0%
 dot           |    10 |    3 |    7 |     30.0%
 exit          |    10 |    5 |    5 |     50.0%
 readonly      |    10 |    5 |    5 |     50.0%
-return        |    10 |    0 |   10 |      0.0%
+return        |    10 |    9 |    1 |     90.0%
 admin         |    10 |    2 |    8 |     20.0%
 delta         |    10 |    2 |    7 |     20.0%
 get           |    10 |    2 |    7 |     20.0%
@@ -3116,7 +3103,7 @@ uustat        |    10 |    9 |    1 |     90.0%
 uux           |    10 |    2 |    8 |     20.0%
 xgettext      |    10 |    6 |    4 |     60.0%
 
-TOTAL COMPLIANCE: 67.1% (1243/1852)
+TOTAL COMPLIANCE: 67.7% (1254/1852)
 
 === MISSING UTILITIES (Implemented but failing) ===
 None

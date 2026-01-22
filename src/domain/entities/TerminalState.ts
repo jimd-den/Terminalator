@@ -13,6 +13,7 @@
  */
 
 import { FileSystem } from './FileSystem';
+import { FileSystemService } from '../services/FileSystemService';
 
 export interface TerminalState {
     currentDirectory: string;
@@ -22,7 +23,9 @@ export interface TerminalState {
     user: string;
     hostname: string;
     isLocked: boolean;
-    fs: FileSystemService; // Added to interface for command access
+    fs: FileSystemService;
+    lastExitCode: number; // Added
+    callDepth: number; // Added: Track function call depth for `return`
 }
 
 /**
@@ -32,16 +35,7 @@ export interface TerminalState {
  */
 export const createInitialTerminalState = (): TerminalState => {
     // Note: FS is typically injected or created.
-    // In production, FS is usually a singleton or passed in.
-    // For test harness compat, we might need to rely on the passed in state having FS,
-    // or the harness injecting it.
-    // The harness in `posix_comprehensive_suite.ts` does:
-    // const testFs = new FileSystem();
-    // const testExecutor = new ExecuteCommand(testFs);
-    // const testState = createInitialTerminalState();
-    // The test executor might not be attaching `fs` to `state`.
-    // We should check `ExecuteCommand.ts`.
-
+    // We assume the caller handles FS injection properly.
     return {
         currentDirectory: '/home/operator',
         history: [],
@@ -58,6 +52,8 @@ export const createInitialTerminalState = (): TerminalState => {
         user: 'operator',
         hostname: 'mainframe-01',
         isLocked: false,
-        fs: new FileSystem() // Default fresh FS if not provided (though tests should overwrite or executor should manage)
+        fs: new FileSystemService(new FileSystem()), // Ensure FS service wrapping
+        lastExitCode: 0,
+        callDepth: 0
     };
 };
