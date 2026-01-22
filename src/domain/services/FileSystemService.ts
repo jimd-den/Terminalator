@@ -44,6 +44,46 @@ export class FileSystemService {
         return this.createDentry(path, S_IFDIR | mode, uid, gid, cwd);
     }
 
+    /**
+     * Recursive mkdir. Creates directories if they don't exist.
+     */
+    public mkdirp(path: string, mode: number = 0o755, uid: number = 0, gid: number = 0, cwd: string = '/'): Dentry {
+        const isAbsolute = path.startsWith('/');
+        let targetPath = path;
+
+        // Simple manual resolution for iteration
+        // Note: verify real path resolution rules if we had complex CWD handling (e.g. ..)
+        // For system initialization, safely generic.
+        if (!isAbsolute) {
+            targetPath = cwd === '/' ? `/${path}` : `${cwd}/${path}`;
+        }
+
+        // Clean double slashes if any (naive)
+        targetPath = targetPath.replace(/\/\//g, '/');
+
+        if (targetPath === '/') return this.fs.root;
+
+        const parts = targetPath.split('/').filter(p => p.length > 0);
+        let currentPath = '';
+
+        let lastDentry = this.fs.root;
+
+        for (const part of parts) {
+            currentPath += `/${part}`;
+            const existing = this.resolve(currentPath);
+            if (existing) {
+                lastDentry = existing;
+                const inode = this.getInode(lastDentry.inodeId);
+                if (inode && !(inode.mode & S_IFDIR)) {
+                    throw new Error(`mkdirp: cannot create directory '${currentPath}': Not a directory`);
+                }
+            } else {
+                lastDentry = this.mkdir(currentPath, mode, uid, gid);
+            }
+        }
+        return lastDentry;
+    }
+
     createFile(path: string, mode: number = 0o644, uid: number = 0, gid: number = 0, cwd: string = '/'): Dentry {
         return this.createDentry(path, S_IFREG | mode, uid, gid, cwd);
     }

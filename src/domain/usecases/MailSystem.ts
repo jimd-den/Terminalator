@@ -10,7 +10,8 @@
  */
 
 import { NPC } from '../entities/NPC';
-import { FileSystem, S_IFREG } from '../entities/FileSystem';
+import { FileSystem, S_IFREG, Dentry } from '../entities/FileSystem';
+import { FileSystemService } from '../services/FileSystemService';
 import { TelemetryPort } from '../ports/TelemetryPort';
 
 export interface MailMessage {
@@ -51,8 +52,8 @@ export class MailSystem {
             try {
                 const targetFS = this.fs;
                 const mailDir = '/home/operator/mail';
-                if (!targetFS.resolveNode(mailDir)) {
-                    targetFS.mkdir(mailDir, 0o700, 1000, 1000, '/');
+                if (!targetFS.resolve(mailDir)) {
+                    targetFS.mkdirp(mailDir, 0o700, 1000, 1000, '/');
                 }
 
                 const mailPath = `${mailDir}/${id}`;
@@ -95,7 +96,7 @@ export class MailSystem {
         const mailDirNode = this.fs.resolve('/home/operator/mail');
         if (mailDirNode && this.fs.isDirectory(mailDirNode)) {
             const lines: string[] = [];
-            mailDirNode.children.forEach((childNode) => {
+            mailDirNode.children.forEach((childNode: Dentry) => {
                 const inode = this.fs.getInode(childNode.inodeId);
                 if (inode && (inode.mode & 0o170000) === S_IFREG) {
                     // In a real mail command, we'd parse content. For now, list filenames/timestamps.

@@ -45,9 +45,17 @@ export class SystemGenerator {
         }
     }
 
-    private populateSystem(service: FileSystemService, options: SystemGenerationOptions) {
+    public populate(service: FileSystemService, options: SystemGenerationOptions) {
         const faction = options.faction || 'corporate';
         const theme = this.getTheme(faction);
+
+        // Ensure base directories
+        service.mkdirp('/etc');
+        service.mkdirp('/var/log');
+        service.mkdirp('/home');
+        service.mkdirp('/bin');
+        service.mkdirp('/usr/bin');
+        service.mkdirp('/tmp', 0o777);
 
         // 1. Create Users (in /etc/passwd)
         const users = this.generateUsers(options.difficulty);
@@ -57,7 +65,7 @@ export class SystemGenerator {
             passwdContent += `${user.name}:x:${user.uid}:${user.gid}:${user.fullname}:/home/${user.name}:/bin/bash\n`;
             // Create home dir
             try {
-                service.mkdir(`/home/${user.name}`, 0o750, user.uid, user.gid);
+                service.mkdirp(`/home/${user.name}`, 0o750, user.uid, user.gid);
 
                 // Add some personal files
                 this.generateUserFiles(service, `/home/${user.name}`, user, theme);
@@ -72,10 +80,15 @@ export class SystemGenerator {
         this.generateLogs(service, theme);
     }
 
+    private populateSystem(service: FileSystemService, options: SystemGenerationOptions) {
+        this.populate(service, options);
+    }
+
     private generateUsers(difficulty: number): { name: string, uid: number, gid: number, fullname: string }[] {
         // Higher difficulty -> more users? Or specific admins?
         const baseUsers = [
-            { name: 'guest', uid: 1000, gid: 1000, fullname: 'Guest User' },
+            { name: 'operator', uid: 1000, gid: 1000, fullname: 'System Operator' },
+            { name: 'guest', uid: 1001, gid: 1001, fullname: 'Guest User' },
         ];
 
         if (difficulty > 3) {

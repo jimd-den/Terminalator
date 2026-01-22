@@ -15,6 +15,9 @@ import { MailSystem, MailMessage } from '../domain/usecases/MailSystem';
 import { FileSystem } from '../domain/entities/FileSystem';
 import { TelemetryPort } from '../domain/ports/TelemetryPort';
 
+
+import { FileSystemService } from '../domain/services/FileSystemService';
+import { SystemGenerator } from '../domain/services/SystemGenerator';
 import { TutorEngine, TutorEvent } from '../domain/entities/TutorEngine';
 
 export class GameManager {
@@ -28,12 +31,21 @@ export class GameManager {
      * @param fs - The file system entity.
      * @param telemetry - The telemetry port for logging events.
      */
-    constructor(fs: FileSystemService, private telemetry?: TelemetryPort) {
-        this.mailSystem = new MailSystem(fs, telemetry);
+    constructor(fs: FileSystem, private telemetry?: TelemetryPort) {
+        const fsService = new FileSystemService(fs);
+        this.mailSystem = new MailSystem(fsService, telemetry);
         this.tutorEngine = new TutorEngine();
 
         // Wire up Tutor Events to IRC (MailSystem)
         this.tutorEngine.subscribe(this.handleTutorEvent);
+
+        // Initialize System if empty
+        // Checking if root has no children (except potentially . and .. which are virtual/not in map? 
+        // Dentry children map usually empty on fresh init)
+        if (fs.root.children.size === 0) {
+            const generator = new SystemGenerator();
+            generator.populate(fsService, { difficulty: 1 });
+        }
     }
 
     private handleTutorEvent = (event: TutorEvent) => {

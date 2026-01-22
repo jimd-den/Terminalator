@@ -14,7 +14,7 @@ try {
         service.mkdir('/home');
         service.mkdir('/home/operator');
         console.log('Created /home/operator');
-    } catch (e) {
+    } catch (e: any) {
         console.error('Failed to create /home/operator:', e.message);
     }
 
@@ -27,7 +27,7 @@ try {
     try {
         service.mkdir('relative_dir', 0o755, 0, 0, '/home/operator');
         console.log('Success: mkdir relative_dir');
-    } catch (e) {
+    } catch (e: any) {
         console.error('Fail: mkdir relative_dir:', e.message);
     }
 
@@ -39,7 +39,7 @@ try {
     try {
         service.createFile('rel_file', 0o644, 0, 0, '/home/operator');
         console.log('Success: create rel_file');
-    } catch (e) {
+    } catch (e: any) {
         console.error('Fail: create rel_file:', e.message);
     }
 

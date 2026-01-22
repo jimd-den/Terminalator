@@ -12,6 +12,7 @@
 import { ExecuteCommand } from '../domain/usecases/ExecuteCommand';
 import { MailSystem } from '../domain/usecases/MailSystem';
 import { FileSystem } from '../domain/entities/FileSystem';
+import { FileSystemService } from '../domain/services/FileSystemService';
 import { CodeCompiler } from '../domain/usecases/CodeCompiler';
 import { TelemetryPort } from '../domain/ports/TelemetryPort';
 
@@ -35,7 +36,7 @@ export class GameCommandExecutor extends ExecuteCommand {
     constructor(fs: FileSystemService, gameManager: GameManager, telemetry?: TelemetryPort) {
         super(fs, telemetry);
         this.mailSystem = new MailSystem(fs, telemetry);
-        this.compiler = new CodeCompiler(fs, telemetry);
+        this.compiler = new CodeCompiler(this.fs, telemetry);
         this.gameManager = gameManager;
 
         this.registerGameCommands();
@@ -52,8 +53,8 @@ export class GameCommandExecutor extends ExecuteCommand {
         registry.register('check-comms', new CheckCommsCommand(this.gameManager));
         registry.register('compile', new CompileCommand(this.compiler));
         registry.register('vim', new VimCommand());
-        registry.register('scheme', new SchemeCommand(this.fs));
-        registry.register('asm', new AsmCommand(this.fs));
+        registry.register('scheme', new SchemeCommand(this.service));
+        registry.register('asm', new AsmCommand(this.service));
         registry.register('options', new SettingsCommand());
         registry.register('settings', new SettingsCommand());
 

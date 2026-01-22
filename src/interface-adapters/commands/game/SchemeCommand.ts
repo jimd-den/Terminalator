@@ -22,7 +22,7 @@ import { SchemeParser } from '../../../domain/usecases/SchemeParser';
 import { SchemeEvaluator } from '../../../domain/usecases/SchemeEvaluator';
 import { Environment } from '../../../domain/entities/Environment';
 import { ProcedureRegistry } from '../../../domain/entities/ProcedureRegistry';
-import { schemeToString } from '../../../domain/entities/SchemeValue';
+import { schemeToString, makeProcedure } from '../../../domain/entities/SchemeValue';
 import { registerStandardLibrary, getPrelude } from '../../scheme/StandardLibrary';
 
 export class SchemeCommand implements ICommand {
@@ -49,6 +49,36 @@ export class SchemeCommand implements ICommand {
             for (const expr of exprs) {
                 this.evaluator.evaluate(expr, this.globalEnv);
             }
+
+            // Define 'load' primitive directly in this environment
+            const loadProc = makeProcedure({
+                name: 'load',
+                isBuiltin: true,
+                call: (args) => {
+                    if (args.length !== 1 || args[0].type !== 'string') {
+                        throw new Error("load: expects a single string argument (filename)");
+                    }
+                    const filename = args[0].value as string;
+                    if (!this.fs) throw new Error("load: Filesystem not available");
+
+                    try {
+                        // Use process CWD if possible? 
+                        // Technically SchemeCommand instance doesn't track CWD per call in `getEnv`.
+                        // But we can try to resolve relative to root or handle it dynamically.
+                        // For now, let's assume absolute paths or relative to root.
+                        const content = this.fs.readFile(filename, '/');
+                        const expressions = this.parser.parse(content);
+                        let lastResult: any = { type: 'boolean', value: false };
+                        for (const expr of expressions) {
+                            lastResult = this.evaluator.evaluate(expr, this.globalEnv!);
+                        }
+                        return lastResult;
+                    } catch (e: any) {
+                        throw new Error(`load: failed to load '${filename}': ${e.message}`);
+                    }
+                }
+            });
+            this.globalEnv.define('load', loadProc);
         }
         return this.globalEnv;
     }

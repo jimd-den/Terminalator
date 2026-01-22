@@ -29,7 +29,7 @@ import { IShellExecutor } from '../interfaces/IShellExecutor';
 export class ExecuteCommand implements IShellExecutor {
     private registry: CommandRegistry;
     private parser: ShellParser;
-    private service: FileSystemService;
+    protected service: FileSystemService;
     private arithmetic: ArithmeticEvaluator;
     protected fs: FileSystem;
 
