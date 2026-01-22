@@ -146,6 +146,7 @@ export class ShellLexer {
         let inSingleQuote = false;
         let inDoubleQuote = false;
         let escaped = false;
+        let parenDepth = 0;
 
         while (this.pos < this.len) {
             const char = this.input[this.pos];
@@ -168,28 +169,44 @@ export class ShellLexer {
                 continue;
             }
 
-            if (char === "'" && !inDoubleQuote) {
+            if (char === "'" && !inDoubleQuote && parenDepth === 0) {
                 inSingleQuote = !inSingleQuote;
-                // We do NOT include the quote chars in the value (Quote Removal step done here for simplicity, 
-                // though strictly POSIX does it later. For now, doing it here simplifies AST).
-                // Actually, let's include valid content.
+                // Include quote
+                value += char;
                 this.pos++;
                 continue;
             }
 
-            if (char === '"' && !inSingleQuote) {
+            if (char === '"' && !inSingleQuote && parenDepth === 0) {
                 inDoubleQuote = !inDoubleQuote;
+                // Include quote
+                value += char;
                 this.pos++;
                 continue;
             }
 
-            // Word Delimiters (if not quoted)
+            // Word Delimiters (if not quoted and not in expansion)
             if (!inSingleQuote && !inDoubleQuote) {
+                // Check for expansion start $(
+                if (char === '$' && this.peek(1) === '(') {
+                    parenDepth++;
+                    value += '$(';
+                    this.pos += 2;
+                    continue;
+                }
+
+                if (parenDepth > 0) {
+                    if (char === '(') parenDepth++;
+                    else if (char === ')') parenDepth--;
+
+                    value += char;
+                    this.pos++;
+                    continue;
+                }
+
                 if (char === ' ' || char === '\t' || char === '\n') break;
                 if (this.isOperatorStart(char)) break;
-                // POSIX: # starts comment only where a token begins, i.e., after whitespace/separator.
-                // Since readWord is called when NOT at whitespace/comment/operator,
-                // a # here is part of the word (e.g. arg#val).
+                // POUND is not a comment here
             }
 
             value += char;

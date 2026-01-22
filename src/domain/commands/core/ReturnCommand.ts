@@ -25,7 +25,7 @@ export class ReturnCommand implements ICommand {
         return {
             output: '',
             newState: state,
-            exitCode: isNaN(exitCode) ? 0 : exitCode,
+            exitCode: parseInt(args[0]) || 0, // Simplified return value
             controlFlow: 'RETURN'
         };
     }

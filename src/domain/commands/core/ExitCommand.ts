@@ -32,7 +32,8 @@ export class ExitCommand implements ICommand {
         return {
             output: '',
             newState: state,
-            exitCode: exitCode
+            exitCode: exitCode,
+            controlFlow: 'EXIT'
             // Note: In a real shell, this would terminate the process.
             // The simulation executor might handle this exit code specially if needed,
             // but for POSIX compliance of the command itself, it just returns the code.

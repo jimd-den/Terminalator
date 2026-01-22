@@ -26,7 +26,10 @@ export enum NodeType {
     SUBSHELL = 'SUBSHELL',
     FUNCTION_DEF = 'FUNCTION_DEF',
     BLOCK = 'BLOCK',
-    REDIRECT = 'REDIRECT'
+    REDIRECT = 'REDIRECT',
+    IF = 'IF',
+    FOR = 'FOR',
+    WHILE = 'WHILE'
 }
 
 export interface ASTNode {
@@ -62,6 +65,7 @@ export interface FunctionDefNode extends ASTNode {
     type: NodeType.FUNCTION_DEF;
     name: string;
     body: ASTNode; // Compound command
+    redirects: RedirectNode[];
 }
 
 export interface BlockNode extends ASTNode {
@@ -72,6 +76,26 @@ export interface BlockNode extends ASTNode {
 export interface SubshellNode extends ASTNode {
     type: NodeType.SUBSHELL;
     root: ASTNode;
+}
+
+export interface IfNode extends ASTNode {
+    type: NodeType.IF;
+    condition: ASTNode;
+    thenBody: ASTNode;
+    elseBody?: ASTNode;
+}
+
+export interface ForNode extends ASTNode {
+    type: NodeType.FOR;
+    variable: string;
+    items: string[];
+    body: ASTNode;
+}
+
+export interface WhileNode extends ASTNode {
+    type: NodeType.WHILE;
+    condition: ASTNode;
+    body: ASTNode;
 }
 
 export class ShellParser {
@@ -135,21 +159,16 @@ export class ShellParser {
     private parseList(): ASTNode | null {
         let left = this.parseLogicList();
 
-        while (left && this.peek().type === TokenType.SEMI) {
-            this.advance(); // consume ;
+        while (left && (this.peek().type === TokenType.SEMI || this.peek().type === TokenType.NEWLINE)) {
+            this.advance(); // consume ; or \n
             // Allow trailing semicolon (e.g., "ls;")
-            if (this.peek().type === TokenType.EOF ||
-                this.peek().type === TokenType.RPAREN ||
-                (this.peek().type === TokenType.WORD && this.peek().value === '}')) {
+            const next = this.peek();
+            if (next.type === TokenType.EOF ||
+                next.type === TokenType.RPAREN ||
+                (next.type === TokenType.WORD && this.isReservedWord(next.value))) {
                 // Return left, but maybe wrap in a list so executor knows it was terminated?
                 return left;
             }
-
-            // Also check if next is } without semicolon? 
-            // parseList is Sequence. } must be separated by ; or newline.
-            // Our ParseList loop requires SEMI. 
-            // If input is "cmd }", loop condition `peek() === SEMI` fails, return left.
-            // Correct.
 
             const right = this.parseLogicList();
             if (!right) {
@@ -165,6 +184,10 @@ export class ShellParser {
             } as ListNode;
         }
         return left;
+    }
+
+    private isReservedWord(word: string): boolean {
+        return ['then', 'else', 'elif', 'fi', 'do', 'done', '}', 'esac'].includes(word);
     }
 
     // Level 2: Logic (&&, ||)
@@ -245,9 +268,124 @@ export class ShellParser {
             return this.parseBlock();
         }
 
-        // Control structures (if, while, etc.) - Future
+        // Control structures
+        if (token.type === TokenType.WORD) {
+            if (token.value === 'if') return this.parseIf();
+            if (token.value === 'for') return this.parseFor();
+            if (token.value === 'while') return this.parseWhile();
+        }
 
         return this.parseSimpleCommand();
+    }
+
+    private parseIf(): ASTNode {
+        // console.log("DEBUG: parseIf");
+        this.advance(); // if
+        const condition = this.parseList();
+        // console.log("DEBUG: parseIf condition parsed");
+
+        let token = this.peek();
+        // expect 'then'
+        // 'then' might be a separate word or after newline/semi
+        // usually 'if list; then list; fi'
+        while (this.peek().type === TokenType.NEWLINE || this.peek().type === TokenType.SEMI) this.advance();
+
+        if (this.peek().value !== 'then') throw new Error("Syntax Error: Expected 'then'");
+        this.advance(); // then
+
+        const thenBody = this.parseList();
+
+        let elseBody: ASTNode | undefined;
+        while (this.peek().type === TokenType.NEWLINE || this.peek().type === TokenType.SEMI) this.advance();
+
+        if (this.peek().value === 'else') {
+            this.advance(); // else
+            const res = this.parseList();
+            elseBody = res || undefined;
+        } else if (this.peek().value === 'elif') {
+            // Treat elif as nested else if
+            // Recursively parse if
+            elseBody = this.parseIf();
+        }
+
+        while (this.peek().type === TokenType.NEWLINE || this.peek().type === TokenType.SEMI) this.advance();
+
+        if (this.peek().value !== 'fi') throw new Error("Syntax Error: Expected 'fi'");
+        this.advance(); // fi
+
+        return {
+            type: NodeType.IF,
+            condition: condition!,
+            thenBody: thenBody!,
+            elseBody: elseBody
+        } as IfNode;
+    }
+
+    private parseFor(): ASTNode {
+        this.advance(); // for
+        const nameToken = this.advance(); // variable name
+        if (nameToken.type !== TokenType.WORD) throw new Error("Syntax Error: Expected variable name after for");
+
+        // Check for 'in'
+        let items: string[] = [];
+        // Optional semi/newline before 'in'? usually 'for i in ...'
+        // POSIX: `for name [ [in [word ...]]; ] do ... done`
+
+        if (this.peek().value === 'in') {
+            this.advance(); // in
+            while (this.peek().type === TokenType.WORD) {
+                items.push(this.advance().value);
+            }
+            // Parse terminator (semi/newline)
+            if (this.peek().type === TokenType.SEMI || this.peek().type === TokenType.NEWLINE) this.advance();
+        } else {
+            // implicit in "$@" - simplified, maybe skip?
+            // If next is 'do', implies 'in "$@"'
+            // Checking if next is 'do'
+            // If next is ';', consume and check do
+        }
+
+        while (this.peek().type === TokenType.NEWLINE || this.peek().type === TokenType.SEMI) this.advance();
+
+        if (this.peek().value !== 'do') throw new Error("Syntax Error: Expected 'do'");
+        this.advance(); // do
+
+        const body = this.parseList();
+
+        while (this.peek().type === TokenType.NEWLINE || this.peek().type === TokenType.SEMI) this.advance();
+
+        if (this.peek().value !== 'done') throw new Error("Syntax Error: Expected 'done'");
+        this.advance(); // done
+
+        return {
+            type: NodeType.FOR,
+            variable: nameToken.value,
+            items: items,
+            body: body!
+        } as ForNode;
+    }
+
+    private parseWhile(): ASTNode {
+        this.advance(); // while
+        const condition = this.parseList();
+
+        while (this.peek().type === TokenType.NEWLINE || this.peek().type === TokenType.SEMI) this.advance();
+
+        if (this.peek().value !== 'do') throw new Error("Syntax Error: Expected 'do'");
+        this.advance(); // do
+
+        const body = this.parseList();
+
+        while (this.peek().type === TokenType.NEWLINE || this.peek().type === TokenType.SEMI) this.advance();
+
+        if (this.peek().value !== 'done') throw new Error("Syntax Error: Expected 'done'");
+        this.advance(); // done
+
+        return {
+            type: NodeType.WHILE,
+            condition: condition!,
+            body: body!
+        } as WhileNode;
     }
 
     private isFunctionDefinition(): boolean {
@@ -270,13 +408,21 @@ export class ShellParser {
         // Optional newlines before body
         while (this.peek().type === TokenType.NEWLINE) this.advance();
 
+        // console.log("DEBUG: Parsing function body for", nameToken.value);
         const body = this.parseCommand(); // Expect compound command usually
+        // console.log("DEBUG: Parsed body for", nameToken.value, body ? body.type : "null");
         if (!body) throw new Error(`Syntax Error: Missing body for function ${nameToken.value}`);
+
+        const redirects: RedirectNode[] = [];
+        while (this.isRedirect(this.peek())) {
+            redirects.push(this.parseRedirect());
+        }
 
         return {
             type: NodeType.FUNCTION_DEF,
             name: nameToken.value,
-            body: body
+            body: body,
+            redirects: redirects
         } as FunctionDefNode;
     }
 
@@ -286,6 +432,11 @@ export class ShellParser {
         while (this.peek().type === TokenType.NEWLINE) this.advance();
 
         const list = this.parseList();
+        // console.log("DEBUG: parseBlock list parsed:", JSON.stringify(list));
+
+        if (!list) {
+            throw new Error("Syntax Error: Block cannot be empty");
+        }
 
         // Expect }
         // POSIX says } must be on a new line or separated by semi?

@@ -196,6 +196,7 @@ for (let i = 0; i < 50; i++) {
 // --- RUNNER ---
 
 async function runRunner() {
+    console.log("SANITY CHECK: RUNNING UPDATED VERIFY SCRIPT");
     console.log(`${YELLOW}=== Shell Functions TDD Verification Suite ===${RESET}`);
     console.log(`Target: ${TOTAL_TESTS_TARGET} tests`);
 

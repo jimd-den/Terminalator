@@ -23,7 +23,8 @@ export class BreakCommand implements ICommand {
         return {
             output: '',
             newState: state,
-            exitCode: 0
+            exitCode: 0,
+            controlFlow: 'BREAK'
         };
     }
 }

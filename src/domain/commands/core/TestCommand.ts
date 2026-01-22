@@ -31,15 +31,21 @@ export class TestCommand implements ICommand {
     }
 
     private evaluate(args: string[], state: TerminalState): boolean {
+        // console.log("DEBUG: TestCommand evaluate args:", args);
         if (args.length === 0) return false;
 
-        // [ expr ] format is handled by shell removing [ and ].
-        // We assume args are the expression.
+        // Strip trailing ] if present (invoked as [ ... ])
+        let evalArgs = args;
+        if (evalArgs.length > 0 && evalArgs[evalArgs.length - 1] === ']') {
+            evalArgs = evalArgs.slice(0, -1);
+        }
 
         // Unary
-        if (args.length === 2 && args[0].startsWith('-')) {
-            const op = args[0];
-            const file = args[1];
+
+        // Unary
+        if (evalArgs.length === 2 && evalArgs[0].startsWith('-')) {
+            const op = evalArgs[0];
+            const file = evalArgs[1];
             try {
                 // Resolve path
                 const path = state.currentDirectory === '/' ? `/${file}` : `${state.currentDirectory}/${file}`; // Naive resolve
@@ -66,10 +72,10 @@ export class TestCommand implements ICommand {
         }
 
         // Binary
-        if (args.length === 3) {
-            const a = args[0];
-            const op = args[1];
-            const b = args[2];
+        if (evalArgs.length === 3) {
+            const a = evalArgs[0];
+            const op = evalArgs[1];
+            const b = evalArgs[2];
 
             switch (op) {
                 case '=': return a === b;
@@ -82,8 +88,8 @@ export class TestCommand implements ICommand {
         }
 
         // Single argument (string)
-        if (args.length === 1) {
-            return args[0].length > 0;
+        if (evalArgs.length === 1) {
+            return evalArgs[0].length > 0;
         }
 
         return false;

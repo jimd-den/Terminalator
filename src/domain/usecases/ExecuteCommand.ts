@@ -4,11 +4,12 @@ import { FileSystemService } from '../services/FileSystemService';
 import { TerminalState } from '../entities/TerminalState';
 import { TelemetryPort } from '../ports/TelemetryPort';
 import { CommandRegistry } from '../commands/CommandRegistry';
-import { ShellParser, ASTNode, NodeType, CommandNode, ListNode, PipelineNode, SubshellNode, FunctionDefNode, RedirectNode } from '../services/ShellParser';
+import { ShellParser, ASTNode, NodeType, CommandNode, ListNode, PipelineNode, SubshellNode, FunctionDefNode, RedirectNode, IfNode, ForNode, WhileNode } from '../services/ShellParser';
 import { CoreUtilsModule } from '../modules/CoreUtilsModule';
 import { SystemUtilsModule } from '../modules/SystemUtilsModule';
 import { IBinaryRunner } from '../interfaces/IBinaryRunner';
 import { ProcessContext } from '../entities/ProcessContext';
+import { ArithmeticEvaluator } from '../services/ArithmeticEvaluator';
 
 export interface CommandResponse {
     output: string;
@@ -20,7 +21,7 @@ export interface CommandResponse {
         target: string;
         params?: any;
     };
-    controlFlow?: 'RETURN';
+    controlFlow?: 'RETURN' | 'BREAK' | 'CONTINUE' | 'EXIT';
 }
 
 import { IShellExecutor } from '../interfaces/IShellExecutor';
@@ -29,6 +30,7 @@ export class ExecuteCommand implements IShellExecutor {
     private registry: CommandRegistry;
     private parser: ShellParser;
     private service: FileSystemService;
+    private arithmetic: ArithmeticEvaluator;
     protected fs: FileSystem;
 
     constructor(
@@ -47,6 +49,7 @@ export class ExecuteCommand implements IShellExecutor {
         }
 
         this.parser = new ShellParser();
+        this.arithmetic = new ArithmeticEvaluator();
 
         if (registry) {
             this.registry = registry;
@@ -110,8 +113,14 @@ export class ExecuteCommand implements IShellExecutor {
             case NodeType.BLOCK:
                 // Block is just a list executed in current context
                 return this.visit((node as any).body, state, stdin);
+            case NodeType.IF:
+                return this.visitIf(node as IfNode, state, stdin);
+            case NodeType.FOR:
+                return this.visitFor(node as ForNode, state, stdin);
+            case NodeType.WHILE:
+                return this.visitWhile(node as WhileNode, state, stdin);
             default:
-                throw new Error("Unknown AST Node Type");
+                throw new Error(`Unknown AST Node Type: ${node.type}`);
         }
     }
 
@@ -122,8 +131,8 @@ export class ExecuteCommand implements IShellExecutor {
         // Persist exit code to state so subsequent commands can read it (e.g. return)
         leftRes.newState.lastExitCode = leftRes.exitCode;
 
-        // Check for control flow interrupt (return)
-        if (leftRes.controlFlow === 'RETURN') {
+        // Check for control flow interrupt (return, break, continue)
+        if (leftRes.controlFlow) {
             return leftRes;
         }
 
@@ -148,7 +157,7 @@ export class ExecuteCommand implements IShellExecutor {
             rightRes.newState.lastExitCode = rightRes.exitCode;
 
             return {
-                output: [leftRes.output, rightRes.output].filter(s => s).join('\n'),
+                output: [leftRes.output, rightRes.output].filter(s => s).join(''),
                 newState: rightRes.newState,
                 exitCode: rightRes.exitCode,
                 uiAction: rightRes.uiAction || leftRes.uiAction,
@@ -240,6 +249,137 @@ export class ExecuteCommand implements IShellExecutor {
         };
     }
 
+    private async visitIf(node: IfNode, state: TerminalState, stdin?: string): Promise<CommandResponse> {
+        // Run condition
+        // Condition is a List, so it runs commands. Exit code of last command determines truth.
+        // 0 = true, non-0 = false
+        // 0 = true, non-0 = false
+        // 0 = true, non-0 = false
+        // console.log("[DEBUG] visitIf Condition: ", JSON.stringify(node.condition));
+        const condRes = await this.visit(node.condition, state, stdin);
+        // console.log("[DEBUG] visitIf Condition Result: " + condRes.exitCode);
+
+        let finalRes: CommandResponse;
+
+        if (condRes.exitCode === 0) {
+            // Run THEN
+            finalRes = await this.visit(node.thenBody, condRes.newState, stdin);
+        } else if (node.elseBody) {
+            // Run ELSE
+            finalRes = await this.visit(node.elseBody, condRes.newState, stdin);
+        } else {
+            // No else, condition false -> exit code 0
+            finalRes = {
+                output: '',
+                newState: condRes.newState,
+                exitCode: 0
+            };
+        }
+
+        // Propagate output from condition?
+        // Usually 'if' output includes condition output? Yes.
+        // "The exit status is the exit status of the last command executed, or zero if no condition tested true."
+        return {
+            ...finalRes,
+            output: condRes.output + finalRes.output
+        };
+    }
+
+    private async visitFor(node: ForNode, state: TerminalState, stdin?: string): Promise<CommandResponse> {
+        // Expand items. Items are words.
+        // We need to expand them? Yes.
+        // "The words are expanded, and then the list of words..."
+        // Simplified expansion here (State doesn't have robust expansion service yet, reusing simplified logic or assumption)
+        // For now, assume items are already tokens or raw strings needing variable expansion.
+
+        const expandedItems: string[] = [];
+        for (const item of node.items) {
+            // Basic variable expansion
+            const exp = item.replace(/\$([a-zA-Z_][a-zA-Z0-9_]*|[0-9]+|[#@*?])/g, (match, varName) => {
+                return state.environment[varName] || '';
+            });
+            // Split by space (simplified word splitting)
+            // POSIX requires IFS splitting. We assume space.
+            const parts = exp.split(/\s+/).filter(s => s.length > 0);
+            expandedItems.push(...parts);
+        }
+
+        // If items empty? "If 'in word' is omitted, positional params are used."
+        // Our parser handles 'in'. If empty list, loop doesn't run.
+
+        let currentState = state;
+        let cumulativeOutput = '';
+        let lastExitCode = 0;
+
+        for (const val of expandedItems) {
+            // Set variable
+            const newEnv = { ...currentState.environment, [node.variable]: val };
+            currentState = { ...currentState, environment: newEnv };
+
+            const res = await this.visit(node.body, currentState, stdin);
+            currentState = res.newState;
+            cumulativeOutput += res.output;
+            lastExitCode = res.exitCode;
+
+            // Handle Break/Continue (if implemented in CommandResponse controlFlow)
+            if (res.controlFlow === 'BREAK') {
+                currentState = { ...currentState, lastExitCode: 0 };
+                break;
+            }
+            if (res.controlFlow === 'CONTINUE') {
+                continue; // Next iteration
+            }
+            if (res.controlFlow === 'RETURN') {
+                return { ...res, output: cumulativeOutput }; // Bubble up return
+            }
+        }
+
+        return {
+            output: cumulativeOutput,
+            newState: currentState,
+            exitCode: lastExitCode
+        };
+    }
+
+    private async visitWhile(node: WhileNode, state: TerminalState, stdin?: string): Promise<CommandResponse> {
+        let currentState = state;
+        let cumulativeOutput = '';
+        let lastExitCode = 0;
+
+        // Loop limit to prevent infinite loops in valid test harness?
+        let iterations = 0;
+        const MAX_LOOPS = 1000;
+
+        while (iterations < MAX_LOOPS) {
+            const condRes = await this.visit(node.condition, currentState, stdin);
+            cumulativeOutput += condRes.output;
+            currentState = condRes.newState;
+
+            if (condRes.exitCode !== 0) {
+                // False, broken loop
+                break;
+            }
+
+            // True, run body
+            const bodyRes = await this.visit(node.body, currentState, stdin);
+            currentState = bodyRes.newState;
+            cumulativeOutput += bodyRes.output;
+            lastExitCode = bodyRes.exitCode;
+
+            // Handle Break/Continue
+            if (bodyRes.controlFlow === 'BREAK') break;
+            if (bodyRes.controlFlow === 'RETURN') return { ...bodyRes, output: cumulativeOutput };
+
+            iterations++;
+        }
+
+        return {
+            output: cumulativeOutput,
+            newState: currentState,
+            exitCode: lastExitCode
+        };
+    }
+
     private async handleRedirections(result: CommandResponse, redirects: RedirectNode[], state: TerminalState): Promise<CommandResponse> {
         if (!redirects || redirects.length === 0) return result;
 
@@ -259,10 +399,24 @@ export class ExecuteCommand implements IShellExecutor {
     private async visitCommand(node: CommandNode, state: TerminalState, stdin?: string): Promise<CommandResponse> {
         // Expansion (Variables) - This should technically happen closer to execution
         const expandedArgs = node.args.map(arg => {
-            // Match $VAR, $1, $#, $@, $*, $?
-            return arg.replace(/\$([a-zA-Z_][a-zA-Z0-9_]*|[0-9]+|[#@*?])/g, (match, varName) => {
+            // 1. Variable Expansion
+            let current = arg.replace(/\$([a-zA-Z_][a-zA-Z0-9_]*|[0-9]+|[#@*?])/g, (match, varName) => {
                 return state.environment[varName] || '';
             });
+
+            // 2. Arithmetic Expansion $(( expression ))
+            // Regex to find $(( ... ))
+            // Note: This simple regex doesn't handle nested parens well but suffices for basic cases.
+            // Posix allows $(( ... )).
+            current = current.replace(/\$\(\(([^)]+)\)\)/g, (match, expr) => {
+                try {
+                    return this.arithmetic.evaluate(expr).toString();
+                } catch (e) {
+                    return '0'; // Or throw?
+                }
+            });
+
+            return current;
         });
 
         const commandName = node.command;
@@ -346,14 +500,22 @@ export class ExecuteCommand implements IShellExecutor {
             // Consumed control flow
             const finalState = { ...res.newState, environment: restoredEnv };
 
+            // Suppress RETURN, but propagate BREAK/CONTINUE
+            const flow = res.controlFlow === 'RETURN' ? undefined : res.controlFlow;
+
             let finalRes: CommandResponse = {
                 output: res.output,
                 newState: finalState,
                 exitCode: exitCode,
                 uiAction: res.uiAction,
                 navigationAction: res.navigationAction,
-                controlFlow: undefined // Suppress return signal so it doesn't bubble up higher
+                controlFlow: flow
             };
+
+            // Apply Function Definition Redirections
+            if (funcNode.redirects && funcNode.redirects.length > 0) {
+                finalRes = await this.handleRedirections(finalRes, funcNode.redirects, state);
+            }
 
             return this.handleRedirections(finalRes, node.redirects, state);
         }
