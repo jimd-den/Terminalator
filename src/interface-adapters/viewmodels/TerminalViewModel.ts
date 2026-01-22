@@ -29,7 +29,7 @@ export interface TerminalOutputLine {
 }
 
 export const useTerminalViewModel = (
-    fs: FileSystemService,
+    fs: FileSystem,
     commandExecutor: ExecuteCommand,
     gameManager: GameManager
 ) => {

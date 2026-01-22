@@ -170,7 +170,7 @@ export const TerminalScreen: React.FC = () => {
             ) : (
                 <>
                     <Text style={dynamicStyles.inputLabel}>
-                        INPUT // {state.user}@system
+                        INPUT // {state.environment.USER}@system
                     </Text>
                     <Pressable style={dynamicStyles.inputContainer} onPress={refocus}>
                         <Text style={dynamicStyles.input}>
