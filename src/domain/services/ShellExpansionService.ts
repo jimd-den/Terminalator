@@ -145,13 +145,96 @@ export class ShellExpansionService {
     }
 
     private findMatchingParen(text: string, start: number): number {
-        let depth = 1; // We passed $((
-        // Actually start should be after $((.
-        // We look for ))
-        // Current logic stub for $((...))
-        // Simple search for ))
-        const idx = text.indexOf('))', start);
-        if (idx !== -1) return idx + 1; // point to last )
+        let depth = 1;
+        // Start is immediately after $((
+        for (let i = start; i < text.length - 1; i++) {
+            const char = text[i];
+            const next = text[i + 1];
+
+            if (char === '(') {
+                depth++;
+            } else if (char === ')') {
+                if (next === ')') {
+                    depth--;
+                    if (depth === 0) {
+                        return i + 2; // Return position after ))
+                    }
+                    i++; // Skip the next ) provided we consumed it as part of ))
+                    // Wait, if it was )) that closed depth, we return.
+                    // If it was just ) that closed inner depth, we continue.
+                    // Actually, standard sh parsing:
+                    // $(( echo ( 1 ) ))
+                    // We need to match parens properly.
+                    // Arithmetic expansion $(( ... )) is delimited by )).
+                    // Inner ( ) must be balanced.
+                    // The depth logic here:
+                    // We start with depth 1 (the outer $(()
+                    // invalid logic in comment above.
+                    // Let's stick to standard paren counting.
+                    // We are looking for the closing )) for the opening $((.
+                } else {
+                    // Single closing paren - does this affect depth?
+                    // In arithmetic expression, parens are used for grouping.
+                    // ( 1 + 2 )
+                    // So yes, we should track single parens too.
+                    // But $(( is special.
+                    // Let's assume we are simply counting balanced parens starting from the first (.
+                    // $(( ... ))
+                    // If we treated $(( as opening depth 2, then )) closes depth 2.
+                }
+            }
+        }
+
+        // Revised robust logic:
+        // We are at index `start` which is inside $(( ...
+        // We need to find the matching ))
+        // Since we are doing arithmetic, ( and ) are valid tokens.
+        // We just count ( and ).
+        // Initial depth = 0 (relative to inside of $(( )) ) ? No.
+
+        // Let's simplify:
+        // Input: $(( ... ))
+        // We passed the initial $((
+        // We scan for )).
+        // BUT, inside arithmetic, we might have ( ).
+        // Example: $(( (1+2) ))
+        // Scan:
+        // ( -> depth++
+        // ) -> depth--
+        // ) -> depth--
+
+        // Wait, the double paren is the delimiter.
+        // POSIX: "The expression is treated as if it were in double quotes... except a double-quote inside... is not special?" 
+        // Actually: "The characters ... are treated as an arithmetic expression".
+        // The shell typically parses this by finding the matching `))`.
+        // However, standard `(` and `)` for grouping *must* be skipped.
+
+        // Implementation:
+        // depth = 0
+        // if char == '(': depth++
+        // if char == ')':
+        //    if depth > 0: depth--
+        //    else:
+        //       check if next is ')'. If so, found it.
+
+        // Correct approach:
+        let nesting = 0;
+        for (let i = start; i < text.length - 1; i++) {
+            const char = text[i];
+
+            if (char === '(') {
+                nesting++;
+            } else if (char === ')') {
+                if (nesting > 0) {
+                    nesting--;
+                } else {
+                    // Check for double closing paren ))
+                    if (text[i + 1] === ')') {
+                        return i + 2; // Found the end
+                    }
+                }
+            }
+        }
         return -1;
     }
 

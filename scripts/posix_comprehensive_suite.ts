@@ -348,7 +348,8 @@ const SUITES: UtilitySuite[] = [
             { id: 'FIND_07', description: 'Multiple paths', posixSection: 'find.html', posixRequirement: 'Operands', setup: (fs) => { fs.mkdir('/a', 0o755); fs.mkdir('/b', 0o755); }, command: 'find /a /b', expect: { exitCode: 0, stdout: /\/a\n\/b/ } },
             { id: 'FIND_08', description: 'Exec (stub)', posixSection: 'find.html', posixRequirement: '-exec', setup: (fs) => fs.writeFile('/f', 'x', 'w'), command: 'find /f -exec echo {} ;', expect: { exitCode: 0 } },
             { id: 'FIND_09', description: 'Maxdepth (stub)', posixSection: 'find.html', posixRequirement: 'Not POSIX but standard', setup: (fs) => { fs.mkdir('/d/sub', 0o755); }, command: 'find /d -maxdepth 1', expect: { exitCode: 0 } },
-            { id: 'FIND_10', description: 'Prune (stub)', posixSection: 'find.html', posixRequirement: '-prune', command: 'find / -prune', expect: { exitCode: 0 } }
+            { id: 'FIND_10', description: 'Prune (stub)', posixSection: 'find.html', posixRequirement: '-prune', command: 'find / -prune', expect: { exitCode: 0 } },
+            { id: 'FIND_11', description: 'Exec with spaces', posixSection: 'find.html', posixRequirement: '-exec safety', setup: (fs) => { fs.writeFile('/space file', 'x', 'w'); }, command: 'find "/space file" -exec echo "{}" ;', expect: { exitCode: 0, stdout: /\/space file/ } }
         ]
     },
     {
@@ -1009,7 +1010,8 @@ const SUITES: UtilitySuite[] = [
             { id: 'SH_07', description: 'Positional args', posixSection: 'sh.html', posixRequirement: '$1 $2', command: 'sh -c "echo \$1" sh 123', expect: { exitCode: 0, stdout: /123/ } },
             { id: 'SH_08', description: 'Verbose -v (Ext)', posixSection: 'sh.html', posixRequirement: '-v', command: 'sh -v -c "echo a"', expect: { exitCode: 0 } },
             { id: 'SH_09', description: 'Restricted -r (Ext)', posixSection: 'sh.html', posixRequirement: '-r', command: 'sh -r', expect: { exitCode: 0 } }, // Interactive
-            { id: 'SH_10', description: 'Ignore sigs? (stub)', posixSection: 'sh.html', posixRequirement: 'Signal', command: 'sh -c "echo done"', expect: { exitCode: 0 } }
+            { id: 'SH_10', description: 'Ignore sigs? (stub)', posixSection: 'sh.html', posixRequirement: 'Signal', command: 'sh -c "echo done"', expect: { exitCode: 0 } },
+            { id: 'SH_11', description: 'Arithmetic valid nesting', posixSection: 'sh.html', posixRequirement: '$(( ))', command: 'echo $(( 1 + (2 * 3) ))', expect: { exitCode: 0, stdout: /7/ } }
         ]
     },
     {
