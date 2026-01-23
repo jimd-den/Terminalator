@@ -19,10 +19,26 @@ import { TerminalState } from '../../entities/TerminalState';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 
 export class ExportCommand implements ICommand {
-    async execute(_args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const newEnv = { ...state.environment };
+
+        for (const arg of args) {
+            if (arg.includes('=')) {
+                const [key, ...rest] = arg.split('=');
+                const val = rest.join('=');
+                // Validate key? Shell variable naming rules.
+                if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(key)) {
+                    newEnv[key] = val;
+                }
+            }
+        }
+
         return {
             output: '',
-            newState: state,
+            newState: {
+                ...state,
+                environment: newEnv
+            },
             exitCode: 0
         };
     }

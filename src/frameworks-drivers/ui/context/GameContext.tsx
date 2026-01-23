@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { FileSystem } from '../../../domain/entities/FileSystem';
 import { GameManager } from '../../../interface-adapters/GameManager';
 import { GameCommandExecutor } from '../../../interface-adapters/GameCommandExecutor';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
+
 import { ConsoleTelemetryAdapter } from '../../../infrastructure/telemetry/ConsoleTelemetryAdapter';
 
 /**
@@ -28,8 +30,11 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Using lazy initialization to ensure purity and performance
     const [fs] = useState(() => new FileSystem());
     const [telemetry] = useState(() => new ConsoleTelemetryAdapter());
+    // Create service for adapters that need it (GameManager, Executor)
+    const [fsService] = useState(() => new FileSystemService(fs));
+
     const [gameManager] = useState(() => new GameManager(fs, telemetry));
-    const [commandExecutor] = useState(() => new GameCommandExecutor(fs, gameManager, telemetry));
+    const [commandExecutor] = useState(() => new GameCommandExecutor(fsService, gameManager, telemetry));
 
     return (
         <GameContext.Provider value={{ fs, gameManager, commandExecutor, telemetry }}>

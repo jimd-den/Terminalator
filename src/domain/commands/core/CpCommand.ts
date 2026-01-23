@@ -11,20 +11,17 @@
  * Allows the operator to duplicate data.
  */
 
-import { ICommand } from '../ICommand';
+import { CommandBase } from '../CommandBase';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
 import { FileSystemService } from '../../services/FileSystemService';
 
-export class CpCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+export class CpCommand extends CommandBase {
+    constructor(private fsService: FileSystemService) { super(); }
 
-    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
-        const flags = args.filter(arg => arg.startsWith('-'));
-        const operands = args.filter(arg => !arg.startsWith('-'));
-        const recursive = flags.some(f => f.includes('r') || f.includes('R'));
+    executeInternal(args: string[], flags: Set<string>, operands: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const recursive = this.hasFlag('r') || this.hasFlag('R');
 
         if (operands.length < 2) {
             return {
@@ -38,9 +35,10 @@ export class CpCommand implements ICommand {
         const destination = operands[operands.length - 1];
 
         // Process destination
-        let destPath = this.resolvePath(destination, state);
-        const destNode = this.fs.resolve(destPath);
-        const destIsDir = destNode ? this.fs.isDirectory(destNode) : destination.endsWith('/');
+        // Use new resolveAbsolutePath
+        const destPath = this.fsService.resolveAbsolutePath(destination, state.currentDirectory);
+        const destNode = this.fsService.resolve(destPath); // Still need resolve to check existence/type
+        const destIsDir = destNode ? this.fsService.isDirectory(destNode) : destination.endsWith('/');
 
         // If multiple sources, dest MUST be a directory
         if (sources.length > 1 && destNode && !destIsDir) {
@@ -52,8 +50,8 @@ export class CpCommand implements ICommand {
         }
 
         for (const source of sources) {
-            const srcPath = this.resolvePath(source, state);
-            const srcNode = this.fs.resolve(srcPath);
+            const srcPath = this.fsService.resolveAbsolutePath(source, state.currentDirectory);
+            const srcNode = this.fsService.resolve(srcPath);
 
             if (!srcNode) {
                 return {
@@ -63,7 +61,7 @@ export class CpCommand implements ICommand {
                 };
             }
 
-            const srcIsDir = this.fs.isDirectory(srcNode);
+            const srcIsDir = this.fsService.isDirectory(srcNode);
 
             if (srcIsDir) {
                 if (!recursive) {
@@ -75,13 +73,9 @@ export class CpCommand implements ICommand {
                 }
 
                 // Recursive copy logic
-                // If dest is dir, copy INTO it. 
-                // If dest doesn't exist, create it as the copy.
                 try {
-                    // Determine actual target path
                     let finalDest = destPath;
                     if (destIsDir) {
-                        // copying /src to /dest/src
                         finalDest = destPath === '/' ? `/${srcNode.name}` : `${destPath}/${srcNode.name}`;
                     }
 
@@ -99,21 +93,11 @@ export class CpCommand implements ICommand {
                 try {
                     let finalDest = destPath;
                     if (destIsDir) {
-                        // copying /file to /dest/file
                         finalDest = destPath === '/' ? `/${srcNode.name}` : `${destPath}/${srcNode.name}`;
                     }
 
-                    const content = this.fs.readFile(srcPath);
-                    // Write to new location
-                    // If file exists, overwrite (unless interactive, but we assume forceful/standard)
-                    // If destIsDir, we are writing into it. "finalDest" handles that.
-
-                    // We need to 'create' or 'write'. fs.writeFile handles create or overwrite.
-                    this.fs.writeFile(finalDest, content, 'w');
-
-                    // Ideally verify permission bits copy too? 
-                    // cp usually preserves mode if possible or applies umask.
-                    // For now, basic content copy.
+                    const content = this.fsService.readFile(srcPath);
+                    this.fsService.writeFile(finalDest, content, 'w');
                 } catch (e: any) {
                     return {
                         output: `cp: cannot create regular file '${destination}': ${e.message}`,
@@ -131,31 +115,25 @@ export class CpCommand implements ICommand {
         };
     }
 
-    private resolvePath(path: string, state: TerminalState): string {
-        if (path.startsWith('/')) return path;
-        return state.currentDirectory === '/' ? `/${path}` : `${state.currentDirectory}/${path}`;
-    }
-
     private copyRecursive(srcPath: string, destPath: string) {
         // Create destination directory
-        // Check if exists?
-        if (!this.fs.resolve(destPath)) {
-            this.fs.mkdir(destPath, 0o755);
+        if (!this.fsService.resolve(destPath)) {
+            this.fsService.mkdir(destPath, 0o755);
         }
 
-        const srcNode = this.fs.resolve(srcPath);
-        if (!srcNode || !this.fs.isDirectory(srcNode)) return; // Should catch earlier
+        const srcNode = this.fsService.resolve(srcPath);
+        if (!srcNode || !this.fsService.isDirectory(srcNode)) return;
 
         const children = Array.from(srcNode.children.values());
         for (const child of children) {
             const childSrcPath = srcPath === '/' ? `/${child.name}` : `${srcPath}/${child.name}`;
             const childDestPath = destPath === '/' ? `/${child.name}` : `${destPath}/${child.name}`;
 
-            if (this.fs.isDirectory(child)) {
+            if (this.fsService.isDirectory(child)) {
                 this.copyRecursive(childSrcPath, childDestPath);
             } else {
-                const content = this.fs.readFile(childSrcPath);
-                this.fs.writeFile(childDestPath, content, 'w');
+                const content = this.fsService.readFile(childSrcPath);
+                this.fsService.writeFile(childDestPath, content, 'w');
             }
         }
     }

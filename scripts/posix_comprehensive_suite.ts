@@ -7,6 +7,10 @@ import { createInitialTerminalState, TerminalState } from '../src/domain/entitie
 import { HostCompilerService } from '../src/infrastructure/services/HostCompilerService';
 import { HostBinaryRunner } from '../src/infrastructure/services/HostBinaryRunner';
 import { C17Command } from '../src/domain/commands/core/C17Command';
+import { ShellFactory } from '../src/domain/factories/ShellFactory';
+import { CommandRegistry } from '../src/domain/commands/CommandRegistry';
+import { CoreUtilsModule } from '../src/domain/modules/CoreUtilsModule';
+import { SystemUtilsModule } from '../src/domain/modules/SystemUtilsModule';
 
 // --- COLOR CONSTANTS ---
 const GREEN = '\x1b[32m';
@@ -2922,17 +2926,28 @@ async function runSuite() {
             let failureReasons: string[] = [];
 
             const testFs = new FileSystem();
-            const service = new FileSystemService(testFs);
+            const service = new FileSystemService(testFs); // Keep this for setup() usage
             let testExecutor: ExecuteCommand;
+
             if (suite.utility === 'c17') {
                 const compiler = new HostCompilerService();
                 const runner = new HostBinaryRunner();
-                // We need to register C17 with these
-                const registry = new ExecuteCommand(service).getRegistry();
+
+                // Initialize modules for C17 too? (If it uses other commands)
+                // For now, reconstruct manually but WITH modules if possible involved.
+                // Or better: Use ShellFactory, then Replace executor with one that has runner, reusing registry?
+
+                // Manual (Robust):
+                const registry = new CommandRegistry();
+                new CoreUtilsModule(testFs).register(registry);
+                new SystemUtilsModule().register(registry);
+
                 registry.register('c17', new C17Command(compiler, service));
                 testExecutor = new ExecuteCommand(service, undefined, registry, runner);
             } else {
-                testExecutor = new ExecuteCommand(service);
+                // Use Factory for standard utilties
+                const { executor } = ShellFactory.create(testFs);
+                testExecutor = executor;
             }
             const testState = createInitialTerminalState();
 

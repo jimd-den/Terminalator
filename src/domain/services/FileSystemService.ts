@@ -17,11 +17,43 @@ export class FileSystemService {
         this.pathResolver = new PathResolver(fs.inodeTable);
     }
 
+    get fileSystem(): FileSystem {
+        return this.fs;
+    }
+
     /**
      * Traverses the file system to find a node by path.
      */
     resolve(path: string, cwd: string = '/', followSymlinks: boolean = true): Dentry | null {
         return this.pathResolver.resolve(this.fs.root, path, cwd, followSymlinks);
+    }
+
+    /**
+     * pure: Resolves a path string to an absolute, normalized path.
+     * Does not check for existence.
+     * 
+     * @param path The path to resolve (relative or absolute)
+     * @param cwd The current working directory (absolute)
+     * @returns Normalized absolute path
+     */
+    resolveAbsolutePath(path: string, cwd: string): string {
+        // 1. Handle absolute vs relative
+        let absolutePath = path.startsWith('/') ? path : (cwd === '/' ? `/${path}` : `${cwd}/${path}`);
+
+        // 2. Split and Normalize
+        const parts = absolutePath.split('/').filter(p => p.length > 0 && p !== '.');
+        const stack: string[] = [];
+
+        for (const part of parts) {
+            if (part === '..') {
+                stack.pop();
+            } else {
+                stack.push(part);
+            }
+        }
+
+        // 3. Reconstruct
+        return '/' + stack.join('/');
     }
 
     getAbsolutePath(dentry: Dentry): string {

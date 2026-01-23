@@ -28,13 +28,25 @@ import { SettingsCommand } from './commands/game/SettingsCommand';
 
 import { TutorCommand } from './commands/game/TutorCommand';
 
+import { CommandRegistry } from '../domain/commands/CommandRegistry';
+import { CoreUtilsModule } from '../domain/modules/CoreUtilsModule';
+import { SystemUtilsModule } from '../domain/modules/SystemUtilsModule';
+
 export class GameCommandExecutor extends ExecuteCommand {
     private mailSystem: MailSystem;
     private compiler: CodeCompiler;
     private gameManager: GameManager;
 
     constructor(fs: FileSystemService, gameManager: GameManager, telemetry?: TelemetryPort) {
-        super(fs, telemetry);
+        // Initialize Core Registry (Missing Link restored)
+        const registry = new CommandRegistry();
+
+        // Register Core Modules (Restoring 'ls', 'cd', etc.)
+        new CoreUtilsModule(fs.fileSystem).register(registry);
+        new SystemUtilsModule().register(registry);
+
+        super(fs, telemetry, registry);
+
         this.mailSystem = new MailSystem(fs, telemetry);
         this.compiler = new CodeCompiler(this.fs, telemetry);
         this.gameManager = gameManager;

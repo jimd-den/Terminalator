@@ -1,16 +1,12 @@
 
 import { FileSystem } from '../entities/FileSystem';
 import { FileSystemService } from '../services/FileSystemService';
-import { GlobService } from '../services/GlobService';
 import { TerminalState } from '../entities/TerminalState';
 import { TelemetryPort } from '../ports/TelemetryPort';
 import { CommandRegistry } from '../commands/CommandRegistry';
 import { ShellParser, ASTNode, NodeType, CommandNode, ListNode, PipelineNode, SubshellNode, FunctionDefNode, RedirectNode, IfNode, ForNode, WhileNode } from '../services/ShellParser';
-import { CoreUtilsModule } from '../modules/CoreUtilsModule';
-import { SystemUtilsModule } from '../modules/SystemUtilsModule';
 import { IBinaryRunner } from '../interfaces/IBinaryRunner';
 import { ProcessContext } from '../entities/ProcessContext';
-import { ArithmeticEvaluator } from '../services/ArithmeticEvaluator';
 
 export interface CommandResponse {
     output: string;
@@ -27,11 +23,13 @@ export interface CommandResponse {
 
 import { IShellExecutor } from '../interfaces/IShellExecutor';
 
+import { ShellExpansionService } from '../services/ShellExpansionService';
+
 export class ExecuteCommand implements IShellExecutor {
     private registry: CommandRegistry;
     private parser: ShellParser;
     protected service: FileSystemService;
-    private arithmetic: ArithmeticEvaluator;
+    private expansionService: ShellExpansionService;
     protected fs: FileSystem;
 
     constructor(
@@ -50,21 +48,13 @@ export class ExecuteCommand implements IShellExecutor {
         }
 
         this.parser = new ShellParser();
-        this.arithmetic = new ArithmeticEvaluator();
+        this.expansionService = new ShellExpansionService(this.service);
 
         if (registry) {
             this.registry = registry;
         } else {
             this.registry = new CommandRegistry();
-            this.registerCoreCommands();
         }
-    }
-
-    private registerCoreCommands() {
-        const coreModule = new CoreUtilsModule(this.fs);
-        coreModule.register(this.registry);
-        const systemModule = new SystemUtilsModule();
-        systemModule.register(this.registry);
     }
 
     getRegistry(): CommandRegistry {
@@ -398,40 +388,16 @@ export class ExecuteCommand implements IShellExecutor {
     }
 
     private async visitCommand(node: CommandNode, state: TerminalState, stdin?: string): Promise<CommandResponse> {
-        // Expansion (Variables) - This should technically happen closer to execution
-        const expandedArgs = node.args.map(arg => {
-            // 1. Variable Expansion
-            let current = arg.replace(/\$([a-zA-Z_][a-zA-Z0-9_]*|[0-9]+|[#@*?])/g, (match, varName) => {
-                return state.environment[varName] || '';
-            });
+        // Expansion using Service
+        const expandedArgs: string[] = [];
 
-            // 2. Arithmetic Expansion $(( expression ))
-            // Regex to find $(( ... ))
-            // Note: This simple regex doesn't handle nested parens well but suffices for basic cases.
-            // Posix allows $(( ... )).
-            current = current.replace(/\$\(\(([^)]+)\)\)/g, (match, expr) => {
-                try {
-                    return this.arithmetic.evaluate(expr).toString();
-                } catch (e) {
-                    return '0'; // Or throw?
-                }
-            });
-
-            return current;
-        });
-
-        // 3. Pathname Expansion (Globbing)
-        // Flatten the array of arrays (or strings)
-        const globService = new GlobService(this.service);
-        const globbedArgs: string[] = [];
-
-        for (const arg of expandedArgs) {
-            const matches = globService.expand(arg, state.currentDirectory);
-            globbedArgs.push(...matches);
+        for (const arg of node.args) {
+            const tokens = this.expansionService.expandToken(arg, state.environment, state.currentDirectory);
+            expandedArgs.push(...tokens);
         }
 
-        // Use globbed args for command execution
-        node.args = globbedArgs;
+        // Update args for execution
+        node.args = expandedArgs;
 
         const commandName = node.command;
 

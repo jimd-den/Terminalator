@@ -3,6 +3,7 @@ import { strict as assert } from 'assert';
 import { EdCommand } from '../../../src/domain/commands/core/EdCommand';
 import { FileSystem } from '../../../src/domain/entities/FileSystem';
 import { createInitialTerminalState } from '../../../src/domain/entities/TerminalState';
+import { FileSystemService } from '../../../src/domain/services/FileSystemService';
 
 const GREEN = '\x1b[32m';
 const RED = '\x1b[31m';
@@ -25,12 +26,14 @@ async function runTests() {
         }
     };
 
+    // Setup FileSystem and Service
     const fs = new FileSystem();
-    const ed = new EdCommand(fs);
+    const fsService = new FileSystemService(fs);
+    const ed = new EdCommand(fsService);
     const state = createInitialTerminalState();
 
     // Setup initial file
-    fs.writeFile('/ed_file.txt', 'line1\nline2\nline3', 'w');
+    fsService.writeFile('/ed_file.txt', 'line1\nline2\nline3', 'w');
 
     // 1. Basic Print (p)
     await runTest('ed p prints lines', async () => {
