@@ -71,7 +71,25 @@ export class ExecuteCommand implements IShellExecutor {
                 const ast = this.parser.parse(input);
                 if (!ast) return { output: '', newState: state, exitCode: 0 };
 
-                return await this.visit(ast, state);
+                let res = await this.visit(ast, state);
+
+                // Handle EXIT Trap
+                if (res.controlFlow === 'EXIT') {
+                    const trapCmd = res.newState.traps ? res.newState.traps.get('EXIT') : undefined;
+                    if (trapCmd) {
+                        try {
+                            const trapAst = this.parser.parse(trapCmd);
+                            if (trapAst) {
+                                const trapRes = await this.visit(trapAst, res.newState);
+                                res.output += (res.output ? '\n' : '') + trapRes.output;
+                                res.newState = trapRes.newState;
+                            }
+                        } catch (e: any) {
+                            res.output += `\nError running EXIT trap: ${e.message}`;
+                        }
+                    }
+                }
+                return res;
             } catch (e: any) {
                 return {
                     output: `sh: syntax error: ${e.message}`,
@@ -442,7 +460,8 @@ export class ExecuteCommand implements IShellExecutor {
 
             const funcState = {
                 ...state,
-                environment: newEnv
+                environment: newEnv,
+                callStackDepth: (state.callStackDepth || 0) + 1
             };
 
             const res = await this.visit(funcNode.body, funcState, stdin);
@@ -478,7 +497,7 @@ export class ExecuteCommand implements IShellExecutor {
             // If implicit return (no return command), exitCode is last command's.
 
             // Consumed control flow
-            const finalState = { ...res.newState, environment: restoredEnv };
+            const finalState = { ...res.newState, environment: restoredEnv, callStackDepth: state.callStackDepth };
 
             // Suppress RETURN, but propagate BREAK/CONTINUE
             const flow = res.controlFlow === 'RETURN' ? undefined : res.controlFlow;

@@ -38,15 +38,17 @@ export class AwkCommand implements ICommand {
                 continue;
             }
             const arg = args[i];
-            if (arg === '-F') {
-                if (i + 1 < args.length) {
+            if (arg.startsWith('-F')) {
+                if (arg.length > 2) {
+                    fieldSeparator = arg.substring(2);
+                } else if (i + 1 < args.length) {
                     fieldSeparator = args[i + 1];
                     skipNext = true;
                 }
             } else if (!program && !arg.startsWith('-')) {
                 program = arg;
             } else if (arg.startsWith('-')) {
-                // flags ignored
+                // flags ignored for now
             } else {
                 files.push(arg);
             }
@@ -54,6 +56,11 @@ export class AwkCommand implements ICommand {
 
         if (!program) {
             return { output: 'awk: missing program', newState: state, exitCode: 1 };
+        }
+
+        // Robustness: Strip surrounding quotes if the parser left them
+        if ((program.startsWith("'") && program.endsWith("'")) || (program.startsWith('"') && program.endsWith('"'))) {
+            program = program.slice(1, -1);
         }
 
         const { beginBlock, mainBlock, endBlock, mainPattern } = this.parseProgram(program);
@@ -95,7 +102,7 @@ export class AwkCommand implements ICommand {
                 const lines = content.split('\n');
                 let NR = 0;
                 for (const line of lines) {
-                    if (line === '') continue;
+                    // if (line === '') continue; // Empty lines should be processed in awk? Yes, usually.
                     NR++;
 
                     let matches = true;
@@ -112,11 +119,13 @@ export class AwkCommand implements ICommand {
                         let fields: string[];
                         if (fieldSeparator === ' ') {
                             fields = line.trim().split(/\s+/);
+                            if (fields.length === 1 && fields[0] === '') fields = []; // Handle empty line split
                         } else {
                             fields = line.split(fieldSeparator);
                         }
                         const NF = fields.length;
 
+                        // Default action is print $0
                         const action = mainBlock || 'print $0';
                         const res = this.executeAction(action, line, fields, NR, NF);
                         if (res !== null) output += res + '\n';
@@ -171,8 +180,7 @@ export class AwkCommand implements ICommand {
             }
         }
 
-        // Check END (usually at end, but naive check here)
-        // We'll check END at the start of remaining if BEGIN consumed
+        // Check END
         const endMatch = remaining.match(/^END\s*\{/);
         if (endMatch) {
             const extracted = extractBlock(remaining, remaining.indexOf('{'));
@@ -183,7 +191,6 @@ export class AwkCommand implements ICommand {
         }
 
         // Remaining is main
-        // Pattern? /regex/ { ... }
         const patternMatch = remaining.match(/^\/(.+)\/\s*\{/);
         if (patternMatch) {
             mainPattern = patternMatch[1];
@@ -196,10 +203,8 @@ export class AwkCommand implements ICommand {
             const extracted = extractBlock(remaining, 0);
             if (extracted) mainBlock = extracted.block;
         } else if (remaining.length > 0) {
-            // Assume strict pattern or implicit print?
-            // If just pattern "length($0) > 80" -> print
-            // For simplicity, treat as main block if not braced? No, standard awk is pattern {action} or {action} or pattern.
-            // If no braces, it's a pattern.
+            // Implicit print if pattern given without block, or simple block guess
+            // For now, treat as pattern with default action
             mainPattern = remaining;
             mainBlock = 'print $0';
         }
@@ -214,23 +219,37 @@ export class AwkCommand implements ICommand {
             if (expr === '') expr = '$0';
 
             // Variable substitution
-            // We use a simplified token replacement.
-            // $0...$N
-            for (let i = fields.length; i >= 0; i--) {
-                const val = i === 0 ? line : fields[i - 1];
-                // Replace $i but ensure we don't break string literals or other variables
-                // Simple hack: Quote the value
-                expr = expr.split(`$${i}`).join(`"${val.replace(/"/g, '\\"')}"`);
+            // We substitute larger indices first to avoid partial matches on $1 vs $10
+            for (let i = fields.length + 10; i >= 0; i--) { // Check higher indices comfortably
+                const val = i === 0 ? line : (fields[i - 1] || '');
+                // Replace $i with value string
+                // Using split/join is safe against regex special chars
+                // We wrap the value in quotes for JS eval
+                const safeVal = JSON.stringify(val);
+                expr = expr.split(`$${i}`).join(safeVal);
             }
 
+            // Replace globals
             expr = expr.split('NF').join(NF.toString());
             expr = expr.split('NR').join(NR.toString());
 
             try {
-                // Safe-ish eval for math
+                // Dangerous eval, but scoped
+                // If the expr ends up as "val1" "val2", implicit concatenation in awk?
+                // JS doesn't support space concat.
+                // We might need to ensure comma separation in print becomes space?
+                // 'print $1, $2' -> 'print "a", "b"'.
+                // If we simply eval "a", "b", it returns "b" (comma operator).
+                // Awk print joins with OFS (space).
+                // We should handle commas in expr.
+                // Replace ',' with '+" "+'. 
+                // But only outside quotes! Too complex for simple parsing.
+                // Simplified: Assuming simple expressions for now.
+
                 const result = new Function(`return ${expr}`)();
                 return String(result);
             } catch (e) {
+                // Fallback: return raw expr with quotes stripped?
                 return expr.replace(/"/g, '');
             }
         }

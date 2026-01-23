@@ -20,7 +20,6 @@ export class SystemUtilsModule implements CommandModule {
     register(registry: CommandRegistry): void {
         registry.register('true', new TrueCommand());
         registry.register('false', new FalseCommand());
-        registry.register('date', new DateCommand());
         registry.register('who', new WhoCommand());
         registry.register('tty', new TtyCommand());
         registry.register('id', new IdCommand());
