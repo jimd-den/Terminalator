@@ -21,11 +21,12 @@ import { TerminalState } from '../../entities/TerminalState';
 export class ReturnCommand implements ICommand {
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         const input = context.stdin;
-        const exitCode = args.length > 0 ? parseInt(args[0], 10) : 0;
+        const exitCode = args.length > 0 ? parseInt(args[0], 10) : state.lastExitCode;
         return {
             output: '',
             newState: state,
-            exitCode: isNaN(exitCode) ? 0 : exitCode
+            exitCode: parseInt(args[0]) || 0, // Simplified return value
+            controlFlow: 'RETURN'
         };
     }
 }

@@ -15,7 +15,11 @@ import { MailSystem, MailMessage } from '../domain/usecases/MailSystem';
 import { FileSystem } from '../domain/entities/FileSystem';
 import { TelemetryPort } from '../domain/ports/TelemetryPort';
 
+
+import { FileSystemService } from '../domain/services/FileSystemService';
+import { SystemGenerator } from '../domain/services/SystemGenerator';
 import { TutorEngine, TutorEvent } from '../domain/entities/TutorEngine';
+import { LessonGenerator, LessonType } from '../domain/services/LessonGenerator';
 
 export class GameManager {
     private mailSystem: MailSystem;
@@ -28,12 +32,34 @@ export class GameManager {
      * @param fs - The file system entity.
      * @param telemetry - The telemetry port for logging events.
      */
-    constructor(fs: FileSystemService, private telemetry?: TelemetryPort) {
-        this.mailSystem = new MailSystem(fs, telemetry);
+    private fs: FileSystem;
+
+    /**
+     * Initializes the Game Manager.
+     *
+     * @param fs - The file system entity.
+     * @param telemetry - The telemetry port for logging events.
+     */
+    constructor(fs: FileSystem, private telemetry?: TelemetryPort) {
+        this.fs = fs;
+        if (!this.fs) {
+            throw new Error("GameManager initialized without FileSystem! Critical Error.");
+        }
+
+        const fsService = new FileSystemService(fs);
+        this.mailSystem = new MailSystem(fsService, telemetry);
         this.tutorEngine = new TutorEngine();
 
         // Wire up Tutor Events to IRC (MailSystem)
         this.tutorEngine.subscribe(this.handleTutorEvent);
+
+        // Initialize System if empty
+        // Checking if root has no children (except potentially . and .. which are virtual/not in map? 
+        // Dentry children map usually empty on fresh init)
+        if (fs.root && fs.root.children.size === 0) {
+            const generator = new SystemGenerator();
+            generator.populate(fsService, { difficulty: 1 });
+        }
     }
 
     private handleTutorEvent = (event: TutorEvent) => {
@@ -54,7 +80,10 @@ export class GameManager {
                 break;
             case 'COMPLETE':
                 this.mailSystem.sendMail(tutorNpc, 'LESSON COMPLETE', `MODULE ${event.payload.id} VERIFIED. PROCEEDING.`);
-                // Auto-start next lesson logic could go here
+                // Auto-start next random lesson after a delay?
+                // Or let user request it.
+                // For now, let's auto-generate a mail invite for the next one?
+                // Or just end.
                 break;
         }
     };
@@ -94,6 +123,18 @@ export class GameManager {
 
     // Debug/admin method to start tutor
     startTutor(lessonId: string) {
-        this.tutorEngine.startLesson(lessonId);
+        this.tutorEngine.startLesson(lessonId, this.fs);
+    }
+
+    /**
+     * Starts a dynamic, procedurally generated lesson.
+     */
+    startRandomLesson() {
+        const types: LessonType[] = ['LOG_ANALYSIS', 'BULK_ORG', 'SCAFFOLDING', 'CLEANUP'];
+        const randomType = types[Math.floor(Math.random() * types.length)];
+        const lesson = LessonGenerator.generate(randomType);
+
+        this.tutorEngine.startLesson(lesson, this.fs);
+        return lesson;
     }
 }

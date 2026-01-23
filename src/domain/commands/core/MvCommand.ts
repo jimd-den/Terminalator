@@ -11,19 +11,18 @@
  * Allows the operator to relocate nodes in the file system.
  */
 
-import { ICommand } from '../ICommand';
+import { CommandBase } from '../CommandBase';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
 import { FileSystemService } from '../../services/FileSystemService';
 
-export class MvCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+export class MvCommand extends CommandBase {
+    constructor(private fsService: FileSystemService) { super(); }
 
-    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+    executeInternal(args: string[], flags: Set<string>, operands: string[], context: ProcessContext, state: TerminalState): CommandResponse {
         const input = context.stdin;
-        const flags = args.filter(arg => arg.startsWith('-')); // -f, -i ignored for now
-        const operands = args.filter(arg => !arg.startsWith('-'));
+        // Flags handled by base class (though Mv ignores most)
 
         if (operands.length < 2) {
             return {
@@ -36,10 +35,10 @@ export class MvCommand implements ICommand {
         const sources = operands.slice(0, operands.length - 1);
         const destination = operands[operands.length - 1];
 
-        // Process destination similar to CP
-        let destPath = this.resolvePath(destination, state);
-        const destNode = this.fs.resolve(destPath);
-        const destIsDir = destNode ? this.fs.isDirectory(destNode) : destination.endsWith('/');
+        // Process destination
+        const destPath = this.fsService.resolveAbsolutePath(destination, state.currentDirectory);
+        const destNode = this.fsService.resolve(destPath);
+        const destIsDir = destNode ? this.fsService.isDirectory(destNode) : destination.endsWith('/');
 
         // If multiple sources, dest MUST be a directory
         if (sources.length > 1 && destNode && !destIsDir) {
@@ -51,8 +50,8 @@ export class MvCommand implements ICommand {
         }
 
         for (const source of sources) {
-            const srcPath = this.resolvePath(source, state);
-            const srcNode = this.fs.resolve(srcPath);
+            const srcPath = this.fsService.resolveAbsolutePath(source, state.currentDirectory);
+            const srcNode = this.fsService.resolve(srcPath);
 
             if (!srcNode) {
                 return {
@@ -66,7 +65,7 @@ export class MvCommand implements ICommand {
             // If dest doesn't exist but is treated as file (not ending in /) -> renaming dir to file is valid?
             // "mv dir file" -> rename dir to file. Valid.
             // "mv dir existing_file" -> fail (cannot overwrite file with dir).
-            if (this.fs.isDirectory(srcNode) && destNode && !this.fs.isDirectory(destNode)) {
+            if (this.fsService.isDirectory(srcNode) && destNode && !this.fsService.isDirectory(destNode)) {
                 return {
                     output: `mv: cannot overwrite non-directory '${destination}' with directory '${source}'`,
                     newState: state,
@@ -85,7 +84,7 @@ export class MvCommand implements ICommand {
                     continue; // No-op, exit code 0 implied for this item
                 }
 
-                this.fs.rename(srcPath, finalDest);
+                this.fsService.rename(srcPath, finalDest);
 
             } catch (e: any) {
                 return {
@@ -101,10 +100,5 @@ export class MvCommand implements ICommand {
             newState: state,
             exitCode: 0
         };
-    }
-
-    private resolvePath(path: string, state: TerminalState): string {
-        if (path.startsWith('/')) return path;
-        return state.currentDirectory === '/' ? `/${path}` : `${state.currentDirectory}/${path}`;
     }
 }

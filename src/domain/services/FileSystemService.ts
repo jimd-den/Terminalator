@@ -17,11 +17,43 @@ export class FileSystemService {
         this.pathResolver = new PathResolver(fs.inodeTable);
     }
 
+    get fileSystem(): FileSystem {
+        return this.fs;
+    }
+
     /**
      * Traverses the file system to find a node by path.
      */
     resolve(path: string, cwd: string = '/', followSymlinks: boolean = true): Dentry | null {
         return this.pathResolver.resolve(this.fs.root, path, cwd, followSymlinks);
+    }
+
+    /**
+     * pure: Resolves a path string to an absolute, normalized path.
+     * Does not check for existence.
+     * 
+     * @param path The path to resolve (relative or absolute)
+     * @param cwd The current working directory (absolute)
+     * @returns Normalized absolute path
+     */
+    resolveAbsolutePath(path: string, cwd: string): string {
+        // 1. Handle absolute vs relative
+        let absolutePath = path.startsWith('/') ? path : (cwd === '/' ? `/${path}` : `${cwd}/${path}`);
+
+        // 2. Split and Normalize
+        const parts = absolutePath.split('/').filter(p => p.length > 0 && p !== '.');
+        const stack: string[] = [];
+
+        for (const part of parts) {
+            if (part === '..') {
+                stack.pop();
+            } else {
+                stack.push(part);
+            }
+        }
+
+        // 3. Reconstruct
+        return '/' + stack.join('/');
     }
 
     getAbsolutePath(dentry: Dentry): string {
@@ -42,6 +74,53 @@ export class FileSystemService {
 
     mkdir(path: string, mode: number = 0o755, uid: number = 0, gid: number = 0, cwd: string = '/'): Dentry {
         return this.createDentry(path, S_IFDIR | mode, uid, gid, cwd);
+    }
+
+    /**
+     * Recursive mkdir. Creates directories if they don't exist.
+     */
+    public mkdirp(path: string, mode: number = 0o755, uid: number = 0, gid: number = 0, cwd: string = '/'): Dentry {
+        const isAbsolute = path.startsWith('/');
+        let targetPath = path;
+
+        // Simple manual resolution for iteration
+        // Note: verify real path resolution rules if we had complex CWD handling (e.g. ..)
+        // For system initialization, safely generic.
+        if (!isAbsolute) {
+            targetPath = cwd === '/' ? `/${path}` : `${cwd}/${path}`;
+        }
+
+        // Clean double slashes if any (naive)
+        targetPath = targetPath.replace(/\/\//g, '/');
+
+        if (targetPath === '/') return this.fs.root;
+
+        const parts = targetPath.split('/').filter(p => p.length > 0);
+        let currentPath = '';
+
+        let lastDentry = this.fs.root;
+
+        for (const part of parts) {
+            currentPath += `/${part}`;
+            const existing = this.resolve(currentPath);
+            if (existing) {
+                lastDentry = existing;
+                const inode = this.getInode(lastDentry.inodeId);
+                if (inode && !(inode.mode & S_IFDIR)) {
+                    throw new Error(`mkdirp: cannot create directory '${currentPath}': Not a directory`);
+                }
+            } else {
+                lastDentry = this.mkdir(currentPath, mode, uid, gid);
+            }
+        }
+        return lastDentry;
+    }
+
+    /**
+     * Alias for mkdirp (Tutor/System usage)
+     */
+    public createDirectory(path: string, mode: number = 0o755): Dentry {
+        return this.mkdirp(path, mode);
     }
 
     createFile(path: string, mode: number = 0o644, uid: number = 0, gid: number = 0, cwd: string = '/'): Dentry {

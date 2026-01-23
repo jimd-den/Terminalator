@@ -26,13 +26,13 @@ export class YaccCommand implements ICommand {
         }
 
         if (!file) {
-             return { output: 'yacc: no input file', newState: state, exitCode: 1 };
+            return { output: 'yacc: no input file', newState: state, exitCode: 1 };
         }
 
-        const fs = state.fs;
+        const fs = context.fileSystemService;
         const node = fs.resolve(file, state.currentDirectory);
         if (!node || fs.isDirectory(node)) {
-             return { output: `yacc: ${file}: No such file or directory`, newState: state, exitCode: 1 };
+            return { output: `yacc: ${file}: No such file or directory`, newState: state, exitCode: 1 };
         }
 
         const cCode = `
@@ -46,7 +46,7 @@ int yyparse(void) { return 0; }
             fs.writeFile(state.currentDirectory + '/' + prefix + '.tab.h', hCode, 'w', state.currentDirectory);
         }
         if (graph) {
-             fs.writeFile(state.currentDirectory + '/' + prefix + '.dot', 'digraph {}', 'w', state.currentDirectory);
+            fs.writeFile(state.currentDirectory + '/' + prefix + '.dot', 'digraph {}', 'w', state.currentDirectory);
         }
 
         return { output: '', newState: state, exitCode: 0 };

@@ -10,7 +10,7 @@ import { TerminalState } from '../../entities/TerminalState';
 export class UncompressCommand implements ICommand {
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         const input = context.stdin;
-        const fs = state.fs;
+        const fs = context.fileSystemService;
         const file = args[0];
 
         if (!file) {

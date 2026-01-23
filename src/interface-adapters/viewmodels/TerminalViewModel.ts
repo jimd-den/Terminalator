@@ -12,13 +12,15 @@
  * Handles input processing, autocomplete, state updates, and navigation routing.
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { FileSystem } from '../../domain/entities/FileSystem';
 import { FileSystemService } from '../../domain/services/FileSystemService';
 import { ExecuteCommand, CommandResponse } from '../../domain/usecases/ExecuteCommand';
 import { GameManager } from '../GameManager';
 import { createInitialTerminalState, TerminalState } from '../../domain/entities/TerminalState';
+import { TutorEvent, TutorEmotion } from '../../domain/entities/TutorEngine';
+import React from 'react';
 
 export type ActiveApp = { type: 'SHELL' } | { type: 'VIM', filename: string };
 
@@ -29,7 +31,7 @@ export interface TerminalOutputLine {
 }
 
 export const useTerminalViewModel = (
-    fs: FileSystemService,
+    fs: FileSystem,
     commandExecutor: ExecuteCommand,
     gameManager: GameManager
 ) => {
@@ -39,6 +41,8 @@ export const useTerminalViewModel = (
     const [activeApp, setActiveApp] = useState<ActiveApp>({ type: 'SHELL' });
     const [state, setState] = useState<TerminalState>(createInitialTerminalState());
     const [input, setInput] = useState('');
+    const [tutorEmotion, setTutorEmotion] = useState<TutorEmotion>(TutorEmotion.NORMAL);
+    const [crashingIndices, setCrashingIndices] = useState<number[]>([]);
     const [outputLines, setOutputLines] = useState<TerminalOutputLine[]>([
         { text: 'SYSTEM INITIALIZED... BOOT SEQUENCE READY', type: 'output' },
         { text: 'WELCOME TO MAINFRAME v1.0', type: 'output' },
@@ -47,9 +51,103 @@ export const useTerminalViewModel = (
     const [ghostText, setGhostText] = useState('');
     const [isTransitioning, setIsTransitioning] = useState(false);
 
-    // -- Logic --
+    // State Refs for Event Handlers (avoid stale closures)
+    const cwdRef = useRef(state.currentDirectory);
+    const preTutorCwdRef = useRef<string | null>(null);
+
+    useEffect(() => {
+        cwdRef.current = state.currentDirectory;
+    }, [state.currentDirectory]);
 
     // -- Logic --
+    // Tutor Engine Subscription
+    useEffect(() => {
+        const unsubscribe = gameManager.tutorEngine.subscribe((event: TutorEvent) => {
+            const engine = gameManager.tutorEngine;
+
+            if (event.type === 'START') {
+                const lesson = event.payload;
+                // Save context
+                preTutorCwdRef.current = cwdRef.current;
+                const targetCwd = lesson.cwd || '/home/user';
+
+                // Switch context
+                setState(prev => ({ ...prev, currentDirectory: targetCwd }));
+                setOutputLines(prev => [...prev, { text: `[ SYSTEM ] RELOCATING TO TRAINING ENVIRONMENT: ${targetCwd}...`, type: 'output' } as TerminalOutputLine]);
+
+            } else if (event.type === 'STOP') {
+                // Restore context
+                const original = preTutorCwdRef.current;
+                if (original) {
+                    setState(prev => ({ ...prev, currentDirectory: original }));
+                    preTutorCwdRef.current = null;
+                    setOutputLines(prev => [...prev, { text: `[ SYSTEM ] TRAINING HALTED. RESTORING CONTEXT: ${original}`, type: 'output' } as TerminalOutputLine]);
+                }
+
+            } else if (event.type === 'EMOTION_CHANGE') {
+                setTutorEmotion(event.payload);
+            } else if (event.type === 'CORRECTION') {
+                // Show the bad character briefly
+                const completed = engine.getCompletedText();
+                const badChar = event.payload.actual;
+                setInput(completed + badChar);
+                // Ghost text stays as is (from verified progress)
+                setGhostText(engine.getGhostText());
+
+                setTimeout(() => {
+                    setInput(completed); // Snap back to correct state
+                }, 200);
+            } else if (event.type === 'PROGRESS') {
+                setInput(engine.getCompletedText());
+                setGhostText(engine.getGhostText());
+            } else if (event.type === 'MISTAKE') {
+                // Crash / Aggressive Backspace Animation
+                const droppedCount = event.payload.dropped;
+                const completed = engine.getCompletedText();
+                const startIdx = completed.length;
+                const endIdx = startIdx + droppedCount;
+
+                const indices = [];
+                for (let i = startIdx; i < endIdx; i++) {
+                    indices.push(i);
+                }
+                setCrashingIndices(indices);
+
+                // Delay state update to allow animation to play
+                setTimeout(() => {
+                    setInput(completed);
+                    setGhostText(engine.getGhostText());
+                    setCrashingIndices([]);
+                }, 400);
+            } else if (event.type === 'COMPLETE') {
+                const lesson = event.payload;
+                setInput(lesson.text);
+                setGhostText('');
+                handleCommand(lesson.text);
+
+                // Start restoration logic after command executes? 
+                // Or just trust STOP will be called?
+                // `COMPLETE` usually means the user finished. Engine emits COMPLETE then sets active=false?
+                // Engine.completeLesson sets active=false, but does NOT emit STOP automatically.
+                // It emits COMPLETE. 
+                // We should restore context here too.
+
+                const original = preTutorCwdRef.current;
+                if (original) {
+                    // Delay slightly so the success message/command runs in the tutor dir?
+                    // Actually, if we restore, the next prompt will be in old dir.
+                    // Let's restore immediately or after short delay.
+                    setTimeout(() => {
+                        setState(prev => ({ ...prev, currentDirectory: original }));
+                        preTutorCwdRef.current = null;
+                        setOutputLines(prev => [...prev, { text: `[ SYSTEM ] MISSION ACCOMPLISHED. RETURN TO BASE: ${original}`, type: 'output' } as TerminalOutputLine]);
+                    }, 1000);
+                }
+            }
+        });
+
+        return unsubscribe;
+    }, [gameManager]);
 
     const suggestions = ['help', 'ls', 'cd', 'cat', 'whoami', 'mail', 'check-comms', 'clear', 'vim', 'man', 'grep'];
 
@@ -102,6 +200,29 @@ export const useTerminalViewModel = (
     const handleCommand = useCallback(async (manualCommand?: string) => {
         const cmdToRun = manualCommand !== undefined ? manualCommand : input;
         if (!cmdToRun) return;
+
+        // Special Command: exit
+        if (cmdToRun === 'exit') {
+            gameManager.tutorEngine.stop();
+            setOutputLines([]);
+            setInput('');
+            setGhostText('');
+            return;
+        }
+
+        // Special Command: train
+        if (cmdToRun === 'train') {
+            const lesson = gameManager.startRandomLesson();
+            setOutputLines(prev => [
+                ...prev,
+                { text: `> ${cmdToRun}`, type: 'input' } as TerminalOutputLine,
+                { text: `[ SYSTEM ] LOADING SIMULATION: ${lesson.id}`, type: 'output' } as TerminalOutputLine,
+                { text: `[ MISSION ] ${lesson.instructions}`, type: 'output' } as TerminalOutputLine
+            ]);
+            setInput('');
+            setGhostText('');
+            return;
+        }
 
         // Execute via Domain Logic
         const response: CommandResponse = await commandExecutor.execute(cmdToRun, state);
@@ -162,25 +283,7 @@ export const useTerminalViewModel = (
             if (lesson && lesson.type === 'SHELL') {
                 if (key.length === 1) {
                     gameManager.tutorEngine.handleInput(key);
-
-                    // Check if lesson just finished (active went false)
-                    if (!gameManager.tutorEngine.isActive()) {
-                        const fullCmd = lesson.text;
-                        setInput(fullCmd);
-                        setGhostText('');
-
-                        // Auto-execute command
-                        handleCommand(fullCmd);
-                        return;
-                    }
-
-                    // Update UI state to reflect Tutor progress
-                    const completed = gameManager.tutorEngine.getCompletedText();
-                    const remaining = gameManager.tutorEngine.getGhostText();
-
-                    setInput(completed);
-                    setGhostText(remaining);
-                    return; // Consumed by Tutor
+                    return; // Consumed by Tutor (UI updates via subscription)
                 }
                 // Allow BACKSPACE to maybe "undo" manually if we wanted, but our mechanics are auto-regression.
                 // Allow ENTER only if lesson complete?
@@ -236,6 +339,8 @@ export const useTerminalViewModel = (
         activeApp,
         state,
         input,
+        tutorEmotion,
+        crashingIndices,
         outputLines,
         ghostText,
         isTransitioning,

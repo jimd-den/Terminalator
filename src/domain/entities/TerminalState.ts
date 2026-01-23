@@ -14,15 +14,16 @@
 
 import { FileSystem } from './FileSystem';
 
+
 export interface TerminalState {
     currentDirectory: string;
     history: string[];
     environment: Record<string, string>;
     aliases: Record<string, string>;
-    user: string;
-    hostname: string;
-    isLocked: boolean;
-    fs: FileSystemService; // Added to interface for command access
+    user: { uid: number, gid: number, groups: number[] };
+    lastExitCode: number;
+    functions: Map<string, any>; // FunctionDefNode
+
 }
 
 /**
@@ -49,15 +50,15 @@ export const createInitialTerminalState = (): TerminalState => {
             PATH: '/bin:/usr/bin',
             USER: 'operator',
             HOME: '/home/operator',
+            SHELL: '/bin/sh',
             TERM: 'xterm-256color',
         },
         aliases: {
             'll': 'ls -l',
             'la': 'ls -a'
         },
-        user: 'operator',
-        hostname: 'mainframe-01',
-        isLocked: false,
-        fs: new FileSystem() // Default fresh FS if not provided (though tests should overwrite or executor should manage)
+        user: { uid: 1000, gid: 1000, groups: [1000] },
+        lastExitCode: 0,
+        functions: new Map()
     };
-};
+}

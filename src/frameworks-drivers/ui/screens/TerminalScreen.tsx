@@ -24,6 +24,8 @@ import { useVimEditor } from '../components/vim/VimEditor';
 import { useInput } from '../context/InputContext';
 import { useTerminalViewModel } from '../../../interface-adapters/viewmodels/TerminalViewModel';
 
+import { Cursor } from '../components/Cursor';
+import { PopChar } from '../components/PopChar';
 import { useTheme } from '../context/ThemeContext';
 
 export const TerminalScreen: React.FC = () => {
@@ -35,6 +37,8 @@ export const TerminalScreen: React.FC = () => {
         activeApp,
         state,
         input,
+        tutorEmotion,
+        crashingIndices,
         outputLines,
         ghostText,
         isTransitioning,
@@ -85,17 +89,12 @@ export const TerminalScreen: React.FC = () => {
             position: 'relative',
             justifyContent: 'center',
         },
-        input: {
-            width: '100%',
+        inputChar: {
             color: colors.text.primary,
             fontFamily: settings.fontFamily,
             fontSize: THEME.typography.fontSize.lg,
-            padding: 0,
-            margin: 0,
             height: 35,
             lineHeight: 35,
-            textAlignVertical: 'center',
-            includeFontPadding: false,
         },
         ghostText: {
             position: 'absolute',
@@ -170,14 +169,16 @@ export const TerminalScreen: React.FC = () => {
             ) : (
                 <>
                     <Text style={dynamicStyles.inputLabel}>
-                        INPUT // {state.user}@system
+                        INPUT // {state.environment.USER}@system
                     </Text>
                     <Pressable style={dynamicStyles.inputContainer} onPress={refocus}>
-                        <Text style={dynamicStyles.input}>
-                            {input}
-                            <View style={{ width: 10, height: 20, backgroundColor: colors.primary, transform: [{ translateY: 4 }] }} />
-                            <Text style={{ color: colors.text.dim }}>{ghostText}</Text>
-                        </Text>
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' }}>
+                            {input.split('').map((char, index) => (
+                                <PopChar key={`${index}-${char}`} style={dynamicStyles.inputChar} isCrashing={crashingIndices.includes(index)}>{char}</PopChar>
+                            ))}
+                            <Cursor color={colors.primary} inputTrigger={input.length} emotion={tutorEmotion} />
+                            <Text style={[dynamicStyles.inputChar, { color: colors.text.dim }]}>{ghostText}</Text>
+                        </View>
                     </Pressable>
                 </>
             )}

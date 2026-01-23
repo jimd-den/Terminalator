@@ -19,7 +19,7 @@ import { TerminalState } from '../../entities/TerminalState';
 import { FileSystem } from '../../entities/FileSystem';
 
 export class DotCommand implements ICommand {
-    constructor(private fs: FileSystemService) {}
+    constructor(private fs: FileSystemService) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         const input = context.stdin;
@@ -35,16 +35,26 @@ export class DotCommand implements ICommand {
         const file = args[0];
         const node = this.fs.resolve(file, state.currentDirectory);
         if (!node) {
-             return {
+            return {
                 output: `.: ${file}: No such file or directory`,
                 newState: state,
                 exitCode: 1
             };
         }
+        // Read file content
+        const absPath = this.fs.getAbsolutePath(node);
+        const content = this.fs.readFile(absPath);
+
+        if (context.executor) {
+            // Execute in CURRENT state (shared environment)
+            const response = await context.executor.execute(content, state);
+            return response;
+        }
+
         return {
-            output: '',
+            output: '.: executor not available',
             newState: state,
-            exitCode: 0
+            exitCode: 1
         };
     }
 }

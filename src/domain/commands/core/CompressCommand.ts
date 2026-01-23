@@ -11,16 +11,16 @@ export class CompressCommand implements ICommand {
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         const input = context.stdin;
         // compress file -> file.Z
-        const fs = state.fs;
+        const fs = context.fileSystemService;
         const file = args[0];
 
         if (!file) {
-             return { output: 'compress: missing file', newState: state, exitCode: 1 };
+            return { output: 'compress: missing file', newState: state, exitCode: 1 };
         }
 
         const node = fs.resolve(file, state.currentDirectory);
         if (!node || fs.isDirectory(node)) {
-             return { output: `compress: ${file}: No such file or directory`, newState: state, exitCode: 1 };
+            return { output: `compress: ${file}: No such file or directory`, newState: state, exitCode: 1 };
         }
 
         const path = fs.getAbsolutePath(node);

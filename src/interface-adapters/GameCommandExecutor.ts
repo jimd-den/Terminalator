@@ -12,6 +12,7 @@
 import { ExecuteCommand } from '../domain/usecases/ExecuteCommand';
 import { MailSystem } from '../domain/usecases/MailSystem';
 import { FileSystem } from '../domain/entities/FileSystem';
+import { FileSystemService } from '../domain/services/FileSystemService';
 import { CodeCompiler } from '../domain/usecases/CodeCompiler';
 import { TelemetryPort } from '../domain/ports/TelemetryPort';
 
@@ -27,15 +28,27 @@ import { SettingsCommand } from './commands/game/SettingsCommand';
 
 import { TutorCommand } from './commands/game/TutorCommand';
 
+import { CommandRegistry } from '../domain/commands/CommandRegistry';
+import { CoreUtilsModule } from '../domain/modules/CoreUtilsModule';
+import { SystemUtilsModule } from '../domain/modules/SystemUtilsModule';
+
 export class GameCommandExecutor extends ExecuteCommand {
     private mailSystem: MailSystem;
     private compiler: CodeCompiler;
     private gameManager: GameManager;
 
     constructor(fs: FileSystemService, gameManager: GameManager, telemetry?: TelemetryPort) {
-        super(fs, telemetry);
+        // Initialize Core Registry (Missing Link restored)
+        const registry = new CommandRegistry();
+
+        // Register Core Modules (Restoring 'ls', 'cd', etc.)
+        new CoreUtilsModule(fs.fileSystem).register(registry);
+        new SystemUtilsModule().register(registry);
+
+        super(fs, telemetry, registry);
+
         this.mailSystem = new MailSystem(fs, telemetry);
-        this.compiler = new CodeCompiler(fs, telemetry);
+        this.compiler = new CodeCompiler(this.fs, telemetry);
         this.gameManager = gameManager;
 
         this.registerGameCommands();
@@ -52,8 +65,8 @@ export class GameCommandExecutor extends ExecuteCommand {
         registry.register('check-comms', new CheckCommsCommand(this.gameManager));
         registry.register('compile', new CompileCommand(this.compiler));
         registry.register('vim', new VimCommand());
-        registry.register('scheme', new SchemeCommand(this.fs));
-        registry.register('asm', new AsmCommand(this.fs));
+        registry.register('scheme', new SchemeCommand(this.service));
+        registry.register('asm', new AsmCommand(this.service));
         registry.register('options', new SettingsCommand());
         registry.register('settings', new SettingsCommand());
 

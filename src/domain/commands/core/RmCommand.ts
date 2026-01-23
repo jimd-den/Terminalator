@@ -11,21 +11,18 @@
  * Allows the operator to delete nodes from the file system.
  */
 
-import { ICommand } from '../ICommand';
+import { CommandBase } from '../CommandBase';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
 import { FileSystemService } from '../../services/FileSystemService';
 
-export class RmCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+export class RmCommand extends CommandBase {
+    constructor(private fsService: FileSystemService) { super(); }
 
-    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
-        const flags = args.filter(arg => arg.startsWith('-'));
-        const targets = args.filter(arg => !arg.startsWith('-'));
-        const recursive = flags.some(f => f.includes('r') || f.includes('R'));
-        const force = flags.some(f => f.includes('f'));
+    executeInternal(args: string[], flags: Set<string>, targets: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const recursive = this.hasFlag('r') || this.hasFlag('R');
+        const force = this.hasFlag('f');
 
         if (targets.length === 0) {
             return {
@@ -36,14 +33,8 @@ export class RmCommand implements ICommand {
         }
 
         for (const target of targets) {
-            let path = target;
-            if (!target.startsWith('/')) {
-                path = state.currentDirectory === '/'
-                    ? `/${target}`
-                    : `${state.currentDirectory}/${target}`;
-            }
-
-            const existing = this.fs.resolve(path);
+            const path = this.fsService.resolveAbsolutePath(target, state.currentDirectory);
+            const existing = this.fsService.resolve(path);
 
             if (!existing) {
                 if (force) continue;
@@ -55,7 +46,7 @@ export class RmCommand implements ICommand {
             }
 
             // Check if directory
-            if (this.fs.isDirectory(existing)) {
+            if (this.fsService.isDirectory(existing)) {
                 if (!recursive) {
                     return {
                         output: `rm: cannot remove '${target}': Is a directory`,
@@ -77,7 +68,7 @@ export class RmCommand implements ICommand {
             } else {
                 // Remove file
                 try {
-                    this.fs.deleteNode(path);
+                    this.fsService.deleteNode(path);
                 } catch (e: any) {
                     // Should not happen if we resolved it, unless permissions/race
                     return {
@@ -97,23 +88,19 @@ export class RmCommand implements ICommand {
     }
 
     private deleteRecursive(path: string) {
-        const node = this.fs.resolve(path);
+        const node = this.fsService.resolve(path);
         if (!node) return;
 
-        if (this.fs.isDirectory(node)) {
+        if (this.fsService.isDirectory(node)) {
             // Delete all children first
-            // We need to copy keys to avoid modification during iteration if we were deleting in loop
-            // But Map iteration is usually safe if we just get values
             const children = Array.from(node.children.values());
             for (const child of children) {
-                // Construct child path
-                // path is absolute 
                 const childPath = path === '/' ? `/${child.name}` : `${path}/${child.name}`;
                 this.deleteRecursive(childPath);
             }
         }
 
         // Now valid to delete (empty dir or file)
-        this.fs.deleteNode(path);
+        this.fsService.deleteNode(path);
     }
 }

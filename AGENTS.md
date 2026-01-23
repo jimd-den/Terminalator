@@ -5,94 +5,116 @@
 
 > [!IMPORTANT]
 > **Adhere strictly to Clean Architecture and the 8-Point GEMINI System.**
-> This is not a suggestion. It is the primary directive.
+> This is a strict requirement for all contributions.
 
 ---
 
 ## 1. Architectural Philosophy: The Four-Fold Shield
 
-The codebase follows a strict **Clean Architecture** implementation. Dependencies flow **inwards**.
+The codebase follows a strict **Clean Architecture** implementation, ensuring separation of concerns and testability. Dependencies always flow **inwards**.
 
-### Layers
+### Layers & Responsibilities
+
 1.  **Entities (Domain)** (`src/domain/entities`)
-    *   **Role:** Enterprise logic. Pure data structures and business rules.
-    *   **Dependencies:** NONE. No external libraries.
-    *   **Key Files:** `FileSystem.ts` (Inode/Dentry tree), `TerminalState.ts`, `EditorBuffer.ts`, `VimEngine.ts`.
-2.  **Use Cases (Application)** (`src/domain/usecases`)
-    *   **Role:** Application logic. Orchestrates entities to achieve goals.
-    *   **Dependencies:** Entities, Repositories (Interfaces).
-    *   **Key Files:** `ExecuteCommand.ts` (Command Dispatcher), `CommandRegistry.ts`.
-3.  **Interface Adapters** (`src/interface-adapters`)
-    *   **Role:** Bridges domain to outer world.
-    *   **Dependencies:** Use Cases, Ports.
-    *   **Key Files:** `GameManager.ts`, `ConsoleLayout.tsx`.
-4.  **Frameworks & Drivers** (`src/frameworks-drivers`)
-    *   **Role:** UI, Databases, External Systems.
+    *   **Role:** Enterprise logic, pure data structures, and core business rules.
+    *   **Dependencies:** **NONE**. Strictly forbidden to import from outer layers or external libraries (except specific polyfills if absolutely necessary).
+    *   **Key Files:** 
+        *   `FileSystem.ts`: The Inode/Dentry tree structure.
+        *   `TerminalState.ts`: State definition.
+        *   `ProcessContext.ts`: Execution context for commands.
+
+2.  **Domain Services** (`src/domain/services`)
+    *   **Role:** Domain logic that interacts with multiple entities or doesn't fit naturally into a single entity.
+    *   **Dependencies:** Entities.
+    *   **Key Files:**
+        *   `FileSystemService.ts`: Implements POSIX logic (mkdir, touch) using the `FileSystem` entity.
+        *   `ShellParser.ts`: Tokenizes and parses command input into AST.
+        *   `ShellExpansionService.ts`: Handles variable expansion, arithmetic, globbing, and quote removal.
+
+3.  **Use Cases (Application)** (`src/domain/usecases`)
+    *   **Role:** Application logic. Orchestrates entities and domain services to achieve specific user goals.
+    *   **Dependencies:** Entities, Domain Services, Repositories (Interfaces).
+    *   **Key Files:**
+        *   `ExecuteCommand.ts`: Core dispatcher that interprets AST and runs commands.
+
+4.  **Interface Adapters** (`src/interface-adapters`)
+    *   **Role:** Adapts data between the Domain and the Frameworks. Implements the **Humble Object** pattern to strip logic from Views.
+    *   **Dependencies:** Use Cases, Ports (Interfaces).
+    *   **Key Files:**
+        *   `TerminalViewModel.ts`: Manages presentation state, input handling, and autocomplete.
+        *   `GameManager.ts`: Coordinates game-specific logic and event systems.
+        *   `GameCommandExecutor.ts`: Interface for UI components to execute shell commands.
+
+5.  **Frameworks & Drivers** (`src/frameworks-drivers`)
+    *   **Role:** UI Components, Database Implementations, System I/O.
     *   **Dependencies:** Interface Adapters.
-    *   **Key Files:** React Native components, Expo config.
+    *   **Key Files:**
+        *   `ui/screens/TerminalScreen.tsx`: The main View (Passive View).
+        *   `ui/components/ConsoleLayout.tsx`: Layout structure.
 
 ---
 
 ## 2. Core Systems & Patterns
 
-### The File System (`FileSystem.ts`)
-*   **Structure:** POSIX-compliant Inode/Dentry model.
-*   **Inodes:** Hold metadata (mode, uid, gid, size, content).
-*   **Dentries:** Map filenames to Inodes. Establish the tree hierarchy.
-*   **Persistence:** Currently in-memory. References `fs.readFile`, `fs.writeFile`, `fs.resolveNode`.
+### The File System
+*   **Model:** In-memory POSIX-compliant Inode/Dentry system.
+*   **Separation:** Data is in `FileSystem` (Entity), Logic is in `FileSystemService` (Domain Service).
+*   **Usage:** Do **NOT** use Node.js `fs` module in client-side code. Use `FileSystemService`.
 
-### The Command Pattern (`ICommand.ts`, `ExecuteCommand.ts`)
-*   **Pattern:** Command Pattern (obviously).
-*   **Interface:**
-    ```typescript
-    interface ICommand {
-        execute(args: string[], state: TerminalState, input?: string): CommandResponse | Promise<CommandResponse>;
-    }
-    ```
-*   **Piping Architecture:**
-    *   The `ExecuteCommand` use case handles pipe splitting (`|`).
-    *   Output of `Command A` is passed as `input` argument to `Command B`.
-    *   Commands MUST check `input` if no file arguments are provided (support stdin).
+### The Command Pattern
+*   **Implementation:** `ICommand` interface in `src/domain/commands/ICommand.ts`.
+*   **Base Class:** `CommandBase` provides common argument parsing and help generation.
+*   **Registry:** `CommandRegistry` maps string names to `ICommand` instances.
+*   **Modules:** Commands are grouped into Modules (`CoreUtilsModule`, `SystemUtilsModule`) for bulk registration.
+*   **Execution:** `ExecuteCommand` use case resolves commands and invokes `execute()`.
+*   **Piping:** Commands receive `stdin` via the `input` argument (3rd arg) or `context.stdin`.
 
-### The Strategy Pattern (Syntax Highlighting)
-*   **Pattern:** Strategy Pattern.
-*   **Port:** `SyntaxHighlighter.ts` (Domain).
-*   **Implementer:** `TypescriptHighlighter.ts` (Interface Adapter).
-*   **Intent:** Allows adding new languages without modifying the editor core.
+### Shell Pipeline Architecture
+1.  **Lexing/Parsing:** `ShellParser` produces an AST (Abstract Syntax Tree). It **DOES NOT** expand variables or strip quotes at this stage.
+2.  **Expansion (`ShellExpansionService`):**
+    *   **Variable Expansion:** `$VAR` -> value.
+    *   **Arithmetic Expansion:** `$(( 1 + 1 ))` -> `2`.
+    *   **Globbing:** `*.ts` -> `file1.ts file2.ts`.
+    *   **Quote Removal:** `"string"` -> `string` (strips syntactic quotes).
+3.  **Command Loading:** `ShellFactory` assembles the shell with all necessary modules.
+4.  **Execution:** `ExecuteCommand` invokes the resolved command with cleaned arguments.
+
+### The Humble Object (ViewModel)
+*   **Pattern:** Logic is moved out of React components (`TerminalScreen`) and into `TerminalViewModel`.
+*   **Benefit:** Allows the UI logic to be tested without rendering components.
+*   **Rule:** `TerminalScreen.tsx` should primarily contain JSX and layout/style logic. State management belongs in the ViewModel.
 
 ### The 8-Point GEMINI System (User Rules)
-1.  **Strict Architecture:** No bypassing layers.
-2.  **Literate Documentation:** Every file must have a header explaining intent in plain English (Pillar: The Storyteller’s Code).
-3.  **Dependency Minimalism:** Use standard library.
-4.  **Observability:** Log inputs/outputs.
-5.  **Performance:** O(1) / O(n). Pure functions.
-6.  **Readability:** Semantic naming.
-7.  **Pragmatic Design Patterns:** Use patterns (Strategy, Factory) only when necessary and explicitly named.
-8.  **SOLID / KISS Equilibrium:** Balance robustness with simplicity.
+1.  **Strict Architecture:** Respect the layers. No shortcuts.
+2.  **Literate Documentation:** "Pillar" headers in files explaining intent and context.
+3.  **Dependency Minimalism:** Avoid external dependencies. Use the standard library.
+4.  **Observability:** Implement granular logging/telemetry for traceability.
+5.  **Performance & Purity:** Prefer pure functions and O(1)/O(n) algorithms.
+6.  **Universal Readability:** Code should be readable by domain experts.
+7.  **Pragmatic Design Patterns:** Use patterns (Strategy, Factory) explicitly where they solve specific problems.
+8.  **SOLID / KISS Equilibrium:** Robustness without over-engineering.
 
 ---
 
 ## 3. Development Workflow
 
-### Test-Driven Development (TDD)
-*   **Suite:** `scripts/posix_suite.ts`.
-*   **Methodology:**
-    1.  **RED:** Write a test case in `posix_suite.ts` (e.g., adding `Grep` test).
-    2.  **GREEN:** Implement the minimal code in `src/domain/commands/core/`.
-    3.  **REFACTOR:** Optimize and clean up.
+### Testing
+*   **Primary Suite:** `scripts/posix_comprehensive_suite.ts`.
 *   **Running Tests:**
     ```bash
-    npx tsx scripts/posix_suite.ts
+    npx tsx scripts/posix_comprehensive_suite.ts
     ```
+*   **Process:**
+    1.  run existing tests to ensure baseline.
+    2.  Implement changes/features.
+    3.  Add new tests if necessary (look at `posix_comprehensive_suite.ts` for patterns).
+    4.  Verify compliance.
 
 ### Adding a New Command
-1.  **Create File:** `src/domain/commands/core/MyCommand.ts`.
-2.  **Implement Interface:** Implement `ICommand`.
-    *   Constructor typically accepts `FileSystem`.
-    *   `execute` method logic.
-    *   Handle `input` (stdin) if applicable.
-3.  **Register:** Add to `ExecuteCommand.ts` inside `registerCoreCommands()`.
-4.  **Test:** Add entry to `posix_suite.ts`.
+1.  **Create:** `src/domain/commands/core/MyCommand.ts`.
+2.  **Implement:** `ICommand` interface (extend `CommandBase`).
+3.  **Register:** Add to `CoreUtilsModule.ts` (or relevant module).
+4.  **Test:** Add to `posix_comprehensive_suite.ts`.
 
 ---
 
@@ -100,29 +122,72 @@ The codebase follows a strict **Clean Architecture** implementation. Dependencie
 
 ```
 src/
-├── domain/                  # PURE LOGIC
-│   ├── commands/            # Command implementations
-│   │   ├── core/            # POSIX commands (ls, cat, grep...)
-│   │   ├── ICommand.ts      # Contract
-│   │   └── CommandRegistry.ts
-│   ├── entities/            # Data structures (FileSystem, TerminalState)
-│   ├── usecases/            # Logic (ExecuteCommand)
-│   └── ports/               # Interfaces for I/O (Telemetry, SyntaxHighlighter)
-├── interface-adapters/      # ADAPTERS
-│   ├── GameManager.ts       # Main controller
-│   └── ...
-├── frameworks-drivers/      # REACT UI
-│   ├── components/          # React components
-│   └── ...
-└── scripts/                 # TOOLING
-    └── posix_suite.ts       # Compliance tests
+├── domain/                      # ENTITIES & LOGIC
+│   ├── commands/                # Command Implementations
+│   │   ├── core/                # StdLib (cp, ls, mv, rm, etc.)
+│   │   ├── system/              # System (shutdown, reboot)
+│   │   ├── CommandBase.ts       # Abstract Base Class
+│   │   ├── CommandRegistry.ts   # Command Lookup Registry
+│   │   └── ICommand.ts          # Command Interface
+│   ├── entities/                # Pure Data Models
+│   │   ├── FileSystem.ts        # Inode/Dentry State
+│   │   ├── TerminalState.ts     # Global State Wrapper
+│   │   └── ProcessContext.ts    # Envrionment Context
+│   ├── factories/               # Object Creation
+│   │   └── ShellFactory.ts      # Assembles Shell Context
+│   ├── modules/                 # DI Modules
+│   │   ├── CoreUtilsModule.ts   # Registers Core Commands
+│   │   └── SystemUtilsModule.ts # Registers System Commands
+│   ├── ports/                   # Interfaces (Ports)
+│   ├── services/                # Domain Services
+│   │   ├── FileSystemService.ts # POSIX Logic
+│   │   ├── ShellExpansionService.ts # Globbing & Expansion
+│   │   └── ShellParser.ts       # Input Parser
+│   └── usecases/                # Application Logic
+│       └── ExecuteCommand.ts    # Main Command Dispatcher
+├── interface-adapters/          # ADAPTERS
+│   ├── commands/                # Adaptive Commands
+│   │   └── game/                # Game Mechanics (asm, scheme, tutor, mail)
+│   ├── viewmodels/              # MVVM ViewModels
+│   │   └── TerminalViewModel.ts # UI State Logic
+│   ├── vim/                     # Vim Simulation Logic
+│   ├── GameCommandExecutor.ts   # UI-Shell Bridge
+│   └── GameManager.ts           # Game Subsystem Coordinator
+├── frameworks-drivers/          # INFRASTRUCTURE
+│   ├── ui/                      # React Native UI
+│   │   ├── screens/             # Top-level Views
+│   │   └── components/          # Reusable UI Blocks
+│   ├── telemetry/               # Logging/Tracing
+│   └── wasm/                    # WebAssembly Drivers
+├── infrastructure/              # SERVICES
+│   └── services/                # Implementation details (HostBinaryRunner)
+└── scripts/                     # TESTS & TOOLS
+    ├── posix_comprehensive_suite.ts # Main Test Suite (Run this!)
+    └── ...
 ```
 
----
+## 6. Code Hygiene & Refactoring Standards
 
-## 5. Critical Notes for Agents
+### SOLID Compliance
+*   **SRP:** Large commands (like `MakeCommand`) MUST be split into Parser/Executor services if logic exceeds 200 lines or distinct phases.
+*   **OCP:** Use the Registry pattern for extending functionality (e.g., CommandRegistry). Avoid hardcoded dispatch switch/case blocks for extensible systems.
 
-*   **Do not use `fs` (Node module) in client-side code.** Rely on the `FileSystem` entity.
-*   **Respect strict mode.** Do not use `any` unless absolutely necessary (and documented).
-*   **Comments are mandatory.** Use the "Pillar" format in file headers.
-*   **Piping matters.** Always ensure commands like `cat`, `grep`, `sed` fallback to `input` if file args are missing.
+### DRY (Don't Repeat Yourself)
+*   **Path Resolution:** Do NOT implement `resolvePath(path, state)` in commands. Use `fs.resolveAbsolutePath(path, cwd)` from `FileSystemService`.
+*   **Argument Parsing:** Commands MUST use `CommandBase.parseOptions` or `CommandBase.parseArgs`.
+*   **Traversals:** Use `FileSystemService` for recursive operations. Do not manually recurse directory structures in Commands.
+
+### Known Violations (To Be Refactored)
+1.  **MakeCommand:** Handles parsing and execution. Needs splitting.
+2.  **Parsers:** `ShellParser` logic complexity is high; consider visitor pattern if grammar grows.
+
+### User Rules (The 8-Point GEMINI System)
+The user rules defined in section 2 are absolute.
+1.  **Strict Architecture**
+2.  **Literate Documentation**
+3.  **Dependency Minimalism**
+4.  **Observability**
+5.  **Performance & Purity**
+6.  **Universal Readability**
+7.  **Pragmatic Design Patterns**
+8.  **SOLID / KISS Equilibrium**

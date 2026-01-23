@@ -32,7 +32,10 @@ export const InputProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const onKeyPressRef = useRef<((key: string) => void) | null>(null);
 
     const refocus = useCallback(() => {
-        inputRef.current?.focus();
+        // Small delay ensures the touch event doesn't steal focus back immediately
+        setTimeout(() => {
+            inputRef.current?.focus();
+        }, 50);
     }, []);
 
     // Keep focus alive
@@ -139,7 +142,7 @@ export const InputProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             {/* The Hidden Global Input */}
             <TextInput
                 ref={inputRef}
-                style={{ position: 'absolute', width: 1, height: 1, opacity: 0, top: -1000 }}
+                style={{ position: 'absolute', width: 1, height: 1, opacity: 0, zIndex: -1 }} // On-screen but invisible
                 value={inputValue}
                 onChangeText={handleTextChange}
                 onKeyPress={handleKeyPressEvent}

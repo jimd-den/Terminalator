@@ -72,6 +72,40 @@ export class FileSystem {
             children: new Map(),
         };
         this.attachDentryHelpers(this.root);
+
+        // Initialize default directories
+        this.mkdir('/home');
+        this.mkdir('/home/operator');
+        this.mkdir('/bin');
+        this.mkdir('/usr/bin');
+        this.mkdir('/tmp');
+        this.mkdir('/var/mail');
+    }
+
+    private mkdir(path: string) {
+        const parts = path.split('/').filter(p => p.length > 0);
+        let current = this.root;
+        for (const part of parts) {
+            let child = current.children.get(part);
+            if (!child) {
+                const inode = this.inodeTable.allocate(S_IFDIR | 0o755, 0, 0);
+                inode.size = 4096;
+                inode.links = 2;
+                child = {
+                    name: part,
+                    inodeId: inode.id,
+                    parent: current,
+                    children: new Map()
+                };
+                this.attachDentryHelpers(child);
+                current.children.set(part, child);
+
+                // Update parent links
+                const parentInode = this.inodeTable.get(current.inodeId);
+                if (parentInode) parentInode.links++;
+            }
+            current = child;
+        }
     }
 
     public attachDentryHelpers(dentry: Dentry) {
