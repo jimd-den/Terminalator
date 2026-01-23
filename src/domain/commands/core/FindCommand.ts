@@ -115,7 +115,12 @@ export class FindCommand implements ICommand {
                     }
                     predicates.push({
                         evaluate: async (node, path, fs, ctx, st, outBuf) => {
-                            const cmdArgs = execArgs.map(a => a === '{}' ? path : a.replace(/{}/g, path));
+                            const cmdArgs = execArgs.map(a => {
+                                const val = a === '{}' ? path : a.replace(/{}/g, path);
+                                // Simple single quoting for shell safety if arguments contain spaces or special chars
+                                // We replace ' with '"'"' to handle internal single quotes
+                                return `'${val.replace(/'/g, "'\"'\"'")}'`;
+                            });
                             const cmdLine = cmdArgs.join(' ');
                             if (!ctx.executor) return false;
 

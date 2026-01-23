@@ -202,6 +202,10 @@ UTILITY: find
 [PASS] FIND_07
 [PASS] FIND_08
 [PASS] FIND_10
+[FAIL] FIND_11: Exec with spaces
+       -> Stdout Regex Mismatch.
+   Expected: /\/space file/
+   Got: "sh: command not found: 'echo'"
 UTILITY: date
 [PASS] DATE_01
 [PASS] DATE_02
@@ -816,6 +820,7 @@ UTILITY: sh
 [PASS] SH_08
 [PASS] SH_09
 [PASS] SH_10
+[PASS] SH_11
 UTILITY: strings
 [PASS] STRINGS_01
 [PASS] STRINGS_02
@@ -2750,7 +2755,7 @@ wc            |    10 |    9 |    1 |     90.0%
 chmod         |    10 |    7 |    3 |     70.0%
 awk           |    10 |   10 |    0 |    100.0%
 sed           |    10 |   10 |    0 |    100.0%
-find          |    10 |    9 |    0 |     90.0%
+find          |    11 |    9 |    1 |     81.8%
 date          |    10 |   10 |    0 |    100.0%
 diff          |    10 |   10 |    0 |    100.0%
 sort          |    10 |   10 |    0 |    100.0%
@@ -2790,7 +2795,7 @@ logname       |    10 |    5 |    5 |     50.0%
 env           |    10 |    5 |    5 |     50.0%
 ar            |    10 |    4 |    6 |     40.0%
 make          |    10 |    8 |    2 |     80.0%
-sh            |    10 |    8 |    2 |     80.0%
+sh            |    11 |    9 |    2 |     81.8%
 strings       |    10 |    4 |    6 |     40.0%
 time          |    10 |    6 |    4 |     60.0%
 fold          |    10 |    6 |    4 |     60.0%
@@ -2909,7 +2914,7 @@ uustat        |    10 |    9 |    1 |     90.0%
 uux           |    10 |    2 |    8 |     20.0%
 xgettext      |    10 |    6 |    4 |     60.0%
 
-TOTAL COMPLIANCE: 68.6% (1200/1750)
+TOTAL COMPLIANCE: 68.6% (1201/1752)
 
 === MISSING UTILITIES (Implemented but failing) ===
 None
