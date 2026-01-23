@@ -28,13 +28,14 @@ The codebase follows a strict **Clean Architecture** implementation, ensuring se
     *   **Dependencies:** Entities.
     *   **Key Files:**
         *   `FileSystemService.ts`: Implements POSIX logic (mkdir, touch) using the `FileSystem` entity.
-        *   `ShellParser.ts`: Tokenizes and parses command input.
+        *   `ShellParser.ts`: Tokenizes and parses command input into AST.
+        *   `ShellExpansionService.ts`: Handles variable expansion, arithmetic, globbing, and quote removal.
 
 3.  **Use Cases (Application)** (`src/domain/usecases`)
     *   **Role:** Application logic. Orchestrates entities and domain services to achieve specific user goals.
     *   **Dependencies:** Entities, Domain Services, Repositories (Interfaces).
     *   **Key Files:**
-        *   `ExecuteCommand.ts`: Core dispatcher that interprets input and runs commands.
+        *   `ExecuteCommand.ts`: Core dispatcher that interprets AST and runs commands.
 
 4.  **Interface Adapters** (`src/interface-adapters`)
     *   **Role:** Adapts data between the Domain and the Frameworks. Implements the **Humble Object** pattern to strip logic from Views.
@@ -42,6 +43,7 @@ The codebase follows a strict **Clean Architecture** implementation, ensuring se
     *   **Key Files:**
         *   `TerminalViewModel.ts`: Manages presentation state, input handling, and autocomplete.
         *   `GameManager.ts`: Coordinates game-specific logic and event systems.
+        *   `GameCommandExecutor.ts`: Interface for UI components to execute shell commands.
 
 5.  **Frameworks & Drivers** (`src/frameworks-drivers`)
     *   **Role:** UI Components, Database Implementations, System I/O.
@@ -61,9 +63,21 @@ The codebase follows a strict **Clean Architecture** implementation, ensuring se
 
 ### The Command Pattern
 *   **Implementation:** `ICommand` interface in `src/domain/commands/ICommand.ts`.
+*   **Base Class:** `CommandBase` provides common argument parsing and help generation.
 *   **Registry:** `CommandRegistry` maps string names to `ICommand` instances.
+*   **Modules:** Commands are grouped into Modules (`CoreUtilsModule`, `SystemUtilsModule`) for bulk registration.
 *   **Execution:** `ExecuteCommand` use case resolves commands and invokes `execute()`.
-*   **Piping:** Commands receive `stdin` via the `input` argument (3rd arg) or `context.stdin`. Always check for this if file arguments are missing.
+*   **Piping:** Commands receive `stdin` via the `input` argument (3rd arg) or `context.stdin`.
+
+### Shell Pipeline Architecture
+1.  **Lexing/Parsing:** `ShellParser` produces an AST (Abstract Syntax Tree). It **DOES NOT** expand variables or strip quotes at this stage.
+2.  **Expansion (`ShellExpansionService`):**
+    *   **Variable Expansion:** `$VAR` -> value.
+    *   **Arithmetic Expansion:** `$(( 1 + 1 ))` -> `2`.
+    *   **Globbing:** `*.ts` -> `file1.ts file2.ts`.
+    *   **Quote Removal:** `"string"` -> `string` (strips syntactic quotes).
+3.  **Command Loading:** `ShellFactory` assembles the shell with all necessary modules.
+4.  **Execution:** `ExecuteCommand` invokes the resolved command with cleaned arguments.
 
 ### The Humble Object (ViewModel)
 *   **Pattern:** Logic is moved out of React components (`TerminalScreen`) and into `TerminalViewModel`.
@@ -98,8 +112,8 @@ The codebase follows a strict **Clean Architecture** implementation, ensuring se
 
 ### Adding a New Command
 1.  **Create:** `src/domain/commands/core/MyCommand.ts`.
-2.  **Implement:** `ICommand` interface.
-3.  **Register:** Add to `ExecuteCommand.ts` (or relevant module).
+2.  **Implement:** `ICommand` interface (extend `CommandBase`).
+3.  **Register:** Add to `CoreUtilsModule.ts` (or relevant module).
 4.  **Test:** Add to `posix_comprehensive_suite.ts`.
 
 ---
@@ -112,18 +126,22 @@ src/
 │   ├── commands/                # Command Implementations
 │   │   ├── core/                # StdLib (cp, ls, mv, rm, etc.)
 │   │   ├── system/              # System (shutdown, reboot)
+│   │   ├── CommandBase.ts       # Abstract Base Class
 │   │   ├── CommandRegistry.ts   # Command Lookup Registry
 │   │   └── ICommand.ts          # Command Interface
 │   ├── entities/                # Pure Data Models
 │   │   ├── FileSystem.ts        # Inode/Dentry State
 │   │   ├── TerminalState.ts     # Global State Wrapper
 │   │   └── ProcessContext.ts    # Envrionment Context
+│   ├── factories/               # Object Creation
+│   │   └── ShellFactory.ts      # Assembles Shell Context
 │   ├── modules/                 # DI Modules
 │   │   ├── CoreUtilsModule.ts   # Registers Core Commands
 │   │   └── SystemUtilsModule.ts # Registers System Commands
 │   ├── ports/                   # Interfaces (Ports)
 │   ├── services/                # Domain Services
 │   │   ├── FileSystemService.ts # POSIX Logic
+│   │   ├── ShellExpansionService.ts # Globbing & Expansion
 │   │   └── ShellParser.ts       # Input Parser
 │   └── usecases/                # Application Logic
 │       └── ExecuteCommand.ts    # Main Command Dispatcher
@@ -133,6 +151,7 @@ src/
 │   ├── viewmodels/              # MVVM ViewModels
 │   │   └── TerminalViewModel.ts # UI State Logic
 │   ├── vim/                     # Vim Simulation Logic
+│   ├── GameCommandExecutor.ts   # UI-Shell Bridge
 │   └── GameManager.ts           # Game Subsystem Coordinator
 ├── frameworks-drivers/          # INFRASTRUCTURE
 │   ├── ui/                      # React Native UI
@@ -154,14 +173,13 @@ src/
 *   **OCP:** Use the Registry pattern for extending functionality (e.g., CommandRegistry). Avoid hardcoded dispatch switch/case blocks for extensible systems.
 
 ### DRY (Don't Repeat Yourself)
-*   **Path Resolution:** Do NOT implement `resolvePath(path, state)` in commands. Use `FileSystemService` or `ProcessContext` helpers (Feature Pending).
-*   **Argument Parsing:** Future commands should use a shared `CommandArgs` utility rather than manual `args.filter()`.
+*   **Path Resolution:** Do NOT implement `resolvePath(path, state)` in commands. Use `fs.resolveAbsolutePath(path, cwd)` from `FileSystemService`.
+*   **Argument Parsing:** Commands MUST use `CommandBase.parseOptions` or `CommandBase.parseArgs`.
 *   **Traversals:** Use `FileSystemService` for recursive operations. Do not manually recurse directory structures in Commands.
 
 ### Known Violations (To Be Refactored)
 1.  **MakeCommand:** Handles parsing and execution. Needs splitting.
-2.  **Core Commands:** Duplicate `resolvePath` logic.
-3.  **Parsers:** `ShellParser` is monolithic.
+2.  **Parsers:** `ShellParser` logic complexity is high; consider visitor pattern if grammar grows.
 
 ### User Rules (The 8-Point GEMINI System)
 The user rules defined in section 2 are absolute.
@@ -173,4 +191,3 @@ The user rules defined in section 2 are absolute.
 6.  **Universal Readability**
 7.  **Pragmatic Design Patterns**
 8.  **SOLID / KISS Equilibrium**
-
