@@ -27,7 +27,7 @@ export interface PatternActionNode extends ASTNode {
     action: BlockNode;
 }
 
-export type StatementNode = PrintStatementNode | ExprStatementNode | IfStatementNode;
+export type StatementNode = PrintStatementNode | ExprStatementNode | IfStatementNode | BlockNode;
 
 export interface PrintStatementNode extends ASTNode {
     type: 'Print';
@@ -187,14 +187,8 @@ export class AwkParser {
             }
             return { type: 'If', condition: cond, thenBranch: thenB, elseBranch: elseB };
         } else if (token.type === AwkTokenType.LBRACE) {
-            // Nested block
-            // This is actually a statement technically.
-            // But strict StatementNode type doesn't include BlockNode currently.
-            // Let's cheat and treat as single statement logic or expand StatementNode.
-            // For now, simplify: we don't expect nested blocks as "statements" in typical simple awk.
-            // But strictly yes.
-            // Let's assume Expression Statement or regular statement.
-            return this.parseExprStatement();
+            // Nested block as statement
+            return this.parseBlock();
         }
 
         return this.parseExprStatement();
