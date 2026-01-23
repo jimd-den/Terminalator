@@ -46,7 +46,7 @@ const CURRICULUM: Lesson[] = [
         instructions: 'TYPE THE FOLLOWING COMMAND TO FILTER LOGS:',
         setup: (fs: FileSystem) => {
             const service = new FileSystemService(fs);
-            service.writeFile('/home/user/mail.log', 'Info: Normal operation\nWarning: Disk space low\nUrgent: Security breach detected\nInfo: Service started');
+            service.writeFile('/home/operator/mail.log', 'Info: Normal operation\nWarning: Disk space low\nUrgent: Security breach detected\nInfo: Service started');
         }
     },
     {
@@ -66,7 +66,7 @@ const CURRICULUM: Lesson[] = [
         instructions: 'OPEN THE FILE IN VIM:',
         setup: (fs: FileSystem) => {
             const service = new FileSystemService(fs);
-            service.writeFile('/home/user/secret.txt', 'This is a top secret file.');
+            service.writeFile('/home/operator/secret.txt', 'This is a top secret file.');
         }
     }
     // More lessons to be added
