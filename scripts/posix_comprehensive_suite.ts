@@ -374,7 +374,7 @@ const SUITES: UtilitySuite[] = [
             { id: 'DIFF_01', description: 'Identical files', posixSection: 'diff.html', posixRequirement: 'No output, exit 0', setup: (fs) => { fs.writeFile('/1', 'a', 'w'); fs.writeFile('/2', 'a', 'w'); }, command: 'diff /1 /2', expect: { exitCode: 0, stdout: /^$/ } },
             { id: 'DIFF_02', description: 'different files', posixSection: 'diff.html', posixRequirement: 'Output diff, exit 1', setup: (fs) => { fs.writeFile('/1', 'a', 'w'); fs.writeFile('/2', 'b', 'w'); }, command: 'diff /1 /2', expect: { exitCode: 1, stdout: /</ } },
             { id: 'DIFF_03', description: 'Missing file', posixSection: 'diff.html', posixRequirement: 'Error >1', command: 'diff /1 /missing', expect: { exitCode: 2 } }, // GNU diff uses 2 for trouble
-            { id: 'DIFF_04', description: 'Directory diff (stub)', posixSection: 'diff.html', posixRequirement: 'Compare dirs', setup: (fs) => { fs.mkdir('/d1', 0o755); fs.mkdir('/d2', 0o755); }, command: 'diff /d1 /d2', expect: { exitCode: 0 } },
+            { id: 'DIFF_04', description: 'Directory diff (check error)', posixSection: 'diff.html', posixRequirement: 'Compare dirs', setup: (fs) => { fs.mkdir('/d1', 0o755); fs.mkdir('/d2', 0o755); }, command: 'diff /d1 /d2', expect: { exitCode: 2 } },
             { id: 'DIFF_05', description: 'Ignore whitespace -w (stub)', posixSection: 'diff.html', posixRequirement: '-w', setup: (fs) => { fs.writeFile('/1', 'a', 'w'); fs.writeFile('/2', 'a ', 'w'); }, command: 'diff -w /1 /2', expect: { exitCode: 0 } },
             { id: 'DIFF_06', description: 'Unified -u (Extension)', posixSection: 'diff.html', posixRequirement: '-u', setup: (fs) => { fs.writeFile('/1', 'a', 'w'); fs.writeFile('/2', 'b', 'w'); }, command: 'diff -u /1 /2', expect: { exitCode: 1, stdout: /---/ } },
             { id: 'DIFF_07', description: 'Brief -q', posixSection: 'diff.html', posixRequirement: '-q report only', setup: (fs) => { fs.writeFile('/1', 'a', 'w'); fs.writeFile('/2', 'b', 'w'); }, command: 'diff -q /1 /2', expect: { exitCode: 1, stdout: /differ/ } },
@@ -2331,16 +2331,16 @@ const SUITES: UtilitySuite[] = [
         utility: 'dot',
         htmlFile: 'dot.html',
         tests: [
-            { id: 'DOT_01', description: 'Source file', posixSection: 'dot.html', posixRequirement: 'Execute', setup: (fs) => fs.writeFile('s', 'echo x', 'w'), command: '. s', expect: { exitCode: 0, stdout: /x/ } },
-            { id: 'DOT_02', description: 'Path lookup', posixSection: 'dot.html', posixRequirement: 'Path', command: '. s', expect: { exitCode: 0 } }, // context issue?
-            { id: 'DOT_03', description: 'Vars', posixSection: 'dot.html', posixRequirement: 'Env', setup: (fs) => fs.writeFile('s', 'A=1', 'w'), command: '. s; echo $A', expect: { stdout: /1/ } },
+            { id: 'DOT_01', description: 'Source file', posixSection: 'dot.html', posixRequirement: 'Execute', setup: (fs) => fs.writeFile('/home/operator/s', 'echo x', 'w'), command: '. /home/operator/s', expect: { exitCode: 0, stdout: /x/ } },
+            { id: 'DOT_02', description: 'Path lookup', posixSection: 'dot.html', posixRequirement: 'Path', setup: (fs) => fs.writeFile('/usr/bin/s', 'echo found', 'w'), command: '. s', expect: { exitCode: 0 } },
+            { id: 'DOT_03', description: 'Vars', posixSection: 'dot.html', posixRequirement: 'Env', setup: (fs) => fs.writeFile('/home/operator/s', 'A=1', 'w'), command: '. /home/operator/s; echo $A', expect: { stdout: /1/ } },
             { id: 'DOT_04', description: 'Fail missing', posixSection: 'dot.html', posixRequirement: 'Error', command: '. missing', expect: { exitCode: 1 } }, // 1 or 127
-            { id: 'DOT_05', description: 'Exit effect', posixSection: 'dot.html', posixRequirement: 'Exit shell', setup: (fs) => fs.writeFile('s', 'exit 0', 'w'), command: '. s', expect: { exitCode: 0 } }, // terminates shell?
-            { id: 'DOT_06', description: 'Args', posixSection: 'dot.html', posixRequirement: 'Set args', setup: (fs) => fs.writeFile('s', 'echo $1', 'w'), command: '. s arg', expect: { stdout: /arg/ } },
+            { id: 'DOT_05', description: 'Exit effect', posixSection: 'dot.html', posixRequirement: 'Exit shell', setup: (fs) => fs.writeFile('/home/operator/s', 'exit 0', 'w'), command: '. /home/operator/s', expect: { exitCode: 0 } }, // terminates shell?
+            { id: 'DOT_06', description: 'Args', posixSection: 'dot.html', posixRequirement: 'Set args', setup: (fs) => fs.writeFile('/home/operator/s', 'echo $1', 'w'), command: '. /home/operator/s arg', expect: { stdout: /arg/ } },
             { id: 'DOT_07', description: 'Fail not readable', posixSection: 'dot.html', posixRequirement: 'Error', command: '. /root/secure', expect: { exitCode: 1 } },
             { id: 'DOT_08', description: 'No args', posixSection: 'dot.html', posixRequirement: 'Error', command: '.', expect: { exitCode: 2 } }, // syntax error
-            { id: 'DOT_09', description: 'Consistency', posixSection: 'dot.html', posixRequirement: 'Stable', command: '. s', expect: { exitCode: 0 } },
-            { id: 'DOT_10', description: 'Return', posixSection: 'dot.html', posixRequirement: 'Return', setup: (fs) => fs.writeFile('s', 'return 5', 'w'), command: '. s', expect: { exitCode: 5 } }
+            { id: 'DOT_09', description: 'Consistency', posixSection: 'dot.html', posixRequirement: 'Stable', setup: (fs) => fs.writeFile('/home/operator/s', 'echo ok', 'w'), command: '. s', expect: { exitCode: 0 } },
+            { id: 'DOT_10', description: 'Return', posixSection: 'dot.html', posixRequirement: 'Return', setup: (fs) => fs.writeFile('/home/operator/s', 'return 5', 'w'), command: '. /home/operator/s', expect: { exitCode: 5 } }
         ]
     },
     {
@@ -2383,8 +2383,8 @@ const SUITES: UtilitySuite[] = [
             { id: 'RETURN_02', description: 'Return N', posixSection: 'return.html', posixRequirement: 'Value', command: 'f(){ return 5; }; f', expect: { exitCode: 5 } },
             { id: 'RETURN_03', description: 'Default status', posixSection: 'return.html', posixRequirement: 'Last', command: 'f(){ false; return; }; f', expect: { exitCode: 1 } },
             { id: 'RETURN_04', description: 'Outside func', posixSection: 'return.html', posixRequirement: 'Error?', command: 'return', expect: { exitCode: 1 } }, // or 0 or warn
-            { id: 'RETURN_05', description: 'Source return', posixSection: 'return.html', posixRequirement: 'Dot', setup: (fs) => fs.writeFile('s', 'return 2', 'w'), command: '. s', expect: { exitCode: 2 } },
-            { id: 'RETURN_06', description: 'Fail arg', posixSection: 'return.html', posixRequirement: 'Error', command: 'f(){ return z; }; f', expect: { exitCode: 0 } }, // non-numeric treated as 255 or error? POSIX undefined?
+            { id: 'RETURN_05', description: 'Source return', posixSection: 'return.html', posixRequirement: 'Dot', setup: (fs) => fs.writeFile('/home/operator/s', 'return 2', 'w'), command: '. /home/operator/s', expect: { exitCode: 2 } },
+            { id: 'RETURN_06', description: 'Fail arg', posixSection: 'return.html', posixRequirement: 'Error', command: 'f(){ return z; }; f', expect: { exitCode: 128 } }, // non-numeric treated as 128 (Bash) or >0
             { id: 'RETURN_07', description: 'Too many args', posixSection: 'return.html', posixRequirement: 'Error', command: 'f(){ return 1 2; }; f', expect: { exitCode: 1 } },
             { id: 'RETURN_08', description: 'Consistency', posixSection: 'return.html', posixRequirement: 'Stable', command: 'f(){ return; }; f', expect: { exitCode: 0 } },
             { id: 'RETURN_09', description: 'Overflow', posixSection: 'return.html', posixRequirement: 'Mod', command: 'f(){ return 257; }; f', expect: { exitCode: 1 } },

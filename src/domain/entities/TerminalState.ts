@@ -23,7 +23,8 @@ export interface TerminalState {
     user: { uid: number, gid: number, groups: number[] };
     lastExitCode: number;
     functions: Map<string, any>; // FunctionDefNode
-
+    traps: Map<string, string>; // Signal -> Command
+    callStackDepth: number;
 }
 
 /**
@@ -55,10 +56,13 @@ export const createInitialTerminalState = (): TerminalState => {
         },
         aliases: {
             'll': 'ls -l',
-            'la': 'ls -a'
+            'la': 'ls -a',
+            'source': '.'
         },
         user: { uid: 1000, gid: 1000, groups: [1000] },
         lastExitCode: 0,
-        functions: new Map()
+        functions: new Map(),
+        traps: new Map(),
+        callStackDepth: 0
     };
 }

@@ -22,7 +22,6 @@ export class DotCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = context.stdin;
         if (args.length === 0) {
             return {
                 output: '.: filename argument required',
@@ -30,24 +29,90 @@ export class DotCommand implements ICommand {
                 exitCode: 2
             };
         }
-        // In full implementation, this reads the file and executes it in current context.
-        // We will verify file existence for compliance.
+
         const file = args[0];
-        const node = this.fs.resolve(file, state.currentDirectory);
-        if (!node) {
+        let absPath: string | null = null;
+        let foundNode: any = null;
+
+        // 1. Path Lookup (if no slash)
+        if (file.indexOf('/') === -1 && state.environment['PATH']) {
+            const paths = state.environment['PATH'].split(':');
+            for (const p of paths) {
+                const node = this.fs.resolve(file, p);
+                if (node && !this.fs.isDirectory(node)) {
+                    foundNode = node;
+                    absPath = this.fs.getAbsolutePath(node);
+                    break;
+                }
+            }
+        }
+
+        // 2. Direct/CWD Lookup (if not found in PATH or has slash)
+        // POSIX: If not found in PATH (for no-slash), check CWD (only if not strictly POSIX, but tests expect it often? 
+        // Actually POSIX says if no slash, use PATH. If not found, behavior is undefined? 
+        // Bash falls back to CWD in non-posix mode. 
+        // Our tests imply it should find it if in CWD. 'DOT_02' is explicit about 'Path lookup'.
+        // Let's fallback to CWD if not found.
+        if (!foundNode) {
+            const node = this.fs.resolve(file, state.currentDirectory);
+            if (node) {
+                foundNode = node;
+                absPath = this.fs.getAbsolutePath(node);
+            }
+        }
+
+        if (!foundNode || !absPath) {
             return {
                 output: `.: ${file}: No such file or directory`,
                 newState: state,
-                exitCode: 1
+                exitCode: 1 // 1 or 127
             };
         }
-        // Read file content
-        const absPath = this.fs.getAbsolutePath(node);
+
         const content = this.fs.readFile(absPath);
 
         if (context.executor) {
-            // Execute in CURRENT state (shared environment)
-            const response = await context.executor.execute(content, state);
+            let sourcedState = {
+                ...state,
+                callStackDepth: (state.callStackDepth || 0) + 1
+            };
+
+            // Update Positional Parameters if args provided
+            if (args.length > 1) {
+                const newEnv = { ...state.environment };
+                // Set $1, $2, ...
+                // Note: This destructively updates the environment for the caller too (as dot command logic dictates)
+                // "The new positional parameters shall remain in effect when the dot utility completes."
+
+                // Clear old positional params? (Heuristic: 1..9, or keep overwriting)
+                // We'll clear 1-9 to be safe for now
+                for (let i = 1; i <= 9; i++) {
+                    delete newEnv[i.toString()];
+                }
+
+                // Set new ones
+                for (let i = 1; i < args.length; i++) {
+                    newEnv[i.toString()] = args[i];
+                }
+                // Update special params?
+                newEnv['#'] = (args.length - 1).toString();
+                // @ and * should be updated similarly
+                const paramArgs = args.slice(1);
+                newEnv['@'] = paramArgs.join(' ');
+                newEnv['*'] = paramArgs.join(' ');
+
+                sourcedState = { ...sourcedState, environment: newEnv };
+            }
+
+            const response = await context.executor.execute(content, sourcedState);
+
+            // Handle RETURN logic
+            if (response.controlFlow === 'RETURN') {
+                return {
+                    ...response,
+                    controlFlow: undefined
+                };
+            }
             return response;
         }
 

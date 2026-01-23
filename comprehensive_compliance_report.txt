@@ -172,10 +172,7 @@ UTILITY: chmod
        -> Exit Code: Expected 0, got 1
 UTILITY: awk
 [PASS] AWK_01
-[FAIL] AWK_02: Print column $1
-       -> Stdout Regex Mismatch.
-   Expected: /a\nc/
-   Got: "a b\nc d"
+[PASS] AWK_02
 [PASS] AWK_03
 [PASS] AWK_04
 [PASS] AWK_05
@@ -203,44 +200,28 @@ UTILITY: find
 [PASS] FIND_05
 [PASS] FIND_06
 [PASS] FIND_07
-[FAIL] FIND_08: Exec (stub)
-       -> Exit Code: Expected 0, got 1
-[FAIL] FIND_10: Prune (stub)
-       -> Exit Code: Expected 0, got 1
+[PASS] FIND_08
+[PASS] FIND_10
 UTILITY: date
 [PASS] DATE_01
 [PASS] DATE_02
 [PASS] DATE_03
 [PASS] DATE_04
 [PASS] DATE_05
-[FAIL] DATE_06: Complex format
-       -> Stdout Regex Mismatch.
-   Expected: /Year: 20../
-   Got: "Fri Jan 23 2026 10:03:02 GMT-0700 (Mountain Standard Time)"
+[PASS] DATE_06
 [PASS] DATE_07
-[FAIL] DATE_08: Set date (fail/stub)
-       -> Exit Code: Expected 1, got 0
-[FAIL] DATE_09: Invalid flag
-       -> Exit Code: Expected 1, got 0
+[PASS] DATE_08
+[PASS] DATE_09
 [PASS] DATE_10
 UTILITY: diff
 [PASS] DIFF_01
 [PASS] DIFF_02
 [PASS] DIFF_03
-[FAIL] DIFF_04: Directory diff (stub)
-       -> Exit Code: Expected 0, got 2
-[FAIL] DIFF_05: Ignore whitespace -w (stub)
-       -> Exit Code: Expected 0, got 1
-[FAIL] DIFF_06: Unified -u (Extension)
-       -> Stdout Regex Mismatch.
-   Expected: /---/
-   Got: "< a\n> b"
-[FAIL] DIFF_07: Brief -q
-       -> Stdout Regex Mismatch.
-   Expected: /differ/
-   Got: "< a\n> b"
-[FAIL] DIFF_08: Recursive -r
-       -> Exit Code: Expected 0, got 2
+[PASS] DIFF_04
+[PASS] DIFF_05
+[PASS] DIFF_06
+[PASS] DIFF_07
+[PASS] DIFF_08
 [PASS] DIFF_09
 [PASS] DIFF_10
 UTILITY: sort
@@ -1459,10 +1440,7 @@ UTILITY: trap
 [FAIL] TRAP_07: Invalid signal
        -> Exit Code: Expected 1, got 0
 [PASS] TRAP_08
-[FAIL] TRAP_09: Print specific
-       -> Stdout Regex Mismatch.
-   Expected: /trap -- 'echo x' INT/
-   Got: ""
+[PASS] TRAP_09
 [PASS] TRAP_10
 UTILITY: type
 [PASS] TYPE_01
@@ -2202,47 +2180,27 @@ UTILITY: colon
 [PASS] COLON_09
 [PASS] COLON_10
 UTILITY: dot
-[FAIL] DOT_01: Source file
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /x/
-   Got: ".: s: No such file or directory"
-[FAIL] DOT_02: Path lookup
-       -> Exit Code: Expected 0, got 1
-[FAIL] DOT_03: Vars
-       -> Stdout Regex Mismatch.
-   Expected: /1/
-   Got: ".: s: No such file or directory/home/operator\n"
+[PASS] DOT_01
+[PASS] DOT_02
+[PASS] DOT_03
 [PASS] DOT_04
-[FAIL] DOT_05: Exit effect
-       -> Exit Code: Expected 0, got 1
-[FAIL] DOT_06: Args
-       -> Stdout Regex Mismatch.
-   Expected: /arg/
-   Got: ".: s: No such file or directory"
+[PASS] DOT_05
+[PASS] DOT_06
 [PASS] DOT_07
 [PASS] DOT_08
-[FAIL] DOT_09: Consistency
-       -> Exit Code: Expected 0, got 1
-[FAIL] DOT_10: Return
-       -> Exit Code: Expected 5, got 1
+[PASS] DOT_09
+[PASS] DOT_10
 UTILITY: exit
 [PASS] EXIT_01
 [PASS] EXIT_02
 [PASS] EXIT_03
-[FAIL] EXIT_04: Exit default fail
-       -> Exit Code: Expected 1, got 0
+[PASS] EXIT_04
 [PASS] EXIT_05
-[FAIL] EXIT_06: Fail invalid
-       -> Exit Code: Expected 128, got 0
+[PASS] EXIT_06
 [PASS] EXIT_07
-[FAIL] EXIT_08: Exit trap
-       -> Stdout Regex Mismatch.
-   Expected: /bye/
-   Got: ""
+[PASS] EXIT_08
 [PASS] EXIT_09
-[FAIL] EXIT_10: Overflow
-       -> Exit Code: Expected 1, got 257
+[PASS] EXIT_10
 UTILITY: readonly
 [PASS] READONLY_01
 [FAIL] READONLY_02: Fail modify
@@ -2261,17 +2219,13 @@ UTILITY: readonly
 UTILITY: return
 [PASS] RETURN_01
 [PASS] RETURN_02
-[FAIL] RETURN_03: Default status
-       -> Exit Code: Expected 1, got 0
-[FAIL] RETURN_04: Outside func
-       -> Exit Code: Expected 1, got 0
-[FAIL] RETURN_05: Source return
-       -> Exit Code: Expected 2, got 1
+[PASS] RETURN_03
+[PASS] RETURN_04
+[PASS] RETURN_05
 [PASS] RETURN_06
 [PASS] RETURN_07
 [PASS] RETURN_08
-[FAIL] RETURN_09: Overflow
-       -> Exit Code: Expected 1, got 257
+[PASS] RETURN_09
 [PASS] RETURN_10
 UTILITY: admin
 [FAIL] ADMIN_01: Create SCCS
@@ -2794,11 +2748,11 @@ head          |    10 |   10 |    0 |    100.0%
 tail          |    10 |   10 |    0 |    100.0%
 wc            |    10 |    9 |    1 |     90.0%
 chmod         |    10 |    7 |    3 |     70.0%
-awk           |    10 |    9 |    1 |     90.0%
+awk           |    10 |   10 |    0 |    100.0%
 sed           |    10 |   10 |    0 |    100.0%
-find          |    10 |    7 |    2 |     70.0%
-date          |    10 |    7 |    3 |     70.0%
-diff          |    10 |    5 |    5 |     50.0%
+find          |    10 |    9 |    0 |     90.0%
+date          |    10 |   10 |    0 |    100.0%
+diff          |    10 |   10 |    0 |    100.0%
 sort          |    10 |   10 |    0 |    100.0%
 uniq          |    10 |   10 |    0 |    100.0%
 tr            |    10 |    8 |    2 |     80.0%
@@ -2871,7 +2825,7 @@ hash          |    10 |    9 |    1 |     90.0%
 set           |    10 |   10 |    0 |    100.0%
 shift         |    10 |    4 |    6 |     40.0%
 times         |    10 |   10 |    0 |    100.0%
-trap          |    10 |    8 |    2 |     80.0%
+trap          |    10 |    9 |    1 |     90.0%
 type          |    10 |    4 |    6 |     40.0%
 ulimit        |    10 |    8 |    2 |     80.0%
 umask         |    10 |    5 |    5 |     50.0%
@@ -2919,10 +2873,10 @@ timeout       |    10 |    7 |    3 |     70.0%
 break         |    10 |    7 |    3 |     70.0%
 continue      |    10 |    7 |    3 |     70.0%
 colon         |    10 |   10 |    0 |    100.0%
-dot           |    10 |    3 |    7 |     30.0%
-exit          |    10 |    6 |    4 |     60.0%
+dot           |    10 |   10 |    0 |    100.0%
+exit          |    10 |   10 |    0 |    100.0%
 readonly      |    10 |    6 |    4 |     60.0%
-return        |    10 |    6 |    4 |     60.0%
+return        |    10 |   10 |    0 |    100.0%
 admin         |    10 |    2 |    8 |     20.0%
 delta         |    10 |    2 |    7 |     20.0%
 get           |    10 |    2 |    7 |     20.0%
@@ -2955,7 +2909,7 @@ uustat        |    10 |    9 |    1 |     90.0%
 uux           |    10 |    2 |    8 |     20.0%
 xgettext      |    10 |    6 |    4 |     60.0%
 
-TOTAL COMPLIANCE: 67.0% (1173/1750)
+TOTAL COMPLIANCE: 68.6% (1200/1750)
 
 === MISSING UTILITIES (Implemented but failing) ===
 None
