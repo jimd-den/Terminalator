@@ -166,6 +166,33 @@ src/
     └── ...
 ```
 
+---
+
+## 5. POSIX Gap Analysis
+
+> [!WARNING]
+> The following POSIX subsystems are **not yet implemented**. Commands depending on these will have reduced compliance scores until addressed.
+
+### 5.1 Job Control & Process Management
+
+*   **Affected Commands:** `bg`, `fg`, `jobs`, `kill`, `wait`
+*   **Gap:** No `JobControlService` or `ProcessTable` entity to manage background jobs, process groups (PGIDs), or job IDs (`%1`). Signal handling (`SIGINT`, `SIGTSTP`, `SIGCHLD`) is stubbed.
+*   **Proposed Fix:** Add `Job` entity and `JobControlService` domain service. Extend `ProcessContext` with a job table reference.
+
+### 5.2 Identity & Permissions Model
+
+*   **Affected Commands:** `id`, `chown`, `chgrp`, `chmod` (symbolic/sticky), `logname`, `newgrp`
+*   **Gap:** No `IdentityService` (simulating `/etc/passwd` & `/etc/group`). Permission enforcement (sticky bit, setuid) is incomplete in `FileSystemService`. `id` outputs `[object Object]` due to missing serialization.
+*   **Proposed Fix:** Add `User`/`Group` entities and an `IdentityService` to manage simulated user database. Update `FileSystemService` for full permission checks.
+
+### 5.3 Process Pipeline & I/O Streams
+
+*   **Affected Commands:** `xargs`, `comm`, `split`, `csplit`, `false` (pipe exit codes)
+*   **Gap:** `ProcessContext.stdin` is a simple `string`. `stdout`/`stderr` are marked "Not implemented". Complex pipes, large data, and FD redirections fail.
+*   **Proposed Fix:** Implement `Stream` abstraction (pipes, file descriptors) in the Domain layer. Replace string buffers with proper stream objects.
+
+---
+
 ## 6. Code Hygiene & Refactoring Standards
 
 ### SOLID Compliance
