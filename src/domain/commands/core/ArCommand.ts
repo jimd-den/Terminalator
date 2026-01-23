@@ -36,7 +36,7 @@ export class ArCommand implements ICommand {
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         const input = context.stdin;
-        // this.fs = state.fs; // Already injected
+        // this.fs = state.fs; // Removed: FS injected via constructor or context
 
         let mode = '';
         let archiveName = '';
@@ -117,7 +117,7 @@ export class ArCommand implements ICommand {
             const targets = files.length > 0 ? entries.filter(e => files.includes(e.header.name)) : entries;
             for (const entry of targets) {
                 const outPath = state.currentDirectory + '/' + entry.header.name;
-                this.fs.writeFile(outPath, entry.content, state.currentDirectory);
+                this.fs.writeFile(outPath, entry.content, 'w', state.currentDirectory);
                 if (verbose) outputLines.push(`x - ${entry.header.name}`);
             }
         } else if (mode.includes('r') || mode.includes('q')) { // Append/Replace
@@ -180,7 +180,7 @@ export class ArCommand implements ICommand {
 
     private writeArchive(path: string, entries: ArEntry[], cwd: string) {
         const json = JSON.stringify(entries);
-        this.fs.writeFile(path, '!<arch>\n' + json, cwd);
+        this.fs.writeFile(path, '!<arch>\n' + json, 'w', cwd);
     }
 
     private formatVerbose(entry: ArEntry): string {

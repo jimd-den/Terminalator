@@ -24,13 +24,13 @@ export class LexCommand implements ICommand {
         }
 
         if (!file) {
-             return { output: 'lex: no input file', newState: state, exitCode: 1 };
+            return { output: 'lex: no input file', newState: state, exitCode: 1 };
         }
 
-        const fs = state.fs;
+        const fs = context.fileSystemService;
         const node = fs.resolve(file, state.currentDirectory);
         if (!node || fs.isDirectory(node)) {
-             return { output: `lex: ${file}: No such file or directory`, newState: state, exitCode: 1 };
+            return { output: `lex: ${file}: No such file or directory`, newState: state, exitCode: 1 };
         }
 
         // Generate Dummy C code

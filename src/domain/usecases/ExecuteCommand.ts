@@ -1,6 +1,7 @@
 
 import { FileSystem } from '../entities/FileSystem';
 import { FileSystemService } from '../services/FileSystemService';
+import { GlobService } from '../services/GlobService';
 import { TerminalState } from '../entities/TerminalState';
 import { TelemetryPort } from '../ports/TelemetryPort';
 import { CommandRegistry } from '../commands/CommandRegistry';
@@ -71,7 +72,7 @@ export class ExecuteCommand implements IShellExecutor {
     }
 
     async execute(input: string, state: TerminalState): Promise<CommandResponse> {
-        state.fs = this.service;
+        // state.fs was removed. FS access is via ProcessContext.
 
         const executeLogic = async (): Promise<CommandResponse> => {
             if (!input.trim()) return { output: '', newState: state, exitCode: 0 };
@@ -418,6 +419,19 @@ export class ExecuteCommand implements IShellExecutor {
 
             return current;
         });
+
+        // 3. Pathname Expansion (Globbing)
+        // Flatten the array of arrays (or strings)
+        const globService = new GlobService(this.service);
+        const globbedArgs: string[] = [];
+
+        for (const arg of expandedArgs) {
+            const matches = globService.expand(arg, state.currentDirectory);
+            globbedArgs.push(...matches);
+        }
+
+        // Use globbed args for command execution
+        node.args = globbedArgs;
 
         const commandName = node.command;
 

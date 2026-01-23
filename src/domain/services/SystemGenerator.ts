@@ -87,7 +87,7 @@ export class SystemGenerator {
     private generateUsers(difficulty: number): { name: string, uid: number, gid: number, fullname: string }[] {
         // Higher difficulty -> more users? Or specific admins?
         const baseUsers = [
-            { name: 'operator', uid: 1000, gid: 1000, fullname: 'System Operator' },
+            { name: 'user', uid: 1000, gid: 1000, fullname: 'System Operator' },
             { name: 'guest', uid: 1001, gid: 1001, fullname: 'Guest User' },
         ];
 

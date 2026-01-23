@@ -18,7 +18,7 @@ export class TutorCommand implements ICommand {
         const input = context.stdin;
         const lessonId = args[0] || 'LESSON_01'; // Default to first lesson
 
-        const success = this.gameManager.tutorEngine.startLesson(lessonId);
+        const success = this.gameManager.tutorEngine.startLesson(lessonId, context.fs);
 
         if (success) {
             return {

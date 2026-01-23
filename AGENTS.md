@@ -147,7 +147,30 @@ src/
     └── ...
 ```
 
-## 5. Critical Notes
-*   **"Blind" Reliance:** Do not assume global variables exist. Everything must be passed via Context or State.
-*   **Immutability:** `TerminalState` is generally treated as immutable. Return *new* state objects from commands.
-*   **Error Handling:** Commands should catch errors and return a `CommandResponse` with a non-zero `exitCode` rather than throwing exceptions up the stack, unless it's a critical system failure.
+## 6. Code Hygiene & Refactoring Standards
+
+### SOLID Compliance
+*   **SRP:** Large commands (like `MakeCommand`) MUST be split into Parser/Executor services if logic exceeds 200 lines or distinct phases.
+*   **OCP:** Use the Registry pattern for extending functionality (e.g., CommandRegistry). Avoid hardcoded dispatch switch/case blocks for extensible systems.
+
+### DRY (Don't Repeat Yourself)
+*   **Path Resolution:** Do NOT implement `resolvePath(path, state)` in commands. Use `FileSystemService` or `ProcessContext` helpers (Feature Pending).
+*   **Argument Parsing:** Future commands should use a shared `CommandArgs` utility rather than manual `args.filter()`.
+*   **Traversals:** Use `FileSystemService` for recursive operations. Do not manually recurse directory structures in Commands.
+
+### Known Violations (To Be Refactored)
+1.  **MakeCommand:** Handles parsing and execution. Needs splitting.
+2.  **Core Commands:** Duplicate `resolvePath` logic.
+3.  **Parsers:** `ShellParser` is monolithic.
+
+### User Rules (The 8-Point GEMINI System)
+The user rules defined in section 2 are absolute.
+1.  **Strict Architecture**
+2.  **Literate Documentation**
+3.  **Dependency Minimalism**
+4.  **Observability**
+5.  **Performance & Purity**
+6.  **Universal Readability**
+7.  **Pragmatic Design Patterns**
+8.  **SOLID / KISS Equilibrium**
+

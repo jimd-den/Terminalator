@@ -63,12 +63,12 @@ export class MakeCommand implements ICommand {
                     else if (char === 'e') options.envOverride = true;
                     else if (char === 'q') options.question = true;
                     else if (char === 'f') {
-                         if (j + 1 < arg.length) {
-                             options.file = arg.substring(j + 1);
-                             j = arg.length; // consume rest
-                         } else if (i + 1 < args.length) {
-                             options.file = args[++i];
-                         }
+                        if (j + 1 < arg.length) {
+                            options.file = arg.substring(j + 1);
+                            j = arg.length; // consume rest
+                        } else if (i + 1 < args.length) {
+                            options.file = args[++i];
+                        }
                     }
                 }
             } else if (arg.includes('=')) {
@@ -79,36 +79,36 @@ export class MakeCommand implements ICommand {
             }
         }
 
-        const fs = state.fs;
+        const fs = context.fileSystemService;
 
         // 1. Resolve Makefile
         let makefileNode: Dentry | null = fs.resolve(options.file, state.currentDirectory);
         if (!makefileNode && state.currentDirectory !== '/') {
-             makefileNode = fs.resolve(options.file, '/');
+            makefileNode = fs.resolve(options.file, '/');
         }
 
         if (!makefileNode || fs.isDirectory(makefileNode)) {
-             // Try 'makefile' lowercase if default
-             if (options.file === 'Makefile') {
-                 let lower = fs.resolve('makefile', state.currentDirectory);
-                 if (!lower && state.currentDirectory !== '/') lower = fs.resolve('makefile', '/');
+            // Try 'makefile' lowercase if default
+            if (options.file === 'Makefile') {
+                let lower = fs.resolve('makefile', state.currentDirectory);
+                if (!lower && state.currentDirectory !== '/') lower = fs.resolve('makefile', '/');
 
-                 if (lower && !fs.isDirectory(lower)) {
-                     makefileNode = lower;
-                 } else {
-                     return {
+                if (lower && !fs.isDirectory(lower)) {
+                    makefileNode = lower;
+                } else {
+                    return {
                         output: 'make: *** No targets specified and no makefile found. Stop.',
                         newState: state,
                         exitCode: 2
                     };
-                 }
-             } else {
-                 return {
+                }
+            } else {
+                return {
                     output: `make: ${options.file}: No such file or directory`,
                     newState: state,
                     exitCode: 2
                 };
-             }
+            }
         }
 
         // Read content
@@ -215,7 +215,7 @@ export class MakeCommand implements ICommand {
         const goals = targets.length > 0 ? targets : (orderedTargets.length > 0 ? [orderedTargets[0]] : []);
 
         if (goals.length === 0) {
-             return {
+            return {
                 output: 'make: *** No targets. Stop.',
                 newState: state,
                 exitCode: 2
@@ -267,11 +267,11 @@ export class MakeCommand implements ICommand {
 
                 const depSuccess = await executeTarget(expandedDep);
                 if (!depSuccess) {
-                     if (!options.keepGoing) return false;
-                     // If keepGoing, we might fail this target but continue others?
-                     // If dependency failed, we cannot build this target.
-                     outputLines.push(`make: *** Target '${targetName}' not remade because of errors.`);
-                     return false;
+                    if (!options.keepGoing) return false;
+                    // If keepGoing, we might fail this target but continue others?
+                    // If dependency failed, we cannot build this target.
+                    outputLines.push(`make: *** Target '${targetName}' not remade because of errors.`);
+                    return false;
                 }
 
                 const depMtime = getMtime(expandedDep);
@@ -285,35 +285,35 @@ export class MakeCommand implements ICommand {
             // If target exists and has no deps, it is considered up to date?
             // "make: 'target' is up to date."
             if (!rebuild && targetMtime !== -1) {
-                 // But wait, if it's a goal and we didn't do anything...
-                 // Only check dependencies.
-                 return true;
+                // But wait, if it's a goal and we didn't do anything...
+                // Only check dependencies.
+                return true;
             }
 
             // Execute recipes
             if (options.touch) {
-                 if (options.dryRun) return true;
-                 // Touch logic
-                 try {
-                     const path = targetName.startsWith('/') ? targetName : state.currentDirectory + '/' + targetName;
-                     fs.writeFile(path, '', 'a', state.currentDirectory); // append empty updates mtime?
-                     // Actually force mtime update
-                     const node = fs.resolve(path, state.currentDirectory);
-                     if (node) {
-                         const inode = fs.getInode(node.inodeId);
-                         if (inode) {
-                             inode.mtime = Date.now();
-                             inode.ctime = Date.now();
-                         }
-                     } else {
-                         fs.writeFile(path, '', 'w', state.currentDirectory);
-                     }
-                     outputLines.push(`touch ${targetName}`);
-                 } catch (e) {
-                     outputLines.push(`make: *** [${targetName}] Error 1`);
-                     return false;
-                 }
-                 return true;
+                if (options.dryRun) return true;
+                // Touch logic
+                try {
+                    const path = targetName.startsWith('/') ? targetName : state.currentDirectory + '/' + targetName;
+                    fs.writeFile(path, '', 'a', state.currentDirectory); // append empty updates mtime?
+                    // Actually force mtime update
+                    const node = fs.resolve(path, state.currentDirectory);
+                    if (node) {
+                        const inode = fs.getInode(node.inodeId);
+                        if (inode) {
+                            inode.mtime = Date.now();
+                            inode.ctime = Date.now();
+                        }
+                    } else {
+                        fs.writeFile(path, '', 'w', state.currentDirectory);
+                    }
+                    outputLines.push(`touch ${targetName}`);
+                } catch (e) {
+                    outputLines.push(`make: *** [${targetName}] Error 1`);
+                    return false;
+                }
+                return true;
             }
 
             for (const recipe of rule.recipes) {
@@ -350,14 +350,14 @@ export class MakeCommand implements ICommand {
                         outputLines.push(text.replace(/['"]/g, ''));
                     } else if (prog === 'touch') {
                         const file = progArgs[0];
-                         const path = file.startsWith('/') ? file : state.currentDirectory + '/' + file;
-                         fs.writeFile(path, '', 'a', state.currentDirectory); // ensure exists
-                         // Update mtime
-                         const node = fs.resolve(path, state.currentDirectory);
-                         if (node) {
-                             const inode = fs.getInode(node.inodeId);
-                             if (inode) inode.mtime = Date.now();
-                         }
+                        const path = file.startsWith('/') ? file : state.currentDirectory + '/' + file;
+                        fs.writeFile(path, '', 'a', state.currentDirectory); // ensure exists
+                        // Update mtime
+                        const node = fs.resolve(path, state.currentDirectory);
+                        if (node) {
+                            const inode = fs.getInode(node.inodeId);
+                            if (inode) inode.mtime = Date.now();
+                        }
                     } else if (prog === 'false') {
                         cmdExit = 1;
                     } else if (prog === 'true') {
@@ -379,12 +379,12 @@ export class MakeCommand implements ICommand {
                 if (cmdExit !== 0) {
                     if (!ignore) {
                         outputLines.push(`make: *** [${targetName}] Error ${cmdExit}`);
-                         if (!options.keepGoing) {
-                             globalExitCode = 2; // Make error
-                             throw new Error('Stop');
-                         }
-                         globalExitCode = 1; // Keep going error
-                         return false;
+                        if (!options.keepGoing) {
+                            globalExitCode = 2; // Make error
+                            throw new Error('Stop');
+                        }
+                        globalExitCode = 1; // Keep going error
+                        return false;
                     } else {
                         outputLines.push(`make: [${targetName}] Error ${cmdExit} (ignored)`);
                     }

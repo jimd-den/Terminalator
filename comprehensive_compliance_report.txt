@@ -267,7 +267,7 @@ UTILITY: date
 [FAIL] DATE_06: Complex format
        -> Stdout Regex Mismatch.
    Expected: /Year: 20../
-   Got: "Wed Jan 21 2026 19:45:37 GMT-0700 (Mountain Standard Time)"
+   Got: "Fri Jan 23 2026 09:07:17 GMT-0700 (Mountain Standard Time)"
 [PASS] DATE_07
 [FAIL] DATE_08: Set date (fail/stub)
        -> Exit Code: Expected 1, got 0
@@ -973,7 +973,7 @@ UTILITY: du
 [FAIL] DU_04: Human readable -h (Ext)
        -> Stdout Regex Mismatch.
    Expected: /[KMG]/
-   Got: "8	/home/operator\n16	/home\n8	/bin\n32	/"
+   Got: "8	/home/operator\n16	/home\n8	/bin\n8	/usr/bin\n16	/usr\n8	/tmp\n8	/var/mail\n16	/var\n72	/"
 [PASS] DU_05
 [PASS] DU_06
 [PASS] DU_07
@@ -1813,20 +1813,20 @@ UTILITY: who
 [FAIL] WHO_01: List users
        -> Stdout Regex Mismatch.
    Expected: /operator/
-   Got: "[object Object]  tty1  1/21/2026"
+   Got: "[object Object]  tty1  1/23/2026"
 [FAIL] WHO_02: Headers -H
        -> Stdout Regex Mismatch.
    Expected: /NAME/
-   Got: "[object Object]  tty1  1/21/2026"
+   Got: "[object Object]  tty1  1/23/2026"
 [PASS] WHO_03
 [FAIL] WHO_04: Am I -m
        -> Stdout Regex Mismatch.
    Expected: /operator/
-   Got: "[object Object]  tty1  1/21/2026"
+   Got: "[object Object]  tty1  1/23/2026"
 [FAIL] WHO_05: Message status -T
        -> Stdout Regex Mismatch.
    Expected: /[+\-?]/
-   Got: "[object Object]  tty1  1/21/2026"
+   Got: "[object Object]  tty1  1/23/2026"
 [PASS] WHO_06
 [PASS] WHO_07
 [PASS] WHO_08

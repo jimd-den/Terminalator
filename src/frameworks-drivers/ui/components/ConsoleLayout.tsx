@@ -87,7 +87,7 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
             >
                 <View style={dynamicStyles.header}>
                     <Text style={dynamicStyles.headerText}>[ STATUS: {status} ]</Text>
-                    <Pressable style={dynamicStyles.keyboardBtn} onPress={refocus}>
+                    <Pressable style={dynamicStyles.keyboardBtn} onPress={refocus} hitSlop={15}>
                         <Text style={dynamicStyles.keyboardBtnText}>KEYBOARD</Text>
                     </Pressable>
                 </View>

@@ -13,7 +13,7 @@
  */
 
 import { FileSystem } from './FileSystem';
-import { FileSystemService } from '../services/FileSystemService';
+
 
 export interface TerminalState {
     currentDirectory: string;
@@ -23,7 +23,7 @@ export interface TerminalState {
     user: { uid: number, gid: number, groups: number[] };
     lastExitCode: number;
     functions: Map<string, any>; // FunctionDefNode
-    fs: FileSystemService; // Added to interface for command access
+
 }
 
 /**
@@ -59,7 +59,6 @@ export const createInitialTerminalState = (): TerminalState => {
         },
         user: { uid: 1000, gid: 1000, groups: [1000] },
         lastExitCode: 0,
-        functions: new Map(),
-        fs: new FileSystemService(new FileSystem()) // Default fresh FS if not provided (though tests should overwrite or executor should manage)
+        functions: new Map()
     };
 }

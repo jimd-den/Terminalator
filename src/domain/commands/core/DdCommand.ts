@@ -19,13 +19,13 @@ export class DdCommand implements ICommand {
             else if (arg.startsWith('of=')) outputFile = arg.substring(3);
         }
 
-        const fs = state.fs;
+        const fs = context.fileSystemService;
         let content = _input || '';
 
         if (inputFile) {
             const node = fs.resolve(inputFile, state.currentDirectory);
             if (!node || fs.isDirectory(node)) {
-                 return { output: `dd: ${inputFile}: No such file`, newState: state, exitCode: 1 };
+                return { output: `dd: ${inputFile}: No such file`, newState: state, exitCode: 1 };
             }
             content = fs.readFile(fs.getAbsolutePath(node));
         }

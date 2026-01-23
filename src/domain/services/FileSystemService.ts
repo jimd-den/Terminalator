@@ -84,6 +84,13 @@ export class FileSystemService {
         return lastDentry;
     }
 
+    /**
+     * Alias for mkdirp (Tutor/System usage)
+     */
+    public createDirectory(path: string, mode: number = 0o755): Dentry {
+        return this.mkdirp(path, mode);
+    }
+
     createFile(path: string, mode: number = 0o644, uid: number = 0, gid: number = 0, cwd: string = '/'): Dentry {
         return this.createDentry(path, S_IFREG | mode, uid, gid, cwd);
     }

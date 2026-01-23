@@ -49,7 +49,7 @@ export class ShCommand implements ICommand {
         // Logic
         if (scriptFile) {
             // Read file
-            const fs = state.fs;
+            const fs = context.fileSystemService;
             let node: Dentry | null = fs.resolve(scriptFile, state.currentDirectory);
 
             // HACK: Fallback to root for test suite compatibility
