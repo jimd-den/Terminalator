@@ -8,6 +8,7 @@ import { ShellParser, ASTNode, NodeType, CommandNode, ListNode, PipelineNode, Su
 import { IBinaryRunner } from '../interfaces/IBinaryRunner';
 import { ProcessContext } from '../entities/ProcessContext';
 import { IStream, StringStream, PipeStream, createStdinStream, createOutputStream } from '../entities/Stream';
+import { JobControlService } from '../services/JobControlService';
 
 export interface CommandResponse {
     output: string;
@@ -32,6 +33,7 @@ export class ExecuteCommand implements IShellExecutor {
     protected service: FileSystemService;
     private expansionService: ShellExpansionService;
     protected fs: FileSystem;
+    private jobControl: JobControlService;
 
     constructor(
         fsOrService: FileSystem | FileSystemService,
@@ -50,6 +52,7 @@ export class ExecuteCommand implements IShellExecutor {
 
         this.parser = new ShellParser();
         this.expansionService = new ShellExpansionService(this.service);
+        this.jobControl = new JobControlService();
 
         if (registry) {
             this.registry = registry;
@@ -537,7 +540,8 @@ export class ExecuteCommand implements IShellExecutor {
                     stdout: stdoutStream,
                     stderr: stderrStream,
                     stdinLegacy: stdin,  // Backward compatibility
-                    executor: this
+                    executor: this,
+                    jobControl: this.jobControl
                 };
                 const res = await command.execute(expandedArgs, context, state);
                 return this.handleRedirections(res, node.redirects, state);

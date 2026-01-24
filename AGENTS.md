@@ -170,14 +170,21 @@ src/
 
 ## 5. POSIX Gap Analysis
 
-> [!WARNING]
-> The following POSIX subsystems are **not yet implemented**. Commands depending on these will have reduced compliance scores until addressed.
+> [!NOTE]
+> The following sections document the status of POSIX subsystem implementations.
 
-### 5.1 Job Control & Process Management
+### 5.1 Job Control & Process Management ✅ IMPLEMENTED
 
-*   **Affected Commands:** `bg`, `fg`, `jobs`, `kill`, `wait`
-*   **Gap:** No `JobControlService` or `ProcessTable` entity to manage background jobs, process groups (PGIDs), or job IDs (`%1`). Signal handling (`SIGINT`, `SIGTSTP`, `SIGCHLD`) is stubbed.
-*   **Proposed Fix:** Add `Job` entity and `JobControlService` domain service. Extend `ProcessContext` with a job table reference.
+*   **Commands:** `bg`, `fg`, `jobs`, `kill`, `wait` — **100% POSIX Compliance**
+*   **Architecture:**
+    *   `Job` entity (`src/domain/entities/Job.ts`) - Job states (Running/Stopped/Done/Terminated) and output formatting.
+    *   `Signal` entity (`src/domain/entities/Signal.ts`) - POSIX signal definitions and parsing.
+    *   `JobControlService` (`src/domain/services/JobControlService.ts`) - Job table management, signal delivery, job resolution (%1, %+, %-).
+    *   `ProcessContext.jobControl` - Reference injected into commands.
+*   **Key Features:**
+    *   Job ID notation: `%1`, `%+`, `%%`, `%-`, `%?string`, `%string`
+    *   Signal handling: SIGTERM, SIGKILL, SIGSTOP, SIGCONT, etc.
+    *   Output formats per POSIX: `[%d] %s\n` for bg, `%s\n` for fg, `[%d] %c %s %s\n` for jobs.
 
 ### 5.2 Identity & Permissions Model
 
@@ -185,11 +192,15 @@ src/
 *   **Gap:** No `IdentityService` (simulating `/etc/passwd` & `/etc/group`). Permission enforcement (sticky bit, setuid) is incomplete in `FileSystemService`. `id` outputs `[object Object]` due to missing serialization.
 *   **Proposed Fix:** Add `User`/`Group` entities and an `IdentityService` to manage simulated user database. Update `FileSystemService` for full permission checks.
 
-### 5.3 Process Pipeline & I/O Streams
+### 5.3 Process Pipeline & I/O Streams ✅ PARTIALLY IMPLEMENTED
 
-*   **Affected Commands:** `xargs`, `comm`, `split`, `csplit`, `false` (pipe exit codes)
-*   **Gap:** `ProcessContext.stdin` is a simple `string`. `stdout`/`stderr` are marked "Not implemented". Complex pipes, large data, and FD redirections fail.
-*   **Proposed Fix:** Implement `Stream` abstraction (pipes, file descriptors) in the Domain layer. Replace string buffers with proper stream objects.
+*   **Commands:** `xargs` (100%), `comm`, `split`, `csplit`
+*   **Implemented:**
+    *   `IStream` interface (`src/domain/entities/Stream.ts`) - Abstraction for stdin/stdout/stderr.
+    *   `StringStream`, `PipeStream`, `NullStream` implementations.
+    *   `ProcessContext` uses `IStream` for I/O with backward compatibility via `getStdinAsString()`.
+*   **Remaining Gap:** Full FD redirection (2>&1, <&3) and large streaming data.
+
 
 ---
 

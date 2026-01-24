@@ -2,6 +2,7 @@ import { FileSystem } from './FileSystem';
 import { FileSystemService } from '../services/FileSystemService';
 import { IShellExecutor } from '../interfaces/IShellExecutor';
 import { IStream } from './Stream';
+import { JobControlService } from '../services/JobControlService';
 
 /**
  * ProcessContext Entity - Domain Layer
@@ -61,7 +62,16 @@ export interface ProcessContext {
      * Shell executor for running sub-commands
      */
     executor?: IShellExecutor;
+
+    /**
+     * Job Control Service for managing background jobs.
+     * 
+     * Required for bg, fg, jobs, kill (job specs), wait commands.
+     * Optional because not all contexts need job control (e.g., subshells).
+     */
+    jobControl?: JobControlService;
 }
+
 
 /**
  * Helper to get stdin as a string (backward compatibility).

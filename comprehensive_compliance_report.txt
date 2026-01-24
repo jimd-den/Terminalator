@@ -313,16 +313,14 @@ UTILITY: unalias
 [PASS] UNALIAS_09
 [PASS] UNALIAS_10
 UTILITY: bg
-[FAIL] BG_01: Resume job
-       -> Exit Code: Expected 0, got 1
+[PASS] BG_01
 [PASS] BG_02
 [PASS] BG_03
 [PASS] BG_04
 [PASS] BG_05
 [PASS] BG_06
 [PASS] BG_07
-[FAIL] BG_08: Help?
-       -> Exit Code: Expected 0, got 1
+[PASS] BG_08
 [PASS] BG_09
 [PASS] BG_10
 UTILITY: fg
@@ -340,43 +338,30 @@ UTILITY: jobs
 [PASS] JOBS_01
 [PASS] JOBS_02
 [PASS] JOBS_03
-[FAIL] JOBS_04: Specific job
-       -> Exit Code: Expected 1, got 0
+[PASS] JOBS_04
 [PASS] JOBS_05
 [PASS] JOBS_06
-[FAIL] JOBS_07: Invalid flag
-       -> Exit Code: Expected 1, got 0
-[FAIL] JOBS_08: Multiple args
-       -> Exit Code: Expected 1, got 0
+[PASS] JOBS_07
+[PASS] JOBS_08
 [PASS] JOBS_09
 [PASS] JOBS_10
 UTILITY: kill
 [PASS] KILL_01
 [PASS] KILL_02
 [PASS] KILL_03
-[FAIL] KILL_04: Fail invalid PID
-       -> Exit Code: Expected 1, got 0
-[FAIL] KILL_05: List signals -l
-       -> Stdout Regex Mismatch.
-   Expected: /TERM|KILL/
-   Got: ""
-[FAIL] KILL_06: Check signals
-       -> Stdout Regex Mismatch.
-   Expected: /KILL/
-   Got: ""
+[PASS] KILL_04
+[PASS] KILL_05
+[PASS] KILL_06
 [PASS] KILL_07
-[FAIL] KILL_08: Kill job %1
-       -> Exit Code: Expected 1, got 0
+[PASS] KILL_08
 [PASS] KILL_09
 [PASS] KILL_10
 UTILITY: wait
 [PASS] WAIT_01
 [PASS] WAIT_02
-[FAIL] WAIT_03: Wait job %1
-       -> Exit Code: Expected 127, got 0
+[PASS] WAIT_03
 [PASS] WAIT_04
-[FAIL] WAIT_05: Invalid arg
-       -> Exit Code: Expected 1, got 0
+[PASS] WAIT_05
 [PASS] WAIT_06
 [PASS] WAIT_07
 [PASS] WAIT_08
@@ -2767,11 +2752,11 @@ cut           |    10 |   10 |    0 |    100.0%
 tee           |    10 |   10 |    0 |    100.0%
 alias         |    10 |    8 |    2 |     80.0%
 unalias       |    10 |    8 |    2 |     80.0%
-bg            |    10 |    8 |    2 |     80.0%
+bg            |    10 |   10 |    0 |    100.0%
 fg            |    10 |   10 |    0 |    100.0%
-jobs          |    10 |    7 |    3 |     70.0%
-kill          |    10 |    6 |    4 |     60.0%
-wait          |    10 |    8 |    2 |     80.0%
+jobs          |    10 |   10 |    0 |    100.0%
+kill          |    10 |   10 |    0 |    100.0%
+wait          |    10 |   10 |    0 |    100.0%
 sleep         |    10 |    8 |    2 |     80.0%
 false         |    10 |    9 |    1 |     90.0%
 true          |    10 |   10 |    0 |    100.0%
@@ -2916,7 +2901,7 @@ uustat        |    10 |    9 |    1 |     90.0%
 uux           |    10 |    2 |    8 |     20.0%
 xgettext      |    10 |    6 |    4 |     60.0%
 
-TOTAL COMPLIANCE: 68.5% (1200/1752)
+TOTAL COMPLIANCE: 69.1% (1211/1752)
 
 === MISSING UTILITIES (Implemented but failing) ===
 None

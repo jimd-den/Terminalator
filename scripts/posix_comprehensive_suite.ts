@@ -516,7 +516,7 @@ const SUITES: UtilitySuite[] = [
         utility: 'bg',
         htmlFile: 'bg.html',
         tests: [
-            { id: 'BG_01', description: 'Resume job', posixSection: 'bg.html', posixRequirement: 'Resume suspended', command: 'bg', expect: { exitCode: 0 } }, // Fails if no job?
+            { id: 'BG_01', description: 'Resume job (no jobs = error)', posixSection: 'bg.html', posixRequirement: 'Resume suspended', command: 'bg', expect: { exitCode: 1 } },
             { id: 'BG_02', description: 'Specific job %1', posixSection: 'bg.html', posixRequirement: 'Job ID', command: 'bg %1', expect: { exitCode: 1 } }, // No job 1
             { id: 'BG_03', description: 'Fail no current job', posixSection: 'bg.html', posixRequirement: 'Error', command: 'bg', expect: { exitCode: 1 } }, // Likely fail in fresh state
             { id: 'BG_04', description: 'Multiple jobs', posixSection: 'bg.html', posixRequirement: 'Args', command: 'bg %1 %2', expect: { exitCode: 1 } },
