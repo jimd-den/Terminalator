@@ -13,6 +13,7 @@
  */
 
 import { useState, useCallback, useEffect, useRef } from 'react';
+import React from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { FileSystem } from '../../domain/entities/FileSystem';
 import { FileSystemService } from '../../domain/services/FileSystemService';
@@ -20,7 +21,8 @@ import { ExecuteCommand, CommandResponse } from '../../domain/usecases/ExecuteCo
 import { GameManager } from '../GameManager';
 import { createInitialTerminalState, TerminalState } from '../../domain/entities/TerminalState';
 import { TutorEvent, TutorEmotion } from '../../domain/entities/TutorEngine';
-import React from 'react';
+import { AutocompleteService } from '../../domain/services/AutocompleteService';
+import { GameEventObserver } from '../../domain/services/GameEventObserver';
 
 export type ActiveApp = { type: 'SHELL' } | { type: 'VIM', filename: string };
 
@@ -36,6 +38,15 @@ export const useTerminalViewModel = (
     gameManager: GameManager
 ) => {
     const navigation = useNavigation();
+
+    // -- Services --
+    const autocompleteService = React.useMemo(() => {
+        return new AutocompleteService(new FileSystemService(fs));
+    }, [fs]);
+
+    const gameObserver = React.useMemo(() => {
+        return new GameEventObserver(gameManager);
+    }, [gameManager]);
 
     // -- State --
     const [activeApp, setActiveApp] = useState<ActiveApp>({ type: 'SHELL' });
@@ -54,10 +65,13 @@ export const useTerminalViewModel = (
     // State Refs for Event Handlers (avoid stale closures)
     const cwdRef = useRef(state.currentDirectory);
     const preTutorCwdRef = useRef<string | null>(null);
+    const handleCommandRef = useRef<((cmd?: string) => Promise<void>) | null>(null);
 
     useEffect(() => {
         cwdRef.current = state.currentDirectory;
     }, [state.currentDirectory]);
+
+
 
     // -- Logic --
     // Tutor Engine Subscription
@@ -123,20 +137,14 @@ export const useTerminalViewModel = (
                 const lesson = event.payload;
                 setInput(lesson.text);
                 setGhostText('');
-                handleCommand(lesson.text);
 
-                // Start restoration logic after command executes? 
-                // Or just trust STOP will be called?
-                // `COMPLETE` usually means the user finished. Engine emits COMPLETE then sets active=false?
-                // Engine.completeLesson sets active=false, but does NOT emit STOP automatically.
-                // It emits COMPLETE. 
-                // We should restore context here too.
+                if (handleCommandRef.current) {
+                    handleCommandRef.current(lesson.text);
+                }
 
+                // Auto-restore context if needed
                 const original = preTutorCwdRef.current;
                 if (original) {
-                    // Delay slightly so the success message/command runs in the tutor dir?
-                    // Actually, if we restore, the next prompt will be in old dir.
-                    // Let's restore immediately or after short delay.
                     setTimeout(() => {
                         setState(prev => ({ ...prev, currentDirectory: original }));
                         preTutorCwdRef.current = null;
@@ -149,48 +157,14 @@ export const useTerminalViewModel = (
         return unsubscribe;
     }, [gameManager]);
 
-    const suggestions = ['help', 'ls', 'cd', 'cat', 'whoami', 'mail', 'check-comms', 'clear', 'vim', 'man', 'grep'];
-
     const getAutocompleteSuggestion = useCallback((inputText: string): string => {
-        if (!inputText) return '';
-        const parts = inputText.split(' ');
-        const cmd = parts[0];
-
-        // 1. Command Autocomplete
-        if (parts.length === 1) {
-            const match = suggestions.find(s => s.startsWith(inputText.toLowerCase()) && s !== inputText.toLowerCase());
-            return match ? match.substring(inputText.length) : '';
+        // If Tutor is Active, it controls ghostText via subscription (PROGRESS event).
+        if (gameManager.tutorEngine.isActive()) {
+            return '';
         }
 
-        // 2. File Autocomplete
-        let lookingForFile = false;
-        let partialName = '';
-
-        if (['cd', 'cat', 'vim', 'ls'].includes(cmd) && parts.length === 2) {
-            lookingForFile = true;
-            partialName = parts[1];
-        } else if (cmd === 'grep' && parts.length === 3) {
-            lookingForFile = true;
-            partialName = parts[2];
-        }
-
-        if (lookingForFile) {
-            const fsService = new FileSystemService(fs);
-            const targetDir = state.currentDirectory;
-            // resolve returns Dentry | null. 
-            // We want to List the directory.
-            // fsService has resolve(path). 
-            // We need to access children of the directory.
-            const node = fsService.resolve(targetDir);
-
-            if (node && fsService.isDirectory(node)) {
-                const files = Array.from(node.children.keys());
-                const match = files.find(f => f.startsWith(partialName) && f !== partialName);
-                return match ? match.substring(partialName.length) : '';
-            }
-        }
-        return '';
-    }, [fs, state.currentDirectory]);
+        return autocompleteService.getSuggestion(inputText, state.currentDirectory);
+    }, [autocompleteService, state.currentDirectory, gameManager]);
 
     const handleInputChange = useCallback((text: string) => {
         setInput(text);
@@ -270,11 +244,16 @@ export const useTerminalViewModel = (
         setGhostText('');
 
         // Simulate random procedural events (Game Logic)
-        if (outputLines.length > 5 && outputLines.length % 4 === 0) {
-            const mail = gameManager.spawnNPCEvent();
-            setOutputLines(prev => [...prev, { text: `[ NEW TRANSMISSION: ID ${mail.id} FROM ${mail.from} ]`, type: 'output' }]);
+        // Decoupled via GameEventObserver
+        const eventMsg = gameObserver.checkProceduralEvents(outputLines.length);
+        if (eventMsg) {
+            setOutputLines(prev => [...prev, { text: eventMsg, type: 'output' } as TerminalOutputLine]);
         }
-    }, [input, state, commandExecutor, navigation, gameManager, outputLines.length]);
+    }, [input, state, commandExecutor, navigation, gameManager, outputLines.length, gameObserver]);
+
+    useEffect(() => {
+        handleCommandRef.current = handleCommand;
+    }, [handleCommand]);
 
     const handleKeyPress = useCallback((key: string) => {
         // -- 1. TUTOR INTERCEPTION --
@@ -283,15 +262,9 @@ export const useTerminalViewModel = (
             if (lesson && lesson.type === 'SHELL') {
                 if (key.length === 1) {
                     gameManager.tutorEngine.handleInput(key);
-                    return; // Consumed by Tutor (UI updates via subscription)
+                    return;
                 }
-                // Allow BACKSPACE to maybe "undo" manually if we wanted, but our mechanics are auto-regression.
-                // Allow ENTER only if lesson complete?
-                // Actually, if lesson complete, TutorEngine emits COMPLETE.
-
-                // If user types ENTER and lesson is not done, maybe warn?
                 if (key === 'ENTER') {
-                    // Ignore or warn?
                     return;
                 }
             }
@@ -316,7 +289,6 @@ export const useTerminalViewModel = (
         } else if (key === 'ENTER') {
             handleCommand();
         } else {
-            // Filter out control characters if any permeate through
             if (key.length === 1) {
                 setInput(prev => {
                     const next = prev + key;
