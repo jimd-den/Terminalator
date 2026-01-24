@@ -20,7 +20,7 @@ import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
 
 export class CommandCommand implements ICommand {
-    constructor(private registryProvider: (name: string) => ICommand | undefined) {}
+    constructor(private registryProvider: (name: string) => ICommand | undefined) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         const input = getStdinAsString(context);
@@ -30,23 +30,23 @@ export class CommandCommand implements ICommand {
         let cmdArgs = args.slice(1);
 
         if (cmdName === '-v' || cmdName === '-V') {
-             if (cmdArgs.length > 0) {
-                 const name = cmdArgs[0];
-                 const cmd = this.registryProvider(name);
-                 if (cmd) {
-                     return { output: name, newState: state, exitCode: 0 };
-                 } else {
-                     return { output: '', newState: state, exitCode: 1 };
-                 }
-             }
-             return { output: '', newState: state, exitCode: 0 };
+            if (cmdArgs.length > 0) {
+                const name = cmdArgs[0];
+                const cmd = this.registryProvider(name);
+                if (cmd) {
+                    return { output: name, newState: state, exitCode: 0 };
+                } else {
+                    return { output: '', newState: state, exitCode: 1 };
+                }
+            }
+            return { output: '', newState: state, exitCode: 0 };
         }
 
         const cmd = this.registryProvider(cmdName);
         if (!cmd) {
-             return { output: `command: ${cmdName}: not found`, newState: state, exitCode: 127 };
+            return { output: `command: ${cmdName}: not found`, newState: state, exitCode: 127 };
         }
 
-        return cmd.execute(cmdArgs, state, input);
+        return cmd.execute(cmdArgs, context, state);
     }
 }

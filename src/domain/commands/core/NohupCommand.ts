@@ -27,7 +27,7 @@ export class NohupCommand implements ICommand {
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         const input = getStdinAsString(context);
         if (args.length === 0) {
-             return { output: 'nohup: missing operand', newState: state, exitCode: 1 };
+            return { output: 'nohup: missing operand', newState: state, exitCode: 1 };
         }
 
         const cmdName = args[0];
@@ -44,14 +44,14 @@ export class NohupCommand implements ICommand {
         let response: CommandResponse;
         try {
             // "nohup: ignoring input and appending output to 'nohup.out'"
-            response = await command.execute(utilityArgs, state, input); // pass input? nohup usually redirects stdin from /dev/null if terminal.
+            response = await command.execute(utilityArgs, context, state); // pass input? nohup usually redirects stdin from /dev/null if terminal.
 
             // Append output to nohup.out
             const outFile = 'nohup.out';
             const path = state.currentDirectory === '/' ? `/${outFile}` : `${state.currentDirectory}/${outFile}`;
 
             let existing = '';
-            try { existing = this.fs.readFile(path); } catch (e) {}
+            try { existing = this.fs.readFile(path); } catch (e) { }
 
             this.fs.writeFile(path, existing + response.output + '\n', 'w');
 

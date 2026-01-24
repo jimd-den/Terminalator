@@ -805,23 +805,18 @@ UTILITY: strings
 [FAIL] STRINGS_10: Default len 4
        -> Exit Code: Expected 0, got 1
 UTILITY: time
-[FAIL] TIME_01: Time command
-       -> Exit Code: Expected 0, got 1
+[PASS] TIME_01
 [PASS] TIME_02
-[FAIL] TIME_03: Format -p
-       -> Exit Code: Expected 0, got 1
+[PASS] TIME_03
 [PASS] TIME_04
 [PASS] TIME_05
 [FAIL] TIME_06: No args?
        -> Exit Code: Expected 0, got 1
-[FAIL] TIME_07: Redirect
-       -> Exit Code: Expected 0, got 1
-[FAIL] TIME_08: Complex command
-       -> Exit Code: Expected 0, got 1
+[PASS] TIME_07
+[PASS] TIME_08
 [FAIL] TIME_09: Subshell
        -> Exit Code: Expected 0, got 1
-[FAIL] TIME_10: Stress
-       -> Exit Code: Expected 0, got 1
+[PASS] TIME_10
 UTILITY: fold
 [PASS] FOLD_01
 [PASS] FOLD_02
@@ -1306,23 +1301,14 @@ UTILITY: expand
 [FAIL] EXPAND_10: Consistency
        -> Exit Code: Expected 0, got 1
 UTILITY: command
-[FAIL] COMMAND_01: Run utility
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /x/
-   Got: "sh: command: Cannot read properties of undefined (reading 'read')"
+[PASS] COMMAND_01
 [FAIL] COMMAND_02: Std path -p
        -> Exit Code: Expected 0, got 127
 [PASS] COMMAND_03
 [PASS] COMMAND_04
 [PASS] COMMAND_05
-[FAIL] COMMAND_06: Ignore func
-       -> Exit Code: Expected 0, got 1
-[FAIL] COMMAND_07: With args
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /a b/
-   Got: "sh: command: Cannot read properties of undefined (reading 'read')"
+[PASS] COMMAND_06
+[PASS] COMMAND_07
 [PASS] COMMAND_08
 [PASS] COMMAND_09
 [FAIL] COMMAND_10: No args
@@ -1566,23 +1552,17 @@ UTILITY: ps
 [FAIL] PS_10: Fail invalid
        -> Exit Code: Expected 1, got 0
 UTILITY: nice
-[FAIL] NICE_01: Run with nice
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /x/
-   Got: "nice: echo: Cannot read properties of undefined (reading 'read')"
-[FAIL] NICE_02: Set increment -n
-       -> Exit Code: Expected 0, got 1
+[PASS] NICE_01
+[PASS] NICE_02
 [PASS] NICE_03
 [FAIL] NICE_04: Fail syntax
        -> Exit Code: Expected 1, got 127
 [PASS] NICE_05
-[PASS] NICE_06
-[FAIL] NICE_07: Complex cmd
-       -> Exit Code: Expected 0, got 1
+[FAIL] NICE_06: Negative (root)
+       -> Exit Code: Expected 1, got 0
+[PASS] NICE_07
 [PASS] NICE_08
-[FAIL] NICE_09: Inc 10
-       -> Exit Code: Expected 0, got 1
+[PASS] NICE_09
 [PASS] NICE_10
 UTILITY: renice
 [PASS] RENICE_01
@@ -1599,21 +1579,16 @@ UTILITY: renice
 [PASS] RENICE_09
 [PASS] RENICE_10
 UTILITY: nohup
-[FAIL] NOHUP_01: Run command
-       -> Exit Code: Expected 0, got 127
-       -> Missing File: Expected /home/operator/nohup.out to be created.
-[FAIL] NOHUP_02: Redirected
-       -> Exit Code: Expected 0, got 127
+[PASS] NOHUP_01
+[PASS] NOHUP_02
 [PASS] NOHUP_03
 [PASS] NOHUP_04
 [PASS] NOHUP_05
-[FAIL] NOHUP_06: Background
-       -> Exit Code: Expected 0, got 127
+[PASS] NOHUP_06
 [PASS] NOHUP_07
 [FAIL] NOHUP_08: Fail no args
        -> Exit Code: Expected 127, got 1
-[FAIL] NOHUP_09: Write permission (stub)
-       -> Exit Code: Expected 0, got 127
+[PASS] NOHUP_09
 [PASS] NOHUP_10
 UTILITY: logger
 [PASS] LOGGER_01
@@ -2119,13 +2094,8 @@ UTILITY: realpath
 [PASS] REALPATH_09
 [PASS] REALPATH_10
 UTILITY: timeout
-[FAIL] TIMEOUT_01: Run command
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /x/
-   Got: "sh: timeout: Cannot read properties of undefined (reading 'read')"
-[FAIL] TIMEOUT_02: Kill after time
-       -> Exit Code: Expected 124, got 1
+[PASS] TIMEOUT_01
+[PASS] TIMEOUT_02
 [FAIL] TIMEOUT_03: Signal -s
        -> Exit Code: Expected 124, got 125
 [PASS] TIMEOUT_04
@@ -2136,8 +2106,7 @@ UTILITY: timeout
 [FAIL] TIMEOUT_08: Foreground --foreground
        -> Exit Code: Expected 0, got 125
 [PASS] TIMEOUT_09
-[FAIL] TIMEOUT_10: Zero duration
-       -> Exit Code: Expected 0, got 1
+[PASS] TIMEOUT_10
 UTILITY: break
 [PASS] BREAK_01
 [PASS] BREAK_02
@@ -2784,7 +2753,7 @@ ar            |    10 |    4 |    6 |     40.0%
 make          |    10 |    8 |    2 |     80.0%
 sh            |    11 |    9 |    2 |     81.8%
 strings       |    10 |    4 |    6 |     40.0%
-time          |    10 |    3 |    7 |     30.0%
+time          |    10 |    8 |    2 |     80.0%
 fold          |    10 |    6 |    4 |     60.0%
 cksum         |    10 |    5 |    5 |     50.0%
 du            |    10 |    9 |    1 |     90.0%
@@ -2810,7 +2779,7 @@ tsort         |    10 |    5 |    5 |     50.0%
 man           |    10 |    7 |    3 |     70.0%
 more          |    10 |    2 |    8 |     20.0%
 expand        |    10 |    4 |    6 |     40.0%
-command       |    10 |    5 |    5 |     50.0%
+command       |    10 |    8 |    2 |     80.0%
 fc            |    10 |    9 |    1 |     90.0%
 getopts       |    10 |    2 |    8 |     20.0%
 hash          |    10 |    9 |    1 |     90.0%
@@ -2826,9 +2795,9 @@ export        |    10 |    8 |    2 |     80.0%
 eval          |    10 |    7 |    3 |     70.0%
 exec          |    10 |    7 |    3 |     70.0%
 ps            |    10 |    7 |    3 |     70.0%
-nice          |    10 |    5 |    5 |     50.0%
+nice          |    10 |    8 |    2 |     80.0%
 renice        |    10 |    7 |    3 |     70.0%
-nohup         |    10 |    5 |    5 |     50.0%
+nohup         |    10 |    9 |    1 |     90.0%
 logger        |    10 |    9 |    1 |     90.0%
 tput          |    10 |    6 |    4 |     60.0%
 tty           |    10 |    6 |    4 |     60.0%
@@ -2861,7 +2830,7 @@ unlink        |    10 |    7 |    3 |     70.0%
 patch         |    10 |    8 |    2 |     80.0%
 readlink      |    10 |    5 |    5 |     50.0%
 realpath      |    10 |    8 |    2 |     80.0%
-timeout       |    10 |    4 |    6 |     40.0%
+timeout       |    10 |    7 |    3 |     70.0%
 break         |    10 |    7 |    3 |     70.0%
 continue      |    10 |    7 |    3 |     70.0%
 colon         |    10 |   10 |    0 |    100.0%
@@ -2901,7 +2870,7 @@ uustat        |    10 |    9 |    1 |     90.0%
 uux           |    10 |    2 |    8 |     20.0%
 xgettext      |    10 |    6 |    4 |     60.0%
 
-TOTAL COMPLIANCE: 69.1% (1211/1752)
+TOTAL COMPLIANCE: 70.1% (1229/1752)
 
 === MISSING UTILITIES (Implemented but failing) ===
 None

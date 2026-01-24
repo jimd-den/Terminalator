@@ -30,7 +30,7 @@ export class TimeCommand implements ICommand {
         const cmdArgs = args.filter(a => a !== '-p'); // ignore -p flag for now
 
         if (cmdArgs.length === 0) {
-             return { output: 'time: missing operand', newState: state, exitCode: 1 };
+            return { output: 'time: missing operand', newState: state, exitCode: 1 };
         }
 
         const cmdName = cmdArgs[0];
@@ -45,7 +45,7 @@ export class TimeCommand implements ICommand {
         let response: CommandResponse;
 
         try {
-            response = await command.execute(utilityArgs, state, input);
+            response = await command.execute(utilityArgs, context, state);
         } catch (e: any) {
             return { output: `time: error executing ${cmdName}: ${e.message}`, newState: state, exitCode: 1 };
         }

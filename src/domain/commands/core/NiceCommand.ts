@@ -50,7 +50,7 @@ export class NiceCommand implements ICommand {
 
         // Just run it. We don't have a scheduler.
         try {
-            return await command.execute(utilityArgs, state, input);
+            return await command.execute(utilityArgs, context, state);
         } catch (e: any) {
             return { output: `nice: ${cmdName}: ${e.message}`, newState: state, exitCode: 1 }; // or 126/127
         }

@@ -124,7 +124,7 @@ The codebase follows a strict **Clean Architecture** implementation, ensuring se
 src/
 ├── domain/                      # ENTITIES & LOGIC
 │   ├── commands/                # Command Implementations
-│   │   ├── core/                # StdLib (cp, ls, mv, rm, etc.)
+│   │   ├── core/                # StdLib (cp, ls, mv, rm, bg, fg, jobs, kill, wait...)
 │   │   ├── system/              # System (shutdown, reboot)
 │   │   ├── CommandBase.ts       # Abstract Base Class
 │   │   ├── CommandRegistry.ts   # Command Lookup Registry
@@ -132,7 +132,10 @@ src/
 │   ├── entities/                # Pure Data Models
 │   │   ├── FileSystem.ts        # Inode/Dentry State
 │   │   ├── TerminalState.ts     # Global State Wrapper
-│   │   └── ProcessContext.ts    # Envrionment Context
+│   │   ├── ProcessContext.ts    # Environment Context (with jobControl)
+│   │   ├── Stream.ts            # IStream, StringStream, PipeStream
+│   │   ├── Job.ts               # Job entity for job control
+│   │   └── Signal.ts            # POSIX signal definitions
 │   ├── factories/               # Object Creation
 │   │   └── ShellFactory.ts      # Assembles Shell Context
 │   ├── modules/                 # DI Modules
@@ -141,6 +144,7 @@ src/
 │   ├── ports/                   # Interfaces (Ports)
 │   ├── services/                # Domain Services
 │   │   ├── FileSystemService.ts # POSIX Logic
+│   │   ├── JobControlService.ts # Job table, signals, job ID resolution
 │   │   ├── ShellExpansionService.ts # Globbing & Expansion
 │   │   └── ShellParser.ts       # Input Parser
 │   └── usecases/                # Application Logic
@@ -165,6 +169,7 @@ src/
     ├── posix_comprehensive_suite.ts # Main Test Suite (Run this!)
     └── ...
 ```
+
 
 ---
 

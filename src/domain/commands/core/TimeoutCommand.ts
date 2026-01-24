@@ -27,7 +27,7 @@ export class TimeoutCommand implements ICommand {
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         const input = getStdinAsString(context);
         if (args.length < 2) {
-             return { output: 'timeout: missing operand', newState: state, exitCode: 125 };
+            return { output: 'timeout: missing operand', newState: state, exitCode: 125 };
         }
 
         const durationStr = args[0];
@@ -39,14 +39,14 @@ export class TimeoutCommand implements ICommand {
         // Handle suffix: s, m, h, d
         const lastChar = durationStr.slice(-1);
         if (['s', 'm', 'h', 'd'].includes(lastChar)) {
-             duration = parseFloat(durationStr.slice(0, -1));
-             if (lastChar === 'm') duration *= 60;
-             if (lastChar === 'h') duration *= 3600;
-             if (lastChar === 'd') duration *= 86400;
+            duration = parseFloat(durationStr.slice(0, -1));
+            if (lastChar === 'm') duration *= 60;
+            if (lastChar === 'h') duration *= 3600;
+            if (lastChar === 'd') duration *= 86400;
         }
 
         if (isNaN(duration)) {
-             return { output: `timeout: invalid time interval '${durationStr}'`, newState: state, exitCode: 125 };
+            return { output: `timeout: invalid time interval '${durationStr}'`, newState: state, exitCode: 125 };
         }
 
         // Convert to ms
@@ -67,7 +67,7 @@ export class TimeoutCommand implements ICommand {
             }, timeoutMs);
         });
 
-        const executionPromise = command.execute(cmdArgs, state, input);
+        const executionPromise = command.execute(cmdArgs, context, state);
 
         return Promise.race([executionPromise, timeoutPromise]);
     }
