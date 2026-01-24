@@ -2945,7 +2945,7 @@ async function runSuite() {
                 // Manual (Robust):
                 const registry = new CommandRegistry();
                 new CoreUtilsModule(testFs, new IdentityService()).register(registry);
-                new SystemUtilsModule().register(registry);
+                new SystemUtilsModule(new FileSystemService(testFs)).register(registry);
 
                 registry.register('c17', new C17Command(compiler, service));
                 testExecutor = new ExecuteCommand(service, undefined, registry, runner);

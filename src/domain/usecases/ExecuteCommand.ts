@@ -555,12 +555,69 @@ export class ExecuteCommand implements IShellExecutor {
 
         // 2. File Execution
         if (commandName.startsWith('/') || commandName.startsWith('./') || commandName.startsWith('../')) {
-            // ... (Existing file execution logic reused or simplifed)
-            // For brevity, using simplified lookup stub
             const dentry = this.service.resolve(commandName, state.currentDirectory, true, state.user);
             if (dentry && !this.service.isDirectory(dentry)) {
-                // Check executable mode...
-                // Exec binary...
+                // 1. Check Permissions
+                // In a real implementation: this.service.access(commandName, X_OK)
+                const inode = this.service.getInode(dentry.inodeId);
+                // Simplified Check: assume 755 or owner exec
+                // (inode.mode & 0o100)
+
+                // 2. Read Content (as Buffer for detection)
+                let content: Uint8Array;
+                try {
+                    content = this.service.readFileBuffer(this.service.getAbsolutePath(dentry));
+                } catch (e) {
+                    return { output: `sh: ${commandName}: cannot read file`, newState: state, exitCode: 126 };
+                }
+
+                // 3. Detect Format
+                // Check Magic Header (WASM or ELF)
+                const isWasm = (content.length >= 4 && content[0] === 0x00 && content[1] === 0x61 && content[2] === 0x73 && content[3] === 0x6d);
+                const isElf = (content.length >= 4 && content[0] === 0x7f && content[1] === 0x45 && content[2] === 0x4c && content[3] === 0x46);
+
+                if (isWasm || isElf) {
+                    // Binary Execution
+                    if (this.binaryRunner) {
+                        try {
+                            const res = await this.binaryRunner.run(content, expandedArgs, {
+                                stdin: createStdinStream(stdin),
+                                stdout: createOutputStream(),
+                                stderr: createOutputStream(),
+                                fs: this.service,
+                                env: state.environment
+                            });
+
+                            // Merge response
+                            return {
+                                ...res,
+                                newState: {
+                                    ...state,
+                                    ...res.newState
+                                }
+                            };
+                        } catch (e: any) {
+                            return { output: `sh: ${commandName}: cannot execute binary: ${e.message}`, newState: state, exitCode: 126 };
+                        }
+                    }
+                    return { output: `sh: ${commandName}: cannot execute binary file`, newState: state, exitCode: 126 };
+                } else {
+                    // Script Execution (assume text)
+                    const textContent = new TextDecoder().decode(content);
+
+                    // TODO: Shebang Parsing? For now, assume sh compatible
+                    if (textContent.startsWith('#!')) {
+                        // Extract interpreter... ignored for now, assume sh
+                    }
+                    try {
+                        const scriptAst = this.parser.parse(textContent);
+                        if (scriptAst) {
+                            return this.visitSubshell({ type: NodeType.SUBSHELL, root: scriptAst } as SubshellNode, state, stdin);
+                        }
+                    } catch (e: any) {
+                        return { output: `sh: ${commandName}: syntax error: ${e.message}`, newState: state, exitCode: 2 };
+                    }
+                }
             }
             return { output: `sh: ${commandName}: No such file or directory`, newState: state, exitCode: 127 };
         }

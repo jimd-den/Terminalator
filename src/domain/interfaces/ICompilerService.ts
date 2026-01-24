@@ -21,6 +21,7 @@ export interface CompilerOptions {
     undefines?: string[]; // -U flag
     optimizationLevel?: string; // -O level
     sharedLibrary?: boolean; // -G flag
+    cwd?: string;
 }
 
 export interface ICompilerService {

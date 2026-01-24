@@ -16,7 +16,7 @@ export class ShellFactory {
 
         // Register Modules
         new CoreUtilsModule(fileSystem, identityService).register(registry);
-        new SystemUtilsModule().register(registry);
+        new SystemUtilsModule(fsService).register(registry);
 
         const executor = new ExecuteCommand(fsService, telemetry, registry);
 

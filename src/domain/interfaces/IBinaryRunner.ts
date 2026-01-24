@@ -8,7 +8,17 @@
  */
 
 import { CommandResponse } from '../usecases/ExecuteCommand';
+import { IStream } from '../entities/Stream';
+import { FileSystemService } from '../services/FileSystemService';
+
+export interface ExecutionContext {
+    stdin: IStream;
+    stdout: IStream;
+    stderr: IStream;
+    fs: FileSystemService;
+    env: Record<string, string>;
+}
 
 export interface IBinaryRunner {
-    run(binary: Uint8Array, args: string[], env: Record<string, string>): Promise<CommandResponse>;
+    run(binary: Uint8Array, args: string[], context: ExecutionContext): Promise<CommandResponse>;
 }
