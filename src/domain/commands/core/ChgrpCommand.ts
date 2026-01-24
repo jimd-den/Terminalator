@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * ChgrpCommand - Core Command
  *
@@ -21,7 +22,7 @@ export class ChgrpCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         // chgrp [-R] group file...
         let recursive = false;
         const files: string[] = [];

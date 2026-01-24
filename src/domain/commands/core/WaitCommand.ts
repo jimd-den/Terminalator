@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * WaitCommand - Core Command
  *
@@ -21,7 +22,7 @@ export class WaitCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         // Since we don't have async background jobs really, wait returns immediately.
         return {
             output: '',

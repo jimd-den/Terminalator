@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file MsgfmtCommand.ts
  * @description The 'msgfmt' command. Create a message object from a message file.

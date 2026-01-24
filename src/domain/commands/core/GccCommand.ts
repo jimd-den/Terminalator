@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * GccCommand - Use Case / Application Logic
  *
@@ -20,7 +21,7 @@ export class GccCommand implements ICommand {
     ) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         // 1. Parse Arguments (Minimal subset for verification)
         // gcc input.c -o output
 

@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file LocaleCommand.ts
  * @description The 'locale' command. Get locale-specific information.

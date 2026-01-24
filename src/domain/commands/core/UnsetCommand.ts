@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file UnsetCommand.ts
  * @description The 'unset' command. Unset values and attributes of variables and functions.

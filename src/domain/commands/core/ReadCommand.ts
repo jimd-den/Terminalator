@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file ReadCommand.ts
  * @description The 'read' command. Read a line from standard input.

@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file NullCommand.ts
  * @description The ':' command (null command). It does nothing and returns exit code 0.

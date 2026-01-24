@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * AtCommand - Core Command
  *
@@ -21,7 +22,7 @@ export class AtCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         // at time...
         // Read stdin for commands
         const commands = input || '';

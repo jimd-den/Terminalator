@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file AdminCommand.ts
  * @description The 'admin' command. Create and administer SCCS files.

@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file ExecCommand.ts
  * @description The 'exec' command. Execute commands and replace the shell.

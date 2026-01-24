@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file MoreCommand.ts
  * @description The 'more' command. Display file contents one screen at a time.
@@ -23,7 +24,7 @@ export class MoreCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         // Non-interactive simulation: just output content like cat
         if (args.length === 0) {
             return {

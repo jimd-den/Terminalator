@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file DdCommand.ts
  * @description The 'dd' command. Convert and copy a file.
@@ -9,8 +10,8 @@ import { TerminalState } from '../../entities/TerminalState';
 
 export class DdCommand implements ICommand {
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const _input = context.stdin;
-        const input = context.stdin;
+        const _input = getStdinAsString(context);
+        const input = getStdinAsString(context);
         let inputFile = '';
         let outputFile = '';
 

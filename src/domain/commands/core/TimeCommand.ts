@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * TimeCommand - Core Command
  *
@@ -24,7 +25,7 @@ export class TimeCommand implements ICommand {
     ) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         // time [-p] utility [argument...]
         const cmdArgs = args.filter(a => a !== '-p'); // ignore -p flag for now
 

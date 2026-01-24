@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file DeltaCommand.ts
  * @description The 'delta' command. Make a delta (change) to an SCCS file.

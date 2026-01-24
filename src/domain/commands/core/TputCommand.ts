@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * TputCommand - Core Command
  *
@@ -21,7 +22,7 @@ export class TputCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         const cap = args[0];
         if (cap === 'clear') {
             // UI action needed?

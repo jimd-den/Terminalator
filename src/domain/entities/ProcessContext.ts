@@ -1,6 +1,7 @@
 import { FileSystem } from './FileSystem';
 import { FileSystemService } from '../services/FileSystemService';
 import { IShellExecutor } from '../interfaces/IShellExecutor';
+import { IStream } from './Stream';
 
 /**
  * ProcessContext Entity - Domain Layer
@@ -36,21 +37,42 @@ export interface ProcessContext {
     user: { uid: number, gid: number, groups: number[] };
 
     /**
-     * Input stream (stdin) - Simple string buffer for now
+     * Input stream (stdin) - Stream abstraction for reading input
      */
-    stdin?: string;
+    stdin: IStream;
 
     /**
-     * Output stream (stdout) - Not implemented yet (Project Phase 2)
+     * Output stream (stdout) - Stream abstraction for writing output
      */
-    // stdout: WritableStream;
+    stdout: IStream;
 
     /**
-     * Error stream (stderr) - Not implemented yet (Project Phase 2)
+     * Error stream (stderr) - Stream abstraction for writing errors
      */
-    // stderr: WritableStream;
+    stderr: IStream;
+
+    /**
+     * Legacy stdin string access (for backward compatibility during migration)
+     * @deprecated Use stdin.read() instead
+     */
+    stdinLegacy?: string;
+
     /**
      * Shell executor for running sub-commands
      */
     executor?: IShellExecutor;
 }
+
+/**
+ * Helper to get stdin as a string (backward compatibility).
+ * Prefers stdinLegacy if available, otherwise reads from stdin stream.
+ */
+export function getStdinAsString(context: ProcessContext): string | undefined {
+    if (context.stdinLegacy !== undefined) {
+        return context.stdinLegacy;
+    }
+    const data = context.stdin.read();
+    return data ?? undefined;
+}
+
+

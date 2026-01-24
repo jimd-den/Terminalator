@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file TarCommand.ts
  * @description The 'tar' command. Tape archiver.
@@ -9,7 +10,7 @@ import { TerminalState } from '../../entities/TerminalState';
 
 export class TarCommand implements ICommand {
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         if (args.length === 0) {
             return { output: 'tar: Must specify one of -c, -r, -t, -u, -x', newState: state, exitCode: 1 };
         }

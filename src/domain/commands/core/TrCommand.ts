@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * TrCommand - Core Command
  *
@@ -28,7 +29,7 @@ export class TrCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         const options: TrOptions = {
             delete: false,
             squeeze: false,

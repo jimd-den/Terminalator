@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * PsCommand - Core Command
  *
@@ -20,7 +21,7 @@ export class PsCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         // Simple mock output
         const header = '  PID TTY          TIME CMD';
         const sh = ` 1000 pts/0    00:00:00 sh`;

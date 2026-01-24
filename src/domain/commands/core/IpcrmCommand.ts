@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file IpcrmCommand.ts
  * @description The 'ipcrm' command. Remove an XSI interprocess communication identifier.

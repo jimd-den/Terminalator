@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * DfCommand - Core Command
  *
@@ -21,7 +22,7 @@ export class DfCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         // Mock Total Size: 1 GB (approx 2 million 512-blocks)
         const TOTAL_BLOCKS = 2097152; // 1024 * 1024 * 2 = 2G sectors? 1GB is 1024*1024*1024. 512 blocks -> 2097152
 

@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * DirnameCommand - Core Command
  *
@@ -21,7 +22,7 @@ export class DirnameCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         // dirname string
         if (args.length === 0) {
              return { output: 'dirname: missing operand', newState: state, exitCode: 1 };

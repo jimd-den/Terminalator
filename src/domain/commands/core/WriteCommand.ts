@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * WriteCommand - Core Command
  *
@@ -21,7 +22,7 @@ export class WriteCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         const target = args[0];
         if (!target) {
              return { output: 'write: missing operand', newState: state, exitCode: 1 };

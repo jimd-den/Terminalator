@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file BreakCommand.ts
  * @description The 'break' command. Exit from for, while, or until loop.

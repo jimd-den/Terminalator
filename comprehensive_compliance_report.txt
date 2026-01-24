@@ -260,8 +260,7 @@ UTILITY: tr
    Got: "xellxx"
 [PASS] TR_05
 [PASS] TR_06
-[FAIL] TR_07: Fail one arg (delete needs -d)
-       -> Exit Code: Expected 1, got 0
+[PASS] TR_07
 [PASS] TR_08
 [PASS] TR_09
 [PASS] TR_10
@@ -672,31 +671,13 @@ UTILITY: read
 UTILITY: xargs
 [PASS] XARGS_01
 [PASS] XARGS_02
-[FAIL] XARGS_03: Max lines -n
-       -> Exit Code: Expected 0, got 127
-       -> Stdout Regex Mismatch.
-   Expected: /a\nb/
-   Got: "xargs: -n: command not found"
-[FAIL] XARGS_04: Placeholder -I (stub)
-       -> Exit Code: Expected 0, got 127
-[FAIL] XARGS_05: No run if empty -r (Ext)
-       -> Exit Code: Expected 0, got 127
-       -> Stdout Regex Mismatch.
-   Expected: /^$/
-   Got: "xargs: -r: command not found"
+[PASS] XARGS_03
+[PASS] XARGS_04
+[PASS] XARGS_05
 [PASS] XARGS_06
-[FAIL] XARGS_07: Trace -t
-       -> Exit Code: Expected 0, got 127
-[FAIL] XARGS_08: Delimiter -d (stub)
-       -> Exit Code: Expected 0, got 127
-       -> Stdout Regex Mismatch.
-   Expected: /a b/
-   Got: "xargs: -d: command not found"
-[FAIL] XARGS_09: 0 terminator -0 (Ext)
-       -> Exit Code: Expected 0, got 127
-       -> Stdout Regex Mismatch.
-   Expected: /a b/
-   Got: "xargs: -0: command not found"
+[PASS] XARGS_07
+[PASS] XARGS_08
+[PASS] XARGS_09
 [PASS] XARGS_10
 UTILITY: id
 [PASS] ID_01
@@ -839,20 +820,23 @@ UTILITY: strings
 [FAIL] STRINGS_10: Default len 4
        -> Exit Code: Expected 0, got 1
 UTILITY: time
-[PASS] TIME_01
+[FAIL] TIME_01: Time command
+       -> Exit Code: Expected 0, got 1
 [PASS] TIME_02
-[PASS] TIME_03
+[FAIL] TIME_03: Format -p
+       -> Exit Code: Expected 0, got 1
 [PASS] TIME_04
-[FAIL] TIME_05: Pipeline
-       -> Exit Code: Expected 0, got 2
+[PASS] TIME_05
 [FAIL] TIME_06: No args?
        -> Exit Code: Expected 0, got 1
-[PASS] TIME_07
+[FAIL] TIME_07: Redirect
+       -> Exit Code: Expected 0, got 1
 [FAIL] TIME_08: Complex command
        -> Exit Code: Expected 0, got 1
 [FAIL] TIME_09: Subshell
        -> Exit Code: Expected 0, got 1
-[PASS] TIME_10
+[FAIL] TIME_10: Stress
+       -> Exit Code: Expected 0, got 1
 UTILITY: fold
 [PASS] FOLD_01
 [PASS] FOLD_02
@@ -1337,14 +1321,23 @@ UTILITY: expand
 [FAIL] EXPAND_10: Consistency
        -> Exit Code: Expected 0, got 1
 UTILITY: command
-[PASS] COMMAND_01
+[FAIL] COMMAND_01: Run utility
+       -> Exit Code: Expected 0, got 1
+       -> Stdout Regex Mismatch.
+   Expected: /x/
+   Got: "sh: command: Cannot read properties of undefined (reading 'read')"
 [FAIL] COMMAND_02: Std path -p
        -> Exit Code: Expected 0, got 127
 [PASS] COMMAND_03
 [PASS] COMMAND_04
 [PASS] COMMAND_05
-[PASS] COMMAND_06
-[PASS] COMMAND_07
+[FAIL] COMMAND_06: Ignore func
+       -> Exit Code: Expected 0, got 1
+[FAIL] COMMAND_07: With args
+       -> Exit Code: Expected 0, got 1
+       -> Stdout Regex Mismatch.
+   Expected: /a b/
+   Got: "sh: command: Cannot read properties of undefined (reading 'read')"
 [PASS] COMMAND_08
 [PASS] COMMAND_09
 [FAIL] COMMAND_10: No args
@@ -1588,18 +1581,23 @@ UTILITY: ps
 [FAIL] PS_10: Fail invalid
        -> Exit Code: Expected 1, got 0
 UTILITY: nice
-[PASS] NICE_01
-[PASS] NICE_02
+[FAIL] NICE_01: Run with nice
+       -> Exit Code: Expected 0, got 1
+       -> Stdout Regex Mismatch.
+   Expected: /x/
+   Got: "nice: echo: Cannot read properties of undefined (reading 'read')"
+[FAIL] NICE_02: Set increment -n
+       -> Exit Code: Expected 0, got 1
 [PASS] NICE_03
 [FAIL] NICE_04: Fail syntax
        -> Exit Code: Expected 1, got 127
 [PASS] NICE_05
-[FAIL] NICE_06: Negative (root)
-       -> Exit Code: Expected 1, got 0
+[PASS] NICE_06
 [FAIL] NICE_07: Complex cmd
        -> Exit Code: Expected 0, got 1
 [PASS] NICE_08
-[PASS] NICE_09
+[FAIL] NICE_09: Inc 10
+       -> Exit Code: Expected 0, got 1
 [PASS] NICE_10
 UTILITY: renice
 [PASS] RENICE_01
@@ -1616,17 +1614,21 @@ UTILITY: renice
 [PASS] RENICE_09
 [PASS] RENICE_10
 UTILITY: nohup
-[PASS] NOHUP_01
-[PASS] NOHUP_02
+[FAIL] NOHUP_01: Run command
+       -> Exit Code: Expected 0, got 127
+       -> Missing File: Expected /home/operator/nohup.out to be created.
+[FAIL] NOHUP_02: Redirected
+       -> Exit Code: Expected 0, got 127
 [PASS] NOHUP_03
 [PASS] NOHUP_04
-[FAIL] NOHUP_05: Pipeline
-       -> Exit Code: Expected 0, got 2
-[PASS] NOHUP_06
+[PASS] NOHUP_05
+[FAIL] NOHUP_06: Background
+       -> Exit Code: Expected 0, got 127
 [PASS] NOHUP_07
 [FAIL] NOHUP_08: Fail no args
        -> Exit Code: Expected 127, got 1
-[PASS] NOHUP_09
+[FAIL] NOHUP_09: Write permission (stub)
+       -> Exit Code: Expected 0, got 127
 [PASS] NOHUP_10
 UTILITY: logger
 [PASS] LOGGER_01
@@ -2132,8 +2134,13 @@ UTILITY: realpath
 [PASS] REALPATH_09
 [PASS] REALPATH_10
 UTILITY: timeout
-[PASS] TIMEOUT_01
-[PASS] TIMEOUT_02
+[FAIL] TIMEOUT_01: Run command
+       -> Exit Code: Expected 0, got 1
+       -> Stdout Regex Mismatch.
+   Expected: /x/
+   Got: "sh: timeout: Cannot read properties of undefined (reading 'read')"
+[FAIL] TIMEOUT_02: Kill after time
+       -> Exit Code: Expected 124, got 1
 [FAIL] TIMEOUT_03: Signal -s
        -> Exit Code: Expected 124, got 125
 [PASS] TIMEOUT_04
@@ -2144,7 +2151,8 @@ UTILITY: timeout
 [FAIL] TIMEOUT_08: Foreground --foreground
        -> Exit Code: Expected 0, got 125
 [PASS] TIMEOUT_09
-[PASS] TIMEOUT_10
+[FAIL] TIMEOUT_10: Zero duration
+       -> Exit Code: Expected 0, got 1
 UTILITY: break
 [PASS] BREAK_01
 [PASS] BREAK_02
@@ -2378,23 +2386,17 @@ UTILITY: unget
 [FAIL] UNGET_10: Simple
        -> Exit Code: Expected 0, got 1
 UTILITY: val
-[FAIL] VAL_01: Validate SCCS
-       -> Exit Code: Expected 0, got 1
-[PASS] VAL_02
+[PASS] VAL_01
+[FAIL] VAL_02: Fail corrupted
+       -> Exit Code: Expected 32, got 0
 [PASS] VAL_03
 [PASS] VAL_04
-[FAIL] VAL_05: SID -r
-       -> Exit Code: Expected 0, got 1
-[FAIL] VAL_06: Message -m
-       -> Exit Code: Expected 0, got 1
-[FAIL] VAL_07: Type -y
-       -> Exit Code: Expected 0, got 1
-[FAIL] VAL_08: Suppress -s
-       -> Exit Code: Expected 0, got 1
-[FAIL] VAL_09: Consistency
-       -> Exit Code: Expected 0, got 1
-[FAIL] VAL_10: Stdin piping
-       -> Exit Code: Expected 0, got 1
+[PASS] VAL_05
+[PASS] VAL_06
+[PASS] VAL_07
+[PASS] VAL_08
+[PASS] VAL_09
+[PASS] VAL_10
 UTILITY: what
 [FAIL] WHAT_01: Find ID
        -> Stdout Regex Mismatch.
@@ -2760,7 +2762,7 @@ date          |    10 |   10 |    0 |    100.0%
 diff          |    10 |   10 |    0 |    100.0%
 sort          |    10 |   10 |    0 |    100.0%
 uniq          |    10 |   10 |    0 |    100.0%
-tr            |    10 |    8 |    2 |     80.0%
+tr            |    10 |    9 |    1 |     90.0%
 cut           |    10 |   10 |    0 |    100.0%
 tee           |    10 |   10 |    0 |    100.0%
 alias         |    10 |    8 |    2 |     80.0%
@@ -2788,7 +2790,7 @@ printf        |    10 |    5 |    5 |     50.0%
 test          |    10 |    7 |    3 |     70.0%
 [             |    10 |    4 |    6 |     40.0%
 read          |    10 |    7 |    3 |     70.0%
-xargs         |    10 |    4 |    6 |     40.0%
+xargs         |    10 |   10 |    0 |    100.0%
 id            |    10 |    5 |    5 |     50.0%
 uname         |    10 |    8 |    2 |     80.0%
 logname       |    10 |    5 |    5 |     50.0%
@@ -2797,7 +2799,7 @@ ar            |    10 |    4 |    6 |     40.0%
 make          |    10 |    8 |    2 |     80.0%
 sh            |    11 |    9 |    2 |     81.8%
 strings       |    10 |    4 |    6 |     40.0%
-time          |    10 |    6 |    4 |     60.0%
+time          |    10 |    3 |    7 |     30.0%
 fold          |    10 |    6 |    4 |     60.0%
 cksum         |    10 |    5 |    5 |     50.0%
 du            |    10 |    9 |    1 |     90.0%
@@ -2823,7 +2825,7 @@ tsort         |    10 |    5 |    5 |     50.0%
 man           |    10 |    7 |    3 |     70.0%
 more          |    10 |    2 |    8 |     20.0%
 expand        |    10 |    4 |    6 |     40.0%
-command       |    10 |    8 |    2 |     80.0%
+command       |    10 |    5 |    5 |     50.0%
 fc            |    10 |    9 |    1 |     90.0%
 getopts       |    10 |    2 |    8 |     20.0%
 hash          |    10 |    9 |    1 |     90.0%
@@ -2839,9 +2841,9 @@ export        |    10 |    8 |    2 |     80.0%
 eval          |    10 |    7 |    3 |     70.0%
 exec          |    10 |    7 |    3 |     70.0%
 ps            |    10 |    7 |    3 |     70.0%
-nice          |    10 |    7 |    3 |     70.0%
+nice          |    10 |    5 |    5 |     50.0%
 renice        |    10 |    7 |    3 |     70.0%
-nohup         |    10 |    8 |    2 |     80.0%
+nohup         |    10 |    5 |    5 |     50.0%
 logger        |    10 |    9 |    1 |     90.0%
 tput          |    10 |    6 |    4 |     60.0%
 tty           |    10 |    6 |    4 |     60.0%
@@ -2874,7 +2876,7 @@ unlink        |    10 |    7 |    3 |     70.0%
 patch         |    10 |    8 |    2 |     80.0%
 readlink      |    10 |    5 |    5 |     50.0%
 realpath      |    10 |    8 |    2 |     80.0%
-timeout       |    10 |    7 |    3 |     70.0%
+timeout       |    10 |    4 |    6 |     40.0%
 break         |    10 |    7 |    3 |     70.0%
 continue      |    10 |    7 |    3 |     70.0%
 colon         |    10 |   10 |    0 |    100.0%
@@ -2890,7 +2892,7 @@ rmdel         |    10 |    5 |    5 |     50.0%
 sact          |    10 |    3 |    7 |     30.0%
 sccs          |    10 |    2 |    8 |     20.0%
 unget         |    10 |    3 |    7 |     30.0%
-val           |    10 |    3 |    7 |     30.0%
+val           |    10 |    9 |    1 |     90.0%
 what          |    10 |    6 |    4 |     60.0%
 ipcrm         |    10 |    7 |    3 |     70.0%
 ipcs          |    10 |    9 |    1 |     90.0%
@@ -2914,7 +2916,7 @@ uustat        |    10 |    9 |    1 |     90.0%
 uux           |    10 |    2 |    8 |     20.0%
 xgettext      |    10 |    6 |    4 |     60.0%
 
-TOTAL COMPLIANCE: 68.6% (1201/1752)
+TOTAL COMPLIANCE: 68.5% (1200/1752)
 
 === MISSING UTILITIES (Implemented but failing) ===
 None

@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * PrintfCommand - Core Command
  *
@@ -21,7 +22,7 @@ export class PrintfCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         if (args.length === 0) {
             return { output: 'printf: usage: printf format [arguments...]', newState: state, exitCode: 1 };
         }

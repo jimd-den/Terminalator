@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file DotCommand.ts
  * @description The '.' command. Execute commands in the current environment.

@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * IdCommand - Core Command
  *
@@ -21,7 +22,7 @@ export class IdCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         // uid=1000(operator) gid=1000(operator) groups=1000(operator)
         // Simplified
         const user = state.user || 'operator';

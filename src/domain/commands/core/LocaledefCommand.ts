@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file LocaledefCommand.ts
  * @description The 'localedef' command. Define locale environment.

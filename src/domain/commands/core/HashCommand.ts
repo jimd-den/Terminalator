@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file HashCommand.ts
  * @description The 'hash' command. Remember or report utility locations.

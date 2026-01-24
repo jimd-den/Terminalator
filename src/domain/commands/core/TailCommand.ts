@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * TailCommand - Core Command
  *
@@ -21,7 +22,7 @@ export class TailCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         let linesToPrint = 10;
         let bytesToPrint = -1;
 

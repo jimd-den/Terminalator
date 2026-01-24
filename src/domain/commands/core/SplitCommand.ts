@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * SplitCommand - Core Command
  *
@@ -21,7 +22,7 @@ export class SplitCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         // split [-l line_count] [-a suffix_length] [file [prefix]]
         let lineCount = 1000;
         let suffixLength = 2;

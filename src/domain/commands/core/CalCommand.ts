@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * CalCommand - Core Command
  *
@@ -21,7 +22,7 @@ export class CalCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         const now = new Date();
         let month = now.getMonth(); // 0-11
         let year = now.getFullYear();

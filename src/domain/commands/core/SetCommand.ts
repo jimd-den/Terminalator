@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file SetCommand.ts
  * @description The 'set' command. Set or unset options and positional parameters.

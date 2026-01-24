@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * UuencodeCommand - Core Command
  *
@@ -21,7 +22,7 @@ export class UuencodeCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         // uuencode [file] decode_pathname
         let infile = '';
         let decodePath = '';

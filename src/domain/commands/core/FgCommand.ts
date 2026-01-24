@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file FgCommand.ts
  * @description The 'fg' command. Run jobs in the foreground.

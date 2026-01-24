@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file CtagsCommand.ts
  * @description The 'ctags' command. Create a tags file.

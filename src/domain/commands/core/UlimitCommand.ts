@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file UlimitCommand.ts
  * @description The 'ulimit' command. Set or report file size limit.

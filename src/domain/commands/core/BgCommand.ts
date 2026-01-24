@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file BgCommand.ts
  * @description The 'bg' command. Run jobs in the background.

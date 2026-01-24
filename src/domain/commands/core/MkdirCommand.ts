@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * MkdirCommand - Core Command
  *
@@ -22,7 +23,7 @@ export class MkdirCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         this.logExecution('MkdirCommand.execute', { args, state });
 
         const options = this.parseOptions(args);

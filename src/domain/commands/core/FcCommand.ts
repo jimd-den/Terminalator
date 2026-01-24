@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file FcCommand.ts
  * @description The 'fc' command. Process command history list.

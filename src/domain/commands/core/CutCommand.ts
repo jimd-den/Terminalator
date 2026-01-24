@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * CutCommand - Core Command
  *
@@ -30,7 +31,7 @@ export class CutCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         const options: CutOptions = {
             delimiter: '\t',
             suppress: false,

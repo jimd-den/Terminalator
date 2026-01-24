@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file IpcsCommand.ts
  * @description The 'ipcs' command. Report XSI interprocess communication facilities status.

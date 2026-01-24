@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file GetoptsCommand.ts
  * @description The 'getopts' command. Parse utility options.

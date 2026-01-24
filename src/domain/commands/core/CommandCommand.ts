@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file CommandCommand.ts
  * @description The 'command' command. Execute a simple command.
@@ -22,7 +23,7 @@ export class CommandCommand implements ICommand {
     constructor(private registryProvider: (name: string) => ICommand | undefined) {}
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         if (args.length === 0) return { output: '', newState: state, exitCode: 0 };
 
         let cmdName = args[0];

@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * JoinCommand - Core Command
  *
@@ -32,7 +33,7 @@ export class JoinCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         const options: JoinOptions = {
             field1: 1,
             field2: 1,

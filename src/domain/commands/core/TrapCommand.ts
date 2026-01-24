@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file TrapCommand.ts
  * @description The 'trap' command. Trap signals.

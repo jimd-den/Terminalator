@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file SactCommand.ts
  * @description The 'sact' command. Print current SCCS file editing activity.

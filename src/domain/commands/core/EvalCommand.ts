@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file EvalCommand.ts
  * @description The 'eval' command. Construct command by concatenating arguments.
@@ -26,7 +27,7 @@ export class EvalCommand implements ICommand {
     // We don't have easy access to "ExecuteCommand" instance here.
     // So we will stub it for now to satisfy existence.
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         const cmd = args.join(' ');
         // Ideally: return executor.execute(cmd, state);
         // For now:

@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * GrepCommand - Core Command
  *
@@ -112,7 +113,7 @@ export class GrepCommand implements ICommand {
      * Entry point for the grep command.
      */
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         const timestamp = new Date().toISOString();
         this.log(`[${timestamp}] GrepCommand.execute(args=${JSON.stringify(args)}, input=${input ? '(length ' + input.length + ')' : 'undefined'})`);
 

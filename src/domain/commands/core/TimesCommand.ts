@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file TimesCommand.ts
  * @description The 'times' command. Write process times.

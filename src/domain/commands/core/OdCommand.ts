@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * OdCommand - Core Command
  *
@@ -21,7 +22,7 @@ export class OdCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         const files: string[] = [];
         // Ignore flags for MVP default behavior
         for (const arg of args) {

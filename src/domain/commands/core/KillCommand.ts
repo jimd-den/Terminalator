@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * KillCommand - Core Command
  *
@@ -20,7 +21,7 @@ export class KillCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         if (args.length === 0) {
             return { output: 'kill: missing operand', newState: state, exitCode: 1 };
         }

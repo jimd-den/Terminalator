@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * EnvCommand - Core Command
  *
@@ -21,7 +22,7 @@ export class EnvCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         // Simplified: just print environment if no args or if args don't set things.
         // POSIX env [name=value]... [utility [argument...]]
         // If args present, we should execute utility with modified env.

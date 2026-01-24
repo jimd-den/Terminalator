@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * AwkCommand - Core Command
  *
@@ -32,7 +33,7 @@ export class AwkCommand implements ICommand {
     }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         let program = '';
         const files: string[] = [];
         let fieldSeparator = ' ';

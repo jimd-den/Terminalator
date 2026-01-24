@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file NewgrpCommand.ts
  * @description The 'newgrp' command. Change to a new group.

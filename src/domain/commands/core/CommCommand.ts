@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * CommCommand - Core Command
  *
@@ -20,7 +21,7 @@ export class CommCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         let suppress1 = false;
         let suppress2 = false;
         let suppress3 = false;

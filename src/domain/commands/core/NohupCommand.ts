@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * NohupCommand - Core Command
  *
@@ -24,7 +25,7 @@ export class NohupCommand implements ICommand {
     ) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         if (args.length === 0) {
              return { output: 'nohup: missing operand', newState: state, exitCode: 1 };
         }

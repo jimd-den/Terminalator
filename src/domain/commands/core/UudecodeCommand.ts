@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * UudecodeCommand - Core Command
  *
@@ -21,7 +22,7 @@ export class UudecodeCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         const file = args.length > 0 ? args[0] : null;
         let content = '';
 

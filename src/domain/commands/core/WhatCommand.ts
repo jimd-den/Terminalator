@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file WhatCommand.ts
  * @description The 'what' command. Identify SCCS files.

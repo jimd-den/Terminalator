@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * CrontabCommand - Core Command
  *
@@ -21,7 +22,7 @@ export class CrontabCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         const user = state.user || 'operator';
         if (args.includes('-l')) {
             return { output: `no crontab for ${user}`, newState: state, exitCode: 1 };

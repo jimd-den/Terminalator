@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../../entities/ProcessContext';
 
 /**
  * AwkInterpreter - Domain Layer

@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * RealpathCommand - Core Command
  *
@@ -21,7 +22,7 @@ export class RealpathCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         const files = args.filter(a => !a.startsWith('-'));
         if (files.length === 0) {
              return { output: 'realpath: missing operand', newState: state, exitCode: 1 };

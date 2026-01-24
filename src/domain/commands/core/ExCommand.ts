@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file ExCommand.ts
  * @description The 'ex' command. Text editor.
