@@ -11,11 +11,11 @@
  * Handles complex logic like `..`, `.`, and Symlink resolution.
  */
 
-import { Dentry, S_IFLNK } from '../../entities/filesystem/FileSystemTypes';
+import { Dentry, S_IFLNK, Inode } from '../../entities/filesystem/FileSystemTypes';
 import { InodeTable } from '../../entities/filesystem/InodeTable';
 
 export class PathResolver {
-    constructor(private inodeTable: InodeTable) {}
+    constructor(private inodeTable: InodeTable) { }
 
     /**
      * Resolves a path string to a Dentry.
@@ -26,7 +26,7 @@ export class PathResolver {
      * @param followSymlinks - Whether to follow symlinks at the *end* of the path.
      * @returns The resolved Dentry or null.
      */
-    resolve(root: Dentry, path: string, cwd: string = '/', followSymlinks: boolean = true): Dentry | null {
+    resolve(root: Dentry, path: string, cwd: string = '/', followSymlinks: boolean = true, actingUser?: { uid: number, gid: number, groups: number[] }): Dentry | null {
         if (!path) return null;
 
         // 1. Determine Start Node
@@ -36,7 +36,7 @@ export class PathResolver {
         } else {
             // Recursive resolve of cwd (always absolute from root)
             // We assume cwd is valid. If not, fallback to root.
-            const resolvedCwd = this.resolve(root, cwd, '/', true);
+            const resolvedCwd = this.resolve(root, cwd, '/', true, actingUser);
             if (!resolvedCwd) return null;
             startNode = resolvedCwd;
         }
@@ -58,6 +58,16 @@ export class PathResolver {
             } else {
                 if (!current || !current.children) {
                     return null;
+                }
+
+                // TRAVERSAL CHECK: Current must be a searchable directory (execute bit)
+                if (actingUser) {
+                    const inode = this.inodeTable.get(current.inodeId);
+                    if (inode) {
+                        if (!this.hasSearchPermission(inode, actingUser)) {
+                            throw new Error('Permission denied');
+                        }
+                    }
                 }
 
                 const next = current.children.get(part);
@@ -82,10 +92,10 @@ export class PathResolver {
                     let targetNode: Dentry | null;
 
                     if (target.startsWith('/')) {
-                        targetNode = this.resolve(root, target, '/', true);
+                        targetNode = this.resolve(root, target, '/', true, actingUser);
                     } else {
                         const currentAbs = this.getAbsolutePath(current);
-                        targetNode = this.resolve(root, target, currentAbs, true);
+                        targetNode = this.resolve(root, target, currentAbs, true, actingUser);
                     }
 
                     if (!targetNode) return null;
@@ -110,5 +120,13 @@ export class PathResolver {
             current = current.parent;
         }
         return parts.length === 0 ? '/' : '/' + parts.join('/');
+    }
+
+    private hasSearchPermission(inode: Inode, user: { uid: number, gid: number, groups: number[] }): boolean {
+        if (user.uid === 0) return true; // Root bypass
+
+        if (user.uid === inode.uid) return (inode.mode & 0o100) !== 0;
+        if (user.gid === inode.gid || user.groups.includes(inode.gid)) return (inode.mode & 0o010) !== 0;
+        return (inode.mode & 0o001) !== 0;
     }
 }

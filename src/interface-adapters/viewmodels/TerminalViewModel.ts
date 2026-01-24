@@ -69,7 +69,7 @@ export const useTerminalViewModel = (
                 const lesson = event.payload;
                 // Save context
                 preTutorCwdRef.current = cwdRef.current;
-                const targetCwd = lesson.cwd || '/home/user';
+                const targetCwd = lesson.cwd || '/home/operator';
 
                 // Switch context
                 setState(prev => ({ ...prev, currentDirectory: targetCwd }));

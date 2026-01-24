@@ -7,8 +7,9 @@ import { CommandRegistry } from '../commands/CommandRegistry';
 import { ShellParser, ASTNode, NodeType, CommandNode, ListNode, PipelineNode, SubshellNode, FunctionDefNode, RedirectNode, IfNode, ForNode, WhileNode } from '../services/ShellParser';
 import { IBinaryRunner } from '../interfaces/IBinaryRunner';
 import { ProcessContext } from '../entities/ProcessContext';
-import { IStream, StringStream, PipeStream, createStdinStream, createOutputStream } from '../entities/Stream';
+import { createStdinStream, createOutputStream } from '../entities/Stream';
 import { JobControlService } from '../services/JobControlService';
+import { IdentityService } from '../services/IdentityService';
 
 export interface CommandResponse {
     output: string;
@@ -34,6 +35,7 @@ export class ExecuteCommand implements IShellExecutor {
     private expansionService: ShellExpansionService;
     protected fs: FileSystem;
     private jobControl: JobControlService;
+    private identityService: IdentityService;
 
     constructor(
         fsOrService: FileSystem | FileSystemService,
@@ -53,6 +55,7 @@ export class ExecuteCommand implements IShellExecutor {
         this.parser = new ShellParser();
         this.expansionService = new ShellExpansionService(this.service);
         this.jobControl = new JobControlService();
+        this.identityService = new IdentityService();
 
         if (registry) {
             this.registry = registry;
@@ -398,7 +401,7 @@ export class ExecuteCommand implements IShellExecutor {
                 if (result.output !== undefined) {
                     const content = result.output;
                     const mode = redir.op === '>>' ? 'a' : 'w';
-                    this.service.writeFile(redir.file, content, mode, state.currentDirectory);
+                    this.service.writeFile(redir.file, content, mode, state.user.uid, state.user.gid, state.currentDirectory, state.user);
                 }
                 result.output = '';
             }
@@ -554,7 +557,7 @@ export class ExecuteCommand implements IShellExecutor {
         if (commandName.startsWith('/') || commandName.startsWith('./') || commandName.startsWith('../')) {
             // ... (Existing file execution logic reused or simplifed)
             // For brevity, using simplified lookup stub
-            const dentry = this.service.resolve(commandName, state.currentDirectory);
+            const dentry = this.service.resolve(commandName, state.currentDirectory, true, state.user);
             if (dentry && !this.service.isDirectory(dentry)) {
                 // Check executable mode...
                 // Exec binary...

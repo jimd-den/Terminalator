@@ -2,6 +2,7 @@
 import * as fsNode from 'fs';
 import { FileSystem } from '../src/domain/entities/FileSystem';
 import { FileSystemService } from '../src/domain/services/FileSystemService';
+import { IdentityService } from '../src/domain/services/IdentityService';
 import { ExecuteCommand } from '../src/domain/usecases/ExecuteCommand';
 import { createInitialTerminalState, TerminalState } from '../src/domain/entities/TerminalState';
 import { HostCompilerService } from '../src/infrastructure/services/HostCompilerService';
@@ -294,13 +295,13 @@ const SUITES: UtilitySuite[] = [
             { id: 'CHMOD_01', description: 'Octal mode', posixSection: 'chmod.html', posixRequirement: 'Change mode', setup: (fs) => fs.writeFile('/f', 'x', 'w'), command: 'chmod 777 /f', expect: { exitCode: 0 } },
             { id: 'CHMOD_02', description: 'Another octal', posixSection: 'chmod.html', posixRequirement: 'Change mode', setup: (fs) => fs.writeFile('/f', 'x', 'w'), command: 'chmod 644 /f', expect: { exitCode: 0 } },
             { id: 'CHMOD_03', description: 'Symbolic +x (stub)', posixSection: 'chmod.html', posixRequirement: 'Symbolic mode', setup: (fs) => fs.writeFile('/f', 'x', 'w'), command: 'chmod +x /f', expect: { exitCode: 0 } },
-            { id: 'CHMOD_04', description: 'Symbolic User -w (stub)', posixSection: 'chmod.html', posixRequirement: 'go-w', command: 'chmod u-w /f', expect: { exitCode: 0 } },
+            { id: 'CHMOD_04', description: 'Symbolic User -w (stub)', posixSection: 'chmod.html', posixRequirement: 'go-w', setup: (fs) => fs.writeFile('/f', 'x', 'w'), command: 'chmod u-w /f', expect: { exitCode: 0 } },
             { id: 'CHMOD_05', description: 'Fail missing', posixSection: 'chmod.html', posixRequirement: 'Error >0', command: 'chmod 777 /missing', expect: { exitCode: 1 } },
             { id: 'CHMOD_06', description: 'Recursive -R', posixSection: 'chmod.html', posixRequirement: '-R recursive', setup: (fs) => { fs.mkdir('/d', 0o755); fs.writeFile('/d/f', 'x', 'w'); }, command: 'chmod -R 777 /d', expect: { exitCode: 0 } },
             { id: 'CHMOD_07', description: 'Invalid mode', posixSection: 'chmod.html', posixRequirement: 'Error invalid', command: 'chmod 999 /f', expect: { exitCode: 1 } },
             { id: 'CHMOD_08', description: 'Directory mode', posixSection: 'chmod.html', posixRequirement: 'Dir perms', setup: (fs) => fs.mkdir('/d', 0o755), command: 'chmod 755 /d', expect: { exitCode: 0 } },
             { id: 'CHMOD_09', description: 'Multiple files', posixSection: 'chmod.html', posixRequirement: 'Multiple', setup: (fs) => { fs.writeFile('/1', 'x', 'w'); fs.writeFile('/2', 'x', 'w'); }, command: 'chmod 777 /1 /2', expect: { exitCode: 0 } },
-            { id: 'CHMOD_10', description: 'Sticky bit (stub)', posixSection: 'chmod.html', posixRequirement: '1000', command: 'chmod +t /d', expect: { exitCode: 0 } }
+            { id: 'CHMOD_10', description: 'Sticky bit (stub)', posixSection: 'chmod.html', posixRequirement: '1000', setup: (fs) => fs.mkdir('/d', 0o755), command: 'chmod +t /d', expect: { exitCode: 0 } }
         ]
     },
     {
@@ -2141,32 +2142,32 @@ const SUITES: UtilitySuite[] = [
         utility: 'chgrp',
         htmlFile: 'chgrp.html',
         tests: [
-            { id: 'CHGRP_01', description: 'Change group', posixSection: 'chgrp.html', posixRequirement: 'Change', setup: (fs) => fs.writeFile('f', 'x', 'w'), command: 'chgrp staff f', expect: { exitCode: 0 } },
-            { id: 'CHGRP_02', description: 'Recursive -R', posixSection: 'chgrp.html', posixRequirement: '-R', setup: (fs) => { fs.mkdir('d', 0o777); fs.writeFile('d/f', 'x', 'w'); }, command: 'chgrp -R staff d', expect: { exitCode: 0 } },
-            { id: 'CHGRP_03', description: 'Dereference -H (stub)', posixSection: 'chgrp.html', posixRequirement: '-H', command: 'chgrp -H staff f', expect: { exitCode: 0 } },
-            { id: 'CHGRP_04', description: 'Dereference -L (stub)', posixSection: 'chgrp.html', posixRequirement: '-L', command: 'chgrp -L staff f', expect: { exitCode: 0 } },
-            { id: 'CHGRP_05', description: 'No deref -P (stub)', posixSection: 'chgrp.html', posixRequirement: '-P', command: 'chgrp -P staff f', expect: { exitCode: 0 } },
+            { id: 'CHGRP_01', description: 'Change group', posixSection: 'chgrp.html', posixRequirement: 'Change', setup: (fs) => fs.writeFile('/home/operator/f', 'x', 'w'), command: 'chgrp staff f', expect: { exitCode: 0 } },
+            { id: 'CHGRP_02', description: 'Recursive -R', posixSection: 'chgrp.html', posixRequirement: '-R', setup: (fs) => { fs.mkdir('/home/operator/d', 0o777); fs.writeFile('/home/operator/d/f', 'x', 'w'); }, command: 'chgrp -R staff d', expect: { exitCode: 0 } },
+            { id: 'CHGRP_03', description: 'Dereference -H (stub)', posixSection: 'chgrp.html', posixRequirement: '-H', setup: (fs) => fs.writeFile('/home/operator/f', 'x', 'w'), command: 'chgrp -H staff f', expect: { exitCode: 0 } },
+            { id: 'CHGRP_04', description: 'Dereference -L (stub)', posixSection: 'chgrp.html', posixRequirement: '-L', setup: (fs) => fs.writeFile('/home/operator/f', 'x', 'w'), command: 'chgrp -L staff f', expect: { exitCode: 0 } },
+            { id: 'CHGRP_05', description: 'No deref -P (stub)', posixSection: 'chgrp.html', posixRequirement: '-P', setup: (fs) => fs.writeFile('/home/operator/f', 'x', 'w'), command: 'chgrp -P staff f', expect: { exitCode: 0 } },
             { id: 'CHGRP_06', description: 'Fail missing', posixSection: 'chgrp.html', posixRequirement: 'Error', command: 'chgrp staff missing', expect: { exitCode: 1 } },
-            { id: 'CHGRP_07', description: 'Fail invalid group', posixSection: 'chgrp.html', posixRequirement: 'Error', command: 'chgrp invalidgroup f', expect: { exitCode: 1 } },
-            { id: 'CHGRP_08', description: 'Numeric group', posixSection: 'chgrp.html', posixRequirement: 'ID', command: 'chgrp 100 f', expect: { exitCode: 0 } },
-            { id: 'CHGRP_09', description: 'Consistency', posixSection: 'chgrp.html', posixRequirement: 'Stable', command: 'chgrp staff f', expect: { exitCode: 0 } },
-            { id: 'CHGRP_10', description: 'Multiple files', posixSection: 'chgrp.html', posixRequirement: 'Args', command: 'chgrp staff f f', expect: { exitCode: 0 } }
+            { id: 'CHGRP_07', description: 'Fail invalid group', posixSection: 'chgrp.html', posixRequirement: 'Error', setup: (fs) => fs.writeFile('/home/operator/f', 'x', 'w'), command: 'chgrp invalidgroup f', expect: { exitCode: 1 } },
+            { id: 'CHGRP_08', description: 'Numeric group', posixSection: 'chgrp.html', posixRequirement: 'ID', setup: (fs) => fs.writeFile('/home/operator/f', 'x', 'w'), command: 'chgrp 100 f', expect: { exitCode: 0 } },
+            { id: 'CHGRP_09', description: 'Consistency', posixSection: 'chgrp.html', posixRequirement: 'Stable', setup: (fs) => fs.writeFile('/home/operator/f', 'x', 'w'), command: 'chgrp staff f', expect: { exitCode: 0 } },
+            { id: 'CHGRP_10', description: 'Multiple files', posixSection: 'chgrp.html', posixRequirement: 'Args', setup: (fs) => { fs.writeFile('/home/operator/1', 'x', 'w'); fs.writeFile('/home/operator/2', 'x', 'w'); }, command: 'chgrp staff 1 2', expect: { exitCode: 0 } }
         ]
     },
     {
         utility: 'chown',
         htmlFile: 'chown.html',
         tests: [
-            { id: 'CHOWN_01', description: 'Change owner', posixSection: 'chown.html', posixRequirement: 'Change', setup: (fs) => fs.writeFile('f', 'x', 'w'), command: 'chown operator f', expect: { exitCode: 0 } },
-            { id: 'CHOWN_02', description: 'Owner:Group', posixSection: 'chown.html', posixRequirement: 'Both', command: 'chown operator:staff f', expect: { exitCode: 0 } },
-            { id: 'CHOWN_03', description: 'Recursive -R', posixSection: 'chown.html', posixRequirement: '-R', setup: (fs) => { fs.mkdir('d', 0o777); fs.writeFile('d/f', 'x', 'w'); }, command: 'chown -R operator d', expect: { exitCode: 0 } },
+            { id: 'CHOWN_01', description: 'Change owner', posixSection: 'chown.html', posixRequirement: 'Change', setup: (fs) => fs.writeFile('/home/operator/f', 'x', 'w'), command: 'chown operator f', expect: { exitCode: 0 } },
+            { id: 'CHOWN_02', description: 'Owner:Group', posixSection: 'chown.html', posixRequirement: 'Both', setup: (fs) => fs.writeFile('/home/operator/f', 'x', 'w'), command: 'chown operator:staff f', expect: { exitCode: 0 } },
+            { id: 'CHOWN_03', description: 'Recursive -R', posixSection: 'chown.html', posixRequirement: '-R', setup: (fs) => { fs.mkdir('/home/operator/d', 0o777); fs.writeFile('/home/operator/d/f', 'x', 'w'); }, command: 'chown -R operator d', expect: { exitCode: 0 } },
             { id: 'CHOWN_04', description: 'Fail missing', posixSection: 'chown.html', posixRequirement: 'Error', command: 'chown operator missing', expect: { exitCode: 1 } },
-            { id: 'CHOWN_05', description: 'Fail invalid user', posixSection: 'chown.html', posixRequirement: 'Error', command: 'chown baduser f', expect: { exitCode: 1 } },
-            { id: 'CHOWN_06', description: 'Symlink -h', posixSection: 'chown.html', posixRequirement: '-h', command: 'chown -h operator f', expect: { exitCode: 0 } },
-            { id: 'CHOWN_07', description: 'Numeric', posixSection: 'chown.html', posixRequirement: 'ID', command: 'chown 1000 f', expect: { exitCode: 0 } },
+            { id: 'CHOWN_05', description: 'Fail invalid user', posixSection: 'chown.html', posixRequirement: 'Error', setup: (fs) => fs.writeFile('/home/operator/f', 'x', 'w'), command: 'chown baduser f', expect: { exitCode: 1 } },
+            { id: 'CHOWN_06', description: 'Symlink -h', posixSection: 'chown.html', posixRequirement: '-h', setup: (fs) => fs.writeFile('/home/operator/f', 'x', 'w'), command: 'chown -h operator f', expect: { exitCode: 0 } },
+            { id: 'CHOWN_07', description: 'Numeric', posixSection: 'chown.html', posixRequirement: 'ID', setup: (fs) => fs.writeFile('/home/operator/f', 'x', 'w'), command: 'chown 1000 f', expect: { exitCode: 0 } },
             { id: 'CHOWN_08', description: 'Preserve root (stub)', posixSection: 'chown.html', posixRequirement: 'Safety', command: 'chown -R operator /', expect: { exitCode: 1 } }, // Mock fail
-            { id: 'CHOWN_09', description: 'Consistency', posixSection: 'chown.html', posixRequirement: 'Stable', command: 'chown operator f', expect: { exitCode: 0 } },
-            { id: 'CHOWN_10', description: 'Multiple', posixSection: 'chown.html', posixRequirement: 'Args', command: 'chown operator f f', expect: { exitCode: 0 } }
+            { id: 'CHOWN_09', description: 'Consistency', posixSection: 'chown.html', posixRequirement: 'Stable', setup: (fs) => fs.writeFile('/home/operator/f', 'x', 'w'), command: 'chown operator f', expect: { exitCode: 0 } },
+            { id: 'CHOWN_10', description: 'Multiple', posixSection: 'chown.html', posixRequirement: 'Args', setup: (fs) => { fs.writeFile('/home/operator/1', 'x', 'w'); fs.writeFile('/home/operator/2', 'x', 'w'); }, command: 'chown operator 1 2', expect: { exitCode: 0 } }
         ]
     },
     {
@@ -2943,7 +2944,7 @@ async function runSuite() {
 
                 // Manual (Robust):
                 const registry = new CommandRegistry();
-                new CoreUtilsModule(testFs).register(registry);
+                new CoreUtilsModule(testFs, new IdentityService()).register(registry);
                 new SystemUtilsModule().register(registry);
 
                 registry.register('c17', new C17Command(compiler, service));

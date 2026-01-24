@@ -1,83 +1,82 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * ChgrpCommand - Core Command
- *
- * Change file group ownership.
- *
- * Pillar: The Four-Fold Shield (Strict Architecture)
- * Pillar: The Swift Stream (Performance)
- *
- * Intent:
- * Change GID.
+ * 
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * POSIX chgrp - Change file group ownership (IEEE Std 1003.1-2024)
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * 
+ * THE EIGHT PILLARS OF THE CRAFT:
+ * 1. Strict Architecture: Implements ICommand, uses IdentityService and FileSystemService.
+ * 2. Literate Documentation: Handles group name resolution and recursive -R.
+ * 3. Dependency Minimalism: Standard domain services only.
+ * 5. Performance: O(1) resolution per file.
+ * 8. SOLID / KISS: Reuses logic similar to chown for consistency.
+ * 
+ * ═══════════════════════════════════════════════════════════════════════════════
  */
 
-import { ICommand } from '../ICommand';
+import { ICommand, CommandResponse } from '../ICommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
-import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../usecases/ExecuteCommand';
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
+import { IdentityService } from '../../services/IdentityService';
 
 export class ChgrpCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+    constructor(
+        private fs: FileSystemService,
+        private identityService: IdentityService
+    ) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = getStdinAsString(context);
-        // chgrp [-R] group file...
-        let recursive = false;
-        const files: string[] = [];
-        let group = '';
+        const flags = args.filter(a => a.startsWith('-'));
+        const operands = args.filter(a => !a.startsWith('-'));
+        const recursive = flags.includes('-R');
 
-        for (const arg of args) {
-            if (arg === '-R') recursive = true;
-            else if (group === '') group = arg;
-            else files.push(arg);
+        if (operands.length < 2) {
+            return { output: 'chgrp: missing operand', newState: state, exitCode: 1 };
         }
 
-        if (group === '' || files.length === 0) {
-             return { output: 'chgrp: missing operand', newState: state, exitCode: 1 };
-        }
+        const groupName = operands[0];
+        const files = operands.slice(1);
 
-        let gid = parseInt(group);
-        if (isNaN(gid)) {
-            // resolve group name?
-            // "operator" -> 1000?
-            // For now, if NaN, ignore or default?
-            // Test expects numeric to work.
-            // If string, fails or maps?
-            // Simple mapping:
-            if (group === 'operator') gid = 1000;
-            else if (group === 'root') gid = 0;
-            else {
-                // assume 1000 for simplified test success unless checking failure?
-                // Test passes 'newgroup', asserts 1000.
-                gid = 1000;
-            }
-        }
+        const group = this.identityService.resolveGroup(groupName);
+        if (!group) return { output: `chgrp: invalid group: '${groupName}'`, newState: state, exitCode: 1 };
 
+        const errors: string[] = [];
         for (const file of files) {
             try {
-                const path = this.resolvePath(file, state);
-                this.fs.chown(path, -1, gid); // -1 means keep uid
-                // chown signature in FS usually (path, uid, gid).
-                // If FS doesn't support -1, we read then write.
-                // Assuming FS.chown exists. `ChownCommand` uses it.
-                // Let's verify FS.chown signature or usage.
-                // Memory says FS is facade.
-            } catch (e) {
-                return { output: `chgrp: changing group of '${file}': No such file or directory`, newState: state, exitCode: 1 };
+                if (recursive) {
+                    this.chgrpRecursive(file, group.gid, state.currentDirectory, context.user);
+                } else {
+                    this.fs.chown(file, -1, group.gid, state.currentDirectory, context.user);
+                }
+            } catch (e: any) {
+                errors.push(`chgrp: ${file}: ${e.message}`);
             }
         }
 
         return {
-            output: '',
+            output: errors.join('\n'),
             newState: state,
-            exitCode: 0
+            exitCode: errors.length > 0 ? 1 : 0
         };
     }
 
-    private resolvePath(path: string, state: TerminalState): string {
-        if (path.startsWith('/')) return path;
-        return state.currentDirectory === '/' ? `/${path}` : `${state.currentDirectory}/${path}`;
+    private chgrpRecursive(path: string, gid: number, cwd: string, user: any): void {
+        const dentry = this.fs.resolve(path, cwd, true, user);
+        if (!dentry) throw new Error(`${path}: No such file or directory`);
+
+        this.applyChgrpRecursive(dentry, gid, user);
+    }
+
+    private applyChgrpRecursive(dentry: any, gid: number, user: any): void {
+        const path = this.fs.getAbsolutePath(dentry);
+        this.fs.chown(path, -1, gid, '/', user);
+
+        if (dentry.children) {
+            for (const child of dentry.children.values()) {
+                this.applyChgrpRecursive(child, gid, user);
+            }
+        }
     }
 }
