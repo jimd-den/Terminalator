@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file NmCommand.ts
  * @description The 'nm' command. Write the name list of an object file.

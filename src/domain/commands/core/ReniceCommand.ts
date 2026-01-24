@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file ReniceCommand.ts
  * @description The 'renice' command. Set nice values of running processes.

@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file CflowCommand.ts
  * @description The 'cflow' command. Generate a C-language flowgraph.
@@ -11,7 +12,7 @@ export class CflowCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         const files: string[] = [];
         let showInverse = false; // -i
         let defines: string[] = []; // -D

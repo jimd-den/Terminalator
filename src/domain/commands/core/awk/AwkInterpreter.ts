@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../../entities/ProcessContext';
 
 /**
  * AwkInterpreter - Domain Layer
@@ -100,25 +101,12 @@ export class AwkInterpreter {
         }
     }
 
-    // Helper to execute single statement or block (since parser allowed block logic inside stmt)
-    private executeOrStatement(stmt: StatementNode | BlockNode) { // Simplify type assumption
-        // Our parser returns StatementNode which covers blocks mostly if wrapped?
-        // Parser returns 'Block' if lbrace.
-        // But StatementNode defined in parser didn't explicitly include BlockNode.
-        // Assuming cast or strict structure from parser.
-        // My parser: if LBRACE -> parseExprStatement? No wait.
-        // Ah, parser's `parseStatement` handled LBRACE by returning parseExprStatement?
-        // Let's check Parser logic for LBRACE... 
-        // "return this.parseExprStatement()" logic for LBRACE was a shortcut placeholder.
-        // If the interpreter sees ExprStmt, it evaluates.
-        // If that expression was actually a Block, things break.
-        // Assuming simple statements for now.
-        // TODO: Enhance Parser to fully support Blocks as Statements.
-
-        if ((stmt as any).type === 'Block') { // If we fix parser
-            this.executeBlock(stmt as any as BlockNode);
+    // Execute a statement which may be a Block or another StatementNode
+    private executeOrStatement(stmt: StatementNode) {
+        if (stmt.type === 'Block') {
+            this.executeBlock(stmt);
         } else {
-            this.executeStatement(stmt as StatementNode);
+            this.executeStatement(stmt);
         }
     }
 
@@ -187,15 +175,17 @@ export class AwkInterpreter {
             case '!=': return String(l) !== String(r);
             case '~': return new RegExp(String(r)).test(String(l));
             case '!~': return !new RegExp(String(r)).test(String(l));
-            // Fallback for math on strings -> 0
-            case '+': return ln + rn; // JS handles '5'-'2' but not '5'+'2' (concat). 
-            // Logic above handled +, so here we likely have non-numeric.
-            // But if op is +, verify execution flow.
-            // If implicit typing failed (one is string), force number for math ops.
-            case '-': return ln - rn;
-            case '*': return ln * rn;
-            case '/': return ln / rn;
-            case '%': return ln % rn;
+        }
+
+        // Awk semantics: non-numeric strings convert to 0 for arithmetic
+        const lNum = isNaN(ln) ? 0 : ln;
+        const rNum = isNaN(rn) ? 0 : rn;
+        switch (op) {
+            case '+': return lNum + rNum;
+            case '-': return lNum - rNum;
+            case '*': return lNum * rNum;
+            case '/': return rNum === 0 ? 0 : lNum / rNum; // Avoid Infinity
+            case '%': return rNum === 0 ? 0 : lNum % rNum;
         }
 
         return 0; // Fallback

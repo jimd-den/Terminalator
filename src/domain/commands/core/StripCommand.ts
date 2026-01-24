@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file StripCommand.ts
  * @description The 'strip' command. Discard information from object files.
@@ -20,7 +21,7 @@ import { TerminalState } from '../../entities/TerminalState';
 
 export class StripCommand implements ICommand {
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         if (args.length === 0) {
             return {
                 output: 'strip: missing operand',

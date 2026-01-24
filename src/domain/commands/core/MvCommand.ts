@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * MvCommand - Core Command
  *
@@ -21,7 +22,7 @@ export class MvCommand extends CommandBase {
     constructor(private fsService: FileSystemService) { super(); }
 
     executeInternal(args: string[], flags: Set<string>, operands: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         // Flags handled by base class (though Mv ignores most)
 
         if (operands.length < 2) {

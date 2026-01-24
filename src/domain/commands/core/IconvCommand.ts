@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * IconvCommand - Core Command
  *
@@ -20,7 +21,7 @@ export class IconvCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         let inputFile: string | null = null;
         let outputFile: string | null = null;
         let silent = false;

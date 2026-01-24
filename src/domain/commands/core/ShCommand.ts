@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file ShCommand.ts
  * @description The 'sh' command. Standard command language interpreter.
@@ -20,8 +21,8 @@ import { Dentry } from '../../entities/FileSystem';
 
 export class ShCommand implements ICommand {
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const _input = context.stdin;
-        const input = context.stdin;
+        const _input = getStdinAsString(context);
+        const input = getStdinAsString(context);
         let commandString = '';
         let scriptFile = '';
         let i = 0;

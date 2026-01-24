@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file SccsCommand.ts
  * @description The 'sccs' command. Front end for the SCCS subsystem.

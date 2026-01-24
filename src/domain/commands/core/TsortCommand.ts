@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * TsortCommand - Core Command
  *
@@ -21,7 +22,7 @@ export class TsortCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         const file = args.find(a => !a.startsWith('-'));
 
         let content = '';

@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file GencatCommand.ts
  * @description The 'gencat' command. Generate a formatted message catalog.
@@ -11,7 +12,7 @@ export class GencatCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         if (args.length < 1) {
             return { output: 'gencat: missing output file', newState: state, exitCode: 1 };
         }

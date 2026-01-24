@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * LnCommand - Core Command
  *
@@ -21,7 +22,7 @@ export class LnCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         let symbolic = false;
         let force = false; // Not implementing -f yet, but good to know
         const operands: string[] = [];

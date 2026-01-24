@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * TouchCommand - Core Command
  *
@@ -22,7 +23,7 @@ export class TouchCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         // Parse flags
         let noCreate = false; // -c
         const targets: string[] = [];

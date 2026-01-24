@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file ContinueCommand.ts
  * @description The 'continue' command. Continue for, while, or until loop.

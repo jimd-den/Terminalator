@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * ExprCommand - Core Command
  *
@@ -21,7 +22,7 @@ export class ExprCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         if (args.length === 0) {
              return { output: 'expr: missing operand', newState: state, exitCode: 2 };
         }

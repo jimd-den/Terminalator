@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file GetCommand.ts
  * @description The 'get' command. Get a version of an SCCS file.

@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file LpCommand.ts
  * @description The 'lp' command. Send files to a printer.

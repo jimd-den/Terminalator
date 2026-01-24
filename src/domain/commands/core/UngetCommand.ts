@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file UngetCommand.ts
  * @description The 'unget' command. Undo a previous get of an SCCS file.

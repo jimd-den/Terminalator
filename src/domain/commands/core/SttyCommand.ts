@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file SttyCommand.ts
  * @description The 'stty' command. Set the options for a terminal.

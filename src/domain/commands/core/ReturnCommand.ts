@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 import { ICommand, CommandResponse } from '../ICommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { FileSystemService } from '../../../domain/services/FileSystemService';

@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file MakeCommand.ts
  * @description The 'make' command. Maintain, update, and regenerate groups of programs.
@@ -36,7 +37,7 @@ interface Rule {
 
 export class MakeCommand implements ICommand {
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         const options: MakeOptions = {
             ignoreErrors: false,
             dryRun: false,

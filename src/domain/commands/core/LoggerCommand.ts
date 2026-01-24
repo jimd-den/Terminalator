@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * LoggerCommand - Core Command
  *
@@ -21,7 +22,7 @@ export class LoggerCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         const msg = args.join(' ') || input || '';
         // Log to console/telemetry?
         // This command usually writes to syslog.

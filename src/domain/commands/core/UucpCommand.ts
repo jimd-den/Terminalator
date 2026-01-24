@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file UucpCommand.ts
  * @description The 'uucp' command. Unix-to-Unix system copy.

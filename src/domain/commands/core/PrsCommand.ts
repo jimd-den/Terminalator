@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file PrsCommand.ts
  * @description The 'prs' command. Print an SCCS file.

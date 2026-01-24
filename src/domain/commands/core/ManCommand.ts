@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * ManCommand - Core Command
  *
@@ -21,7 +22,7 @@ export class ManCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         const topic = args[0];
         if (!topic) {
              return { output: 'What manual page do you want?', newState: state, exitCode: 1 };

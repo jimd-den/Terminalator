@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file PatchCommand.ts
  * @description The 'patch' command. Apply changes to files.

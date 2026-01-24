@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file UustatCommand.ts
  * @description The 'uustat' command. uucp status inquiry and job control.

@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file GzipCommand.ts
  * @description The 'gzip' command. Compress files.
@@ -9,7 +10,7 @@ import { TerminalState } from '../../entities/TerminalState';
 
 export class GzipCommand implements ICommand {
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         // Simulation: Just say it worked or warn about missing file
         if (args.length === 0) {
             // gzip filters stdin to stdout

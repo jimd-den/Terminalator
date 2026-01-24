@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * CksumCommand - Core Command
  *
@@ -20,7 +21,7 @@ export class CksumCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         const files = args.filter(a => !a.startsWith('-'));
 
         if (files.length === 0 && !input) {

@@ -159,17 +159,14 @@ UTILITY: wc
 UTILITY: chmod
 [PASS] CHMOD_01
 [PASS] CHMOD_02
-[FAIL] CHMOD_03: Symbolic +x (stub)
-       -> Exit Code: Expected 0, got 1
-[FAIL] CHMOD_04: Symbolic User -w (stub)
-       -> Exit Code: Expected 0, got 1
+[PASS] CHMOD_03
+[PASS] CHMOD_04
 [PASS] CHMOD_05
 [PASS] CHMOD_06
 [PASS] CHMOD_07
 [PASS] CHMOD_08
 [PASS] CHMOD_09
-[FAIL] CHMOD_10: Sticky bit (stub)
-       -> Exit Code: Expected 0, got 1
+[PASS] CHMOD_10
 UTILITY: awk
 [PASS] AWK_01
 [PASS] AWK_02
@@ -260,8 +257,7 @@ UTILITY: tr
    Got: "xellxx"
 [PASS] TR_05
 [PASS] TR_06
-[FAIL] TR_07: Fail one arg (delete needs -d)
-       -> Exit Code: Expected 1, got 0
+[PASS] TR_07
 [PASS] TR_08
 [PASS] TR_09
 [PASS] TR_10
@@ -314,16 +310,14 @@ UTILITY: unalias
 [PASS] UNALIAS_09
 [PASS] UNALIAS_10
 UTILITY: bg
-[FAIL] BG_01: Resume job
-       -> Exit Code: Expected 0, got 1
+[PASS] BG_01
 [PASS] BG_02
 [PASS] BG_03
 [PASS] BG_04
 [PASS] BG_05
 [PASS] BG_06
 [PASS] BG_07
-[FAIL] BG_08: Help?
-       -> Exit Code: Expected 0, got 1
+[PASS] BG_08
 [PASS] BG_09
 [PASS] BG_10
 UTILITY: fg
@@ -341,43 +335,30 @@ UTILITY: jobs
 [PASS] JOBS_01
 [PASS] JOBS_02
 [PASS] JOBS_03
-[FAIL] JOBS_04: Specific job
-       -> Exit Code: Expected 1, got 0
+[PASS] JOBS_04
 [PASS] JOBS_05
 [PASS] JOBS_06
-[FAIL] JOBS_07: Invalid flag
-       -> Exit Code: Expected 1, got 0
-[FAIL] JOBS_08: Multiple args
-       -> Exit Code: Expected 1, got 0
+[PASS] JOBS_07
+[PASS] JOBS_08
 [PASS] JOBS_09
 [PASS] JOBS_10
 UTILITY: kill
 [PASS] KILL_01
 [PASS] KILL_02
 [PASS] KILL_03
-[FAIL] KILL_04: Fail invalid PID
-       -> Exit Code: Expected 1, got 0
-[FAIL] KILL_05: List signals -l
-       -> Stdout Regex Mismatch.
-   Expected: /TERM|KILL/
-   Got: ""
-[FAIL] KILL_06: Check signals
-       -> Stdout Regex Mismatch.
-   Expected: /KILL/
-   Got: ""
+[PASS] KILL_04
+[PASS] KILL_05
+[PASS] KILL_06
 [PASS] KILL_07
-[FAIL] KILL_08: Kill job %1
-       -> Exit Code: Expected 1, got 0
+[PASS] KILL_08
 [PASS] KILL_09
 [PASS] KILL_10
 UTILITY: wait
 [PASS] WAIT_01
 [PASS] WAIT_02
-[FAIL] WAIT_03: Wait job %1
-       -> Exit Code: Expected 127, got 0
+[PASS] WAIT_03
 [PASS] WAIT_04
-[FAIL] WAIT_05: Invalid arg
-       -> Exit Code: Expected 1, got 0
+[PASS] WAIT_05
 [PASS] WAIT_06
 [PASS] WAIT_07
 [PASS] WAIT_08
@@ -421,18 +402,23 @@ UTILITY: true
 [PASS] TRUE_10
 UTILITY: basename
 [PASS] BASENAME_01
-[PASS] BASENAME_02
+[FAIL] BASENAME_02: Strip suffix
+       -> Stdout Regex Mismatch.
+   Expected: /stdio/
+   Got: "std"
 [PASS] BASENAME_03
 [FAIL] BASENAME_04: Root
        -> Stdout Regex Mismatch.
    Expected: /^\/$/
    Got: ""
 [PASS] BASENAME_05
-[FAIL] BASENAME_06: Fail no args
-       -> Exit Code: Expected 1, got 0
+[PASS] BASENAME_06
 [FAIL] BASENAME_07: Too many args
        -> Exit Code: Expected 1, got 0
-[PASS] BASENAME_08
+[FAIL] BASENAME_08: Suffix is entire string
+       -> Stdout Regex Mismatch.
+   Expected: /.h/
+   Got: ""
 [PASS] BASENAME_09
 [PASS] BASENAME_10
 UTILITY: dirname
@@ -440,8 +426,7 @@ UTILITY: dirname
 [PASS] DIRNAME_02
 [PASS] DIRNAME_03
 [PASS] DIRNAME_04
-[FAIL] DIRNAME_05: Fail no args
-       -> Exit Code: Expected 1, got 0
+[PASS] DIRNAME_05
 [PASS] DIRNAME_06
 [PASS] DIRNAME_07
 [PASS] DIRNAME_08
@@ -672,53 +657,24 @@ UTILITY: read
 UTILITY: xargs
 [PASS] XARGS_01
 [PASS] XARGS_02
-[FAIL] XARGS_03: Max lines -n
-       -> Exit Code: Expected 0, got 127
-       -> Stdout Regex Mismatch.
-   Expected: /a\nb/
-   Got: "xargs: -n: command not found"
-[FAIL] XARGS_04: Placeholder -I (stub)
-       -> Exit Code: Expected 0, got 127
-[FAIL] XARGS_05: No run if empty -r (Ext)
-       -> Exit Code: Expected 0, got 127
-       -> Stdout Regex Mismatch.
-   Expected: /^$/
-   Got: "xargs: -r: command not found"
+[PASS] XARGS_03
+[PASS] XARGS_04
+[PASS] XARGS_05
 [PASS] XARGS_06
-[FAIL] XARGS_07: Trace -t
-       -> Exit Code: Expected 0, got 127
-[FAIL] XARGS_08: Delimiter -d (stub)
-       -> Exit Code: Expected 0, got 127
-       -> Stdout Regex Mismatch.
-   Expected: /a b/
-   Got: "xargs: -d: command not found"
-[FAIL] XARGS_09: 0 terminator -0 (Ext)
-       -> Exit Code: Expected 0, got 127
-       -> Stdout Regex Mismatch.
-   Expected: /a b/
-   Got: "xargs: -0: command not found"
+[PASS] XARGS_07
+[PASS] XARGS_08
+[PASS] XARGS_09
 [PASS] XARGS_10
 UTILITY: id
 [PASS] ID_01
 [PASS] ID_02
-[FAIL] ID_03: Fail missing
-       -> Exit Code: Expected 1, got 0
-[FAIL] ID_04: Group only -g
-       -> Stdout Regex Mismatch.
-   Expected: /^\d+/
-   Got: "uid=1000([object Object]) gid=1000([object Object]) groups=1000([object Object])"
-[FAIL] ID_05: User only -u
-       -> Stdout Regex Mismatch.
-   Expected: /^\d+/
-   Got: "uid=1000([object Object]) gid=1000([object Object]) groups=1000([object Object])"
-[FAIL] ID_06: Name -n
-       -> Stdout Regex Mismatch.
-   Expected: /operator/
-   Got: "uid=1000([object Object]) gid=1000([object Object]) groups=1000([object Object])"
+[PASS] ID_03
+[PASS] ID_04
+[PASS] ID_05
+[PASS] ID_06
 [PASS] ID_07
 [PASS] ID_08
-[FAIL] ID_09: Multiple args
-       -> Exit Code: Expected 1, got 0
+[PASS] ID_09
 [PASS] ID_10
 UTILITY: uname
 [PASS] UNAME_01
@@ -734,20 +690,15 @@ UTILITY: uname
 [PASS] UNAME_09
 [PASS] UNAME_10
 UTILITY: logname
-[FAIL] LOGNAME_01: Print user
-       -> Runtime Exception: TypeError: output.replace is not a function
-[FAIL] LOGNAME_02: No args allowed
-       -> Exit Code: Expected 1, got 0
+[PASS] LOGNAME_01
+[PASS] LOGNAME_02
 [PASS] LOGNAME_03
-[FAIL] LOGNAME_04: Help?
-       -> Exit Code: Expected 1, got 0
+[PASS] LOGNAME_04
 [PASS] LOGNAME_05
 [PASS] LOGNAME_06
 [PASS] LOGNAME_07
-[FAIL] LOGNAME_08: Fail flags
-       -> Exit Code: Expected 1, got 0
-[FAIL] LOGNAME_09: Output format
-       -> Runtime Exception: TypeError: output.replace is not a function
+[PASS] LOGNAME_08
+[PASS] LOGNAME_09
 [PASS] LOGNAME_10
 UTILITY: env
 [PASS] ENV_01
@@ -843,13 +794,11 @@ UTILITY: time
 [PASS] TIME_02
 [PASS] TIME_03
 [PASS] TIME_04
-[FAIL] TIME_05: Pipeline
-       -> Exit Code: Expected 0, got 2
+[PASS] TIME_05
 [FAIL] TIME_06: No args?
        -> Exit Code: Expected 0, got 1
 [PASS] TIME_07
-[FAIL] TIME_08: Complex command
-       -> Exit Code: Expected 0, got 1
+[PASS] TIME_08
 [FAIL] TIME_09: Subshell
        -> Exit Code: Expected 0, got 1
 [PASS] TIME_10
@@ -1596,8 +1545,7 @@ UTILITY: nice
 [PASS] NICE_05
 [FAIL] NICE_06: Negative (root)
        -> Exit Code: Expected 1, got 0
-[FAIL] NICE_07: Complex cmd
-       -> Exit Code: Expected 0, got 1
+[PASS] NICE_07
 [PASS] NICE_08
 [PASS] NICE_09
 [PASS] NICE_10
@@ -1620,8 +1568,7 @@ UTILITY: nohup
 [PASS] NOHUP_02
 [PASS] NOHUP_03
 [PASS] NOHUP_04
-[FAIL] NOHUP_05: Pipeline
-       -> Exit Code: Expected 0, got 2
+[PASS] NOHUP_05
 [PASS] NOHUP_06
 [PASS] NOHUP_07
 [FAIL] NOHUP_08: Fail no args
@@ -1711,20 +1658,17 @@ UTILITY: who
 [FAIL] WHO_01: List users
        -> Stdout Regex Mismatch.
    Expected: /operator/
-   Got: "[object Object]  tty1  1/23/2026"
+   Got: "[object Object]   tty1   2026-01-24 03:48"
 [FAIL] WHO_02: Headers -H
        -> Stdout Regex Mismatch.
    Expected: /NAME/
-   Got: "[object Object]  tty1  1/23/2026"
+   Got: "[object Object]   tty1   2026-01-24 03:48"
 [PASS] WHO_03
 [FAIL] WHO_04: Am I -m
        -> Stdout Regex Mismatch.
    Expected: /operator/
-   Got: "[object Object]  tty1  1/23/2026"
-[FAIL] WHO_05: Message status -T
-       -> Stdout Regex Mismatch.
-   Expected: /[+\-?]/
-   Got: "[object Object]  tty1  1/23/2026"
+   Got: "[object Object]   tty1   2026-01-24 03:48"
+[PASS] WHO_05
 [PASS] WHO_06
 [PASS] WHO_07
 [PASS] WHO_08
@@ -2004,42 +1948,27 @@ UTILITY: asa
 [FAIL] ASA_10: Multiple
        -> Exit Code: Expected 0, got 1
 UTILITY: chgrp
-[FAIL] CHGRP_01: Change group
-       -> Exit Code: Expected 0, got 1
-[FAIL] CHGRP_02: Recursive -R
-       -> Exit Code: Expected 0, got 1
-[FAIL] CHGRP_03: Dereference -H (stub)
-       -> Exit Code: Expected 0, got 1
-[FAIL] CHGRP_04: Dereference -L (stub)
-       -> Exit Code: Expected 0, got 1
-[FAIL] CHGRP_05: No deref -P (stub)
-       -> Exit Code: Expected 0, got 1
+[PASS] CHGRP_01
+[PASS] CHGRP_02
+[PASS] CHGRP_03
+[PASS] CHGRP_04
+[PASS] CHGRP_05
 [PASS] CHGRP_06
 [PASS] CHGRP_07
-[FAIL] CHGRP_08: Numeric group
-       -> Exit Code: Expected 0, got 1
-[FAIL] CHGRP_09: Consistency
-       -> Exit Code: Expected 0, got 1
-[FAIL] CHGRP_10: Multiple files
-       -> Exit Code: Expected 0, got 1
+[PASS] CHGRP_08
+[PASS] CHGRP_09
+[PASS] CHGRP_10
 UTILITY: chown
-[FAIL] CHOWN_01: Change owner
-       -> Exit Code: Expected 0, got 1
-[FAIL] CHOWN_02: Owner:Group
-       -> Exit Code: Expected 0, got 1
-[FAIL] CHOWN_03: Recursive -R
-       -> Exit Code: Expected 0, got 1
+[PASS] CHOWN_01
+[PASS] CHOWN_02
+[PASS] CHOWN_03
 [PASS] CHOWN_04
 [PASS] CHOWN_05
-[FAIL] CHOWN_06: Symlink -h
-       -> Exit Code: Expected 0, got 1
-[FAIL] CHOWN_07: Numeric
-       -> Exit Code: Expected 0, got 1
+[PASS] CHOWN_06
+[PASS] CHOWN_07
 [PASS] CHOWN_08
-[FAIL] CHOWN_09: Consistency
-       -> Exit Code: Expected 0, got 1
-[FAIL] CHOWN_10: Multiple
-       -> Exit Code: Expected 0, got 1
+[PASS] CHOWN_09
+[PASS] CHOWN_10
 UTILITY: rmdir
 [PASS] RMDIR_01
 [PASS] RMDIR_02
@@ -2378,23 +2307,17 @@ UTILITY: unget
 [FAIL] UNGET_10: Simple
        -> Exit Code: Expected 0, got 1
 UTILITY: val
-[FAIL] VAL_01: Validate SCCS
-       -> Exit Code: Expected 0, got 1
-[PASS] VAL_02
+[PASS] VAL_01
+[FAIL] VAL_02: Fail corrupted
+       -> Exit Code: Expected 32, got 0
 [PASS] VAL_03
 [PASS] VAL_04
-[FAIL] VAL_05: SID -r
-       -> Exit Code: Expected 0, got 1
-[FAIL] VAL_06: Message -m
-       -> Exit Code: Expected 0, got 1
-[FAIL] VAL_07: Type -y
-       -> Exit Code: Expected 0, got 1
-[FAIL] VAL_08: Suppress -s
-       -> Exit Code: Expected 0, got 1
-[FAIL] VAL_09: Consistency
-       -> Exit Code: Expected 0, got 1
-[FAIL] VAL_10: Stdin piping
-       -> Exit Code: Expected 0, got 1
+[PASS] VAL_05
+[PASS] VAL_06
+[PASS] VAL_07
+[PASS] VAL_08
+[PASS] VAL_09
+[PASS] VAL_10
 UTILITY: what
 [FAIL] WHAT_01: Find ID
        -> Stdout Regex Mismatch.
@@ -2486,16 +2409,25 @@ UTILITY: localedef
 [PASS] LOCALEDEF_09
 [PASS] LOCALEDEF_10
 UTILITY: c17
-[PASS] C17_01
-[PASS] C17_02
-[PASS] C17_03
-[PASS] C17_04
-[PASS] C17_05
+[FAIL] C17_01: Compile C
+       -> Exit Code: Expected 0, got 1
+       -> Missing File: Expected /home/operator/a.out to be created.
+[FAIL] C17_02: Output -o
+       -> Exit Code: Expected 0, got 1
+       -> Missing File: Expected /home/operator/out to be created.
+[FAIL] C17_03: Compile only -c
+       -> Missing File: Expected /home/operator/f.o to be created.
+[FAIL] C17_04: Debug -g
+       -> Exit Code: Expected 0, got 1
+[FAIL] C17_05: Optimize -O
+       -> Exit Code: Expected 0, got 1
 [PASS] C17_06
 [PASS] C17_07
 [PASS] C17_08
-[PASS] C17_09
-[PASS] C17_10
+[FAIL] C17_09: Consistency
+       -> Exit Code: Expected 0, got 1
+[FAIL] C17_10: Link lib (stub)
+       -> Exit Code: Expected 0, got 1
 UTILITY: cflow
 [PASS] CFLOW_01
 [PASS] CFLOW_02
@@ -2593,10 +2525,7 @@ UTILITY: newgrp
 [FAIL] NEWGRP_03: Fail missing
        -> Exit Code: Expected 1, got 0
 [PASS] NEWGRP_04
-[FAIL] NEWGRP_05: Check ID
-       -> Stdout Regex Mismatch.
-   Expected: /staff/
-   Got: "uid=1000([object Object]) gid=1000([object Object]) groups=1000([object Object])"
+[PASS] NEWGRP_05
 [FAIL] NEWGRP_06: Fail perms
        -> Exit Code: Expected 1, got 0
 [PASS] NEWGRP_07
@@ -2752,7 +2681,7 @@ grep          |    10 |   10 |    0 |    100.0%
 head          |    10 |   10 |    0 |    100.0%
 tail          |    10 |   10 |    0 |    100.0%
 wc            |    10 |    9 |    1 |     90.0%
-chmod         |    10 |    7 |    3 |     70.0%
+chmod         |    10 |   10 |    0 |    100.0%
 awk           |    10 |   10 |    0 |    100.0%
 sed           |    10 |   10 |    0 |    100.0%
 find          |    11 |    9 |    1 |     81.8%
@@ -2760,21 +2689,21 @@ date          |    10 |   10 |    0 |    100.0%
 diff          |    10 |   10 |    0 |    100.0%
 sort          |    10 |   10 |    0 |    100.0%
 uniq          |    10 |   10 |    0 |    100.0%
-tr            |    10 |    8 |    2 |     80.0%
+tr            |    10 |    9 |    1 |     90.0%
 cut           |    10 |   10 |    0 |    100.0%
 tee           |    10 |   10 |    0 |    100.0%
 alias         |    10 |    8 |    2 |     80.0%
 unalias       |    10 |    8 |    2 |     80.0%
-bg            |    10 |    8 |    2 |     80.0%
+bg            |    10 |   10 |    0 |    100.0%
 fg            |    10 |   10 |    0 |    100.0%
-jobs          |    10 |    7 |    3 |     70.0%
-kill          |    10 |    6 |    4 |     60.0%
-wait          |    10 |    8 |    2 |     80.0%
+jobs          |    10 |   10 |    0 |    100.0%
+kill          |    10 |   10 |    0 |    100.0%
+wait          |    10 |   10 |    0 |    100.0%
 sleep         |    10 |    8 |    2 |     80.0%
 false         |    10 |    9 |    1 |     90.0%
 true          |    10 |   10 |    0 |    100.0%
-basename      |    10 |    7 |    3 |     70.0%
-dirname       |    10 |    8 |    2 |     80.0%
+basename      |    10 |    6 |    4 |     60.0%
+dirname       |    10 |    9 |    1 |     90.0%
 file          |    10 |    6 |    4 |     60.0%
 join          |    10 |    8 |    2 |     80.0%
 paste         |    10 |    8 |    2 |     80.0%
@@ -2788,16 +2717,16 @@ printf        |    10 |    5 |    5 |     50.0%
 test          |    10 |    7 |    3 |     70.0%
 [             |    10 |    4 |    6 |     40.0%
 read          |    10 |    7 |    3 |     70.0%
-xargs         |    10 |    4 |    6 |     40.0%
-id            |    10 |    5 |    5 |     50.0%
+xargs         |    10 |   10 |    0 |    100.0%
+id            |    10 |   10 |    0 |    100.0%
 uname         |    10 |    8 |    2 |     80.0%
-logname       |    10 |    5 |    5 |     50.0%
+logname       |    10 |   10 |    0 |    100.0%
 env           |    10 |    5 |    5 |     50.0%
 ar            |    10 |    4 |    6 |     40.0%
 make          |    10 |    8 |    2 |     80.0%
 sh            |    11 |    9 |    2 |     81.8%
 strings       |    10 |    4 |    6 |     40.0%
-time          |    10 |    6 |    4 |     60.0%
+time          |    10 |    8 |    2 |     80.0%
 fold          |    10 |    6 |    4 |     60.0%
 cksum         |    10 |    5 |    5 |     50.0%
 du            |    10 |    9 |    1 |     90.0%
@@ -2839,15 +2768,15 @@ export        |    10 |    8 |    2 |     80.0%
 eval          |    10 |    7 |    3 |     70.0%
 exec          |    10 |    7 |    3 |     70.0%
 ps            |    10 |    7 |    3 |     70.0%
-nice          |    10 |    7 |    3 |     70.0%
+nice          |    10 |    8 |    2 |     80.0%
 renice        |    10 |    7 |    3 |     70.0%
-nohup         |    10 |    8 |    2 |     80.0%
+nohup         |    10 |    9 |    1 |     90.0%
 logger        |    10 |    9 |    1 |     90.0%
 tput          |    10 |    6 |    4 |     60.0%
 tty           |    10 |    6 |    4 |     60.0%
 stty          |    10 |    8 |    2 |     80.0%
 tabs          |    10 |    9 |    1 |     90.0%
-who           |    10 |    5 |    5 |     50.0%
+who           |    10 |    6 |    4 |     60.0%
 write         |    10 |    7 |    3 |     70.0%
 talk          |    10 |    7 |    3 |     70.0%
 at            |    10 |    8 |    2 |     80.0%
@@ -2866,8 +2795,8 @@ nm            |    10 |    7 |    3 |     70.0%
 strip         |    10 |    7 |    3 |     70.0%
 ctags         |    10 |    6 |    4 |     60.0%
 asa           |    10 |    3 |    7 |     30.0%
-chgrp         |    10 |    2 |    8 |     20.0%
-chown         |    10 |    3 |    7 |     30.0%
+chgrp         |    10 |   10 |    0 |    100.0%
+chown         |    10 |   10 |    0 |    100.0%
 rmdir         |    10 |    9 |    1 |     90.0%
 mkfifo        |    10 |    8 |    2 |     80.0%
 unlink        |    10 |    7 |    3 |     70.0%
@@ -2890,14 +2819,14 @@ rmdel         |    10 |    5 |    5 |     50.0%
 sact          |    10 |    3 |    7 |     30.0%
 sccs          |    10 |    2 |    8 |     20.0%
 unget         |    10 |    3 |    7 |     30.0%
-val           |    10 |    3 |    7 |     30.0%
+val           |    10 |    9 |    1 |     90.0%
 what          |    10 |    6 |    4 |     60.0%
 ipcrm         |    10 |    7 |    3 |     70.0%
 ipcs          |    10 |    9 |    1 |     90.0%
 iconv         |    10 |    9 |    1 |     90.0%
 locale        |    10 |    7 |    3 |     70.0%
 localedef     |    10 |    8 |    2 |     80.0%
-c17           |    10 |   10 |    0 |    100.0%
+c17           |    10 |    3 |    7 |     30.0%
 cflow         |    10 |   10 |    0 |    100.0%
 cxref         |    10 |    9 |    1 |     90.0%
 fuser         |    10 |   10 |    0 |    100.0%
@@ -2905,7 +2834,7 @@ gencat        |    10 |    7 |    3 |     70.0%
 getconf       |    10 |   10 |    0 |    100.0%
 gettext       |    10 |    8 |    2 |     80.0%
 msgfmt        |    10 |    4 |    6 |     40.0%
-newgrp        |    10 |    6 |    4 |     60.0%
+newgrp        |    10 |    7 |    3 |     70.0%
 ngettext      |    10 |    3 |    7 |     30.0%
 pathchk       |    10 |    9 |    1 |     90.0%
 unexpand      |    10 |    5 |    5 |     50.0%
@@ -2914,7 +2843,7 @@ uustat        |    10 |    9 |    1 |     90.0%
 uux           |    10 |    2 |    8 |     20.0%
 xgettext      |    10 |    6 |    4 |     60.0%
 
-TOTAL COMPLIANCE: 68.6% (1201/1752)
+TOTAL COMPLIANCE: 71.5% (1252/1752)
 
 === MISSING UTILITIES (Implemented but failing) ===
 None

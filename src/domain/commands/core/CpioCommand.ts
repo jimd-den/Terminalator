@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file CpioCommand.ts
  * @description The 'cpio' command. Copy in and out (archive).

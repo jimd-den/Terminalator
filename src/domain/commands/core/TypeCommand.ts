@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * TypeCommand - Core Command
  *
@@ -22,7 +23,7 @@ export class TypeCommand implements ICommand {
     constructor(private fs: FileSystemService, private registry?: CommandRegistry) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         if (args.length === 0) return { output: '', newState: state, exitCode: 0 };
 
         const outputs: string[] = [];

@@ -124,7 +124,7 @@ The codebase follows a strict **Clean Architecture** implementation, ensuring se
 src/
 ├── domain/                      # ENTITIES & LOGIC
 │   ├── commands/                # Command Implementations
-│   │   ├── core/                # StdLib (cp, ls, mv, rm, etc.)
+│   │   ├── core/                # StdLib (cp, ls, mv, rm, bg, fg, jobs, kill, wait...)
 │   │   ├── system/              # System (shutdown, reboot)
 │   │   ├── CommandBase.ts       # Abstract Base Class
 │   │   ├── CommandRegistry.ts   # Command Lookup Registry
@@ -132,7 +132,10 @@ src/
 │   ├── entities/                # Pure Data Models
 │   │   ├── FileSystem.ts        # Inode/Dentry State
 │   │   ├── TerminalState.ts     # Global State Wrapper
-│   │   └── ProcessContext.ts    # Envrionment Context
+│   │   ├── ProcessContext.ts    # Environment Context (with jobControl)
+│   │   ├── Stream.ts            # IStream, StringStream, PipeStream
+│   │   ├── Job.ts               # Job entity for job control
+│   │   └── Signal.ts            # POSIX signal definitions
 │   ├── factories/               # Object Creation
 │   │   └── ShellFactory.ts      # Assembles Shell Context
 │   ├── modules/                 # DI Modules
@@ -141,6 +144,7 @@ src/
 │   ├── ports/                   # Interfaces (Ports)
 │   ├── services/                # Domain Services
 │   │   ├── FileSystemService.ts # POSIX Logic
+│   │   ├── JobControlService.ts # Job table, signals, job ID resolution
 │   │   ├── ShellExpansionService.ts # Globbing & Expansion
 │   │   └── ShellParser.ts       # Input Parser
 │   └── usecases/                # Application Logic
@@ -165,6 +169,45 @@ src/
     ├── posix_comprehensive_suite.ts # Main Test Suite (Run this!)
     └── ...
 ```
+
+
+---
+
+## 5. POSIX Gap Analysis
+
+> [!NOTE]
+> The following sections document the status of POSIX subsystem implementations.
+
+### 5.1 Job Control & Process Management ✅ IMPLEMENTED
+
+*   **Commands:** `bg`, `fg`, `jobs`, `kill`, `wait` — **100% POSIX Compliance**
+*   **Architecture:**
+    *   `Job` entity (`src/domain/entities/Job.ts`) - Job states (Running/Stopped/Done/Terminated) and output formatting.
+    *   `Signal` entity (`src/domain/entities/Signal.ts`) - POSIX signal definitions and parsing.
+    *   `JobControlService` (`src/domain/services/JobControlService.ts`) - Job table management, signal delivery, job resolution (%1, %+, %-).
+    *   `ProcessContext.jobControl` - Reference injected into commands.
+*   **Key Features:**
+    *   Job ID notation: `%1`, `%+`, `%%`, `%-`, `%?string`, `%string`
+    *   Signal handling: SIGTERM, SIGKILL, SIGSTOP, SIGCONT, etc.
+    *   Output formats per POSIX: `[%d] %s\n` for bg, `%s\n` for fg, `[%d] %c %s %s\n` for jobs.
+
+### 5.2 Identity & Permissions Model
+
+*   **Affected Commands:** `id`, `chown`, `chgrp`, `chmod` (symbolic/sticky), `logname`, `newgrp`
+*   **Gap:** No `IdentityService` (simulating `/etc/passwd` & `/etc/group`). Permission enforcement (sticky bit, setuid) is incomplete in `FileSystemService`. `id` outputs `[object Object]` due to missing serialization.
+*   **Proposed Fix:** Add `User`/`Group` entities and an `IdentityService` to manage simulated user database. Update `FileSystemService` for full permission checks.
+
+### 5.3 Process Pipeline & I/O Streams ✅ PARTIALLY IMPLEMENTED
+
+*   **Commands:** `xargs` (100%), `comm`, `split`, `csplit`
+*   **Implemented:**
+    *   `IStream` interface (`src/domain/entities/Stream.ts`) - Abstraction for stdin/stdout/stderr.
+    *   `StringStream`, `PipeStream`, `NullStream` implementations.
+    *   `ProcessContext` uses `IStream` for I/O with backward compatibility via `getStdinAsString()`.
+*   **Remaining Gap:** Full FD redirection (2>&1, <&3) and large streaming data.
+
+
+---
 
 ## 6. Code Hygiene & Refactoring Standards
 

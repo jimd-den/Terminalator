@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * CdCommand - Core Command
  *
@@ -29,7 +30,7 @@ export class CdCommand implements ICommand {
      * @param state - Current terminal state.
      */
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         const target = args.length > 0 ? args[0] : '~';
         let newPath = target;
 

@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file PaxCommand.ts
  * @description The 'pax' command. Portable archive interchange.

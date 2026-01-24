@@ -18,12 +18,13 @@ import { DirnameCommand } from '../commands/system/DirnameCommand';
 
 export class SystemUtilsModule implements CommandModule {
     register(registry: CommandRegistry): void {
-        registry.register('true', new TrueCommand());
-        registry.register('false', new FalseCommand());
-        registry.register('who', new WhoCommand());
-        registry.register('tty', new TtyCommand());
-        registry.register('id', new IdCommand());
-        registry.register('basename', new BasenameCommand());
-        registry.register('dirname', new DirnameCommand());
+        // These are now handled by CoreUtilsModule with more POSIX compliance.
+        // registry.register('true', new TrueCommand());
+        // registry.register('false', new FalseCommand());
+        // registry.register('who', new WhoCommand());
+        // registry.register('tty', new TtyCommand());
+        // registry.register('id', new IdCommand());
+        // registry.register('basename', new BasenameCommand());
+        // registry.register('dirname', new DirnameCommand());
     }
 }

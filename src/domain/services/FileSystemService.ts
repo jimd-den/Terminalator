@@ -7,7 +7,7 @@
  * Pillar: The Four-Fold Shield (Use Case/Service Layer)
  */
 
-import { FileSystem, Dentry, S_IFDIR, S_IFREG, S_IFLNK, S_IFMT, S_IFIFO, Inode } from '../entities/FileSystem';
+import { FileSystem, Dentry, S_IFDIR, S_IFREG, S_IFLNK, S_IFMT, S_IFIFO, Inode, S_IRUSR, S_IWUSR, S_IXUSR, S_IRGRP, S_IWGRP, S_IXGRP, S_IROTH, S_IWOTH, S_IXOTH } from '../entities/FileSystem';
 import { PathResolver } from './filesystem/PathResolver';
 
 export class FileSystemService {
@@ -24,8 +24,8 @@ export class FileSystemService {
     /**
      * Traverses the file system to find a node by path.
      */
-    resolve(path: string, cwd: string = '/', followSymlinks: boolean = true): Dentry | null {
-        return this.pathResolver.resolve(this.fs.root, path, cwd, followSymlinks);
+    resolve(path: string, cwd: string = '/', followSymlinks: boolean = true, actingUser?: { uid: number, gid: number, groups: number[] }): Dentry | null {
+        return this.pathResolver.resolve(this.fs.root, path, cwd, followSymlinks, actingUser);
     }
 
     /**
@@ -72,14 +72,14 @@ export class FileSystemService {
         return inode;
     }
 
-    mkdir(path: string, mode: number = 0o755, uid: number = 0, gid: number = 0, cwd: string = '/'): Dentry {
+    mkdir(path: string, mode: number = 0o755, uid: number = 1000, gid: number = 1000, cwd: string = '/'): Dentry {
         return this.createDentry(path, S_IFDIR | mode, uid, gid, cwd);
     }
 
     /**
      * Recursive mkdir. Creates directories if they don't exist.
      */
-    public mkdirp(path: string, mode: number = 0o755, uid: number = 0, gid: number = 0, cwd: string = '/'): Dentry {
+    public mkdirp(path: string, mode: number = 0o755, uid: number = 1000, gid: number = 1000, cwd: string = '/'): Dentry {
         const isAbsolute = path.startsWith('/');
         let targetPath = path;
 
@@ -119,25 +119,69 @@ export class FileSystemService {
     /**
      * Alias for mkdirp (Tutor/System usage)
      */
-    public createDirectory(path: string, mode: number = 0o755): Dentry {
-        return this.mkdirp(path, mode);
+    public createDirectory(path: string, mode: number = 0o755, uid: number = 1000, gid: number = 1000, cwd: string = '/'): Dentry {
+        return this.mkdirp(path, mode, uid, gid, cwd);
     }
 
-    createFile(path: string, mode: number = 0o644, uid: number = 0, gid: number = 0, cwd: string = '/'): Dentry {
+    createFile(path: string, mode: number = 0o644, uid: number = 1000, gid: number = 1000, cwd: string = '/'): Dentry {
         return this.createDentry(path, S_IFREG | mode, uid, gid, cwd);
     }
 
-    mkfifo(path: string, mode: number = 0o644, uid: number = 0, gid: number = 0, cwd: string = '/'): Dentry {
+    mkfifo(path: string, mode: number = 0o644, uid: number = 1000, gid: number = 1000, cwd: string = '/'): Dentry {
         return this.createDentry(path, S_IFIFO | mode, uid, gid, cwd);
     }
 
-    symlink(target: string, linkPath: string, uid: number = 0, gid: number = 0, cwd: string = '/'): Dentry {
+    symlink(target: string, linkPath: string, uid: number = 1000, gid: number = 1000, cwd: string = '/'): Dentry {
         const dentry = this.createDentry(linkPath, S_IFLNK | 0o777, uid, gid, cwd);
         const inode = this.getInode(dentry.inodeId)!;
         inode.target = target;
         inode.size = target.length;
         this.fs.usedBytes += target.length;
         return dentry;
+    }
+
+    /**
+     * Checks if the given user has the required permissions on the inode.
+     * 
+     * @param inodeId - The ID of the inode to check.
+     * @param actingUser - The user attempting access.
+     * @param requiredBit - The permission bit required (e.g., S_IRUSR, S_IWUSR, S_IXUSR).
+     * @returns True if access is granted, false otherwise.
+     */
+    public hasAccess(inodeId: number, actingUser: { uid: number, gid: number, groups: number[] }, requiredBit: number): boolean {
+        const inode = this.getInode(inodeId);
+        if (!inode) return false;
+
+        // 1. Root Override
+        if (actingUser.uid === 0) {
+            // Root can read/write anything.
+            // For execute, root needs at least one execute bit set on the file.
+            if (requiredBit === S_IXUSR || requiredBit === S_IXGRP || requiredBit === S_IXOTH) {
+                return (inode.mode & 0o111) !== 0;
+            }
+            return true;
+        }
+
+        // 2. Owner Check
+        if (actingUser.uid === inode.uid) {
+            if (requiredBit === S_IRUSR || requiredBit === S_IRGRP || requiredBit === S_IROTH) return (inode.mode & S_IRUSR) !== 0;
+            if (requiredBit === S_IWUSR || requiredBit === S_IWGRP || requiredBit === S_IWOTH) return (inode.mode & S_IWUSR) !== 0;
+            if (requiredBit === S_IXUSR || requiredBit === S_IXGRP || requiredBit === S_IXOTH) return (inode.mode & S_IXUSR) !== 0;
+        }
+
+        // 3. Group Check
+        if (actingUser.gid === inode.gid || actingUser.groups.includes(inode.gid)) {
+            if (requiredBit === S_IRUSR || requiredBit === S_IRGRP || requiredBit === S_IROTH) return (inode.mode & S_IRGRP) !== 0;
+            if (requiredBit === S_IWUSR || requiredBit === S_IWGRP || requiredBit === S_IWOTH) return (inode.mode & S_IWGRP) !== 0;
+            if (requiredBit === S_IXUSR || requiredBit === S_IXGRP || requiredBit === S_IXOTH) return (inode.mode & S_IXGRP) !== 0;
+        }
+
+        // 4. Others Check
+        if (requiredBit === S_IRUSR || requiredBit === S_IRGRP || requiredBit === S_IROTH) return (inode.mode & S_IROTH) !== 0;
+        if (requiredBit === S_IWUSR || requiredBit === S_IWGRP || requiredBit === S_IWOTH) return (inode.mode & S_IWOTH) !== 0;
+        if (requiredBit === S_IXUSR || requiredBit === S_IXGRP || requiredBit === S_IXOTH) return (inode.mode & S_IXOTH) !== 0;
+
+        return false;
     }
 
     link(oldPath: string, newPath: string, cwd: string = '/'): Dentry {
@@ -242,16 +286,21 @@ export class FileSystemService {
         return dentry;
     }
 
-    writeFile(path: string, content: string | Uint8Array, modeStr: 'w' | 'a' = 'w', cwd: string = '/'): Dentry {
-        let dentry = this.resolve(path, cwd);
+    writeFile(path: string, content: string | Uint8Array, modeStr: 'w' | 'a' = 'w', uid: number = 1000, gid: number = 1000, cwd: string = '/', actingUser?: { uid: number, gid: number, groups: number[] }): Dentry {
+        let dentry = this.resolve(path, cwd, true, actingUser);
         let inode: Inode;
 
         if (!dentry) {
-            dentry = this.createFile(path, 0o644, 1000, 1000, cwd);
+            dentry = this.createFile(path, 0o644, uid, gid, cwd);
             inode = this.getInode(dentry.inodeId)!;
         } else {
             inode = this.getInode(dentry.inodeId)!;
             if (inode.mode & S_IFDIR) throw new Error(`Cannot write to '${path}': Is a directory`);
+
+            // Check Write Permission
+            if (actingUser && !this.hasAccess(inode.id, actingUser, S_IWUSR)) {
+                throw new Error('Permission denied');
+            }
         }
 
         const oldSize = inode.size;
@@ -283,12 +332,17 @@ export class FileSystemService {
         return dentry;
     }
 
-    readFile(path: string, cwd: string = '/'): string {
-        const dentry = this.resolve(path, cwd);
+    readFile(path: string, cwd: string = '/', actingUser?: { uid: number, gid: number, groups: number[] }): string {
+        const dentry = this.resolve(path, cwd, true, actingUser);
         if (!dentry) throw new Error(`${path}: No such file or directory`);
         const inode = this.getInode(dentry.inodeId);
         if (!inode) throw new Error('Corrupt filesystem');
         if (inode.mode & S_IFDIR) throw new Error(`${path}: Is a directory`);
+
+        // Check Read Permission
+        if (actingUser && !this.hasAccess(inode.id, actingUser, S_IRUSR)) {
+            throw new Error('Permission denied');
+        }
 
         const content = inode.content;
         if (content instanceof Uint8Array) {
@@ -297,12 +351,17 @@ export class FileSystemService {
         return content as string;
     }
 
-    readFileBuffer(path: string, cwd: string = '/'): Uint8Array {
-        const dentry = this.resolve(path, cwd);
+    readFileBuffer(path: string, cwd: string = '/', actingUser?: { uid: number, gid: number, groups: number[] }): Uint8Array {
+        const dentry = this.resolve(path, cwd, true, actingUser);
         if (!dentry) throw new Error(`${path}: No such file or directory`);
         const inode = this.getInode(dentry.inodeId);
         if (!inode) throw new Error('Corrupt filesystem');
         if (inode.mode & S_IFDIR) throw new Error(`${path}: Is a directory`);
+
+        // Check Read Permission
+        if (actingUser && !this.hasAccess(inode.id, actingUser, S_IRUSR)) {
+            throw new Error('Permission denied');
+        }
 
         const content = inode.content;
         if (content instanceof Uint8Array) {
@@ -311,10 +370,20 @@ export class FileSystemService {
         return new TextEncoder().encode(content as string);
     }
 
-    deleteNode(path: string, cwd: string = '/'): void {
-        const dentry = this.resolve(path, cwd, false);
+    deleteNode(path: string, cwd: string = '/', actingUser?: { uid: number, gid: number, groups: number[] }): void {
+        const dentry = this.resolve(path, cwd, false, actingUser);
         if (!dentry) throw new Error(`rm: cannot remove '${path}': No such file or directory`);
         if (!dentry.parent) throw new Error(`rm: cannot remove root`);
+
+        // To delete a node, we need write + execute permission on the PARENT directory
+        if (actingUser) {
+            const parentInode = this.getInode(dentry.parent.inodeId);
+            if (parentInode) {
+                if (!this.hasAccess(parentInode.id, actingUser, S_IWUSR) || !this.hasAccess(parentInode.id, actingUser, S_IXUSR)) {
+                    throw new Error('Permission denied');
+                }
+            }
+        }
 
         const inode = this.getInode(dentry.inodeId)!;
         if ((inode.mode & S_IFDIR) && dentry.children.size > 0) {
@@ -333,10 +402,15 @@ export class FileSystemService {
         }
     }
 
-    chmod(path: string, mode: number, cwd: string = '/'): void {
-        const dentry = this.resolve(path, cwd);
+    chmod(path: string, mode: number, cwd: string = '/', actingUser?: { uid: number, gid: number, groups: number[] }): void {
+        const dentry = this.resolve(path, cwd, true, actingUser);
         if (!dentry) throw new Error(`chmod: cannot access '${path}': No such file or directory`);
         const inode = this.getInode(dentry.inodeId)!;
+
+        // Check ownership: only owner or root can chmod
+        if (actingUser && actingUser.uid !== 0 && actingUser.uid !== inode.uid) {
+            throw new Error('Operation not permitted');
+        }
 
         const typeMask = S_IFMT;
         const permMask = ~S_IFMT;
@@ -344,10 +418,31 @@ export class FileSystemService {
         inode.ctime = Date.now();
     }
 
-    chown(path: string, uid: number, gid: number, cwd: string = '/'): void {
-        const dentry = this.resolve(path, cwd);
+    chown(path: string, uid: number, gid: number, cwd: string = '/', actingUser?: { uid: number, gid: number, groups: number[] }): void {
+        const dentry = this.resolve(path, cwd, true, actingUser);
         if (!dentry) throw new Error(`chown: cannot access '${path}': No such file or directory`);
         const inode = this.getInode(dentry.inodeId)!;
+
+        // Check ownership: only root can chown (POSIX restricted mode)
+        if (actingUser && actingUser.uid !== 0) {
+            // Non-root can only change their own files
+            if (actingUser.uid !== inode.uid) {
+                throw new Error('Operation not permitted');
+            }
+
+            // Non-root owner can change GID to a group they belong to
+            if (gid !== -1 && gid !== inode.gid) {
+                if (actingUser.gid !== gid && !actingUser.groups.includes(gid)) {
+                    throw new Error('Operation not permitted');
+                }
+            }
+
+            // Non-root owner CANNOT change UID (restricted mode)
+            if (uid !== -1 && uid !== inode.uid) {
+                throw new Error('Operation not permitted');
+            }
+        }
+
         if (uid !== -1) inode.uid = uid;
         if (gid !== -1) inode.gid = gid;
         inode.ctime = Date.now();

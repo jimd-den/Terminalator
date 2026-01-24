@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file UncompressCommand.ts
  * @description The 'uncompress' command. Expand data.
@@ -9,7 +10,7 @@ import { TerminalState } from '../../entities/TerminalState';
 
 export class UncompressCommand implements ICommand {
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         const fs = context.fileSystemService;
         const file = args[0];
 

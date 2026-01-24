@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * RmdirCommand - Core Command
  *
@@ -52,7 +53,7 @@ export class RmdirCommand implements ICommand {
      * Executes the rmdir command.
      */
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         const timestamp = new Date().toISOString();
         this.log(`[${timestamp}] RmdirCommand.execute(args=${JSON.stringify(args)})`);
 

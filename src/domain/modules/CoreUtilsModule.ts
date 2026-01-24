@@ -10,6 +10,7 @@ import { CommandModule } from './CommandModule';
 import { CommandRegistry } from '../commands/CommandRegistry';
 import { FileSystem } from '../entities/FileSystem';
 import { FileSystemService } from '../services/FileSystemService';
+import { IdentityService } from '../services/IdentityService';
 
 import { LsCommand } from '../commands/core/LsCommand';
 import { CdCommand } from '../commands/core/CdCommand';
@@ -192,7 +193,7 @@ import { DateCommand } from '../commands/core/DateCommand';
 export class CoreUtilsModule implements CommandModule {
     private fsService: FileSystemService;
 
-    constructor(private fs: FileSystem) {
+    constructor(private fs: FileSystem, private identityService: IdentityService) {
         this.fsService = new FileSystemService(fs);
     }
 
@@ -215,7 +216,7 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('tail', new TailCommand(fsService));
         registry.register('wc', new WcCommand(fsService));
         registry.register('chmod', new ChmodCommand(fsService));
-        registry.register('chown', new ChownCommand(fsService));
+        registry.register('chown', new ChownCommand(fsService, this.identityService));
         registry.register('du', new DuCommand(fsService));
         registry.register('ln', new LnCommand(fsService));
         registry.register('df', new DfCommand(fsService));
@@ -249,7 +250,7 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('realpath', new RealpathCommand(fsService));
         registry.register('sleep', new SleepCommand(fsService));
         registry.register('uname', new UnameCommand(fsService));
-        registry.register('logname', new LognameCommand(fsService));
+        registry.register('logname', new LognameCommand(this.identityService));
         registry.register('env', new EnvCommand(fsService));
         registry.register('cal', new CalCommand(fsService));
         registry.register('expr', new ExprCommand(fsService));
@@ -260,7 +261,7 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('uudecode', new UudecodeCommand(fsService));
         registry.register('who', new WhoCommand(fsService));
         registry.register('tty', new TtyCommand(fsService));
-        registry.register('id', new IdCommand(fsService));
+        registry.register('id', new IdCommand(this.identityService));
         registry.register('basename', new BasenameCommand(fsService));
         registry.register('dirname', new DirnameCommand(fsService));
         registry.register('pathchk', new PathchkCommand(fsService));
@@ -273,7 +274,7 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('mkfifo', new MkfifoCommand(fsService));
         registry.register('file', new FileCommand(fsService));
         registry.register('timeout', new TimeoutCommand(fsService, (name) => registry.get(name)));
-        registry.register('chgrp', new ChgrpCommand(fsService));
+        registry.register('chgrp', new ChgrpCommand(fsService, this.identityService));
         registry.register('alias', new AliasCommand(fsService));
         registry.register('unalias', new UnaliasCommand(fsService));
         registry.register('type', new TypeCommand(fsService, registry));

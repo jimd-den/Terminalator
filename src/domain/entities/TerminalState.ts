@@ -59,7 +59,7 @@ export const createInitialTerminalState = (): TerminalState => {
             'la': 'ls -a',
             'source': '.'
         },
-        user: { uid: 1000, gid: 1000, groups: [1000] },
+        user: { uid: 1000, gid: 1000, groups: [1000, 1001, 100] },
         lastExitCode: 0,
         functions: new Map(),
         traps: new Map(),

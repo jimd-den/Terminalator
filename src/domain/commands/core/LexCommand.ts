@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file LexCommand.ts
  * @description The 'lex' command. Generate programs for lexical tasks.
@@ -9,7 +10,7 @@ import { TerminalState } from '../../entities/TerminalState';
 
 export class LexCommand implements ICommand {
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         let file = '';
         let output = 'lex.yy.c';
 

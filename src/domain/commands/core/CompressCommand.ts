@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file CompressCommand.ts
  * @description The 'compress' command. Compress data.
@@ -9,7 +10,7 @@ import { TerminalState } from '../../entities/TerminalState';
 
 export class CompressCommand implements ICommand {
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         // compress file -> file.Z
         const fs = context.fileSystemService;
         const file = args[0];

@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * CatCommand - Core Command
  *
@@ -21,7 +22,7 @@ export class CatCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         const files: string[] = [];
 
         // Manual arg parsing to handle '-' mixed with files

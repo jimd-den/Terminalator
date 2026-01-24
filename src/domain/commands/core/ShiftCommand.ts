@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file ShiftCommand.ts
  * @description The 'shift' command. Shift positional parameters.

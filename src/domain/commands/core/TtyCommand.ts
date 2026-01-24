@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * TtyCommand - Core Command
  *
@@ -21,7 +22,7 @@ export class TtyCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         return {
             output: '/dev/tty1', // Standard simulation value
             newState: state,

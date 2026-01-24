@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file XgettextCommand.ts
  * @description The 'xgettext' command. Extract gettext strings from source.

@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file CsplitCommand.ts
  * @description The 'csplit' command. Split files based on context.

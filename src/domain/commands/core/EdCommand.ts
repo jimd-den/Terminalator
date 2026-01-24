@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * EdCommand - Core Command
  *
@@ -28,7 +29,7 @@ export class EdCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         // Reset state for each execution
         this.buffer = [];
         this.currentLine = 0;

@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file M4Command.ts
  * @description The 'm4' command. Macro processor.

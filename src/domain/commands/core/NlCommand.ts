@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * NlCommand - Core Command
  *
@@ -21,7 +22,7 @@ export class NlCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         let bodyType = 't'; // t=non-empty, a=all, n=none
         const files: string[] = [];
 

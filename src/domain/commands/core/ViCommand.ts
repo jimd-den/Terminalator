@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file ViCommand.ts
  * @description The 'vi' command. Screen-oriented (visual) display editor.

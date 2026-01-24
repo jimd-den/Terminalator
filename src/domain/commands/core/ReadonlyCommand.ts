@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file ReadonlyCommand.ts
  * @description The 'readonly' command. Set readonly attribute for variables.
@@ -20,7 +21,7 @@ import { TerminalState } from '../../entities/TerminalState';
 
 export class ReadonlyCommand implements ICommand {
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
          if (args.length === 0) {
             // Should list readonly vars (mocked)
             return {

@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file RmdelCommand.ts
  * @description The 'rmdel' command. Remove a delta from an SCCS file.

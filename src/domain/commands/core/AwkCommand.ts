@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * AwkCommand - Core Command
  *
@@ -32,7 +33,7 @@ export class AwkCommand implements ICommand {
     }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         let program = '';
         const files: string[] = [];
         let fieldSeparator = ' ';
@@ -70,6 +71,11 @@ export class AwkCommand implements ICommand {
         }
 
         try {
+            // Handle -F by prepending BEGIN block before parsing
+            if (fieldSeparator !== ' ') {
+                program = `BEGIN { FS="${fieldSeparator}" } ` + program;
+            }
+
             // 1. Lexing
             const lexer = new AwkLexer(program);
             const tokens = lexer.tokenize();
@@ -78,71 +84,26 @@ export class AwkCommand implements ICommand {
             const parser = new AwkParser(tokens);
             const ast = parser.parse();
 
-            // 3. Execution (Interpreter)
-            const interpreter = new AwkInterpreter();
-
-            // Set FS (state initialization) - we might need to expose this in Interpreter
-            // Or modify program? 
-            // Better: Interpreter constructor or valid method?
-            // The Interpreter as written puts 'FS' in vars map.
-            // We can treat it as a variable assignment if we exposed setVar?
-            // Or just prepend BEGIN { FS="x" } ?
-            // Or modify interpreter to accept initial vars.
-            // Current interpreter implementation: this.vars.set('FS', ' ');
-            // We'll trust the interpreter handles FS default, but command line -F overrides.
-            // We need to inject -F.
-            // Modify interpreter logic to separate FS initialization?
-            // Let's prepend a BEGIN block or modifying the AST? 
-            // Simplest: Prepend 'BEGIN { FS="sep" }' to program string?
-            // Safer: Add internal API to interpreter if we could edit it.
-            // Since I just wrote Interpreter, I know I didn't verify a setVar method.
-            // I'll prepend BEGIN logic to program string before lexing!
-
-            if (fieldSeparator !== ' ') {
-                // Escape quotes in separator?
-                program = `BEGIN { FS="${fieldSeparator}" } ` + program;
-                // Re-lex/parse
-                const lexer2 = new AwkLexer(program);
-                const tokens2 = lexer2.tokenize();
-                const parser2 = new AwkParser(tokens2);
-                const ast2 = parser2.parse();
-
-                let content = '';
-                if (files.length > 0) {
-                    for (const file of files) {
-                        try {
-                            const path = file.startsWith('/') ? file : (state.currentDirectory === '/' ? `/${file}` : `${state.currentDirectory}/${file}`);
-                            content += this.fs.readFile(path) + '\n';
-                        } catch (e: any) {
-                            return { output: `awk: ${file}: ${e.message}`, newState: state, exitCode: 1 };
-                        }
+            // 3. Read input content (unified logic)
+            let content = '';
+            if (files.length > 0) {
+                for (const file of files) {
+                    try {
+                        const path = file.startsWith('/') ? file : (state.currentDirectory === '/' ? `/${file}` : `${state.currentDirectory}/${file}`);
+                        content += this.fs.readFile(path) + '\n';
+                    } catch (e: any) {
+                        return { output: `awk: ${file}: ${e.message}`, newState: state, exitCode: 1 };
                     }
-                    if (content.endsWith('\n')) content = content.slice(0, -1);
-                } else if (input !== undefined) {
-                    content = input;
                 }
-
-                const output = interpreter.execute(ast2, content);
-                return { output: output.trimEnd(), newState: state, exitCode: 0 };
-            } else {
-                let content = '';
-                if (files.length > 0) {
-                    for (const file of files) {
-                        try {
-                            const path = file.startsWith('/') ? file : (state.currentDirectory === '/' ? `/${file}` : `${state.currentDirectory}/${file}`);
-                            content += this.fs.readFile(path) + '\n';
-                        } catch (e: any) {
-                            return { output: `awk: ${file}: ${e.message}`, newState: state, exitCode: 1 };
-                        }
-                    }
-                    if (content.endsWith('\n')) content = content.slice(0, -1);
-                } else if (input !== undefined) {
-                    content = input;
-                }
-
-                const output = interpreter.execute(ast, content);
-                return { output: output.trimEnd(), newState: state, exitCode: 0 };
+                if (content.endsWith('\n')) content = content.slice(0, -1);
+            } else if (input !== undefined) {
+                content = input;
             }
+
+            // 4. Execute
+            const interpreter = new AwkInterpreter();
+            const output = interpreter.execute(ast, content);
+            return { output: output.trimEnd(), newState: state, exitCode: 0 };
 
         } catch (e: any) {
             return { output: `awk: ${e.message}`, newState: state, exitCode: 1 };

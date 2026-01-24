@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * NiceCommand - Core Command
  *
@@ -24,7 +25,7 @@ export class NiceCommand implements ICommand {
     ) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         // nice [-n increment] utility [argument...]
         let increment = 10;
         let cmdIndex = 0;
@@ -49,7 +50,7 @@ export class NiceCommand implements ICommand {
 
         // Just run it. We don't have a scheduler.
         try {
-            return await command.execute(utilityArgs, state, input);
+            return await command.execute(utilityArgs, context, state);
         } catch (e: any) {
             return { output: `nice: ${cmdName}: ${e.message}`, newState: state, exitCode: 1 }; // or 126/127
         }

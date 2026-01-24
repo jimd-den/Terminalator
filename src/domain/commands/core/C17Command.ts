@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * C17Command - Core Utility
  *
@@ -16,7 +17,7 @@ export class C17Command implements ICommand {
     constructor(private compilerService: ICompilerService, private fs: FileSystemService) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         let outputName = 'a.out';
         let compileOnly = false;
         let preprocessOnly = false;

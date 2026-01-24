@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * BasenameCommand - Core Command
  *
@@ -21,7 +22,7 @@ export class BasenameCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         // basename string [suffix]
         if (args.length === 0) {
              return { output: 'basename: missing operand', newState: state, exitCode: 1 };

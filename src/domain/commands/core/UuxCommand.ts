@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file UuxCommand.ts
  * @description The 'uux' command. Remote command execution.

@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * FalseCommand - Core Command
  *
@@ -18,7 +19,7 @@ import { CommandResponse } from '../../usecases/ExecuteCommand';
 
 export class FalseCommand implements ICommand {
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         return {
             output: '',
             newState: state,

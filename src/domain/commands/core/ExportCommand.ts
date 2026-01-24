@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file ExportCommand.ts
  * @description The 'export' command. Set export attribute for variables.

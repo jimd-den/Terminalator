@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * MkfifoCommand - Core Command
  *
@@ -21,7 +22,7 @@ export class MkfifoCommand implements ICommand {
     constructor(private fs: FileSystemService) {}
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         let mode = 0o644;
         const targets: string[] = [];
 

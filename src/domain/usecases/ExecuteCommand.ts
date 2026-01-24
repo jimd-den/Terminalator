@@ -7,6 +7,9 @@ import { CommandRegistry } from '../commands/CommandRegistry';
 import { ShellParser, ASTNode, NodeType, CommandNode, ListNode, PipelineNode, SubshellNode, FunctionDefNode, RedirectNode, IfNode, ForNode, WhileNode } from '../services/ShellParser';
 import { IBinaryRunner } from '../interfaces/IBinaryRunner';
 import { ProcessContext } from '../entities/ProcessContext';
+import { createStdinStream, createOutputStream } from '../entities/Stream';
+import { JobControlService } from '../services/JobControlService';
+import { IdentityService } from '../services/IdentityService';
 
 export interface CommandResponse {
     output: string;
@@ -31,6 +34,8 @@ export class ExecuteCommand implements IShellExecutor {
     protected service: FileSystemService;
     private expansionService: ShellExpansionService;
     protected fs: FileSystem;
+    private jobControl: JobControlService;
+    private identityService: IdentityService;
 
     constructor(
         fsOrService: FileSystem | FileSystemService,
@@ -49,6 +54,8 @@ export class ExecuteCommand implements IShellExecutor {
 
         this.parser = new ShellParser();
         this.expansionService = new ShellExpansionService(this.service);
+        this.jobControl = new JobControlService();
+        this.identityService = new IdentityService();
 
         if (registry) {
             this.registry = registry;
@@ -181,32 +188,30 @@ export class ExecuteCommand implements IShellExecutor {
     private async visitPipeline(node: PipelineNode, state: TerminalState, stdin?: string): Promise<CommandResponse> {
         let currentState = state;
         let currentInput = stdin;
-        let outputs: string[] = [];
         let lastExitCode = 0;
         let finalUiAction;
         let finalNavAction;
+        let finalOutput = '';
 
-        for (const part of node.parts) {
+        // Process pipeline stages sequentially (serial emulation)
+        // Each stage's stdout becomes next stage's stdin via string passing
+        for (let i = 0; i < node.parts.length; i++) {
+            const isLast = i === node.parts.length - 1;
+            const part = node.parts[i];
+
             const res = await this.visit(part, currentState, currentInput);
 
-            // In a real pipe, we'd stream stdin/out. Here we pass output as input to next.
+            // Pass output to next stage as stdin
             currentInput = res.output;
             currentState = res.newState;
             lastExitCode = res.exitCode;
-
-            // Update state exit code immediately (though properly piped commands run in parallel, 
-            // in serial emulation, subsequent commands might seemingly see it, but standard sh doesn't share state between pipe elements.
-            // However, for the FINAL command in pipeline, its exit code becomes the pipeline's exit code.)
             currentState.lastExitCode = res.exitCode;
 
-            // Only the LAST command's output usually shows up if it's not captured? 
-            // In typical shell: cmd1 | cmd2. cmd1 output goes to cmd2 input. cmd2 output goes to stdout.
-            // So we shouldn't push cmd1 output to the final 'output' array if it's piped.
-            // However, verify_shell tests might expect seeing it if debugging?
-            // Correct behavior: Only the last command's output is returned as the result of the pipeline.
-            // (Unless `tee` is used, etc.)
+            // Only last command's output goes to final result
+            if (isLast) {
+                finalOutput = res.output;
+            }
 
-            outputs = [res.output]; // Replace previous output effectively, as it was consumed
             if (res.uiAction) finalUiAction = res.uiAction;
             if (res.navigationAction) finalNavAction = res.navigationAction;
 
@@ -215,11 +220,10 @@ export class ExecuteCommand implements IShellExecutor {
             }
         }
 
-        // Update global state with last exit code
         currentState.lastExitCode = lastExitCode;
 
         return {
-            output: outputs.join(''),
+            output: finalOutput,
             newState: currentState,
             exitCode: lastExitCode,
             uiAction: finalUiAction,
@@ -397,7 +401,7 @@ export class ExecuteCommand implements IShellExecutor {
                 if (result.output !== undefined) {
                     const content = result.output;
                     const mode = redir.op === '>>' ? 'a' : 'w';
-                    this.service.writeFile(redir.file, content, mode, state.currentDirectory);
+                    this.service.writeFile(redir.file, content, mode, state.user.uid, state.user.gid, state.currentDirectory, state.user);
                 }
                 result.output = '';
             }
@@ -524,14 +528,23 @@ export class ExecuteCommand implements IShellExecutor {
         // 1. Builtin/Command found
         if (command) {
             try {
+                // Create stream-based ProcessContext
+                const stdinStream = createStdinStream(stdin);
+                const stdoutStream = createOutputStream();
+                const stderrStream = createOutputStream();
+
                 const context: ProcessContext = {
                     fs: this.fs,
                     fileSystemService: this.service,
                     env: state.environment,
                     cwd: state.currentDirectory,
                     user: state.user,
-                    stdin: stdin,
-                    executor: this
+                    stdin: stdinStream,
+                    stdout: stdoutStream,
+                    stderr: stderrStream,
+                    stdinLegacy: stdin,  // Backward compatibility
+                    executor: this,
+                    jobControl: this.jobControl
                 };
                 const res = await command.execute(expandedArgs, context, state);
                 return this.handleRedirections(res, node.redirects, state);
@@ -544,7 +557,7 @@ export class ExecuteCommand implements IShellExecutor {
         if (commandName.startsWith('/') || commandName.startsWith('./') || commandName.startsWith('../')) {
             // ... (Existing file execution logic reused or simplifed)
             // For brevity, using simplified lookup stub
-            const dentry = this.service.resolve(commandName, state.currentDirectory);
+            const dentry = this.service.resolve(commandName, state.currentDirectory, true, state.user);
             if (dentry && !this.service.isDirectory(dentry)) {
                 // Check executable mode...
                 // Exec binary...

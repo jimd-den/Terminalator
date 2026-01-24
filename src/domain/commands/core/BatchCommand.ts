@@ -1,3 +1,4 @@
+import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * BatchCommand - Core Command
  *
@@ -21,7 +22,7 @@ export class BatchCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
+        const input = getStdinAsString(context);
         return {
             output: 'job 2 at 2023-10-27 10:00',
             newState: state,

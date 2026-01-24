@@ -46,7 +46,7 @@ export class LessonGenerator {
                     content += `${ip} - - [${time}] "GET ${path} HTTP/1.1" ${status} ${Math.floor(Math.random() * 5000)}\n`;
                 }
 
-                service.writeFile('/home/user/access.log', content);
+                service.writeFile('/home/operator/access.log', content);
             }
         };
     }
@@ -60,12 +60,12 @@ export class LessonGenerator {
             instructions: 'MOVE ALL IMAGES TO THE IMAGES FOLDER AT ONCE:',
             setup: (fs: FileSystem) => {
                 const service = new FileSystemService(fs);
-                service.createDirectory('/home/user/images');
+                service.createDirectory('/home/operator/images');
 
                 // Scatter some files
                 const files = ['logo.png', 'banner.png', 'avatar.jpg', 'icon.png', 'readme.md', 'config.json', 'screenshot.png'];
                 files.forEach(f => {
-                    service.writeFile(`/home/user/${f}`, '[BINARY DATA]');
+                    service.writeFile(`/home/operator/${f}`, '[BINARY DATA]');
                 });
             }
         };
@@ -80,7 +80,7 @@ export class LessonGenerator {
             instructions: 'CREATE A DEEP DIRECTORY STRUCTURE INSTANTLY:',
             setup: (fs: FileSystem) => {
                 // Ensure root is clean-ish for this demo
-                // user is already in /home/user usually
+                // user is already in /home/operator usually
             }
         };
     }
@@ -96,10 +96,10 @@ export class LessonGenerator {
                 const service = new FileSystemService(fs);
                 // Create clutter
                 for (let i = 0; i < 5; i++) {
-                    service.writeFile(`/home/user/temp_${i}.tmp`, 'trash');
-                    service.writeFile(`/home/user/cache_${i}.tmp`, 'garbage');
+                    service.writeFile(`/home/operator/temp_${i}.tmp`, 'trash');
+                    service.writeFile(`/home/operator/cache_${i}.tmp`, 'garbage');
                 }
-                service.writeFile('/home/user/important.doc', 'KEEP THIS');
+                service.writeFile('/home/operator/important.doc', 'KEEP THIS');
             }
         };
     }
