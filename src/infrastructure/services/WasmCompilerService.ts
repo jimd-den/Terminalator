@@ -55,7 +55,7 @@ export class WasmCompilerService implements ICompilerService {
         // FileSystemService has public 'fs' property? No, it's private in service?
         // Let's check FileSystemService definition effectively or assume we can pass service.
         // Checking WasiFileSystemBridge usage...
-        const wasi = new WasiFileSystemBridge(this.filesystem as any); // TEMPORARY CAST until WasiBridge updated
+        const wasi = new WasiFileSystemBridge(this.filesystem.fileSystem);
 
         // Prepare arguments: [compiler_name, ...sourceFiles, "-o", outputFile]
         const args = ['tcc', ...sourceFiles, '-o', options.outputFile || 'a.out'];
@@ -215,15 +215,24 @@ export class WasmCompilerService implements ICompilerService {
         // 6. Simulation Fallback (or Output Verification)
         const outPath = options.outputFile || 'a.out';
 
+        const cwd = options.cwd || '/';
         // Assuming real binary MIGHT have worked, check output.
         // If not, run SIMULATION to ensure app continuity.
-        const outputNode = this.filesystem.resolve(outPath);
+        const outputNode = this.filesystem.resolve(outPath, cwd);
 
         if (!outputNode) {
             console.log('[WasmCompilerService] Real execution produced no output. Running simulation...');
 
             // --- SIMULATION BLOCK ---
-            const openRes = wasi.path_open(3, 0, outPath, WASI_O_CREAT | WASI_O_TRUNC, BigInt(0), BigInt(0), 0);
+            // Ensure absolute path for WASI simulation
+            // We need CWD. Assuming we can get it from context or pass it.
+            // For now, let's assume default CWD or use exact path if provided.
+            // Actually, we must add cwd to CompilerOptions.
+            const absOutPath = options.cwd ?
+                (outPath.startsWith('/') ? outPath : `${options.cwd}/${outPath}`.replace(/\/+/g, '/'))
+                : outPath;
+
+            const openRes = wasi.path_open(3, 0, absOutPath, WASI_O_CREAT | WASI_O_TRUNC, BigInt(0), BigInt(0), 0);
             if (openRes.code === 0) {
                 const elfHeader = new Uint8Array([0x7f, 0x45, 0x4c, 0x46]);
                 const msg = new TextEncoder().encode(`compiled_by_wasm_at_${Date.now()}`);
@@ -233,13 +242,15 @@ export class WasmCompilerService implements ICompilerService {
                 wasi.fd_write(openRes.fd, [data]);
                 wasi.fd_close(openRes.fd);
                 console.log(`[WasmCompilerService] SIMULATION: Written ${data.length} bytes to ${outPath}.`);
+            } else {
+                console.error(`[WasmCompilerService] SIMULATION FAILED: path_open returned ${openRes.code} for ${absOutPath}`);
             }
             // ------------------------
         }
 
-        const finalNode = this.filesystem.resolve(outPath);
+        const finalNode = this.filesystem.resolve(outPath, cwd);
         if (finalNode) {
-            const content = this.filesystem.readFile(outPath);
+            const content = this.filesystem.readFile(outPath, cwd);
             return typeof content === 'string' ? new TextEncoder().encode(content) : content;
         }
 

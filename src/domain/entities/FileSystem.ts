@@ -1,5 +1,8 @@
 import { InodeTable } from './filesystem/InodeTable';
 import { Inode } from './filesystem/FileSystemTypes';
+import { DirectoryNode } from './filesystem/DirectoryNode';
+import { FileNode } from './filesystem/FileNode';
+import { IFileSystemNode } from './filesystem/IFileSystemNode';
 
 // Constants (Keep these here or move to a constants file, keeping for compatibility)
 export const S_IFMT = 0o170000;
@@ -41,17 +44,13 @@ export enum FileType {
 
 export { InodeTable, Inode };
 
-export interface Dentry {
-    name: string;
-    inodeId: number;
-    parent: Dentry | null;
-    children: Map<string, Dentry>;
-}
+// Compatibility alias to ease refactor pain in other files
+export type Dentry = IFileSystemNode;
 
 export class FileSystem {
     public inodeTable: InodeTable;
     public usedBytes: number = 0;
-    public root: Dentry;
+    public root: DirectoryNode;
 
     constructor() {
         this.inodeTable = new InodeTable();
@@ -64,14 +63,8 @@ export class FileSystem {
 
         this.usedBytes += 4096;
 
-        // Create Root Dentry
-        this.root = {
-            name: '/',
-            inodeId: rootInode.id,
-            parent: null,
-            children: new Map(),
-        };
-        this.attachDentryHelpers(this.root);
+        // Create Root DirectoryNode
+        this.root = new DirectoryNode('/', rootInode.id);
 
         // Initialize default directories
         this.mkdir('/home');
@@ -83,43 +76,38 @@ export class FileSystem {
     }
 
     private mkdir(path: string) {
+        // Simple bootstrap mkdir (assumes strict hierarchy creation or handled by logic)
+        // Note: This logic duplicates Service/mkdirp but simplified for bootstrap.
         const parts = path.split('/').filter(p => p.length > 0);
-        let current = this.root;
+        let current: DirectoryNode = this.root;
+
         for (const part of parts) {
-            let child = current.children.get(part);
+            let child = current.getChild(part);
             if (!child) {
                 const inode = this.inodeTable.allocate(S_IFDIR | 0o755, 0, 0);
                 inode.size = 4096;
-                inode.links = 2;
-                child = {
-                    name: part,
-                    inodeId: inode.id,
-                    parent: current,
-                    children: new Map()
-                };
-                this.attachDentryHelpers(child);
-                current.children.set(part, child);
+                inode.links = 2; // . and .. points to parent
+                child = new DirectoryNode(part, inode.id, current);
+                current.addChild(child);
 
-                // Update parent links
+                // Update parent links?
+                // Parent inode links++ (for '..')
                 const parentInode = this.inodeTable.get(current.inodeId);
                 if (parentInode) parentInode.links++;
             }
-            current = child;
+            if (child.isDirectory()) {
+                current = child as DirectoryNode;
+            } else {
+                // Should not happen during bootstrap unless name collision
+                throw new Error(`Bootstrap error: ${part} is not a directory`);
+            }
         }
     }
 
+    // Deprecated helpers removed. 
+    // Consumers must start using Node methods or Service.
     public attachDentryHelpers(dentry: Dentry) {
-        // Prevent cyclic reference issues in JSON stringify if needed
-        Object.defineProperty(dentry, 'toJSON', {
-            value: () => ({
-                name: dentry.name,
-                inodeId: dentry.inodeId,
-                children: Array.from(dentry.children.keys())
-            })
-        });
+        // No-op or throw?
+        // This was used to monkey-patch JSON. Nodes should handle their own serialization if needed.
     }
-
-    // Deprecated helpers for compatibility during refactor, calling these will now fail at runtime 
-    // if compiled against old definitions, but we are fixing consumers.
-    // We intentionally do NOT include them to force compile errors where usage exists.
 }

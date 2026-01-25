@@ -10,7 +10,8 @@ export class WhoamiCommand implements ICommand {
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse | Promise<CommandResponse> {
         return {
-            output: state.user || 'operator',
+            output: state.environment['USER'] || 'operator',
+            newState: state,
             exitCode: 0
         };
     }

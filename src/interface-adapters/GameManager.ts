@@ -21,7 +21,9 @@ import { SystemGenerator } from '../domain/services/SystemGenerator';
 import { TutorEngine, TutorEvent } from '../domain/entities/TutorEngine';
 import { LessonGenerator, LessonType } from '../domain/services/LessonGenerator';
 
-export class GameManager {
+import { IGameManager } from '../domain/interfaces/IGameManager';
+
+export class GameManager implements IGameManager {
     private mailSystem: MailSystem;
     private activeNPCs: NPC[] = [];
     public readonly tutorEngine: TutorEngine;

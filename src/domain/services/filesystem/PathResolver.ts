@@ -11,20 +11,18 @@
  * Handles complex logic like `..`, `.`, and Symlink resolution.
  */
 
-import { Dentry, S_IFLNK, Inode } from '../../entities/filesystem/FileSystemTypes';
+import { IFileSystemNode } from '../../entities/filesystem/IFileSystemNode';
+import { DirectoryNode } from '../../entities/filesystem/DirectoryNode';
+import { S_IFLNK, Inode } from '../../entities/filesystem/FileSystemTypes';
 import { InodeTable } from '../../entities/filesystem/InodeTable';
+
+type Dentry = IFileSystemNode;
 
 export class PathResolver {
     constructor(private inodeTable: InodeTable) { }
 
     /**
      * Resolves a path string to a Dentry.
-     *
-     * @param root - The root Dentry of the filesystem.
-     * @param path - The path to resolve.
-     * @param cwd - The current working directory path.
-     * @param followSymlinks - Whether to follow symlinks at the *end* of the path.
-     * @returns The resolved Dentry or null.
      */
     resolve(root: Dentry, path: string, cwd: string = '/', followSymlinks: boolean = true, actingUser?: { uid: number, gid: number, groups: number[] }): Dentry | null {
         if (!path) return null;
@@ -35,7 +33,6 @@ export class PathResolver {
             startNode = root;
         } else {
             // Recursive resolve of cwd (always absolute from root)
-            // We assume cwd is valid. If not, fallback to root.
             const resolvedCwd = this.resolve(root, cwd, '/', true, actingUser);
             if (!resolvedCwd) return null;
             startNode = resolvedCwd;
@@ -56,9 +53,11 @@ export class PathResolver {
                     current = current.parent;
                 }
             } else {
-                if (!current || !current.children) {
+                if (!current.isDirectory()) {
                     return null;
                 }
+
+                const dirNode = current as DirectoryNode;
 
                 // TRAVERSAL CHECK: Current must be a searchable directory (execute bit)
                 if (actingUser) {
@@ -70,7 +69,7 @@ export class PathResolver {
                     }
                 }
 
-                const next = current.children.get(part);
+                const next = dirNode.getChild(part);
                 if (!next) {
                     return null;
                 }

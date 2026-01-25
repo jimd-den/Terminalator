@@ -7,8 +7,14 @@
  * Pillar: The Four-Fold Shield (Use Case/Service Layer)
  */
 
-import { FileSystem, Dentry, S_IFDIR, S_IFREG, S_IFLNK, S_IFMT, S_IFIFO, Inode, S_IRUSR, S_IWUSR, S_IXUSR, S_IRGRP, S_IWGRP, S_IXGRP, S_IROTH, S_IWOTH, S_IXOTH } from '../entities/FileSystem';
+import { FileSystem, S_IFDIR, S_IFREG, S_IFLNK, S_IFMT, S_IFIFO, Inode, S_IRUSR, S_IWUSR, S_IXUSR, S_IRGRP, S_IWGRP, S_IXGRP, S_IROTH, S_IWOTH, S_IXOTH } from '../entities/FileSystem';
+import { IFileSystemNode } from '../entities/filesystem/IFileSystemNode';
+import { DirectoryNode } from '../entities/filesystem/DirectoryNode';
+import { FileNode } from '../entities/filesystem/FileNode';
 import { PathResolver } from './filesystem/PathResolver';
+
+// Local Alias for backward compat in signatures
+type Dentry = IFileSystemNode;
 
 export class FileSystemService {
     private pathResolver: PathResolver;
@@ -98,7 +104,7 @@ export class FileSystemService {
         const parts = targetPath.split('/').filter(p => p.length > 0);
         let currentPath = '';
 
-        let lastDentry = this.fs.root;
+        let lastDentry: IFileSystemNode = this.fs.root;
 
         for (const part of parts) {
             currentPath += `/${part}`;
@@ -184,7 +190,7 @@ export class FileSystemService {
         return false;
     }
 
-    link(oldPath: string, newPath: string, cwd: string = '/'): Dentry {
+    link(oldPath: string, newPath: string, cwd: string = '/'): IFileSystemNode {
         // Resolve oldPath
         const oldDentry = this.resolve(oldPath, cwd);
         if (!oldDentry) throw new Error(`link: cannot access '${oldPath}': No such file or directory`);
@@ -201,7 +207,7 @@ export class FileSystemService {
         const newName = parts.pop()!;
         const dirPath = (isAbsolute ? '/' : '') + parts.join('/');
 
-        let parent: Dentry | null;
+        let parent: IFileSystemNode | null;
 
         if (parts.length === 0 && !isAbsolute) {
             parent = this.resolve(cwd);
@@ -212,16 +218,15 @@ export class FileSystemService {
         }
 
         if (!parent) throw new Error(`link: cannot create link '${newPath}': No such file or directory`);
-        if (parent.children.has(newName)) throw new Error(`link: failed to create link '${newPath}': File exists`);
+        if (!parent.isDirectory()) throw new Error(`link: cannot create link '${newPath}': Parent not a directory`);
 
-        const dentry: Dentry = {
-            name: newName,
-            inodeId: inode.id,
-            parent: parent,
-            children: new Map()
-        };
+        const parentDir = parent as DirectoryNode;
+        if (parentDir.getChild(newName)) throw new Error(`link: failed to create link '${newPath}': File exists`);
 
-        parent.children.set(newName, dentry);
+        // Hard Link: Create a new FileNode pointing to the SAME inodeId
+        const dentry = new FileNode(newName, inode.id, parentDir);
+
+        parentDir.addChild(dentry);
         inode.links++;
         inode.ctime = Date.now();
 
@@ -236,8 +241,8 @@ export class FileSystemService {
         return inode.target || '';
     }
 
-    private createDentry(path: string, mode: number, uid: number, gid: number, cwd: string): Dentry {
-        let parent: Dentry | null = null;
+    private createDentry(path: string, mode: number, uid: number, gid: number, cwd: string): IFileSystemNode {
+        let parent: IFileSystemNode | null = null;
         let name: string;
 
         const isAbsolute = path.startsWith('/');
@@ -257,33 +262,33 @@ export class FileSystemService {
         }
 
         if (!parent) throw new Error(`Cannot create '${path}': Parent directory not found`);
+        if (!parent.isDirectory()) throw new Error(`Cannot create '${path}': Parent is not a directory`);
 
-        const parentInode = this.getInode(parent.inodeId);
+        const pNode = parent as DirectoryNode;
+        const parentInode = this.getInode(pNode.inodeId);
+        // Note: Logic allows creating children even if parent inode says it's not a dir? 
+        // No, parent.isDirectory() checks the class type. 
+        // We should also verify inode mode consistency.
         if (!parentInode || !(parentInode.mode & S_IFDIR)) throw new Error(`Cannot create '${path}': Parent is not a directory`);
 
-        if (parent.children.has(name)) throw new Error(`Cannot create '${path}': File exists`);
+        if (pNode.getChild(name)) throw new Error(`Cannot create '${path}': File exists`);
 
         const inode = this.createInode(mode, uid, gid);
 
-        const dentry: Dentry = {
-            name: name,
-            inodeId: inode.id,
-            parent: parent,
-            children: new Map()
-        };
-        this.fs.attachDentryHelpers(dentry);
-        // Ideally strict entity shouldn't have helpers but for now relying on existing one to minimize breakage
-
-        parent.children.set(name, dentry);
-
+        let newNode: IFileSystemNode;
         if (mode & S_IFDIR) {
-            parentInode.links++;
+            newNode = new DirectoryNode(name, inode.id, pNode);
+            parentInode.links++; // for the ".." in the new child
+        } else {
+            newNode = new FileNode(name, inode.id, pNode);
         }
+
+        pNode.addChild(newNode);
 
         parentInode.mtime = Date.now();
         parentInode.ctime = Date.now();
 
-        return dentry;
+        return newNode;
     }
 
     writeFile(path: string, content: string | Uint8Array, modeStr: 'w' | 'a' = 'w', uid: number = 1000, gid: number = 1000, cwd: string = '/', actingUser?: { uid: number, gid: number, groups: number[] }): Dentry {
@@ -386,14 +391,22 @@ export class FileSystemService {
         }
 
         const inode = this.getInode(dentry.inodeId)!;
-        if ((inode.mode & S_IFDIR) && dentry.children.size > 0) {
-            throw new Error(`rm: cannot remove '${path}': Directory not empty`);
+
+        if ((inode.mode & S_IFDIR)) {
+            // Check if directory empty using VFS structure
+            if (dentry.isDirectory()) {
+                const dirNode = dentry as DirectoryNode;
+                if (dirNode.children.size > 0) {
+                    throw new Error(`rm: cannot remove '${path}': Directory not empty`);
+                }
+            }
         }
 
-        dentry.parent.children.delete(dentry.name);
+        const parent = dentry.parent as DirectoryNode; // Parent of a node must be DirectoryNode
+        parent.removeChild(dentry.name);
         inode.links--;
 
-        const parentInode = this.getInode(dentry.parent.inodeId);
+        const parentInode = this.getInode(parent.inodeId);
         if (parentInode) parentInode.mtime = Date.now();
 
         if (inode.links <= 0) {
@@ -458,7 +471,7 @@ export class FileSystemService {
             this.deleteNode(newPath, cwd);
         }
 
-        let newParent: Dentry | null = null;
+        let newParent: IFileSystemNode | null = null;
         let newName: string;
 
         const isAbsolute = newPath.startsWith('/');
@@ -475,14 +488,18 @@ export class FileSystemService {
         }
 
         if (!newParent) throw new Error(`rename: cannot move to '${newPath}': Parent not found`);
-        const parentInode = this.getInode(newParent.inodeId);
+        if (!newParent.isDirectory()) throw new Error(`rename: '${newPath}': Parent not a directory`);
+
+        const targetParentDir = newParent as DirectoryNode;
+        const parentInode = this.getInode(targetParentDir.inodeId);
         if (!parentInode || !(parentInode.mode & S_IFDIR)) throw new Error(`rename: '${newPath}': Parent not a directory`);
 
-        oldDentry.parent.children.delete(oldDentry.name);
+        const oldParent = oldDentry.parent as DirectoryNode;
+        oldParent.removeChild(oldDentry.name);
 
-        oldDentry.parent = newParent;
+        oldDentry.parent = targetParentDir;
         oldDentry.name = newName;
-        newParent.children.set(newName, oldDentry);
+        targetParentDir.addChild(oldDentry);
 
         const inode = this.getInode(oldDentry.inodeId);
         if (inode) inode.ctime = Date.now();

@@ -1658,16 +1658,16 @@ UTILITY: who
 [FAIL] WHO_01: List users
        -> Stdout Regex Mismatch.
    Expected: /operator/
-   Got: "[object Object]   tty1   2026-01-24 03:48"
+   Got: "[object Object]   tty1   2026-01-24 20:50"
 [FAIL] WHO_02: Headers -H
        -> Stdout Regex Mismatch.
    Expected: /NAME/
-   Got: "[object Object]   tty1   2026-01-24 03:48"
+   Got: "[object Object]   tty1   2026-01-24 20:50"
 [PASS] WHO_03
 [FAIL] WHO_04: Am I -m
        -> Stdout Regex Mismatch.
    Expected: /operator/
-   Got: "[object Object]   tty1   2026-01-24 03:48"
+   Got: "[object Object]   tty1   2026-01-24 20:50"
 [PASS] WHO_05
 [PASS] WHO_06
 [PASS] WHO_07
@@ -2409,25 +2409,16 @@ UTILITY: localedef
 [PASS] LOCALEDEF_09
 [PASS] LOCALEDEF_10
 UTILITY: c17
-[FAIL] C17_01: Compile C
-       -> Exit Code: Expected 0, got 1
-       -> Missing File: Expected /home/operator/a.out to be created.
-[FAIL] C17_02: Output -o
-       -> Exit Code: Expected 0, got 1
-       -> Missing File: Expected /home/operator/out to be created.
-[FAIL] C17_03: Compile only -c
-       -> Missing File: Expected /home/operator/f.o to be created.
-[FAIL] C17_04: Debug -g
-       -> Exit Code: Expected 0, got 1
-[FAIL] C17_05: Optimize -O
-       -> Exit Code: Expected 0, got 1
+[PASS] C17_01
+[PASS] C17_02
+[PASS] C17_03
+[PASS] C17_04
+[PASS] C17_05
 [PASS] C17_06
 [PASS] C17_07
 [PASS] C17_08
-[FAIL] C17_09: Consistency
-       -> Exit Code: Expected 0, got 1
-[FAIL] C17_10: Link lib (stub)
-       -> Exit Code: Expected 0, got 1
+[PASS] C17_09
+[PASS] C17_10
 UTILITY: cflow
 [PASS] CFLOW_01
 [PASS] CFLOW_02
@@ -2826,7 +2817,7 @@ ipcs          |    10 |    9 |    1 |     90.0%
 iconv         |    10 |    9 |    1 |     90.0%
 locale        |    10 |    7 |    3 |     70.0%
 localedef     |    10 |    8 |    2 |     80.0%
-c17           |    10 |    3 |    7 |     30.0%
+c17           |    10 |   10 |    0 |    100.0%
 cflow         |    10 |   10 |    0 |    100.0%
 cxref         |    10 |    9 |    1 |     90.0%
 fuser         |    10 |   10 |    0 |    100.0%
@@ -2843,7 +2834,7 @@ uustat        |    10 |    9 |    1 |     90.0%
 uux           |    10 |    2 |    8 |     20.0%
 xgettext      |    10 |    6 |    4 |     60.0%
 
-TOTAL COMPLIANCE: 71.5% (1252/1752)
+TOTAL COMPLIANCE: 71.9% (1259/1752)
 
 === MISSING UTILITIES (Implemented but failing) ===
 None

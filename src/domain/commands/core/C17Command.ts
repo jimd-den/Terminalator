@@ -144,14 +144,15 @@ export class C17Command implements ICommand {
                 undefines,
                 includePaths,
                 librarySearchPaths,
-                linkLibraries
+                linkLibraries,
+                cwd: state.currentDirectory
             };
 
             const binary = await this.compilerService.compile(fileContents, options);
 
             // 4. Write Output
             // Determine absolute path for output
-            this.fs.writeFile(outputName, binary, 'w', state.currentDirectory);
+            this.fs.writeFile(outputName, binary, 'w', state.user.uid, state.user.gid, state.currentDirectory);
 
             // 5. Set Executable (unless -c or -E)
             if (!compileOnly && !preprocessOnly && !sharedLibrary) {
