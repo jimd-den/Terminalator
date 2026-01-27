@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
 `;
 
         if (output) {
-            fs.writeFile(state.currentDirectory + '/' + output, cCode, 'w', state.currentDirectory);
+            fs.writeFile(state.currentDirectory + '/' + output, cCode, 'w', undefined, undefined, state.currentDirectory);
             return { output: '', newState: state, exitCode: 0 };
         } else {
             return { output: cCode, newState: state, exitCode: 0 };

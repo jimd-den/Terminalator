@@ -297,7 +297,7 @@ export class MakeCommand implements ICommand {
                 // Touch logic
                 try {
                     const path = targetName.startsWith('/') ? targetName : state.currentDirectory + '/' + targetName;
-                    fs.writeFile(path, '', 'a', state.currentDirectory); // append empty updates mtime?
+                    fs.writeFile(path, '', 'a', undefined, undefined, state.currentDirectory); // append empty updates mtime?
                     // Actually force mtime update
                     const node = fs.resolve(path, state.currentDirectory);
                     if (node) {
@@ -307,7 +307,7 @@ export class MakeCommand implements ICommand {
                             inode.ctime = Date.now();
                         }
                     } else {
-                        fs.writeFile(path, '', 'w', state.currentDirectory);
+                        fs.writeFile(path, '', 'w', undefined, undefined, state.currentDirectory);
                     }
                     outputLines.push(`touch ${targetName}`);
                 } catch (e) {
@@ -352,7 +352,7 @@ export class MakeCommand implements ICommand {
                     } else if (prog === 'touch') {
                         const file = progArgs[0];
                         const path = file.startsWith('/') ? file : state.currentDirectory + '/' + file;
-                        fs.writeFile(path, '', 'a', state.currentDirectory); // ensure exists
+                        fs.writeFile(path, '', 'a', undefined, undefined, state.currentDirectory); // ensure exists
                         // Update mtime
                         const node = fs.resolve(path, state.currentDirectory);
                         if (node) {

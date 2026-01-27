@@ -17,6 +17,7 @@ import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
 import { FileSystemService } from '../../services/FileSystemService';
+import { DirectoryNode } from '../../entities/filesystem/DirectoryNode';
 
 export class RmCommand extends CommandBase {
     constructor(private fsService: FileSystemService) { super(); }
@@ -94,7 +95,7 @@ export class RmCommand extends CommandBase {
 
         if (this.fsService.isDirectory(node)) {
             // Delete all children first
-            const children = Array.from(node.children.values());
+            const children = Array.from((node as DirectoryNode).children.values());
             for (const child of children) {
                 const childPath = path === '/' ? `/${child.name}` : `${path}/${child.name}`;
                 this.deleteRecursive(childPath);

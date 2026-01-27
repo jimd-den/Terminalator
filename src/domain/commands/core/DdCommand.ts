@@ -32,7 +32,7 @@ export class DdCommand implements ICommand {
         }
 
         if (outputFile) {
-            fs.writeFile(outputFile, content, 'w', state.currentDirectory);
+            fs.writeFile(outputFile, content, 'w', undefined, undefined, state.currentDirectory);
         } else {
             return { output: content, newState: state, exitCode: 0 };
         }

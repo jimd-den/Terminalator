@@ -42,12 +42,12 @@ int yyparse(void) { return 0; }
         `;
         const hCode = `#ifndef _Y_TAB_H\n#define _Y_TAB_H\n#endif`;
 
-        fs.writeFile(state.currentDirectory + '/' + prefix + '.tab.c', cCode, 'w', state.currentDirectory);
+        fs.writeFile(state.currentDirectory + '/' + prefix + '.tab.c', cCode, 'w', undefined, undefined, state.currentDirectory);
         if (header) {
-            fs.writeFile(state.currentDirectory + '/' + prefix + '.tab.h', hCode, 'w', state.currentDirectory);
+            fs.writeFile(state.currentDirectory + '/' + prefix + '.tab.h', hCode, 'w', undefined, undefined, state.currentDirectory);
         }
         if (graph) {
-            fs.writeFile(state.currentDirectory + '/' + prefix + '.dot', 'digraph {}', 'w', state.currentDirectory);
+            fs.writeFile(state.currentDirectory + '/' + prefix + '.dot', 'digraph {}', 'w', undefined, undefined, state.currentDirectory);
         }
 
         return { output: '', newState: state, exitCode: 0 };

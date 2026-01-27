@@ -31,7 +31,7 @@ export class CompressCommand implements ICommand {
         // POSIX compress uses LZW. We can just pretend.
         const compressed = `\x1f\x9d` + content; // magic header
 
-        fs.writeFile(path + '.Z', compressed, 'w', state.currentDirectory);
+        fs.writeFile(path + '.Z', compressed, 'w', undefined, undefined, state.currentDirectory);
         fs.deleteNode(path, state.currentDirectory);
 
         return { output: '', newState: state, exitCode: 0 };
