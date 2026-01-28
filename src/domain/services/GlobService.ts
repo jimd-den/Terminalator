@@ -9,6 +9,7 @@
 
 import { FileSystemService } from './FileSystemService';
 import { Dentry } from '../entities/FileSystem';
+import { DirectoryNode } from '../entities/filesystem/DirectoryNode';
 
 export class GlobService {
     constructor(private fs: FileSystemService) { }
@@ -111,7 +112,7 @@ export class GlobService {
             const dirNode = this.fs.resolve(currentPath);
             if (!dirNode || !this.fs.isDirectory(dirNode)) return [];
 
-            const children = Array.from(dirNode.children.values());
+            const children = Array.from((dirNode as DirectoryNode).children.values());
 
             for (const child of children) {
                 const name = child.name;

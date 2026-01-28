@@ -18,6 +18,7 @@ import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
 import { FileSystemService } from '../../services/FileSystemService';
 import { Dentry } from '../../entities/FileSystem';
+import { DirectoryNode } from '../../entities/filesystem/DirectoryNode';
 
 export class DuCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
@@ -128,7 +129,7 @@ export class DuCommand implements ICommand {
             // In FileSystem.ts: interface Dentry { ... children: Map<string, Dentry>; ... }
             // Yes.
 
-            for (const [name, child] of node.children) {
+            for (const [name, child] of (node as DirectoryNode).children) {
                 const childPath = path === '/' ? `/${name}` : `${path}/${name}`;
                 // Recursively add child size
                 // Pass false for isOperand

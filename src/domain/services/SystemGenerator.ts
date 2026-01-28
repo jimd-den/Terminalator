@@ -103,14 +103,14 @@ export class SystemGenerator {
         // Generate random email
         if (theme.emails.length > 0) {
             const email = theme.emails[Math.floor(Math.random() * theme.emails.length)];
-            service.writeFile(`${homeDir}/mbox`, `From: ${email.from}\nSubject: ${email.subject}\n\n${email.body}`, 'w', '/');
+            service.writeFile(`${homeDir}/mbox`, `From: ${email.from}\nSubject: ${email.subject}\n\n${email.body}`, 'w', undefined, undefined, '/');
             service.chown(`${homeDir}/mbox`, user.uid, user.gid);
         }
 
         if (theme.todos.length > 0) {
             // Pick random todos
             const todos = theme.todos.sort(() => 0.5 - Math.random()).slice(0, 3);
-            service.writeFile(`${homeDir}/todo.list`, todos.join('\n'), 'w', '/');
+            service.writeFile(`${homeDir}/todo.list`, todos.join('\n'), 'w', undefined, undefined, '/');
             service.chown(`${homeDir}/todo.list`, user.uid, user.gid);
         }
     }

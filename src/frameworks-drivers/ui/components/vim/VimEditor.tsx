@@ -3,16 +3,16 @@
  * 
  * A high-performance, high-contrast Vim-like text editor for the terminal.
  * 
- * Pillar: THE STORYTELLER’S CODE (Literate Documentation)
+ * Pillar: THE STORYTELLER'S CODE (Literate Documentation)
  * Pillar: THE FOUR-FOLD SHIELD (Clean Architecture)
  * Pillar: THE BALANCED SCALE (KISS)
  * 
  * Intent:
  * Renders the state provided by the VimSimulator.
- * Minimal logic remains here; most operations are delegated to the domain layer via adapters.
+ * Composes VimInputController and VimTutorController for clean separation.
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { useInput } from '../../context/InputContext';
 import { THEME } from '../../Theme';
@@ -22,6 +22,10 @@ import { VimSimulator } from '../../../../interface-adapters/VimSimulator';
 import { HighlighterRegistry } from '../../../../interface-adapters/vim/HighlighterRegistry';
 import { useTheme } from '../../context/ThemeContext';
 
+// Import Controllers
+import { useVimInputController } from '../../../../interface-adapters/controllers/VimInputController';
+import { useVimTutorController } from '../../../../interface-adapters/controllers/VimTutorController';
+
 interface VimEditorProps {
     filename: string;
     onExit: () => void;
@@ -30,112 +34,37 @@ interface VimEditorProps {
 const highlighterRegistry = new HighlighterRegistry();
 
 export const useVimEditor = (filename: string, onExit: () => void) => {
-    const { fs } = useGame();
+    const { fs, gameManager } = useGame();
     const { theme, settings } = useTheme();
     const colors = theme.colors;
 
-    // -- Permanent Logic Controller --
-    const validator = useMemo(() => new VimSimulator(fs, filename), [filename, fs]);
-    const simulator = validator; // Alias to keep old code working
+    // -- Simulator (Domain Orchestrator) --
+    // Create FileSystemService from FileSystem (GameContext provides FileSystem, not service)
+    const fsService = useMemo(() => new (require('../../../../domain/services/FileSystemService').FileSystemService)(fs), [fs]);
+    const simulator = useMemo(() => new VimSimulator(fsService, filename), [filename, fsService]);
     const highlighter = useMemo(() => highlighterRegistry.getHighlighterForFile(filename), [filename]);
 
-    const [state, setState] = useState(simulator.getSnapshot());
-    const [commandInput, setCommandInput] = useState('');
-    const [isMounting, setIsMounting] = useState(true);
+    // -- Controllers --
+    const inputController = useVimInputController(simulator, onExit, gameManager.tutorEngine);
+    const tutorState = useVimTutorController(gameManager.tutorEngine);
 
-    const handleCommandSubmit = React.useCallback(() => {
-        const { exit, message } = simulator.executeCommand(commandInput);
-        if (exit) onExit();
-        else {
-            const nextState = simulator.getSnapshot();
-            nextState.statusMessage = message;
-            setState(nextState);
-            setCommandInput('');
-        }
-    }, [commandInput, onExit, simulator]);
+    // -- Mount State --
+    const [isMounting, setIsMounting] = React.useState(true);
 
-    const { gameManager } = useGame(); // Need gameManager to access TutorEngine
-
-    const handleVirtualKey = React.useCallback((key: string) => {
-        // -- TUTOR INTERCEPTION --
-        if (gameManager.tutorEngine.isActive()) {
-            const lesson = gameManager.tutorEngine.getCurrentLesson();
-            // Only intercept if we are in a VIM lesson type, OR if we are transitioning?
-            // If lesson is SHELL, Vim shouldn't be active anyway.
-            // If lesson is VIM_INSERT or VIM_COMMAND, we track.
-            if (lesson && (lesson.type === 'VIM_INSERT' || lesson.type === 'VIM_COMMAND' || lesson.type === 'SHELL')) {
-                // Note: 'SHELL' lesson might use 'vim filename' to enter vim. 
-                // If we are in Vim but lesson is SHELL, it means we just entered. 
-                // We might need to advance lesson to 'VIM_BASICS'? 
-                // Ideally TutorEngine handles this transition logic.
-
-                // For now, if Tutor is active, pass input to it?
-                // But Vim is complex. Tutor needs to know if we typed 'i' to enter insert mode.
-                // TutorEngine.handleInput just matches string.
-                // If lesson text is "iHello<ESC>", handling 'i' advances it.
-                // We still need to letting VimSimulator process it so the UI updates!
-
-                // 1. Pass to Tutor (non-blocking, just scoring)
-                gameManager.tutorEngine.handleInput(key);
-
-                // 2. Pass to Simulator (Visuals)
-                // We always pass to simulator so user sees what they type.
-            }
-        }
-
-        if (key === 'BACKSPACE') {
-            if (state.mode === 'COMMAND') {
-                if (commandInput.length > 0) {
-                    setCommandInput(prev => prev.slice(0, -1));
-                } else if (commandInput.length === 0) {
-                    // Exit command mode if backspace on empty
-                    simulator.handleInput('ESC');
-                    setState(simulator.getSnapshot());
-                }
-                return;
-            }
-            setState(simulator.handleInput('BACKSPACE'));
-            return;
-        }
-
-        if (state.mode === 'COMMAND') {
-            if (key === 'ESC') {
-                simulator.handleInput('ESC');
-                setState(simulator.getSnapshot());
-                setCommandInput('');
-                return;
-            }
-            if (key === 'ENTER') {
-                handleCommandSubmit();
-                return;
-            }
-            if (key.length === 1) setCommandInput(prev => prev + key);
-            return;
-        }
-
-        // Special handling for Entering Command Mode
-        if (state.mode === 'NORMAL' && key === ':') {
-            setCommandInput(':');
-        }
-
-        setState(simulator.handleInput(key));
-    }, [state.mode, commandInput, simulator, handleCommandSubmit, gameManager]);
-
+    // -- Input Context Wiring --
     const { setOnInput, setOnKeyPress, refocus } = useInput();
 
     React.useEffect(() => {
-        // Wire up global input
         setOnInput((text) => {
-            // Handle pasted text or fast typing
             for (const char of text) {
-                if (char === '\n') handleVirtualKey('ENTER');
-                else handleVirtualKey(char);
+                if (char === '\n') inputController.handleVirtualKey('ENTER');
+                else inputController.handleVirtualKey(char);
             }
         });
         setOnKeyPress((key) => {
-            handleVirtualKey(key);
+            inputController.handleVirtualKey(key);
         });
-    }, [handleVirtualKey, setOnInput, setOnKeyPress]);
+    }, [inputController.handleVirtualKey, setOnInput, setOnKeyPress]);
 
     // -- Initialization --
     useEffect(() => {
@@ -144,13 +73,14 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
         return () => clearTimeout(timer);
     }, [filename]);
 
-    // Force focus when mounting this "active app"
+    // Force focus when mounting
     useEffect(() => {
         refocus();
         const interval = setInterval(refocus, 2000);
         return () => clearInterval(interval);
     }, [refocus]);
 
+    // -- Dynamic Styles --
     const dynamicStyles = StyleSheet.create({
         editorContainer: {
             flex: 1,
@@ -247,9 +177,21 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
             ...StyleSheet.absoluteFillObject,
             backgroundColor: colors.background,
             zIndex: 999,
+        },
+        tutorOverlay: {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: 'rgba(0,0,0,0.8)',
+            padding: 10,
+            zIndex: 100,
+            borderBottomWidth: 1,
+            borderColor: colors.primary
         }
     });
 
+    // -- Token Color Mapper --
     const getTokenColor = (type: string) => {
         switch (type) {
             case 'keyword': return colors.secondary;
@@ -261,6 +203,11 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
         }
     };
 
+    // -- State Aliases --
+    const state = inputController.state;
+    const commandInput = inputController.commandInput;
+
+    // -- Line Renderer --
     const renderLine = (lineContent: string, lineIdx: number) => {
         const isCurrentLine = lineIdx === state.cursor.line;
         const lineError = state.lintErrors.find(e => e.line === lineIdx + 1);
@@ -312,54 +259,11 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
         );
     };
 
-    // We will re-use the existing renderLine for the file content.
-    // Main renderLine logic is above at line 264.
-
-
-    // We will re-use the existing renderLine for the file content.
-    // But we add an Overlay to topContent.
-
-    const [tutorState, setTutorState] = useState<{ active: boolean, text: string, completed: string }>({ active: false, text: '', completed: '' });
-
-    // Poll tutor state for UI? Or subscribe?
-    // Let's use a quick poll in useEffect or just rely on re-renders if gameManager triggers update?
-    // Since TutorEngine is outside React, we need to force update or use a hook.
-    // For now, simply reading it during render might lag if no state change happens.
-    // Better: Subscribe in useEffect.
-
-    useEffect(() => {
-        if (!gameManager.tutorEngine.isActive()) {
-            setTutorState({ active: false, text: '', completed: '' });
-            return;
-        }
-
-        const updateTutor = () => {
-            setTutorState({
-                active: gameManager.tutorEngine.isActive(),
-                text: gameManager.tutorEngine.getGhostText(),
-                completed: gameManager.tutorEngine.getCompletedText()
-            });
-        };
-
-        // Initial sync
-        updateTutor();
-
-        // Subscribe
-        const unsubscribe = gameManager.tutorEngine.subscribe(() => {
-            updateTutor();
-        });
-
-        return unsubscribe;
-    }, [gameManager.tutorEngine]);
-
+    // -- Render Sections --
     const topContent = (
         <View style={dynamicStyles.editorContainer}>
             {tutorState.active && (
-                <View style={{
-                    position: 'absolute', top: 0, left: 0, right: 0,
-                    backgroundColor: 'rgba(0,0,0,0.8)', padding: 10, zIndex: 100,
-                    borderBottomWidth: 1, borderColor: colors.primary
-                }}>
+                <View style={dynamicStyles.tutorOverlay}>
                     <Text style={{ color: colors.primary, fontWeight: 'bold' }}>TUTOR PROTOCOL ACTIVE</Text>
                     <Text style={{ color: colors.text.primary, fontFamily: settings.fontFamily }}>
                         TARGET: <Text style={{ color: colors.secondary }}>{tutorState.completed}</Text>
@@ -369,7 +273,6 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
             )}
 
             {isMounting && <View style={dynamicStyles.crtBlinkOverlay} />}
-            {/* ... rest of ScrollView ... */}
             <ScrollView
                 style={dynamicStyles.contentArea}
                 contentContainerStyle={dynamicStyles.scrollContent}
@@ -396,7 +299,7 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
         </View>
     );
 
-    const middleContent = <VirtualKeyboard onKeyPress={handleVirtualKey} />;
+    const middleContent = <VirtualKeyboard onKeyPress={inputController.handleVirtualKey} />;
 
     const bottomContent = (
         <View style={dynamicStyles.footer}>
@@ -408,7 +311,7 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
             ) : (
                 <View style={dynamicStyles.buttonRow}>
                     {['i', ':', 'ESC', 'h', 'j', 'k', 'l'].map(k => (
-                        <Pressable key={k} style={dynamicStyles.hintButton} onPress={() => handleVirtualKey(k)}>
+                        <Pressable key={k} style={dynamicStyles.hintButton} onPress={() => inputController.handleVirtualKey(k)}>
                             <Text style={dynamicStyles.hintText}>[{k.toUpperCase()}]</Text>
                         </Pressable>
                     ))}

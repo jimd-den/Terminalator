@@ -17,6 +17,7 @@ import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../usecases/ExecuteCommand';
 import { FileSystemService } from '../../services/FileSystemService';
+import { DirectoryNode } from '../../entities/filesystem/DirectoryNode';
 
 export class CpCommand extends CommandBase {
     constructor(private fsService: FileSystemService) { super(); }
@@ -125,7 +126,7 @@ export class CpCommand extends CommandBase {
         const srcNode = this.fsService.resolve(srcPath);
         if (!srcNode || !this.fsService.isDirectory(srcNode)) return;
 
-        const children = Array.from(srcNode.children.values());
+        const children = Array.from((srcNode as DirectoryNode).children.values());
         for (const child of children) {
             const childSrcPath = srcPath === '/' ? `/${child.name}` : `${srcPath}/${child.name}`;
             const childDestPath = destPath === '/' ? `/${child.name}` : `${destPath}/${child.name}`;
