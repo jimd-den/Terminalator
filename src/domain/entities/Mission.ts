@@ -13,8 +13,9 @@
  */
 
 import { NPC } from './NPC';
+import { generateHostname, generateObjectiveFilename } from '../utils/NameGenerator';
 
-export type MissionType = 'hack' | 'decrypt' | 'retrieve' | 'monitor';
+export type MissionType = 'hack' | 'exfiltrate' | 'modify' | 'decrypt';
 
 export interface ChatMessage {
     sender: string;
@@ -25,7 +26,9 @@ export interface ChatMessage {
 export interface Mission {
     id: string;
     type: MissionType;
-    target: string;
+    targetSystem: string;
+    targetUser: string;
+    objectiveTarget: string;
     description: string;
     reward: string;
     status: 'active' | 'completed' | 'failed';
@@ -35,38 +38,32 @@ export interface Mission {
 }
 
 export class MissionGenerator {
-    private static targets = [
-        'Corporate Mainframe',
-        'Orbital Relay Node',
-        'Black Market Server',
-        'Sector 7 Grid',
-        'Derelict Ship Log',
-    ];
-
     private static rewards = [
-        'Crypto Credits',
-        'Systems Upgrade',
-        'Decrypt Key',
-        'Safe Passage Code',
+        '500 Credits',
+        '1000 Credits',
+        'Rootkit V2',
+        'Proxy Node Access',
     ];
 
     /**
      * Generates a unique mission for a given NPC.
-     *
-     * @param npc - The NPC assigning the mission.
-     * @returns A populated Mission object.
+     * Note: Does NOT register the system in NetworkMap yet; that is the caller's responsibility (GameManager).
      */
     static generate(npc: NPC): Mission {
         const id = Math.random().toString(36).substring(2, 6).toUpperCase();
         const type = this.getRandomType();
-        const target = this.getRandomTarget();
+        const targetSystem = generateHostname(npc.faction || 'corporate'); // Assume NPC has faction or default
+        const targetUser = 'admin'; // Usually target admin/root files
+        const objectiveTarget = generateObjectiveFilename();
         const reward = this.getRandomReward();
 
         return {
             id,
             type,
-            target,
-            description: this.generateDescription(type, target, npc),
+            targetSystem,
+            targetUser,
+            objectiveTarget,
+            description: this.generateDescription(type, targetSystem, objectiveTarget),
             reward,
             status: 'active',
             assignedBy: npc.id,
@@ -76,30 +73,22 @@ export class MissionGenerator {
     }
 
     private static getRandomType(): MissionType {
-        const types: MissionType[] = ['hack', 'decrypt', 'retrieve', 'monitor'];
+        const types: MissionType[] = ['exfiltrate', 'modify']; // Focus on these for now
         return types[Math.floor(Math.random() * types.length)];
-    }
-
-    private static getRandomTarget(): string {
-        return this.targets[Math.floor(Math.random() * this.targets.length)];
     }
 
     private static getRandomReward(): string {
         return this.rewards[Math.floor(Math.random() * this.rewards.length)];
     }
 
-    private static generateDescription(type: MissionType, target: string, npc: NPC): string {
+    private static generateDescription(type: MissionType, system: string, file: string): string {
         switch (type) {
-            case 'hack':
-                return `Install backdoor in ${target}.`;
-            case 'decrypt':
-                return `Decrypt archive at ${target}.`;
-            case 'retrieve':
-                return `Fetch payload from ${target}.`;
-            case 'monitor':
-                return `Tap comms at ${target}.`;
+            case 'exfiltrate':
+                return `Connect to ${system}. Retrieve payload ${file} and upload it to your home server.`;
+            case 'modify':
+                return `Connect to ${system}. Locate ${file} and append the signature 'HACKED'.`;
             default:
-                return `Investigate ${target}.`;
+                return `Access ${system} and investigate.`;
         }
     }
 }

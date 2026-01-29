@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Dimensions } from 'react-native';
 import { Mission } from '../../../domain/entities/Mission';
 import { THEME } from '../Theme';
 import { useTheme } from '../context/ThemeContext';
@@ -43,6 +43,9 @@ export const IrcTab: React.FC<IrcTabProps> = ({ missions }) => {
 
     const activeMission = missions.find(m => m.id === activeMissionId);
 
+    // Responsive width calculation
+    const { width } = Dimensions.get('window');
+
     const dynamicStyles = StyleSheet.create({
         container: {
             position: 'absolute',
@@ -68,7 +71,7 @@ export const IrcTab: React.FC<IrcTabProps> = ({ missions }) => {
         notificationText: {
             color: colors.primary,
             fontFamily: settings.fontFamily,
-            fontSize: 12,
+            fontSize: 12, // Notification text can stay small or match setting
             fontWeight: 'bold',
         },
         tabColumn: {
@@ -111,8 +114,10 @@ export const IrcTab: React.FC<IrcTabProps> = ({ missions }) => {
             color: colors.primary,
         },
         panel: {
-            width: 350,
-            maxHeight: 600,
+            width: Math.min(width * 0.4, 600), // Responsive width, max 600px
+            minWidth: 350, // Ensure minimum readability
+            maxHeight: '100%', // Constrain to container height
+            flex: 1, // Fill available vertical space
             backgroundColor: 'rgba(0,0,0,0.95)',
             borderColor: colors.primary,
             borderWidth: 1,
@@ -128,13 +133,13 @@ export const IrcTab: React.FC<IrcTabProps> = ({ missions }) => {
         title: {
             color: colors.primary,
             fontFamily: settings.fontFamily,
-            fontSize: 16,
+            fontSize: settings.fontSize, // Match terminal font size
             fontWeight: 'bold',
         },
         subtitle: {
             color: colors.text.dim,
             fontFamily: settings.fontFamily,
-            fontSize: 12,
+            fontSize: settings.fontSize * 0.75, // Smaller subtitle
         },
         messageRow: {
             marginBottom: 4,
@@ -144,7 +149,7 @@ export const IrcTab: React.FC<IrcTabProps> = ({ missions }) => {
         sender: {
             color: colors.secondary,
             fontWeight: 'bold',
-            fontSize: 12,
+            fontSize: settings.fontSize, // Match terminal
             marginRight: 6,
         },
         systemSender: {
@@ -153,7 +158,7 @@ export const IrcTab: React.FC<IrcTabProps> = ({ missions }) => {
         messageText: {
             color: colors.text.primary,
             fontFamily: settings.fontFamily,
-            fontSize: 12,
+            fontSize: settings.fontSize, // Match terminal
             flex: 1,
         },
     });

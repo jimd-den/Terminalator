@@ -12,7 +12,8 @@ import { getStdinAsString } from '../../entities/ProcessContext';
 import { CommandBase } from '../CommandBase';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../usecases/ExecuteCommand';
+import { CommandResponse } from '../../entities/Command';
+
 import { FileSystemService } from '../../services/FileSystemService';
 
 export class LsCommand extends CommandBase {

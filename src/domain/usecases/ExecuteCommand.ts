@@ -14,6 +14,7 @@ import { ShellExpansionService } from '../services/ShellExpansionService';
 import { ShellInterpreter } from '../services/ShellInterpreter';
 import { RedirectionService } from '../services/RedirectionService';
 import { mergeState, fail } from '../utils/TerminalStateUtils';
+import { NetworkMap } from '../services/NetworkMap';
 
 /**
  * ExecuteCommand (Refactored Facade)
@@ -33,12 +34,14 @@ export class ExecuteCommand implements IShellExecutor {
     private identityService: IdentityService;
     private interpreter: ShellInterpreter;
     private redirectionService: RedirectionService;
+    protected networkMap: NetworkMap;
 
     constructor(
         fsOrService: FileSystem | FileSystemService,
         protected telemetry?: TelemetryPort,
         registry?: CommandRegistry,
-        protected binaryRunner?: IBinaryRunner
+        protected binaryRunner?: IBinaryRunner,
+        networkMap?: NetworkMap
     ) {
         if (fsOrService instanceof FileSystemService) {
             this.service = fsOrService;
@@ -48,6 +51,7 @@ export class ExecuteCommand implements IShellExecutor {
             this.service = new FileSystemService(this.fs);
         }
 
+        this.networkMap = networkMap || new NetworkMap();
         this.parser = new ShellParser();
         this.expansionService = new ShellExpansionService(this.service);
         this.jobControl = new JobControlService();
@@ -60,6 +64,7 @@ export class ExecuteCommand implements IShellExecutor {
             this.registry = new CommandRegistry();
         }
 
+        // Default interpreter (will be overridden in execute if needed)
         this.interpreter = new ShellInterpreter(
             this.service,
             this.fs,
@@ -68,7 +73,7 @@ export class ExecuteCommand implements IShellExecutor {
             this.jobControl,
             this.redirectionService,
             this.binaryRunner,
-            () => this // Inject self as factory
+            () => this
         );
     }
 

@@ -15,11 +15,12 @@ import { ICommand } from '../ICommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../usecases/ExecuteCommand';
+import { CommandResponse } from '../../entities/Command';
+
 import { FileSystem, S_IFDIR, S_IFLNK, S_IFREG, S_IFIFO, S_IFMT } from '../../entities/FileSystem';
 
 export class FileCommand implements ICommand {
-    constructor(private fs: FileSystemService) {}
+    constructor(private fs: FileSystemService) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         const input = getStdinAsString(context);
@@ -71,7 +72,7 @@ export class FileCommand implements ICommand {
                     }
                 }
             } else {
-                 type = 'special file';
+                type = 'special file';
             }
 
             results.push(`${arg}: ${type}`);

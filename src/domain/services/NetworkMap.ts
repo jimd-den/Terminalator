@@ -7,6 +7,7 @@
 
 import { FileSystem } from '../entities/FileSystem';
 import { SystemGenerator } from './SystemGenerator';
+import { FileSystemService } from './FileSystemService';
 
 export class NetworkMap {
     private systems: Map<string, FileSystem> = new Map();
@@ -41,13 +42,14 @@ export class NetworkMap {
             faction
         });
 
-        fs.writeFile('/etc/hostname', hostname, 'w');
+        const service = new FileSystemService(fs);
+        service.writeFile('/etc/hostname', hostname, 'w');
 
         this.systems.set(hostname, fs);
         return fs;
     }
 
-    registerSystem(hostname: string, fs: FileSystemService) {
+    registerSystem(hostname: string, fs: FileSystem) {
         this.systems.set(hostname, fs);
     }
 }

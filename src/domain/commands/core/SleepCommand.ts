@@ -15,7 +15,8 @@ import { ICommand } from '../ICommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../usecases/ExecuteCommand';
+import { CommandResponse } from '../../entities/Command';
+
 import { FileSystem } from '../../entities/FileSystem';
 
 export class SleepCommand implements ICommand {
@@ -24,7 +25,7 @@ export class SleepCommand implements ICommand {
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         const input = getStdinAsString(context);
         if (args.length === 0) {
-             return { output: 'sleep: missing operand', newState: state, exitCode: 1 };
+            return { output: 'sleep: missing operand', newState: state, exitCode: 1 };
         }
 
         const seconds = parseFloat(args[0]);

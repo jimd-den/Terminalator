@@ -25,6 +25,7 @@ export interface TerminalState {
     functions: Map<string, any>; // FunctionDefNode
     traps: Map<string, string>; // Signal -> Command
     callStackDepth: number;
+    fsContext?: string; // Hostname of active remote system
 }
 
 /**

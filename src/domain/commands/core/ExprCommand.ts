@@ -15,7 +15,8 @@ import { ICommand } from '../ICommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../usecases/ExecuteCommand';
+import { CommandResponse } from '../../entities/Command';
+
 import { FileSystem } from '../../entities/FileSystem';
 
 export class ExprCommand implements ICommand {
@@ -24,7 +25,7 @@ export class ExprCommand implements ICommand {
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
         const input = getStdinAsString(context);
         if (args.length === 0) {
-             return { output: 'expr: missing operand', newState: state, exitCode: 2 };
+            return { output: 'expr: missing operand', newState: state, exitCode: 2 };
         }
 
         // Simplified expression parser

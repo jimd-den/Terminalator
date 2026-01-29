@@ -23,6 +23,7 @@ export interface NPC {
     goal: string;
     status: 'active' | 'mia' | 'terminated' | 'retired';
     traits: string[];
+    faction?: string;
 }
 
 export class NPCGenerator {

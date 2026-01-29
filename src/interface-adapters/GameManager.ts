@@ -15,19 +15,23 @@ import { MailSystem, MailMessage } from '../domain/usecases/MailSystem';
 import { FileSystem } from '../domain/entities/FileSystem';
 import { TelemetryPort } from '../domain/ports/TelemetryPort';
 
-
 import { FileSystemService } from '../domain/services/FileSystemService';
 import { SystemGenerator } from '../domain/services/SystemGenerator';
 import { TutorEngine, TutorEvent } from '../domain/entities/TutorEngine';
 import { LessonGenerator, LessonType } from '../domain/services/LessonGenerator';
 
 import { IGameManager } from '../domain/interfaces/IGameManager';
+import { NetworkMap } from '../domain/services/NetworkMap';
+import { analyzeGameState, TutorAction } from '../domain/services/TutorService';
+import { TerminalState } from '../domain/entities/TerminalState';
+import { CommandResponse } from '../domain/entities/Command';
 
 export class GameManager implements IGameManager {
     private mailSystem: MailSystem;
     private activeNPCs: NPC[] = [];
     private activeMissions: Mission[] = [];
     public readonly tutorEngine: TutorEngine;
+    private networkMap: NetworkMap;
 
     /**
      * Initializes the Game Manager.
@@ -37,14 +41,14 @@ export class GameManager implements IGameManager {
      */
     private fs: FileSystem;
 
-    /**
-     * Initializes the Game Manager.
-     *
-     * @param fs - The file system entity.
-     * @param telemetry - The telemetry port for logging events.
-     */
-    constructor(fs: FileSystem, private telemetry?: TelemetryPort) {
+    constructor(
+        fs: FileSystem,
+        networkMap: NetworkMap,
+        private telemetry?: TelemetryPort
+    ) {
         this.fs = fs;
+        this.networkMap = networkMap;
+
         if (!this.fs) {
             throw new Error("GameManager initialized without FileSystem! Critical Error.");
         }
@@ -57,11 +61,43 @@ export class GameManager implements IGameManager {
         this.tutorEngine.subscribe(this.handleTutorEvent);
 
         // Initialize System if empty
-        // Checking if root has no children (except potentially . and .. which are virtual/not in map? 
-        // Dentry children map usually empty on fresh init)
         if (fs.root && fs.root.children.size === 0) {
             const generator = new SystemGenerator();
             generator.populate(fsService, { difficulty: 1 });
+        }
+    }
+
+    /**
+     * Called after every command execution to update game state and trigger Tutor hints.
+     */
+    onCommandExecuted(state: TerminalState, response: CommandResponse) {
+        // Check active missions for Tutor hints
+        for (const mission of this.activeMissions) {
+            const hint = analyzeGameState(mission, state, response);
+            if (hint) {
+                // Send hint via IRC/Mail
+                // For immediate feedback, we inject into Chat History (IRC)
+                // or send a mail if it's a big update.
+                const alreadySent = mission.chatHistory.some(m => m.message === hint.message);
+                if (!alreadySent) {
+                    const sender = hint.type === 'CONGRATS' ? 'SYSTEM' : 'TutorBot';
+                    mission.chatHistory.push({
+                        sender,
+                        message: hint.message,
+                        timestamp: Date.now()
+                    });
+
+                    // If CONGRATS, maybe mark mission as completed?
+                    if (hint.type === 'CONGRATS') {
+                        // mission.status = 'completed'; // Or let user claim it?
+                        this.mailSystem.sendMail(
+                            { name: 'Bank', id: 'bank', origin: '', career: '', goal: '', status: 'active', traits: [], loadout: [] },
+                            'PAYMENT RECEIVED',
+                            `Escrow released for Mission ${mission.id}. ${mission.reward} transferred.`
+                        );
+                    }
+                }
+            }
         }
     }
 
@@ -107,6 +143,10 @@ export class GameManager implements IGameManager {
             this.activeNPCs.push(npc);
 
             const mission = MissionGenerator.generate(npc);
+
+            // Ensure target system exists in the network
+            this.networkMap.getSystem(mission.targetSystem);
+
             // Add initial "Handshake" message to the chat history
             mission.chatHistory = [
                 { sender: 'SYSTEM', message: `CONNECTING TO SECURE CHANNEL ${mission.id}...`, timestamp: Date.now() },
