@@ -8,5 +8,5 @@ import { MailMessage } from '../usecases/MailSystem';
 import { Mission } from '../entities/Mission';
 
 export interface IGameManager {
-    spawnNPCEvent(): Mission;
+    spawnNPCEvent(): Mission | null;
 }

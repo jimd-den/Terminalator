@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Animated } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { Mission } from '../../../domain/entities/Mission';
 import { THEME } from '../Theme';
 import { useTheme } from '../context/ThemeContext';
@@ -13,83 +13,57 @@ export const IrcTab: React.FC<IrcTabProps> = ({ missions }) => {
     const { theme, settings } = useTheme();
     const colors = theme.colors;
     const { refocus } = useInput();
-    const [expanded, setExpanded] = useState(false);
-    const [selectedMissionId, setSelectedMissionId] = useState<string | null>(null);
 
-    // Animation state for the sprite
-    const [frame, setFrame] = useState(0);
+    // Track which mission tab is active (open)
+    const [activeMissionId, setActiveMissionId] = useState<string | null>(null);
 
-    // Sprite frames (Retro ASCII style)
-    const frames = [
-        "( ^_^)",
-        "( >_<)",
-        "( O_O)",
-        "( -_-)"
-    ];
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setFrame((current) => (current + 1) % frames.length);
-        }, 800);
-        return () => clearInterval(interval);
-    }, []);
-
+    // Notification handling
     const [notification, setNotification] = useState<string | null>(null);
-    const prevMissionsLength = React.useRef(missions.length);
+    const prevMissionsLength = useRef(missions.length);
 
     useEffect(() => {
         if (missions.length > prevMissionsLength.current) {
             const newMission = missions[missions.length - 1];
-            // Show the actual message (shortened description)
-            setNotification(`[!] ${newMission.type.toUpperCase()}: ${newMission.description}`);
+            setNotification(`[!] ${newMission.type.toUpperCase()}: ${newMission.description.substring(0, 30)}...`);
             const timer = setTimeout(() => setNotification(null), 5000);
             return () => clearTimeout(timer);
         }
         prevMissionsLength.current = missions.length;
     }, [missions]);
 
-    const toggleExpand = () => {
-        setExpanded(!expanded);
-        // Only return focus if we are CLOSING the tab.
-        // If opening, user might want to scroll/click.
-        if (expanded) {
-            setTimeout(refocus, 50);
+    const handleTabPress = (id: string) => {
+        if (activeMissionId === id) {
+            setActiveMissionId(null); // Close if already open
+            setTimeout(refocus, 50); // Refocus terminal
+        } else {
+            setActiveMissionId(id);
+            // Do not refocus, let user scroll chat
         }
     };
 
-    const handleSelect = (id: string) => {
-        if (selectedMissionId === id) {
-            setSelectedMissionId(null);
-        } else {
-            setSelectedMissionId(id);
-        }
-        // DO NOT REFOCUS HERE. Let the user browse the mission details.
-    };
+    const activeMission = missions.find(m => m.id === activeMissionId);
 
     const dynamicStyles = StyleSheet.create({
         container: {
             position: 'absolute',
             right: 0,
-            top: 200, // Moved down (was 100)
+            top: 200,
             bottom: 100,
             zIndex: 1000,
-            flexDirection: 'row',
+            flexDirection: 'row', // Panel | Tabs
             alignItems: 'flex-start',
+            justifyContent: 'flex-end',
         },
         notificationBubble: {
             position: 'absolute',
-            right: 60, // To the left of the tab
-            top: 10,
+            right: 50, // To left of tabs
+            top: -40,
             backgroundColor: colors.surface,
             borderColor: colors.primary,
             borderWidth: 1,
             padding: 8,
             borderRadius: 4,
-            maxWidth: 300, // Wider for full text
-            shadowColor: colors.primary,
-            shadowOffset: { width: 0, height: 0 },
-            shadowOpacity: 0.5,
-            shadowRadius: 4,
+            maxWidth: 250,
         },
         notificationText: {
             color: colors.primary,
@@ -97,177 +71,147 @@ export const IrcTab: React.FC<IrcTabProps> = ({ missions }) => {
             fontSize: 12,
             fontWeight: 'bold',
         },
+        tabColumn: {
+            flexDirection: 'column',
+            marginLeft: -1, // Overlap border
+        },
         tab: {
-            backgroundColor: colors.surface,
+            backgroundColor: colors.background,
             borderColor: colors.primary,
             borderWidth: 1,
-            borderRightWidth: 0, // Connect to panel
-            paddingVertical: 20, // Taller (was 10)
-            paddingHorizontal: 5,
-            borderTopLeftRadius: 4,
-            borderBottomLeftRadius: 4,
-            width: 40, // Wider (was 30)
+            borderRightWidth: 0,
+            width: 40,
+            height: 120, // Tall tab for vertical text
+            marginBottom: 8,
+            borderTopLeftRadius: 8,
+            borderBottomLeftRadius: 8,
             alignItems: 'center',
             justifyContent: 'center',
         },
-        tabText: {
-            color: colors.primary,
-            fontFamily: settings.fontFamily,
-            fontSize: 14, // Larger text (was 10)
-            lineHeight: 16,
-            width: 140, // Rotate trick container
-            textAlign: 'center',
-            // transform: [{ rotate: '-90deg' }] // React Native doesn't support string rotate in strict styles sometimes without view wrapper
+        activeTab: {
+            backgroundColor: colors.surface,
+            borderRightWidth: 0, // Merge with panel
+            zIndex: 10, // Bring to front
+            width: 42, // Slightly wider
         },
-        verticalText: {
+        tabTextContainer: {
+            width: 120,
+            height: 40,
+            alignItems: 'center',
+            justifyContent: 'center',
             transform: [{ rotate: '-90deg' }],
-            width: 140,
-            textAlign: 'center'
+        },
+        tabText: {
+            color: colors.text.dim,
+            fontFamily: settings.fontFamily,
+            fontSize: 12,
+            fontWeight: 'bold',
+        },
+        activeTabText: {
+            color: colors.primary,
         },
         panel: {
-            width: 350, // Wider panel (was 300)
-            height: '60%', // Fixed height relative to container? Or let it flex.
+            width: 350,
             maxHeight: 600,
-            backgroundColor: 'rgba(0,0,0,0.95)', // High contrast opaque
+            backgroundColor: 'rgba(0,0,0,0.95)',
             borderColor: colors.primary,
             borderWidth: 1,
             padding: THEME.spacing.md,
-            display: expanded ? 'flex' : 'none',
+            marginRight: -1, // Connect to tab
         },
         header: {
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
             borderBottomWidth: 1,
             borderBottomColor: colors.border,
             paddingBottom: 8,
             marginBottom: 8,
         },
         title: {
-            color: colors.text.primary,
-            fontFamily: settings.fontFamily,
-            fontSize: THEME.typography.fontSize.lg,
-            fontWeight: 'bold',
-        },
-        sprite: {
-            color: colors.secondary,
-            fontFamily: settings.fontFamily,
-            fontSize: THEME.typography.fontSize.lg,
-        },
-        channelItem: {
-            marginBottom: 4,
-            padding: 4,
-        },
-        channelHeader: {
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-        },
-        channelName: {
             color: colors.primary,
             fontFamily: settings.fontFamily,
+            fontSize: 16,
             fontWeight: 'bold',
         },
-        channelTopic: {
+        subtitle: {
             color: colors.text.dim,
             fontFamily: settings.fontFamily,
             fontSize: 12,
-            marginLeft: 8,
-        },
-        messageBlock: {
-            marginTop: 4,
-            paddingLeft: 8,
-            borderLeftWidth: 1,
-            borderLeftColor: colors.border,
         },
         messageRow: {
-            marginBottom: 2,
+            marginBottom: 4,
+            flexDirection: 'row',
+            flexWrap: 'wrap',
         },
         sender: {
             color: colors.secondary,
             fontWeight: 'bold',
             fontSize: 12,
+            marginRight: 6,
+        },
+        systemSender: {
+            color: colors.error, // Or warning color
         },
         messageText: {
-            color: colors.secondary,
+            color: colors.text.primary,
             fontFamily: settings.fontFamily,
             fontSize: 12,
+            flex: 1,
         },
-        empty: {
-            color: colors.text.dim,
-            fontFamily: settings.fontFamily,
-            fontStyle: 'italic',
-            marginTop: 20,
-            textAlign: 'center',
-        }
     });
 
     return (
         <View style={dynamicStyles.container}>
-            {/* Notification Bubble */}
+            {/* Notification */}
             {notification && (
                 <View style={dynamicStyles.notificationBubble}>
                     <Text style={dynamicStyles.notificationText}>{notification}</Text>
                 </View>
             )}
 
-            {/* The Tab Handle */}
-            <Pressable style={dynamicStyles.tab} onPress={toggleExpand}>
-                <View style={{ transform: [{ rotate: '-90deg' }] }}>
-                    <Text style={{
-                        color: colors.primary,
-                        fontFamily: settings.fontFamily,
-                        fontSize: 12,
-                        width: 100,
-                        textAlign: 'center'
-                    }}>
-                        IRC
-                    </Text>
-                </View>
-            </Pressable>
-
-            {/* The Content Panel */}
-            {expanded && (
+            {/* Content Panel (Left of Tabs) */}
+            {activeMission && (
                 <View style={dynamicStyles.panel}>
                     <View style={dynamicStyles.header}>
-                        <Text style={dynamicStyles.title}>NETWORK</Text>
-                        <Text style={dynamicStyles.sprite}>{frames[frame]}</Text>
+                        <Text style={dynamicStyles.title}>COMMS: {activeMission.assignerName.toUpperCase()}</Text>
+                        <Text style={dynamicStyles.subtitle}>SECURE CHANNEL #{activeMission.id} | OP: {activeMission.type.toUpperCase()}</Text>
                     </View>
-
                     <ScrollView>
-                        {missions.length === 0 ? (
-                            <Text style={dynamicStyles.empty}>No active channels.</Text>
-                        ) : (
-                            missions.map((m) => (
-                                <Pressable
-                                    key={m.id}
-                                    style={[
-                                        dynamicStyles.channelItem,
-                                        selectedMissionId === m.id && { backgroundColor: 'rgba(255,255,255,0.05)' }
-                                    ]}
-                                    onPress={() => handleSelect(m.id)}
-                                >
-                                    <View style={dynamicStyles.channelHeader}>
-                                        <Text style={dynamicStyles.channelName}>#op_{m.type}_{m.id}</Text>
-                                        <Text style={{ color: colors.text.dim }}>{selectedMissionId === m.id ? '▼' : '▶'}</Text>
-                                    </View>
-
-                                    {selectedMissionId === m.id && (
-                                        <View style={dynamicStyles.messageBlock}>
-                                            <Text style={dynamicStyles.channelTopic}>Topic: {m.target}</Text>
-                                            {m.chatHistory.map((msg, i) => (
-                                                <View key={i} style={dynamicStyles.messageRow}>
-                                                    <Text style={dynamicStyles.sender}>{`<${msg.sender}>`}</Text>
-                                                    <Text style={dynamicStyles.messageText}>{msg.message}</Text>
-                                                </View>
-                                            ))}
-                                        </View>
-                                    )}
-                                </Pressable>
-                            ))
-                        )}
+                        {activeMission.chatHistory.map((msg, i) => (
+                            <View key={i} style={dynamicStyles.messageRow}>
+                                <Text style={[
+                                    dynamicStyles.sender,
+                                    msg.sender === 'SYSTEM' && dynamicStyles.systemSender
+                                ]}>
+                                    {`<${msg.sender}>`}
+                                </Text>
+                                <Text style={dynamicStyles.messageText}>{msg.message}</Text>
+                            </View>
+                        ))}
                     </ScrollView>
                 </View>
             )}
+
+            {/* Tab Stack (Right Edge) */}
+            <View style={dynamicStyles.tabColumn}>
+                {missions.map(mission => {
+                    const isActive = activeMissionId === mission.id;
+                    return (
+                        <Pressable
+                            key={mission.id}
+                            style={[dynamicStyles.tab, isActive && dynamicStyles.activeTab]}
+                            onPress={() => handleTabPress(mission.id)}
+                        >
+                            <View style={dynamicStyles.tabTextContainer}>
+                                <Text
+                                    style={[dynamicStyles.tabText, isActive && dynamicStyles.activeTabText]}
+                                    numberOfLines={1}
+                                >
+                                    {mission.assignerName.toUpperCase()}
+                                </Text>
+                            </View>
+                        </Pressable>
+                    );
+                })}
+            </View>
         </View>
     );
 };

@@ -13,10 +13,29 @@ export class CheckCommsCommand implements ICommand {
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         const input = context.stdin;
         const mission = this.gameManager.spawnNPCEvent();
+
+        if (!mission) {
+            return {
+                output: `
+ERROR: SECURE CHANNEL LIMIT REACHED.
+Active conduits saturated (4/4). 
+Close existing channels to establish new connections.
+`.trim(),
+                newState: state,
+                exitCode: 1
+            };
+        }
+
         return {
-            output: `[ SIGNAL DETECTED ]\nNew channel opened: #${mission.id}\nType: ${mission.type.toUpperCase()}\nTarget: ${mission.target}\n\nCheck the IRC tab for details.`,
-            exitCode: 0,
-            newState: state
+            output: `
+[SECURE CONNECTION ESTABLISHED]
+Channel ID: ${mission.id}
+Source: ${mission.assignerName}
+Encryption: AES-256-GCM
+Status: HANDSHAKE_COMPLETE
+`.trim(),
+            newState: state,
+            exitCode: 0
         };
     }
 }

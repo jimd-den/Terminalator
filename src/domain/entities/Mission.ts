@@ -30,6 +30,7 @@ export interface Mission {
     reward: string;
     status: 'active' | 'completed' | 'failed';
     assignedBy: string; // NPC ID
+    assignerName: string; // NPC Name
     chatHistory: ChatMessage[];
 }
 
@@ -69,6 +70,7 @@ export class MissionGenerator {
             reward,
             status: 'active',
             assignedBy: npc.id,
+            assignerName: npc.name,
             chatHistory: [],
         };
     }

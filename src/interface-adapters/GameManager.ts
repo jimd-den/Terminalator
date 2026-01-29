@@ -95,10 +95,14 @@ export class GameManager implements IGameManager {
      * Triggers a new transmission from a random NPC.
      * Creates an NPC, generates a mission, and registers it as an active channel.
      *
-     * @returns The created Mission.
+     * @returns The created Mission or null if limit reached.
      */
-    spawnNPCEvent(): Mission {
+    spawnNPCEvent(): Mission | null {
         const spawnLogic = () => {
+            if (this.activeMissions.length >= 4) {
+                return null;
+            }
+
             const npc = NPCGenerator.generate();
             this.activeNPCs.push(npc);
 

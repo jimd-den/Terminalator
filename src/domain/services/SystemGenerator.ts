@@ -1,5 +1,6 @@
-import { FileSystem, Dentry, Inode, FileType, S_IFDIR, S_IFREG, S_IRWXU, S_IRGRP, S_IXGRP, S_IROTH, S_IXOTH } from '../entities/FileSystem';
+import { FileSystem } from '../entities/FileSystem';
 import { FileSystemService } from './FileSystemService';
+import { ThemeRegistry, NarrativeTheme } from './themes/ThemeRegistry';
 
 export interface SystemGenerationOptions {
     difficulty: number; // 1-10
@@ -8,8 +9,11 @@ export interface SystemGenerationOptions {
 
 export class SystemGenerator {
     private generatedSystems: number = 0;
+    private themeRegistry: ThemeRegistry;
 
-    constructor() { }
+    constructor() {
+        this.themeRegistry = new ThemeRegistry();
+    }
 
     /**
      * Generates a unique, procedurally generated file system.
@@ -38,11 +42,7 @@ export class SystemGenerator {
     }
 
     private getTheme(faction: string): NarrativeTheme {
-        switch (faction) {
-            case 'military': return MILITARY_THEME;
-            case 'research': return RESEARCH_THEME;
-            case 'corporate': default: return CORPORATE_THEME;
-        }
+        return this.themeRegistry.get(faction);
     }
 
     public populate(service: FileSystemService, options: SystemGenerationOptions) {
@@ -122,41 +122,3 @@ export class SystemGenerator {
     }
 }
 
-interface NarrativeTheme {
-    hostPrefixes: string[];
-    hostSuffixes: string[];
-    emails: { from: string, subject: string, body: string }[];
-    logs: string[];
-    todos: string[];
-}
-
-const CORPORATE_THEME: NarrativeTheme = {
-    hostPrefixes: ['CORP', 'HQ', 'FIN', 'SALES'],
-    hostSuffixes: ['SRV', 'NODE', 'UNIT'],
-    emails: [
-        { from: 'hr@corp.net', subject: 'Policy Update', body: 'Please review the new data retention policy.' },
-        { from: 'boss@corp.net', subject: 'Q3 Goals', body: 'We need to hit the targets this quarter.' }
-    ],
-    logs: ['Auth service started', 'Backup completed', 'User logged in'],
-    todos: ['- Submit expense report', '- Update client list', '- Schedule meeting']
-};
-
-const MILITARY_THEME: NarrativeTheme = {
-    hostPrefixes: ['CMD', 'TAC', 'DEF', 'SEC'],
-    hostSuffixes: ['ALPHA', 'BRAVO', 'OMNI'],
-    emails: [
-        { from: 'cmd@mil.net', subject: 'Classified Briefing', body: 'Eyes only. Operation Blackout is a go.' }
-    ],
-    logs: ['Security alert level raised', 'Perimeter breach detected', 'Firewall active'],
-    todos: ['- Patrol sector 7', '- Calibrate sensors', '- Inspect armory']
-};
-
-const RESEARCH_THEME: NarrativeTheme = {
-    hostPrefixes: ['LAB', 'BIO', 'DATA', 'AI'],
-    hostSuffixes: ['PRIME', 'CORE', 'NEXUS'],
-    emails: [
-        { from: 'lead@research.net', subject: 'Simulation Results', body: 'The anomaly is growing. See attached data.' }
-    ],
-    logs: ['Experiment 442 initiated', 'Containment field stable', 'Data anomaly detected'],
-    todos: ['- Calibrate microscope', '- Order reagents', '- Restart simulation']
-};
