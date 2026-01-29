@@ -26,6 +26,7 @@ import { IGameManager } from '../domain/interfaces/IGameManager';
 export class GameManager implements IGameManager {
     private mailSystem: MailSystem;
     private activeNPCs: NPC[] = [];
+    private activeMissions: Mission[] = [];
     public readonly tutorEngine: TutorEngine;
 
     /**
@@ -92,21 +93,26 @@ export class GameManager implements IGameManager {
 
     /**
      * Triggers a new transmission from a random NPC.
-     * Creates an NPC, generates a mission, and sends a mail to the operator.
+     * Creates an NPC, generates a mission, and registers it as an active channel.
      *
-     * @returns The created MailMessage.
+     * @returns The created Mission.
      */
-    spawnNPCEvent(): MailMessage {
+    spawnNPCEvent(): Mission {
         const spawnLogic = () => {
             const npc = NPCGenerator.generate();
             this.activeNPCs.push(npc);
 
             const mission = MissionGenerator.generate(npc);
+            // Add initial "Handshake" message to the chat history
+            mission.chatHistory = [
+                { sender: 'SYSTEM', message: `CONNECTING TO SECURE CHANNEL ${mission.id}...`, timestamp: Date.now() },
+                { sender: npc.name, message: `Operator, I require assistance with a ${mission.type} operation.`, timestamp: Date.now() },
+                { sender: npc.name, message: mission.description, timestamp: Date.now() },
+                { sender: 'SYSTEM', message: `REWARD ESCROW: ${mission.reward}`, timestamp: Date.now() },
+            ];
 
-            const subject = `MISSION: ${mission.type.toUpperCase()} - ${mission.target}`;
-            const body = `Operator,\n\nI am ${npc.name}, a ${npc.career} from ${npc.origin}.\nMy goal is to ${npc.goal}.\n\nMISSION BRIEFING:\n${mission.description}\n\nREWARD: ${mission.reward}\n\nExecute protocol immediately.\n\nOver.`;
-
-            return this.mailSystem.sendMail(npc, subject, body);
+            this.activeMissions.push(mission);
+            return mission;
         };
 
         if (this.telemetry) {
@@ -121,6 +127,13 @@ export class GameManager implements IGameManager {
      */
     getActiveNPCs(): NPC[] {
         return this.activeNPCs;
+    }
+
+    /**
+     * Retrieves the list of currently active Missions.
+     */
+    getActiveMissions(): Mission[] {
+        return this.activeMissions;
     }
 
     // Debug/admin method to start tutor

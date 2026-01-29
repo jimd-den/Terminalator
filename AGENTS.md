@@ -135,7 +135,9 @@ src/
 │   │   ├── ProcessContext.ts    # Environment Context (with jobControl)
 │   │   ├── Stream.ts            # IStream, StringStream, PipeStream
 │   │   ├── Job.ts               # Job entity for job control
-│   │   └── Signal.ts            # POSIX signal definitions
+│   │   ├── Signal.ts            # POSIX signal definitions
+│   │   ├── Mission.ts           # Procedural Game Missions
+│   │   └── NPC.ts               # Non-Player Characters
 │   ├── factories/               # Object Creation
 │   │   └── ShellFactory.ts      # Assembles Shell Context
 │   ├── modules/                 # DI Modules
@@ -160,7 +162,9 @@ src/
 ├── frameworks-drivers/          # INFRASTRUCTURE
 │   ├── ui/                      # React Native UI
 │   │   ├── screens/             # Top-level Views
-│   │   └── components/          # Reusable UI Blocks
+│   │   ├── components/          # Reusable UI Blocks
+│   │   │   └── IrcTab.tsx       # IRC Sidebar (Missions)
+│   │   └── context/             # React Context
 │   ├── telemetry/               # Logging/Tracing
 │   └── wasm/                    # WebAssembly Drivers
 ├── infrastructure/              # SERVICES

@@ -16,10 +16,12 @@ import { FileSystemService } from '../domain/services/FileSystemService';
 import { CodeCompiler } from '../domain/usecases/CodeCompiler';
 import { TelemetryPort } from '../domain/ports/TelemetryPort';
 
+import { IdentityService } from '../domain/services/IdentityService';
+
 import { GameManager } from './GameManager';
 
 import { MailCommand } from './commands/MailCommand';
-import { CheckCommsCommand } from './commands/CheckCommsCommand';
+import { CheckCommsCommand } from './commands/game/CheckCommsCommand';
 import { CompileCommand } from './commands/CompileCommand';
 import { VimCommand } from './commands/VimCommand';
 import { SchemeCommand } from './commands/game/SchemeCommand';
@@ -40,10 +42,11 @@ export class GameCommandExecutor extends ExecuteCommand {
     constructor(fs: FileSystemService, gameManager: GameManager, telemetry?: TelemetryPort) {
         // Initialize Core Registry (Missing Link restored)
         const registry = new CommandRegistry();
+        const identityService = new IdentityService();
 
         // Register Core Modules (Restoring 'ls', 'cd', etc.)
-        new CoreUtilsModule(fs.fileSystem).register(registry);
-        new SystemUtilsModule().register(registry);
+        new CoreUtilsModule(fs.fileSystem, identityService).register(registry);
+        new SystemUtilsModule(fs).register(registry);
 
         super(fs, telemetry, registry);
 

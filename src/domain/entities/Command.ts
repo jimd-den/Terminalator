@@ -6,7 +6,7 @@
  */
 
 import { ProcessContext } from './ProcessContext';
-import { FileSystemService } from '../../../domain/services/FileSystemService';
+import { FileSystemService } from '../services/FileSystemService';
 import { TerminalState } from './TerminalState';
 
 export interface CommandResponse {
@@ -19,6 +19,7 @@ export interface CommandResponse {
         target: string;
         params?: any;
     };
+    controlFlow?: 'RETURN' | 'BREAK' | 'CONTINUE' | 'EXIT';
 }
 
 export interface ICommand {

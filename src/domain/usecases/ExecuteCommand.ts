@@ -11,18 +11,7 @@ import { createStdinStream, createOutputStream } from '../entities/Stream';
 import { JobControlService } from '../services/JobControlService';
 import { IdentityService } from '../services/IdentityService';
 
-export interface CommandResponse {
-    output: string;
-    newState: TerminalState;
-    exitCode: number;
-    uiAction?: 'CLEAR';
-    navigationAction?: {
-        type: 'NAVIGATE';
-        target: string;
-        params?: any;
-    };
-    controlFlow?: 'RETURN' | 'BREAK' | 'CONTINUE' | 'EXIT';
-}
+import { CommandResponse } from '../entities/Command';
 
 import { IShellExecutor } from '../interfaces/IShellExecutor';
 
@@ -82,14 +71,18 @@ export class ExecuteCommand implements IShellExecutor {
 
                 // Handle EXIT Trap
                 if (res.controlFlow === 'EXIT') {
-                    const trapCmd = res.newState.traps ? res.newState.traps.get('EXIT') : undefined;
+                    // Use effective state (merged or original)
+                    const effectiveState = res.newState ? { ...state, ...res.newState } : state;
+                    const trapCmd = effectiveState.traps ? effectiveState.traps.get('EXIT') : undefined;
+
                     if (trapCmd) {
                         try {
                             const trapAst = this.parser.parse(trapCmd);
                             if (trapAst) {
-                                const trapRes = await this.visit(trapAst, res.newState);
+                                const trapRes = await this.visit(trapAst, effectiveState);
                                 res.output += (res.output ? '\n' : '') + trapRes.output;
-                                res.newState = trapRes.newState;
+                                // Merge trap result state
+                                res.newState = trapRes.newState ? { ...effectiveState, ...trapRes.newState } : effectiveState;
                             }
                         } catch (e: any) {
                             res.output += `\nError running EXIT trap: ${e.message}`;
@@ -141,11 +134,17 @@ export class ExecuteCommand implements IShellExecutor {
     }
 
     private async visitList(node: ListNode, state: TerminalState, stdin?: string): Promise<CommandResponse> {
-        // Execute left
         const leftRes = await this.visit(node.left, state, stdin);
 
+        // Ensure newState exists
+        if (!leftRes.newState) {
+            leftRes.newState = state; // Or clone?
+        }
+
         // Persist exit code to state so subsequent commands can read it (e.g. return)
-        leftRes.newState.lastExitCode = leftRes.exitCode;
+        if (leftRes.newState) {
+            leftRes.newState.lastExitCode = leftRes.exitCode;
+        }
 
         // Check for control flow interrupt (return, break, continue)
         if (leftRes.controlFlow) {
@@ -167,14 +166,24 @@ export class ExecuteCommand implements IShellExecutor {
             // But checking verify_return_compliance, we might want to capture output?
             // "sh" behavior: output is printed as it happens. 
             // Here we concatenate strings for the response.
-            const rightRes = await this.visit(node.right, leftRes.newState, stdin); // stdin usually not passed across ;
+
+            // Ensure we have a full TerminalState to pass
+            const effectiveLeftState = leftRes.newState ? { ...state, ...leftRes.newState } : state;
+
+            const rightRes = await this.visit(node.right, effectiveLeftState, stdin); // stdin usually not passed across ;
 
             // Persist right exit code too
-            rightRes.newState.lastExitCode = rightRes.exitCode;
+            if (rightRes.newState) {
+                // Ensure lastExitCode is set on the partial state if it exists, or create it?
+                // Actually CommandResponse often returns just the diff. 
+                // We should probably rely on the merge in the caller.
+                // But specifically for 'lastExitCode', we want it in the state.
+                rightRes.newState.lastExitCode = rightRes.exitCode;
+            }
 
             return {
                 output: [leftRes.output, rightRes.output].filter(s => s).join(''),
-                newState: rightRes.newState,
+                newState: rightRes.newState ? { ...effectiveLeftState, ...rightRes.newState } : effectiveLeftState,
                 exitCode: rightRes.exitCode,
                 uiAction: rightRes.uiAction || leftRes.uiAction,
                 navigationAction: rightRes.navigationAction || leftRes.navigationAction,
@@ -203,7 +212,9 @@ export class ExecuteCommand implements IShellExecutor {
 
             // Pass output to next stage as stdin
             currentInput = res.output;
-            currentState = res.newState;
+            if (res.newState) {
+                currentState = { ...currentState, ...res.newState };
+            }
             lastExitCode = res.exitCode;
             currentState.lastExitCode = res.exitCode;
 
@@ -276,15 +287,17 @@ export class ExecuteCommand implements IShellExecutor {
 
         if (condRes.exitCode === 0) {
             // Run THEN
-            finalRes = await this.visit(node.thenBody, condRes.newState, stdin);
+            const thenState = condRes.newState ? { ...state, ...condRes.newState } : state;
+            finalRes = await this.visit(node.thenBody, thenState, stdin);
         } else if (node.elseBody) {
             // Run ELSE
-            finalRes = await this.visit(node.elseBody, condRes.newState, stdin);
+            const elseState = condRes.newState ? { ...state, ...condRes.newState } : state;
+            finalRes = await this.visit(node.elseBody, elseState, stdin);
         } else {
             // No else, condition false -> exit code 0
             finalRes = {
                 output: '',
-                newState: condRes.newState,
+                newState: condRes.newState || state, // Fallback if condRes didn't change state
                 exitCode: 0
             };
         }
@@ -330,7 +343,9 @@ export class ExecuteCommand implements IShellExecutor {
             currentState = { ...currentState, environment: newEnv };
 
             const res = await this.visit(node.body, currentState, stdin);
-            currentState = res.newState;
+            if (res.newState) {
+                currentState = { ...currentState, ...res.newState };
+            }
             cumulativeOutput += res.output;
             lastExitCode = res.exitCode;
 
@@ -343,7 +358,7 @@ export class ExecuteCommand implements IShellExecutor {
                 continue; // Next iteration
             }
             if (res.controlFlow === 'RETURN') {
-                return { ...res, output: cumulativeOutput }; // Bubble up return
+                return { ...res, newState: currentState, output: cumulativeOutput }; // Bubble up return
             }
         }
 
@@ -366,7 +381,9 @@ export class ExecuteCommand implements IShellExecutor {
         while (iterations < MAX_LOOPS) {
             const condRes = await this.visit(node.condition, currentState, stdin);
             cumulativeOutput += condRes.output;
-            currentState = condRes.newState;
+            if (condRes.newState) {
+                currentState = { ...currentState, ...condRes.newState };
+            }
 
             if (condRes.exitCode !== 0) {
                 // False, broken loop
@@ -375,13 +392,15 @@ export class ExecuteCommand implements IShellExecutor {
 
             // True, run body
             const bodyRes = await this.visit(node.body, currentState, stdin);
-            currentState = bodyRes.newState;
+            if (bodyRes.newState) {
+                currentState = { ...currentState, ...bodyRes.newState };
+            }
             cumulativeOutput += bodyRes.output;
             lastExitCode = bodyRes.exitCode;
 
             // Handle Break/Continue
             if (bodyRes.controlFlow === 'BREAK') break;
-            if (bodyRes.controlFlow === 'RETURN') return { ...bodyRes, output: cumulativeOutput };
+            if (bodyRes.controlFlow === 'RETURN') return { ...bodyRes, newState: currentState, output: cumulativeOutput };
 
             iterations++;
         }
@@ -477,7 +496,8 @@ export class ExecuteCommand implements IShellExecutor {
             // However, side-effects to OTHER variables ($VAR) must remain.
             // So we take `res.newState.environment`, and RESTORE the positional params from `previousEnv`.
 
-            const restoredEnv = { ...res.newState.environment };
+            const effectiveResState = res.newState ? { ...funcState, ...res.newState } : funcState;
+            const restoredEnv = { ...effectiveResState.environment };
             // Restore special params
             ['#', '@', '*'].forEach(k => {
                 if (previousEnv[k] !== undefined) restoredEnv[k] = previousEnv[k];
@@ -501,7 +521,12 @@ export class ExecuteCommand implements IShellExecutor {
             // If implicit return (no return command), exitCode is last command's.
 
             // Consumed control flow
-            const finalState = { ...res.newState, environment: restoredEnv, callStackDepth: state.callStackDepth };
+            const finalState = {
+                ...state, // start with original to keep structure? No, we need mutations.
+                ...(res.newState || {}), // Apply mutations
+                environment: restoredEnv, // But enforce restored environment
+                callStackDepth: state.callStackDepth
+            };
 
             // Suppress RETURN, but propagate BREAK/CONTINUE
             const flow = res.controlFlow === 'RETURN' ? undefined : res.controlFlow;

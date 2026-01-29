@@ -28,6 +28,8 @@ import { Cursor } from '../components/Cursor';
 import { PopChar } from '../components/PopChar';
 import { useTheme } from '../context/ThemeContext';
 
+import { IrcTab } from '../components/IrcTab';
+
 export const TerminalScreen: React.FC = () => {
     const { fs, gameManager, commandExecutor } = useGame();
     const { theme, settings } = useTheme();
@@ -42,6 +44,7 @@ export const TerminalScreen: React.FC = () => {
         outputLines,
         ghostText,
         isTransitioning,
+        missions,
         handleInputChange,
         handleKeyPress,
         handleCommand,
@@ -193,6 +196,7 @@ export const TerminalScreen: React.FC = () => {
             bottomContent={bottomContent}
         >
             {isTransitioning && <View style={dynamicStyles.crtBlinkOverlay} />}
+            <IrcTab missions={missions} />
         </ConsoleLayout>
     );
 };

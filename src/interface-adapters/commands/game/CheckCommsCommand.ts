@@ -12,9 +12,9 @@ export class CheckCommsCommand implements ICommand {
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         const input = context.stdin;
-        const mail = this.gameManager.spawnNPCEvent();
+        const mission = this.gameManager.spawnNPCEvent();
         return {
-            output: `[ SECURE CHANNEL ESTABLISHED ]\nIncoming transmission from ${mail.from}...\nMessage saved to /home/operator/mail/${mail.id}`,
+            output: `[ SIGNAL DETECTED ]\nNew channel opened: #${mission.id}\nType: ${mission.type.toUpperCase()}\nTarget: ${mission.target}\n\nCheck the IRC tab for details.`,
             exitCode: 0,
             newState: state
         };

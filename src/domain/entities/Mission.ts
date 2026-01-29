@@ -16,6 +16,12 @@ import { NPC } from './NPC';
 
 export type MissionType = 'hack' | 'decrypt' | 'retrieve' | 'monitor';
 
+export interface ChatMessage {
+    sender: string;
+    message: string;
+    timestamp: number;
+}
+
 export interface Mission {
     id: string;
     type: MissionType;
@@ -24,6 +30,7 @@ export interface Mission {
     reward: string;
     status: 'active' | 'completed' | 'failed';
     assignedBy: string; // NPC ID
+    chatHistory: ChatMessage[];
 }
 
 export class MissionGenerator {
@@ -62,6 +69,7 @@ export class MissionGenerator {
             reward,
             status: 'active',
             assignedBy: npc.id,
+            chatHistory: [],
         };
     }
 
@@ -81,13 +89,13 @@ export class MissionGenerator {
     private static generateDescription(type: MissionType, target: string, npc: NPC): string {
         switch (type) {
             case 'hack':
-                return `Gain root access to ${target}. ${npc.name} needs a backdoor installed.`;
+                return `Install backdoor in ${target}.`;
             case 'decrypt':
-                return `Decrypt the secure archive at ${target}. It contains evidence for ${npc.goal}.`;
+                return `Decrypt archive at ${target}.`;
             case 'retrieve':
-                return `Navigate to ${target} and retrieve the payload. Priority Alpha.`;
+                return `Fetch payload from ${target}.`;
             case 'monitor':
-                return `Tap into the comms feed at ${target}. ${npc.name} suspects compromised chatter.`;
+                return `Tap comms at ${target}.`;
             default:
                 return `Investigate ${target}.`;
         }

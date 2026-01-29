@@ -60,6 +60,7 @@ export const useTerminalViewModel = (
     const [activeApp, setActiveApp] = useState<ActiveApp>({ type: 'SHELL' });
     const [state, setState] = useState<TerminalState>(createInitialTerminalState());
     const [isTransitioning, setIsTransitioning] = useState(false);
+    const [missions, setMissions] = useState(gameManager.getActiveMissions());
 
     // -- Input Controller --
     const isTutorActive = useCallback(() => {
@@ -191,6 +192,7 @@ export const useTerminalViewModel = (
         if (eventMsg) {
             outputController.appendSystemMessage(eventMsg);
         }
+        setMissions([...gameManager.getActiveMissions()]);
     }, [inputController, outputController, state, commandExecutor, navigation, gameManager, gameObserver]);
 
     // Update ref for TutorController callback
@@ -258,6 +260,9 @@ export const useTerminalViewModel = (
         // Tutor State (from TutorController)
         tutorEmotion: tutorController.emotion,
         crashingIndices: tutorController.crashingIndices,
+
+        // Game State
+        missions,
 
         // Handlers
         handleInputChange,
