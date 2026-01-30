@@ -85,7 +85,7 @@ export class ExecuteCommand implements IShellExecutor {
     private createInterpreter(fsService: FileSystemService): ShellInterpreter {
         return new ShellInterpreter(
             fsService,
-            (fsService as any).fs || this.fs, // Unwrap or fallback
+            fsService.fileSystem, // Use the public getter
             this.registry,
             new ShellExpansionService(fsService),
             this.jobControl,

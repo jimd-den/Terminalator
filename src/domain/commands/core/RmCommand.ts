@@ -24,6 +24,7 @@ export class RmCommand extends CommandBase {
     constructor(private fsService: FileSystemService) { super(); }
 
     executeInternal(args: string[], flags: Set<string>, targets: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const fsService = context.fileSystemService || this.fsService;
         const recursive = this.hasFlag('r') || this.hasFlag('R');
         const force = this.hasFlag('f');
 
@@ -36,8 +37,8 @@ export class RmCommand extends CommandBase {
         }
 
         for (const target of targets) {
-            const path = this.fsService.resolveAbsolutePath(target, state.currentDirectory);
-            const existing = this.fsService.resolve(path);
+            const path = fsService.resolveAbsolutePath(target, state.currentDirectory);
+            const existing = fsService.resolve(path);
 
             if (!existing) {
                 if (force) continue;
@@ -49,7 +50,7 @@ export class RmCommand extends CommandBase {
             }
 
             // Check if directory
-            if (this.fsService.isDirectory(existing)) {
+            if (fsService.isDirectory(existing)) {
                 if (!recursive) {
                     return {
                         output: `rm: cannot remove '${target}': Is a directory`,
@@ -60,7 +61,7 @@ export class RmCommand extends CommandBase {
 
                 // Recursive deletion
                 try {
-                    this.deleteRecursive(path);
+                    this.deleteRecursive(path, fsService);
                 } catch (e: any) {
                     return {
                         output: `rm: cannot remove '${target}': ${e.message}`,
@@ -71,7 +72,7 @@ export class RmCommand extends CommandBase {
             } else {
                 // Remove file
                 try {
-                    this.fsService.deleteNode(path);
+                    fsService.deleteNode(path);
                 } catch (e: any) {
                     // Should not happen if we resolved it, unless permissions/race
                     return {
@@ -90,20 +91,20 @@ export class RmCommand extends CommandBase {
         };
     }
 
-    private deleteRecursive(path: string) {
-        const node = this.fsService.resolve(path);
+    private deleteRecursive(path: string, fsService: FileSystemService) {
+        const node = fsService.resolve(path);
         if (!node) return;
 
-        if (this.fsService.isDirectory(node)) {
+        if (fsService.isDirectory(node)) {
             // Delete all children first
             const children = Array.from((node as DirectoryNode).children.values());
             for (const child of children) {
                 const childPath = path === '/' ? `/${child.name}` : `${path}/${child.name}`;
-                this.deleteRecursive(childPath);
+                this.deleteRecursive(childPath, fsService);
             }
         }
 
         // Now valid to delete (empty dir or file)
-        this.fsService.deleteNode(path);
+        fsService.deleteNode(path);
     }
 }

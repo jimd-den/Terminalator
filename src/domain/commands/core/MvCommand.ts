@@ -22,6 +22,7 @@ export class MvCommand extends CommandBase {
     constructor(private fsService: FileSystemService) { super(); }
 
     executeInternal(args: string[], flags: Set<string>, operands: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const fsService = context.fileSystemService || this.fsService;
         const input = getStdinAsString(context);
         // Flags handled by base class (though Mv ignores most)
 
@@ -37,9 +38,9 @@ export class MvCommand extends CommandBase {
         const destination = operands[operands.length - 1];
 
         // Process destination
-        const destPath = this.fsService.resolveAbsolutePath(destination, state.currentDirectory);
-        const destNode = this.fsService.resolve(destPath);
-        const destIsDir = destNode ? this.fsService.isDirectory(destNode) : destination.endsWith('/');
+        const destPath = fsService.resolveAbsolutePath(destination, state.currentDirectory);
+        const destNode = fsService.resolve(destPath);
+        const destIsDir = destNode ? fsService.isDirectory(destNode) : destination.endsWith('/');
 
         // If multiple sources, dest MUST be a directory
         if (sources.length > 1 && destNode && !destIsDir) {
@@ -51,8 +52,8 @@ export class MvCommand extends CommandBase {
         }
 
         for (const source of sources) {
-            const srcPath = this.fsService.resolveAbsolutePath(source, state.currentDirectory);
-            const srcNode = this.fsService.resolve(srcPath);
+            const srcPath = fsService.resolveAbsolutePath(source, state.currentDirectory);
+            const srcNode = fsService.resolve(srcPath);
 
             if (!srcNode) {
                 return {
@@ -63,10 +64,7 @@ export class MvCommand extends CommandBase {
             }
 
             // Check if source is directory and dest is file (FAIL)
-            // If dest doesn't exist but is treated as file (not ending in /) -> renaming dir to file is valid?
-            // "mv dir file" -> rename dir to file. Valid.
-            // "mv dir existing_file" -> fail (cannot overwrite file with dir).
-            if (this.fsService.isDirectory(srcNode) && destNode && !this.fsService.isDirectory(destNode)) {
+            if (fsService.isDirectory(srcNode) && destNode && !fsService.isDirectory(destNode)) {
                 return {
                     output: `mv: cannot overwrite non-directory '${destination}' with directory '${source}'`,
                     newState: state,
@@ -85,7 +83,7 @@ export class MvCommand extends CommandBase {
                     continue; // No-op, exit code 0 implied for this item
                 }
 
-                this.fsService.rename(srcPath, finalDest);
+                fsService.rename(srcPath, finalDest);
 
             } catch (e: any) {
                 return {

@@ -31,6 +31,7 @@ export class CdCommand implements ICommand {
      * @param state - Current terminal state.
      */
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const fsService = context.fileSystemService || this.fs;
         const input = getStdinAsString(context);
         const target = args.length > 0 ? args[0] : '~';
         let newPath = target;
@@ -52,11 +53,11 @@ export class CdCommand implements ICommand {
             }
         }
 
-        const node = this.fs.resolve(newPath, state.currentDirectory);
+        const node = fsService.resolve(newPath, state.currentDirectory);
 
         if (node) {
-            if (this.fs.isDirectory(node)) {
-                const absolutePath = this.fs.getAbsolutePath(node);
+            if (fsService.isDirectory(node)) {
+                const absolutePath = fsService.getAbsolutePath(node);
                 return {
                     output: target === '-' ? absolutePath : '',
                     newState: {

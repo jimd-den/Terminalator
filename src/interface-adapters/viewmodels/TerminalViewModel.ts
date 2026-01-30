@@ -90,11 +90,17 @@ export const useTerminalViewModel = (
     // -- Tutor Controller Callbacks --
     const tutorCallbacks: TutorControllerCallbacks = useMemo(() => ({
         onStart: (lesson: Lesson, targetCwd: string) => {
+            // [FIX] Skip relocation for mission-related lessons to avoid resetting context
+            const isMission = lesson.id.startsWith('MISSION_');
+            if (isMission) return;
+
             setState(prev => ({ ...prev, currentDirectory: targetCwd }));
             outputController.appendSystemMessage(`[ SYSTEM ] RELOCATING TO TRAINING ENVIRONMENT: ${targetCwd}...`);
         },
         onStop: (originalCwd: string | null) => {
-            if (originalCwd) {
+            const current = stateRef.current;
+            // Only restore if we aren't in a remote session or mission
+            if (originalCwd && !current.fsContext) {
                 setState(prev => ({ ...prev, currentDirectory: originalCwd }));
                 outputController.appendSystemMessage(`[ SYSTEM ] TRAINING HALTED. RESTORING CONTEXT: ${originalCwd}`);
             }
@@ -123,12 +129,17 @@ export const useTerminalViewModel = (
             }
 
             // Restore context (Relocation cleanup)
-            // [FIX] Skip restoration for mission-related lessons to allow SSH/navigation to persist
+            // [FIX] Skip restoration for mission-related lessons OR if we have actively switched FS context (SSH)
             const isMission = lesson.id.startsWith('MISSION_');
-            if (originalCwd && !isMission) {
+            const hasSwitchedContext = !!stateRef.current.fsContext;
+
+            if (originalCwd && !isMission && !hasSwitchedContext) {
                 setTimeout(() => {
-                    setState(prev => ({ ...prev, currentDirectory: originalCwd }));
-                    outputController.appendSystemMessage(`[ SYSTEM ] CONTEXT RESTORED: ${originalCwd}`);
+                    // Final check of the ref to ensure we don't overwrite a successful SSH that happened in the meantime
+                    if (!stateRef.current.fsContext) {
+                        setState(prev => ({ ...prev, currentDirectory: originalCwd }));
+                        outputController.appendSystemMessage(`[ SYSTEM ] CONTEXT RESTORED: ${originalCwd}`);
+                    }
                 }, 1000);
             }
         }
@@ -200,7 +211,6 @@ export const useTerminalViewModel = (
         const prevFsContext = state.fsContext;
         const effectiveState = newState ? { ...state, ...newState } : state;
 
-        if (newState) setState(prev => ({ ...prev, ...newState }));
         inputController.clearInput();
 
         // Notify GameManager (Tutor Analysis)

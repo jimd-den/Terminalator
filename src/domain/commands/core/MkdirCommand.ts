@@ -24,6 +24,7 @@ export class MkdirCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const fsService = context.fileSystemService || this.fs;
         const input = getStdinAsString(context);
         this.logExecution('MkdirCommand.execute', { args, state });
 
@@ -48,7 +49,7 @@ export class MkdirCommand implements ICommand {
         let outputString = '';
 
         for (const target of options.targets) {
-            const result = this.createPath(target, options, state);
+            const result = this.createPath(target, options, state, fsService);
             if (result.error) {
                 outputString += `mkdir: ${result.error}\n`;
                 exitCode = 1;
@@ -113,15 +114,15 @@ export class MkdirCommand implements ICommand {
         return { parents, modeStr, targets };
     }
 
-    private createPath(target: string, options: any, state: TerminalState): { error?: string } {
+    private createPath(target: string, options: any, state: TerminalState, fsService: FileSystemService): { error?: string } {
         const fullPath = this.resolvePath(target, state);
         const components = this.getPathComponents(fullPath);
 
         // Check search permissions for all but the last component
         let current = '/';
         for (let i = 0; i < components.length; i++) {
-            const node = this.fs.resolve(current);
-            if (node && !this.hasSearchPermission(node, state.user)) {
+            const node = fsService.resolve(current);
+            if (node && !this.hasSearchPermission(node, state.user, fsService)) {
                 return { error: `cannot create directory '${target}': Permission denied` };
             }
             if (i === components.length - 1) break;
@@ -129,28 +130,28 @@ export class MkdirCommand implements ICommand {
             current += (current === '/' ? '' : '/') + components[i];
 
             // If component exists and is not a directory, that's an error for mkdir -p too if it's intermediate
-            const existingNode = this.fs.resolve(current);
-            if (existingNode && !this.fs.isDirectory(existingNode)) {
+            const existingNode = fsService.resolve(current);
+            if (existingNode && !fsService.isDirectory(existingNode)) {
                 return { error: `cannot create directory '${target}': File exists` };
             }
         }
 
         if (options.parents) {
-            return this.createPathWithParents(components, options.modeStr, state.user);
+            return this.createPathWithParents(components, options.modeStr, state.user, fsService);
         } else {
-            return this.createSinglePath(fullPath, options.modeStr, state.user);
+            return this.createSinglePath(fullPath, options.modeStr, state.user, fsService);
         }
     }
 
-    private createSinglePath(path: string, modeStr: string | undefined, user: string): { error?: string } {
-        const node = this.fs.resolve(path);
+    private createSinglePath(path: string, modeStr: string | undefined, user: { uid: number, gid: number, groups: number[] } | string, fsService: FileSystemService): { error?: string } {
+        const node = fsService.resolve(path);
         if (node) {
             return { error: `cannot create directory '${path}': File exists` };
         }
 
         const parentPath = this.getParentPath(path);
-        const parent = this.fs.resolve(parentPath);
-        if (!parent || !this.fs.isDirectory(parent)) {
+        const parent = fsService.resolve(parentPath);
+        if (!parent || !fsService.isDirectory(parent)) {
             return { error: `cannot create directory '${path}': No such file or directory` };
         }
 
@@ -158,20 +159,20 @@ export class MkdirCommand implements ICommand {
             // Default POSIX mode for mkdir is a=rwx (0777) modified by umask.
             // Our sim uses 0755 as default.
             const mode = modeStr ? ModeParser.parse(modeStr, 0o777) : 0o755;
-            this.fs.mkdir(path, mode);
+            fsService.mkdir(path, mode);
             return {};
         } catch (e: any) {
             return { error: `cannot create directory '${path}': ${e.message}` };
         }
     }
 
-    private createPathWithParents(components: string[], modeStr: string | undefined, user: string): { error?: string } {
+    private createPathWithParents(components: string[], modeStr: string | undefined, user: { uid: number, gid: number, groups: number[] } | string, fsService: FileSystemService): { error?: string } {
         let currentPath = '';
         const len = components.length;
 
         for (let i = 0; i < len; i++) {
             currentPath += `/${components[i]}`;
-            const node = this.fs.resolve(currentPath);
+            const node = fsService.resolve(currentPath);
 
             if (!node) {
                 try {
@@ -182,28 +183,25 @@ export class MkdirCommand implements ICommand {
                         ? (modeStr ? ModeParser.parse(modeStr, 0o777) : 0o755)
                         : 0o755; // Intermediate default
 
-                    this.fs.mkdir(currentPath, mode);
+                    fsService.mkdir(currentPath, mode);
                 } catch (e: any) {
                     return { error: `cannot create directory '${currentPath}': ${e.message}` };
                 }
-            } else if (!this.fs.isDirectory(node)) {
+            } else if (!fsService.isDirectory(node)) {
                 return { error: `cannot create directory '${currentPath}': File exists` };
             }
         }
         return {};
     }
 
-    private hasSearchPermission(dentry: any, user: string): boolean {
+    private hasSearchPermission(dentry: any, user: { uid: number, gid: number, groups: number[] } | string, fsService: FileSystemService): boolean {
         if (user === 'root') return true;
-        const inode = this.fs.getInode(dentry.inodeId);
+        const inode = fsService.getInode(dentry.inodeId);
         if (!inode) return false;
 
-        // Simplified permission check:
-        // Since we don't have UID/GID mapping for 'testuser', 
-        // we check if 'other' has execute or if it's the owner (assume creator is operator).
-        // For test purposes, we'll check S_IXOTH if not root.
+        // Simplified permission check
         const mode = inode.mode;
-        return (mode & 0o001) !== 0 || (user === 'operator' && (mode & 0o100) !== 0);
+        return (mode & 0o001) !== 0 || (typeof user === 'string' && user === 'operator' && (mode & 0o100) !== 0);
     }
 
     private resolvePath(path: string, state: TerminalState): string {
