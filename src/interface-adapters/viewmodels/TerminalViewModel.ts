@@ -23,7 +23,8 @@ import React from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { FileSystem } from '../../domain/entities/FileSystem';
 import { FileSystemService } from '../../domain/services/FileSystemService';
-import { ExecuteCommand, CommandResponse } from '../../domain/usecases/ExecuteCommand';
+import { ExecuteCommand } from '../../domain/usecases/ExecuteCommand';
+import { CommandResponse } from '../../domain/entities/Command';
 import { GameManager } from '../GameManager';
 import { createInitialTerminalState, TerminalState } from '../../domain/entities/TerminalState';
 import { AutocompleteService } from '../../domain/services/AutocompleteService';
@@ -57,8 +58,15 @@ export const useTerminalViewModel = (
     }, [gameManager]);
 
     // -- Core State --
-    const [activeApp, setActiveApp] = useState<ActiveApp>({ type: 'SHELL' });
     const [state, setState] = useState<TerminalState>(createInitialTerminalState());
+    const [activeApp, setActiveApp] = useState<ActiveApp>({ type: 'SHELL' });
+
+    // [FIX] State Ref to avoid stale closures in handleCommand and other callbacks
+    const stateRef = useRef(state);
+    useEffect(() => {
+        stateRef.current = state;
+    }, [state]);
+
     const [isTransitioning, setIsTransitioning] = useState(false);
     const [missions, setMissions] = useState(gameManager.getActiveMissions());
 
@@ -110,13 +118,17 @@ export const useTerminalViewModel = (
             // Execute the completed command
             if (handleCommandRef.current) {
                 handleCommandRef.current(lesson.text);
+                // [FIX] Clear input immediately after auto-exec to prevent double-firing from user ENTER
+                inputController.clearInput();
             }
 
-            // Restore context
-            if (originalCwd) {
+            // Restore context (Relocation cleanup)
+            // [FIX] Skip restoration for mission-related lessons to allow SSH/navigation to persist
+            const isMission = lesson.id.startsWith('MISSION_');
+            if (originalCwd && !isMission) {
                 setTimeout(() => {
                     setState(prev => ({ ...prev, currentDirectory: originalCwd }));
-                    outputController.appendSystemMessage(`[ SYSTEM ] MISSION ACCOMPLISHED. RETURN TO BASE: ${originalCwd}`);
+                    outputController.appendSystemMessage(`[ SYSTEM ] CONTEXT RESTORED: ${originalCwd}`);
                 }, 1000);
             }
         }
@@ -134,27 +146,28 @@ export const useTerminalViewModel = (
         const cmdToRun = manualCommand !== undefined ? manualCommand : inputController.input;
         if (!cmdToRun) return;
 
-        // Special Command: exit
-        if (cmdToRun === 'exit') {
+        // Execute via Domain Logic
+        // Use stateRef.current to ensure we have the absolute latest state (inc. previous command's side effects)
+        const response: CommandResponse = await commandExecutor.execute(cmdToRun, stateRef.current);
+        const { output: cmdOutput, newState, navigationAction, uiAction, exitCode, controlFlow } = response;
+
+        // [FIX] Synchronous State Update for the Ref
+        // This ensures the NEXT command in a sequence (e.g. from Tutor) sees this command's state changes
+        // even if React hasn't re-rendered yet.
+        if (newState) {
+            const updated = { ...stateRef.current, ...newState };
+            stateRef.current = updated;
+            setState(updated);
+        }
+
+        // Handle Control Flow (e.g. EXIT)
+        if (controlFlow === 'EXIT') {
             gameManager.tutorEngine.stop();
             outputController.clear();
             inputController.clearInput();
+            // Optional: outputController.appendSystemMessage('[ SYSTEM ] SESSION TERMINATED.');
             return;
         }
-
-        // Special Command: train
-        if (cmdToRun === 'train') {
-            const lesson = gameManager.startRandomLesson();
-            outputController.appendInput(cmdToRun);
-            outputController.appendSystemMessage(`[ SYSTEM ] LOADING SIMULATION: ${lesson.id}`);
-            outputController.appendSystemMessage(`[ MISSION ] ${lesson.instructions}`);
-            inputController.clearInput();
-            return;
-        }
-
-        // Execute via Domain Logic
-        const response: CommandResponse = await commandExecutor.execute(cmdToRun, state);
-        const { output: cmdOutput, newState, navigationAction, uiAction, exitCode } = response;
 
         // Handle UI Actions
         if (uiAction === 'CLEAR') {
@@ -184,8 +197,14 @@ export const useTerminalViewModel = (
             outputController.appendOutput(cmdOutput);
         }
 
+        const prevFsContext = state.fsContext;
+        const effectiveState = newState ? { ...state, ...newState } : state;
+
         if (newState) setState(prev => ({ ...prev, ...newState }));
         inputController.clearInput();
+
+        // Notify GameManager (Tutor Analysis)
+        gameManager.onCommandExecuted(effectiveState, response, prevFsContext);
 
         // Simulate random procedural events (Game Logic)
         const eventMsg = gameObserver.checkProceduralEvents(outputController.getLineCount());
@@ -244,6 +263,17 @@ export const useTerminalViewModel = (
         }, 100);
     }, []);
 
+    // -- Mission Handlers --
+    const handleStartMission = useCallback((id: string) => {
+        gameManager.startMission(id);
+        setMissions([...gameManager.getActiveMissions()]); // Force update
+    }, [gameManager]);
+
+    const handleAbandonMission = useCallback((id: string) => {
+        gameManager.abandonMission(id);
+        setMissions([...gameManager.getActiveMissions()]); // Force update
+    }, [gameManager]);
+
     return {
         // App State
         activeApp,
@@ -268,6 +298,8 @@ export const useTerminalViewModel = (
         handleInputChange,
         handleKeyPress,
         handleCommand,
-        handleVimExit
+        handleVimExit,
+        handleStartMission,
+        handleAbandonMission
     };
 };

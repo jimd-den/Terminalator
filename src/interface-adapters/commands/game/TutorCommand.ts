@@ -15,12 +15,23 @@ export class TutorCommand implements ICommand {
     constructor(private gameManager: GameManager) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = context.stdin;
-        const lessonId = args[0] || 'LESSON_01'; // Default to first lesson
+        const isTrain = args[0] === 'train' || args.length === 0;
+        let lessonId = args[0] || 'LESSON_01';
 
-        const success = this.gameManager.tutorEngine.startLesson(lessonId, context.fs);
+        if (isTrain) {
+            const lesson = this.gameManager.startRandomLesson();
+            return {
+                output: `TUTOR PROTOCOL INITIATED: ${lesson.id}\n[ MISSION ] ${lesson.instructions}\nFollow instructions from TutorBot.`,
+                newState: state,
+                exitCode: 0
+            };
+        }
 
-        if (success) {
+        // Use GameManager facade instead of calling engine directly
+        this.gameManager.startTutor(lessonId);
+
+        // Check if actually started (simple proxy for success)
+        if (this.gameManager.tutorEngine.isActive()) {
             return {
                 output: `TUTOR PROTOCOL INITIATED: ${lessonId}\nFollow instructions from TutorBot.`,
                 newState: state,

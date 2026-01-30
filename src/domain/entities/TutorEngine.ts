@@ -14,7 +14,6 @@
  */
 
 import { FileSystem } from './FileSystem';
-import { FileSystemService } from '../services/FileSystemService';
 
 export enum TutorEmotion {
     NORMAL = 'NORMAL',
@@ -38,39 +37,6 @@ export interface Lesson {
     setup?: (fs: FileSystem) => void;
 }
 
-const CURRICULUM: Lesson[] = [
-    {
-        id: 'LESSON_01',
-        type: 'SHELL',
-        text: 'grep "Urgent" mail.log',
-        instructions: 'TYPE THE FOLLOWING COMMAND TO FILTER LOGS:',
-        setup: (fs: FileSystem) => {
-            const service = new FileSystemService(fs);
-            service.writeFile('/home/operator/mail.log', 'Info: Normal operation\nWarning: Disk space low\nUrgent: Security breach detected\nInfo: Service started');
-        }
-    },
-    {
-        id: 'LESSON_02',
-        type: 'SHELL',
-        text: 'cd /var/secure/data',
-        instructions: 'NAVIGATE TO SECURE STORAGE:',
-        setup: (fs: FileSystem) => {
-            const service = new FileSystemService(fs);
-            service.createDirectory('/var/secure/data');
-        }
-    },
-    {
-        id: 'LESSON_03',
-        type: 'SHELL',
-        text: 'vim secret.txt',
-        instructions: 'OPEN THE FILE IN VIM:',
-        setup: (fs: FileSystem) => {
-            const service = new FileSystemService(fs);
-            service.writeFile('/home/operator/secret.txt', 'This is a top secret file.');
-        }
-    }
-    // More lessons to be added
-];
 
 export class TutorEngine {
     private active: boolean = false;
@@ -92,15 +58,7 @@ export class TutorEngine {
 
     constructor() { }
 
-    public startLesson(lessonOrId: string | Lesson, fs: FileSystem): boolean {
-        let lesson: Lesson | undefined;
-
-        if (typeof lessonOrId === 'string') {
-            lesson = CURRICULUM.find(l => l.id === lessonOrId);
-        } else {
-            lesson = lessonOrId;
-        }
-
+    public startLesson(lesson: Lesson): boolean {
         if (!lesson) return false;
 
         this.currentLesson = lesson;
@@ -111,21 +69,13 @@ export class TutorEngine {
         this.patience = 100;
         this.consecutiveMistakes = 0;
 
-        // Execute Setup
-        if (lesson.setup) {
-            if (!fs) {
-                console.error("TutorEngine: Cannot execute lesson setup. FileSystem argument is missing.");
-                return false;
-            }
-            try {
-                lesson.setup(fs);
-            } catch (error: any) {
-                console.error("TutorEngine: Error during lesson setup:", error.message);
-                return false;
-            }
-        }
+        // Note: Setup execution is now the responsibility of the caller (LessonService)
 
         this.updateEmotion();
+
+        this.emit({ type: 'START', payload: this.currentLesson });
+        // Emit initial progress to show full ghost text
+        this.emit({ type: 'PROGRESS', payload: { index: 0 } });
 
         return true;
     }

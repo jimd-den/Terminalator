@@ -48,7 +48,9 @@ export const TerminalScreen: React.FC = () => {
         handleInputChange,
         handleKeyPress,
         handleCommand,
-        handleVimExit
+        handleVimExit,
+        handleStartMission,
+        handleAbandonMission
     } = useTerminalViewModel(fs, commandExecutor, gameManager);
 
     const isShell = activeApp.type === 'SHELL';
@@ -172,7 +174,7 @@ export const TerminalScreen: React.FC = () => {
             ) : (
                 <>
                     <Text style={dynamicStyles.inputLabel}>
-                        INPUT // {state.environment.USER}@system
+                        INPUT // {state.environment.USER}@{state.fsContext || state.environment.HOSTNAME || 'system'}
                     </Text>
                     <Pressable style={dynamicStyles.inputContainer} onPress={refocus}>
                         <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -196,7 +198,11 @@ export const TerminalScreen: React.FC = () => {
             bottomContent={bottomContent}
         >
             {isTransitioning && <View style={dynamicStyles.crtBlinkOverlay} />}
-            <IrcTab missions={missions} />
+            <IrcTab
+                missions={missions}
+                onStartMission={handleStartMission}
+                onAbandonMission={handleAbandonMission}
+            />
         </ConsoleLayout>
     );
 };

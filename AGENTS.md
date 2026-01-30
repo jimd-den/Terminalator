@@ -228,7 +228,35 @@ src/
 1.  **MakeCommand:** Handles parsing and execution. Needs splitting.
 2.  **Parsers:** `ShellParser` logic complexity is high; consider visitor pattern if grammar grows.
 
-### User Rules (The 8-Point GEMINI System)
+---
+
+## 7. Mission System Architecture ✅ REFACTORED
+
+### Overview
+Missions are implemented using a **State Machine** managed by `GameManager` and a **Strategy Pattern** for rule evaluation. This ensures that progression logic is decoupled from command implementations and is based on the actual state of the File System.
+
+### Components
+1.  **Mission Entity** (`src/domain/entities/Mission.ts`):
+    *   Tracks `currentStep` using the `MissionStep` enum:
+        *   `PENDING`: Mission started, user needs to connect.
+        *   `CONNECTED`: SSH session established to target.
+        *   `LOCATED`: User has found the objective file.
+        *   `COMPLETED`: Objective accomplished (e.g., file exfiltrated/modified).
+
+2.  **IMissionStrategy** (`src/domain/services/mission-strategies/`):
+    *   `evaluate(mission, state, lastResponse)`: Evaluates the current state and return hints or progression triggers.
+    *   **ExfiltrateStrategy**: Rules for moving files from remote to local.
+    *   **ModifyStrategy**: Rules for altering remote files.
+
+3.  **Tutor Synchronization**:
+    *   Missions use the `MISSION_` lesson ID prefix.
+    *   `TerminalViewModel` skips directory context restoration for these lessons to persist SSH sessions.
+    *   `GameManager` uses a low-latency transition (200ms) between steps to prevent UI flicker.
+
+---
+
+## 8. The 8-Point GEMINI System (User Rules)
+
 The user rules defined in section 2 are absolute.
 1.  **Strict Architecture**
 2.  **Literate Documentation**

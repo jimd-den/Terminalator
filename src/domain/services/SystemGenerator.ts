@@ -91,8 +91,11 @@ export class SystemGenerator {
             { name: 'guest', uid: 1001, gid: 1001, fullname: 'Guest User' },
         ];
 
+        // Ensure admin always exists for tutorial missions
+        baseUsers.push({ name: 'admin', uid: 1002, gid: 1002, fullname: 'Administrator' });
+
         if (difficulty > 3) {
-            baseUsers.push({ name: 'admin', uid: 1001, gid: 1001, fullname: 'Administrator' });
+            // Add more users for higher difficulty...
         }
 
         // Random names
@@ -103,15 +106,35 @@ export class SystemGenerator {
         // Generate random email
         if (theme.emails.length > 0) {
             const email = theme.emails[Math.floor(Math.random() * theme.emails.length)];
-            service.writeFile(`${homeDir}/mbox`, `From: ${email.from}\nSubject: ${email.subject}\n\n${email.body}`, 'w', undefined, undefined, '/');
-            service.chown(`${homeDir}/mbox`, user.uid, user.gid);
+            service.writeFile(`${homeDir}/mbox`, `From: ${email.from}\nSubject: ${email.subject}\n\n${email.body}`, 'w', user.uid, user.gid, homeDir);
         }
 
         if (theme.todos.length > 0) {
             // Pick random todos
             const todos = theme.todos.sort(() => 0.5 - Math.random()).slice(0, 3);
-            service.writeFile(`${homeDir}/todo.list`, todos.join('\n'), 'w', undefined, undefined, '/');
-            service.chown(`${homeDir}/todo.list`, user.uid, user.gid);
+            service.writeFile(`${homeDir}/todo.list`, todos.join('\n'), 'w', user.uid, user.gid, homeDir);
+        }
+
+        // [USER REQUEST] Generate 5 test files for testing purposes if user is 'admin'
+        if (user.name === 'admin') {
+            // 1. Home
+            service.writeFile(`${homeDir}/test_home.txt`, 'SYSTEM DIAGNOSTICS: ALL SYSTEMS NOMINAL\nGENERATED_ID: ' + Math.random().toString(16).slice(2), 'w', user.uid, user.gid, homeDir);
+
+            // 2. Mail (subdir)
+            service.mkdirp(`${homeDir}/mail`, 0o700, user.uid, user.gid);
+            service.writeFile(`${homeDir}/mail/test_mail.eml`, 'Subject: SECURITY AUDIT\n\nTest mail for verification.', 'w', user.uid, user.gid, homeDir);
+
+            // 3. Docs (nested)
+            service.mkdirp(`${homeDir}/docs/nested`, 0o700, user.uid, user.gid);
+            service.writeFile(`${homeDir}/docs/nested/test_nested.txt`, 'DEEP_NESTED_SECRET_001', 'w', user.uid, user.gid, homeDir);
+
+            // 4. Src (app)
+            service.mkdirp(`${homeDir}/src/app`, 0o755, user.uid, user.gid);
+            service.writeFile(`${homeDir}/src/app/test_code.sh`, '#!/bin/bash\necho "Context Verified"', 'w', user.uid, user.gid, homeDir);
+
+            // 5. Archive (zip)
+            service.mkdirp(`${homeDir}/archive`, 0o700, user.uid, user.gid);
+            service.writeFile(`${homeDir}/archive/test_backup.zip`, 'MOCK_ZIP_DATA_PK_0x0304', 'w', user.uid, user.gid, homeDir);
         }
     }
 

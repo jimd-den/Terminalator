@@ -100,6 +100,20 @@ export const InputProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         setInputValue(' ');
     };
 
+
+    // Debounce Enter to avoid double-firing (onKeyPress + onSubmitEditing)
+    const lastEnterTime = useRef(0);
+    const fireEnter = () => {
+        const now = Date.now();
+        if (now - lastEnterTime.current < 50) return;
+        lastEnterTime.current = now;
+
+        if (onKeyPressRef.current) onKeyPressRef.current('ENTER');
+        // Check if we should clear buffer on Enter
+        lastValue.current = ' ';
+        setInputValue(' ');
+    };
+
     const handleKeyPressEvent = (e: any) => {
         const key = e.nativeEvent.key;
 
@@ -108,10 +122,7 @@ export const InputProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         // We ignore 'Backspace' here to avoid duplicate events, relying on onChangeText handling.
 
         if (key === 'Enter') {
-            if (onKeyPressRef.current) onKeyPressRef.current('ENTER');
-            // Check if we should clear buffer on Enter
-            lastValue.current = ' ';
-            setInputValue(' ');
+            fireEnter();
             return;
         }
 
@@ -127,10 +138,7 @@ export const InputProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
     const handleSubmitEditing = () => {
         // Capture soft-keyboard submit as Enter
-        if (onKeyPressRef.current) onKeyPressRef.current('ENTER');
-        // Reset buffer just in case
-        lastValue.current = ' ';
-        setInputValue(' ');
+        fireEnter();
     };
 
     const setOnKeyPress = useCallback((handler: (key: string) => void) => {

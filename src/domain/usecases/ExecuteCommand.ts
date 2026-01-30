@@ -81,18 +81,75 @@ export class ExecuteCommand implements IShellExecutor {
         return this.registry;
     }
 
+
+    private createInterpreter(fsService: FileSystemService): ShellInterpreter {
+        return new ShellInterpreter(
+            fsService,
+            (fsService as any).fs || this.fs, // Unwrap or fallback
+            this.registry,
+            new ShellExpansionService(fsService),
+            this.jobControl,
+            new RedirectionService(fsService),
+            this.binaryRunner,
+            () => this
+        );
+    }
+
+    protected resolveInterpreter(state: TerminalState): ShellInterpreter {
+        // 1. Local Context
+        if (!state.fsContext || state.fsContext === 'localhost' || state.fsContext === 'terminalator') {
+            return this.interpreter;
+        }
+
+        // 2. Remote Context (SSH)
+        if (this.networkMap) {
+            const remoteFs = this.networkMap.getSystem(state.fsContext);
+            if (remoteFs) {
+                if (this.telemetry) {
+                    this.telemetry.info(`[ExecuteCommand] Switching to remote interpreter for host: ${state.fsContext}`);
+                }
+                const remoteService = new FileSystemService(remoteFs);
+                return this.createInterpreter(remoteService);
+            }
+        }
+
+        return this.interpreter;
+    }
+
     async execute(input: string, state: TerminalState): Promise<CommandResponse> {
         const executeLogic = async (): Promise<CommandResponse> => {
-            if (!input.trim()) return { output: '', newState: state, exitCode: 0 };
+            if (!input.trim()) return { output: '', exitCode: 0, newState: state, command: input };
 
             try {
                 const ast = this.parser.parse(input);
-                if (!ast) return { output: '', newState: state, exitCode: 0 };
+                if (!ast) return { output: '', exitCode: 0, newState: state, command: input };
 
-                let res = await this.interpreter.visit(ast, state);
+                const activeInterpreter = this.resolveInterpreter(state);
+                let res = await activeInterpreter.visit(ast, state);
+
+                res.command = input;
 
                 // Handle EXIT Trap (Top Level)
                 if (res.controlFlow === 'EXIT') {
+                    // [FIX] SSH Logout Logic
+                    if (state.fsContext) {
+                        return {
+                            ...res,
+                            output: res.output + '\nConnection to ' + state.fsContext + ' closed.',
+                            newState: {
+                                ...(res.newState || state),
+                                fsContext: undefined,
+                                currentDirectory: '/home/operator', // Reset to local home
+                                environment: {
+                                    ...(res.newState?.environment || state.environment),
+                                    USER: 'operator',
+                                    HOSTNAME: 'terminalator'
+                                }
+                            },
+                            controlFlow: undefined // Swallow the EXIT signal
+                        };
+                    }
+
                     const effectiveState = mergeState(state, res.newState);
                     const trapCmd = effectiveState.traps?.get('EXIT');
 
@@ -109,14 +166,14 @@ export class ExecuteCommand implements IShellExecutor {
                         }
                     }
                 }
-                return res;
+                return { ...res, command: input };
             } catch (e: any) {
-                return fail(state, `sh: syntax error: ${e.message}`, 2);
+                return { ...fail(state, `sh: syntax error: ${e.message}`, 2), command: input };
             }
         };
 
         if (this.telemetry) {
-            return this.telemetry.trace('ExecuteCommand.execute', executeLogic, input, state.currentDirectory);
+            return this.telemetry.trace('ExecuteCommand.execute', executeLogic);
         }
         return executeLogic();
     }

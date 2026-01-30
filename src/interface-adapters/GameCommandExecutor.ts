@@ -93,12 +93,22 @@ export class GameCommandExecutor extends ExecuteCommand {
 
         // Register Tutor
         registry.register('tutor', new TutorCommand(this.gameManager));
+        registry.register('train', new TutorCommand(this.gameManager));
     }
 
-    // Override execute to trigger Tutor
+    // Override execute to trigger Tutor and handle connection setup
     async execute(input: string, state: TerminalState): Promise<CommandResponse> {
         const response = await super.execute(input, state);
-        this.gameManager.onCommandExecuted(state, response);
+
+        // 1. Connection established trigger: Ensure remote system is prepared with mission files
+        if (response.newState?.fsContext && response.newState.fsContext !== state.fsContext) {
+            this.gameManager.ensureSystemPrepared(response.newState.fsContext);
+        }
+
+        // 2. Pass the UPDATED state to GameManager for progression analysis
+        const mergedState = { ...state, ...response.newState };
+        this.gameManager.onCommandExecuted(mergedState, response);
+
         return response;
     }
 }

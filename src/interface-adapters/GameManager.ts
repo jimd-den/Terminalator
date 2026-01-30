@@ -1,30 +1,19 @@
-/**
- * GameManager - Interface Adapter Layer
- * 
- * Orchestrates the procedural elements of the game.
- * Spawns NPCs, triggers mail events, and tracks player progress.
- *
- * Pillar: The Four-Fold Shield (Strict Architecture)
- * Pillar: The Watchman’s Log (Telemetry)
- * Pillar: The Storyteller’s Code (Literate Documentation)
- */
-
-import { NPCGenerator, NPC } from '../domain/entities/NPC';
-import { MissionGenerator, Mission } from '../domain/entities/Mission';
-import { MailSystem, MailMessage } from '../domain/usecases/MailSystem';
-import { FileSystem } from '../domain/entities/FileSystem';
-import { TelemetryPort } from '../domain/ports/TelemetryPort';
-
-import { FileSystemService } from '../domain/services/FileSystemService';
-import { SystemGenerator } from '../domain/services/SystemGenerator';
-import { TutorEngine, TutorEvent } from '../domain/entities/TutorEngine';
-import { LessonGenerator, LessonType } from '../domain/services/LessonGenerator';
 
 import { IGameManager } from '../domain/interfaces/IGameManager';
 import { NetworkMap } from '../domain/services/NetworkMap';
-import { analyzeGameState, TutorAction } from '../domain/services/TutorService';
+import { analyzeGameState, checkMissionProgression, TutorAction } from '../domain/services/TutorService';
 import { TerminalState } from '../domain/entities/TerminalState';
 import { CommandResponse } from '../domain/entities/Command';
+import { NPCGenerator, NPC } from '../domain/entities/NPC';
+import { MissionGenerator, Mission, MissionStep } from '../domain/entities/Mission';
+import { MailSystem, MailMessage } from '../domain/usecases/MailSystem';
+import { FileSystem } from '../domain/entities/FileSystem';
+import { TelemetryPort } from '../domain/ports/TelemetryPort';
+import { FileSystemService } from '../domain/services/FileSystemService';
+import { SystemGenerator } from '../domain/services/SystemGenerator';
+import { TutorEngine, TutorEvent, Lesson } from '../domain/entities/TutorEngine';
+import { LessonService } from '../domain/services/LessonService';
+import { LessonType, LessonGenerator } from '../domain/services/LessonGenerator';
 
 export class GameManager implements IGameManager {
     private mailSystem: MailSystem;
@@ -32,6 +21,36 @@ export class GameManager implements IGameManager {
     private activeMissions: Mission[] = [];
     public readonly tutorEngine: TutorEngine;
     private networkMap: NetworkMap;
+    private lessonService: LessonService;
+
+    /**
+     * Ensures a system has all necessary files for active missions.
+     * @param hostname - Hostname of the system to prepare.
+     */
+    public ensureSystemPrepared(hostname: string) {
+        const system = this.networkMap.getSystem(hostname);
+        if (!system) return;
+
+        const service = new FileSystemService(system);
+        const relevantMissions = this.activeMissions.filter(m => m.targetSystem === hostname);
+
+        relevantMissions.forEach(mission => {
+            const targetPath = `/home/admin/${mission.objectiveTarget}`;
+            // Only write if doesn't exist to preserve state (if it were persistent)
+            try {
+                service.mkdirp('/home/admin');
+                service.writeFile(
+                    targetPath,
+                    `[ SECURE DATA ]\nSYSTEM: ${hostname}\nPAYLOAD: ${mission.objectiveTarget}\nAUTHENTICATION: REQUIRED\n\n${mission.description}`,
+                    'w',
+                    1002, // admin
+                    1002  // admin
+                );
+            } catch (e) {
+                // Ignore if exists/fails
+            }
+        });
+    }
 
     /**
      * Initializes the Game Manager.
@@ -56,6 +75,7 @@ export class GameManager implements IGameManager {
         const fsService = new FileSystemService(fs);
         this.mailSystem = new MailSystem(fsService, telemetry);
         this.tutorEngine = new TutorEngine();
+        this.lessonService = new LessonService();
 
         // Wire up Tutor Events to IRC (MailSystem)
         this.tutorEngine.subscribe(this.handleTutorEvent);
@@ -70,68 +90,101 @@ export class GameManager implements IGameManager {
     /**
      * Called after every command execution to update game state and trigger Tutor hints.
      */
-    onCommandExecuted(state: TerminalState, response: CommandResponse) {
-        // Check active missions for Tutor hints
+    onCommandExecuted(state: TerminalState, response: CommandResponse, prevFsContext?: string) {
+        // 1. Text Hints (IRC)
         for (const mission of this.activeMissions) {
             const hint = analyzeGameState(mission, state, response);
             if (hint) {
-                // Send hint via IRC/Mail
-                // For immediate feedback, we inject into Chat History (IRC)
-                // or send a mail if it's a big update.
                 const alreadySent = mission.chatHistory.some(m => m.message === hint.message);
                 if (!alreadySent) {
                     const sender = hint.type === 'CONGRATS' ? 'SYSTEM' : 'TutorBot';
-                    mission.chatHistory.push({
-                        sender,
-                        message: hint.message,
-                        timestamp: Date.now()
-                    });
+                    const missionIndex = this.activeMissions.indexOf(mission);
+                    const updatedMission: Mission = {
+                        ...mission,
+                        chatHistory: [
+                            ...mission.chatHistory,
+                            {
+                                sender,
+                                message: hint.message,
+                                timestamp: Date.now()
+                            }
+                        ],
+                        status: hint.type === 'CONGRATS' ? 'completed' as const : mission.status,
+                        currentStep: hint.type === 'CONGRATS' ? MissionStep.COMPLETED : mission.currentStep
+                    };
 
-                    // If CONGRATS, maybe mark mission as completed?
+                    this.activeMissions = [
+                        ...this.activeMissions.slice(0, missionIndex),
+                        updatedMission,
+                        ...this.activeMissions.slice(missionIndex + 1)
+                    ];
+
+                    // If CONGRATS, payout
                     if (hint.type === 'CONGRATS') {
-                        // mission.status = 'completed'; // Or let user claim it?
                         this.mailSystem.sendMail(
                             { name: 'Bank', id: 'bank', origin: '', career: '', goal: '', status: 'active', traits: [], loadout: [] },
                             'PAYMENT RECEIVED',
-                            `Escrow released for Mission ${mission.id}. ${mission.reward} transferred.`
+                            `Escrow released for Mission ${updatedMission.id}. ${updatedMission.reward} transferred.`
                         );
                     }
                 }
             }
         }
+
+        // 2. Progression Rules (Start new Lessons)
+        const progression = checkMissionProgression(state, this.activeMissions, prevFsContext, response);
+
+        if (progression && progression.result && progression.result.type === 'START_LESSON') {
+            const missionIndex = this.activeMissions.findIndex(m => m.id === progression.missionId);
+            if (missionIndex !== -1 && progression.result.nextStep) {
+                console.log(`[GameManager] Mission ${progression.missionId} transitioning: ${this.activeMissions[missionIndex].currentStep} -> ${progression.result.nextStep}`);
+
+                // [FIX] Immutable update to trigger React re-render
+                this.activeMissions = [
+                    ...this.activeMissions.slice(0, missionIndex),
+                    {
+                        ...this.activeMissions[missionIndex],
+                        currentStep: progression.result.nextStep
+                    },
+                    ...this.activeMissions.slice(missionIndex + 1)
+                ];
+            }
+
+            // ... Dynamic Lesson Construction ...
+            setTimeout(() => {
+                const lesson: Lesson = {
+                    id: progression.result!.lessonId,
+                    type: 'SHELL',
+                    text: 'ls -la',
+                    instructions: `CONNECTION ESTABLISHED. SCAN SYSTEM FOR ${progression.result!.objectiveTarget || 'TARGET'}`
+                };
+
+                this.tutorEngine.startLesson(lesson);
+            }, 200);
+        }
     }
 
     private handleTutorEvent = (event: TutorEvent) => {
-        // Create a "System" or "Tutor" NPC for these messages if not exists
         const tutorNpc = { name: 'TutorBot', career: 'Training AI', origin: 'Mainframe', goal: 'Educate' } as NPC;
 
         switch (event.type) {
             case 'MISTAKE':
-                // Optional: spam user on big mistakes?
-                // this.mailSystem.sendMail(tutorNpc, 'ERROR', 'SYNC LOSS DETECTED. RECALIBRATING...');
                 break;
             case 'SPEED_WARNING':
                 if (event.payload === 'TOO FAST') {
-                    this.mailSystem.sendMail(tutorNpc, 'WARNING', 'SYNC RATE EXCEEDED. SLOW DOWN.');
+                    // this.mailSystem.sendMail(tutorNpc, 'WARNING', 'SYNC RATE EXCEEDED. SLOW DOWN.');
                 } else {
-                    this.mailSystem.sendMail(tutorNpc, 'WARNING', 'SIGNAL FADING. INPUT REQUIRED.');
+                    // this.mailSystem.sendMail(tutorNpc, 'WARNING', 'SIGNAL FADING. INPUT REQUIRED.');
                 }
                 break;
             case 'COMPLETE':
                 this.mailSystem.sendMail(tutorNpc, 'LESSON COMPLETE', `MODULE ${event.payload.id} VERIFIED. PROCEEDING.`);
-                // Auto-start next random lesson after a delay?
-                // Or let user request it.
-                // For now, let's auto-generate a mail invite for the next one?
-                // Or just end.
                 break;
         }
     };
 
     /**
      * Triggers a new transmission from a random NPC.
-     * Creates an NPC, generates a mission, and registers it as an active channel.
-     *
-     * @returns The created Mission or null if limit reached.
      */
     spawnNPCEvent(): Mission | null {
         const spawnLogic = () => {
@@ -156,6 +209,10 @@ export class GameManager implements IGameManager {
             ];
 
             this.activeMissions.push(mission);
+
+            // [FIX] Inject Mission Objective into Target System
+            this.ensureSystemPrepared(mission.targetSystem);
+
             return mission;
         };
 
@@ -166,23 +223,58 @@ export class GameManager implements IGameManager {
         return spawnLogic();
     }
 
-    /**
-     * Retrieves the list of currently active NPCs.
-     */
     getActiveNPCs(): NPC[] {
         return this.activeNPCs;
     }
 
-    /**
-     * Retrieves the list of currently active Missions.
-     */
     getActiveMissions(): Mission[] {
         return this.activeMissions;
     }
 
+    startMission(missionId: string) {
+        console.log('[GameManager] startMission:', missionId);
+        const mission = this.activeMissions.find(m => m.id === missionId);
+        if (mission && mission.status === 'pending') {
+            mission.status = 'active';
+            mission.chatHistory.push({
+                sender: 'SYSTEM',
+                message: `MISSION STARTED. TARGET: ${mission.targetSystem}`,
+                timestamp: Date.now()
+            });
+            mission.chatHistory.push({
+                sender: 'TutorBot',
+                message: `Acknowledged. Initiate connection protocol: 'ssh admin@${mission.targetSystem}'.`,
+                timestamp: Date.now() + 100
+            });
+
+            // [FIX] Auto-start Tutor Lesson for this mission
+            const sshCommand = `ssh admin@${mission.targetSystem}`;
+            const lesson: Lesson = {
+                id: `MISSION_${mission.id}`,
+                type: 'SHELL' as const,
+                text: sshCommand,
+                instructions: `INITIATE SATLINK // CONNECT TO ${mission.targetSystem}`
+            };
+
+            // Setup if needed (none for this simple lesson)
+            // this.lessonService.setupLesson(lesson, this.fs);
+
+            // Start the lesson
+            this.tutorEngine.startLesson(lesson);
+        }
+    }
+
+    abandonMission(missionId: string) {
+        this.activeMissions = this.activeMissions.filter(m => m.id !== missionId);
+    }
+
     // Debug/admin method to start tutor
     startTutor(lessonId: string) {
-        this.tutorEngine.startLesson(lessonId, this.fs);
+        const lesson = this.lessonService.getLesson(lessonId);
+        if (lesson) {
+            this.lessonService.setupLesson(lesson, this.fs);
+            this.tutorEngine.startLesson(lesson);
+        }
     }
 
     /**
@@ -191,9 +283,13 @@ export class GameManager implements IGameManager {
     startRandomLesson() {
         const types: LessonType[] = ['LOG_ANALYSIS', 'BULK_ORG', 'SCAFFOLDING', 'CLEANUP'];
         const randomType = types[Math.floor(Math.random() * types.length)];
-        const lesson = LessonGenerator.generate(randomType);
 
-        this.tutorEngine.startLesson(lesson, this.fs);
+        // Old Generator: const lesson = LessonGenerator.generate(randomType);
+        // New Service Approach:
+        const lesson = this.lessonService.generateDynamicLesson(randomType);
+
+        this.lessonService.setupLesson(lesson, this.fs);
+        this.tutorEngine.startLesson(lesson);
         return lesson;
     }
 }

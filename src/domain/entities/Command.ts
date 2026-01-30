@@ -20,6 +20,7 @@ export interface CommandResponse {
         params?: any;
     };
     controlFlow?: 'RETURN' | 'BREAK' | 'CONTINUE' | 'EXIT';
+    command?: string; // [NEW] Context: The command that produced this response
 }
 
 export interface ICommand {

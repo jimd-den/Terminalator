@@ -23,6 +23,14 @@ export interface ChatMessage {
     timestamp: number;
 }
 
+
+export enum MissionStep {
+    PENDING = 'PENDING',
+    CONNECTED = 'CONNECTED',
+    LOCATED = 'LOCATED',
+    COMPLETED = 'COMPLETED'
+}
+
 export interface Mission {
     id: string;
     type: MissionType;
@@ -31,7 +39,8 @@ export interface Mission {
     objectiveTarget: string;
     description: string;
     reward: string;
-    status: 'active' | 'completed' | 'failed';
+    status: 'pending' | 'active' | 'completed' | 'failed';
+    currentStep: MissionStep; // [NEW] Track granular progress
     assignedBy: string; // NPC ID
     assignerName: string; // NPC Name
     chatHistory: ChatMessage[];
@@ -64,8 +73,9 @@ export class MissionGenerator {
             targetUser,
             objectiveTarget,
             description: this.generateDescription(type, targetSystem, objectiveTarget),
-            reward,
-            status: 'active',
+            reward, // Fixed: duplicate removed
+            status: 'pending',
+            currentStep: MissionStep.PENDING,
             assignedBy: npc.id,
             assignerName: npc.name,
             chatHistory: [],
