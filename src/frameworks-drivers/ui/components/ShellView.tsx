@@ -35,6 +35,8 @@ interface ShellViewProps {
     onKeyPress: (key: string) => void;
     onFKeyAction: (action: string) => void;
     onSave: (index: number) => void;
+    onMinimize: (index: number) => void;
+    onDelete: (index: number) => void;
 }
 
 export const ShellView: React.FC<ShellViewProps> = ({
@@ -113,6 +115,8 @@ export const useShellView = (props: ShellViewProps) => {
                 renderedLineCount={props.renderedLineCount}
                 onLineComplete={props.markLineComplete}
                 onSave={props.onSave}
+                onMinimize={props.onMinimize}
+                onDelete={props.onDelete}
             />
         ),
         middleContent: <FKeyBar keys={keys} />,

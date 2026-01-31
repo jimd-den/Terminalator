@@ -51,12 +51,11 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
         },
         header: {
             flexDirection: 'row',
-            justifyContent: 'space-between',
+            justifyContent: 'center', // [MOBILE-CENTRIC] Main focal point
             alignItems: 'center',
-            paddingHorizontal: THEME.spacing.xl,
             paddingVertical: THEME.spacing.md,
             borderBottomWidth: 1,
-            borderBottomColor: 'rgba(0, 255, 65, 0.1)', // Subtle phosphor line
+            borderBottomColor: 'rgba(0, 255, 65, 0.1)',
         },
         headerText: {
             color: colors.primary,

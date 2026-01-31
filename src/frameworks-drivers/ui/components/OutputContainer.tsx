@@ -20,10 +20,30 @@ interface OutputContainerProps {
     renderedLineCount: number;
     onLineComplete: () => void;
     onSave: (index: number) => void;
+    onMinimize: (index: number) => void;
+    onDelete: (index: number) => void;
 }
 
 // Memoized blinking status component
-const StatusIndicator = ({ exitCode, pending, colors, settings, onSave }: { exitCode?: number, pending?: boolean, colors: any, settings: any, onSave: () => void }) => {
+const StatusIndicator = ({
+    exitCode,
+    pending,
+    colors,
+    settings,
+    onSave,
+    onMinimize,
+    onDelete,
+    isMinimized
+}: {
+    exitCode?: number,
+    pending?: boolean,
+    colors: any,
+    settings: any,
+    onSave: () => void,
+    onMinimize: () => void,
+    onDelete: () => void,
+    isMinimized?: boolean
+}) => {
     const [blinkCount, setBlinkCount] = React.useState(0);
     const [isSettled, setIsSettled] = React.useState(false);
 
@@ -44,6 +64,7 @@ const StatusIndicator = ({ exitCode, pending, colors, settings, onSave }: { exit
     }, [pending]);
 
     const visible = (blinkCount % 2 === 0) || isSettled;
+    const smiley = blinkCount % 4 === 0 ? '( ^_^)' : '( o_o)';
 
     const indicatorStyles = StyleSheet.create({
         container: {
@@ -76,6 +97,19 @@ const StatusIndicator = ({ exitCode, pending, colors, settings, onSave }: { exit
             color: colors.primary,
             fontFamily: settings.fontFamily,
             fontSize: 10,
+        },
+        deleteBtn: {
+            marginLeft: THEME.spacing.sm,
+            paddingHorizontal: 6,
+            paddingVertical: 2,
+            borderWidth: 1,
+            borderColor: colors.error,
+            opacity: 0.8,
+        },
+        deleteText: {
+            color: colors.error,
+            fontFamily: settings.fontFamily,
+            fontSize: 10,
         }
     });
 
@@ -92,7 +126,7 @@ const StatusIndicator = ({ exitCode, pending, colors, settings, onSave }: { exit
     return (
         <View style={indicatorStyles.container}>
             <Text style={indicatorStyles.status}>
-                [{exitCode === 0 ? 'STATUS OK' : 'SYSTEM ERR'}: {exitCode}]
+                {exitCode === 0 ? `${smiley} STATUS OK` : `SYSTEM ERR`}: {exitCode}
             </Text>
             <React.Suspense fallback={null}>
                 <Pressable
@@ -104,7 +138,104 @@ const StatusIndicator = ({ exitCode, pending, colors, settings, onSave }: { exit
                 >
                     <Text style={indicatorStyles.saveText}>SAVE</Text>
                 </Pressable>
+                <Pressable
+                    onPress={onMinimize}
+                    style={({ pressed }) => [
+                        indicatorStyles.saveBtn,
+                        pressed && { backgroundColor: 'rgba(0, 255, 65, 0.2)' }
+                    ]}
+                >
+                    <Text style={indicatorStyles.saveText}>{isMinimized ? 'MAX' : 'MIN'}</Text>
+                </Pressable>
+                <Pressable
+                    onPress={onDelete}
+                    style={({ pressed }) => [
+                        indicatorStyles.deleteBtn,
+                        pressed && { backgroundColor: 'rgba(255, 0, 0, 0.2)' }
+                    ]}
+                >
+                    <Text style={indicatorStyles.deleteText}>DEL</Text>
+                </Pressable>
             </React.Suspense>
+        </View>
+    );
+};
+
+/**
+ * SequentialCommandEcho - Handles the 3-stage materialization of a command line.
+ * Stage 1: COMMAND: [cmd] (Typed)
+ * Stage 2: ...... (Dots Typed)
+ * Stage 3: STATUS / CONTROLS (Revealed)
+ */
+const SequentialCommandEcho = ({
+    line, index, styles, colors, settings, onSave, onMinimize, onDelete, onComplete, isActive, isTyped
+}: {
+    line: TerminalOutputLine,
+    index: number,
+    styles: any,
+    colors: any,
+    settings: any,
+    onSave: (idx: number) => void,
+    onMinimize: (idx: number) => void,
+    onDelete: (idx: number) => void,
+    onComplete: () => void,
+    isActive: boolean,
+    isTyped: boolean
+}) => {
+    const [stage, setStage] = React.useState<'text' | 'dots' | 'final'>(isTyped ? 'final' : 'text');
+    const cleanText = line.text.replace(/^>\s*/, '');
+    const baseText = `COMMAND: ${cleanText}`;
+    const dotsText = ' . . . . . .';
+
+    React.useEffect(() => {
+        if (isTyped) setStage('final');
+    }, [isTyped]);
+
+    if (!isActive && !isTyped) return null;
+
+    return (
+        <View style={styles.inputLineContainer}>
+            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+                {stage === 'text' && isActive ? (
+                    <GhostWriter
+                        text={baseText}
+                        speed={20}
+                        style={styles.inputEchoText}
+                        isActive={true}
+                        onComplete={() => setStage('dots')}
+                    />
+                ) : (
+                    <Text style={styles.inputEchoText}>{baseText}</Text>
+                )}
+
+                {stage === 'dots' && isActive ? (
+                    <GhostWriter
+                        text={dotsText}
+                        speed={80} // Slower, crunchier dots
+                        style={styles.inputEchoText}
+                        isActive={true}
+                        onComplete={() => {
+                            setStage('final');
+                            onComplete();
+                        }}
+                    />
+                ) : (stage !== 'text') ? (
+                    <Text style={styles.inputEchoText}>{dotsText}</Text>
+                ) : null}
+            </View>
+
+            {stage === 'final' && (
+                <StatusIndicator
+                    exitCode={line.exitCode}
+                    pending={line.pending}
+                    colors={colors}
+                    settings={settings}
+                    onSave={() => onSave(index)}
+                    onMinimize={() => onMinimize(index)}
+                    onDelete={() => onDelete(index)}
+                    isMinimized={line.isMinimized}
+                />
+            )}
         </View>
     );
 };
@@ -127,28 +258,16 @@ const OutputLineItem = React.memo(({ line, index, styles, colors, settings, onSa
             />
         );
     }
-    return (
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={styles.inputEchoText}>
-                {line.text}
-            </Text>
-            {line.exitCode !== undefined && (
-                <StatusIndicator
-                    exitCode={line.exitCode}
-                    colors={colors}
-                    settings={settings}
-                    onSave={() => onSave(index)}
-                />
-            )}
-        </View>
-    );
+    return null;
 });
 
 export const OutputContainer: React.FC<OutputContainerProps> = ({
     lines,
     renderedLineCount,
     onLineComplete,
-    onSave
+    onSave,
+    onMinimize,
+    onDelete
 }) => {
     const { theme, settings } = useTheme();
     const colors = theme.colors;
@@ -172,8 +291,15 @@ export const OutputContainer: React.FC<OutputContainerProps> = ({
             color: colors.secondary,
             fontFamily: settings.fontFamily,
             fontSize: THEME.typography.fontSize.md,
+            fontWeight: 'bold',
+            textAlign: 'left', // [INDUSTRIAL] Left-aligned command
+        },
+        inputLineContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between', // [PUSH-PULL] Text left, Controls right
             marginBottom: THEME.spacing.xs,
-            opacity: 0.8,
+            width: '100%',
         },
         systemText: {
             color: colors.primary,
@@ -185,8 +311,7 @@ export const OutputContainer: React.FC<OutputContainerProps> = ({
         fishLsContainer: {
             flexDirection: 'row',
             flexWrap: 'wrap',
-            gap: 16,
-            marginBottom: THEME.spacing.sm,
+            gap: 12,
         },
         dirText: {
             color: colors.primary,
@@ -198,6 +323,28 @@ export const OutputContainer: React.FC<OutputContainerProps> = ({
             color: 'rgba(0, 255, 65, 0.7)',
             fontFamily: settings.fontFamily,
             fontSize: THEME.typography.fontSize.md,
+        },
+        cardContainer: {
+            borderWidth: 1,
+            borderColor: colors.primary,
+            marginBottom: THEME.spacing.md,
+            marginTop: THEME.spacing.xs,
+        },
+        cardHeader: {
+            backgroundColor: colors.primary,
+            paddingHorizontal: THEME.spacing.sm,
+            paddingVertical: 2,
+        },
+        cardHeaderText: {
+            color: colors.background,
+            fontFamily: settings.fontFamily,
+            fontSize: 10,
+            fontWeight: 'bold',
+            letterSpacing: 1,
+        },
+        cardBody: {
+            padding: THEME.spacing.md,
+            backgroundColor: 'rgba(0, 255, 65, 0.05)',
         },
     });
 
@@ -211,38 +358,85 @@ export const OutputContainer: React.FC<OutputContainerProps> = ({
         // If it's a future line, don't render yet
         if (index > renderedLineCount) return null;
 
+        // Skip deleted lines
+        if (line.isDeleted) return null;
+
+        // Determine if this line belongs to a minimized group
+        if (line.type !== 'input') {
+            // Find the most recent input line before this one
+            for (let i = index - 1; i >= 0; i--) {
+                if (lines[i].type === 'input') {
+                    if (lines[i].isMinimized) return null;
+                    break;
+                }
+            }
+        }
+
+        if (line.type === 'input') {
+            return (
+                <SequentialCommandEcho
+                    key={index}
+                    line={line}
+                    index={index}
+                    styles={styles}
+                    colors={colors}
+                    settings={settings}
+                    onSave={onSave}
+                    onMinimize={onMinimize}
+                    onDelete={onDelete}
+                    onComplete={onLineComplete}
+                    isActive={isTyping}
+                    isTyped={isTyped}
+                />
+            );
+        }
+
         if (line.type === 'output' || line.type === 'system') {
             // -- Specialized Pretty Printing (Fish-style) --
             if (line.type === 'output' && line.metadata?.renderType === 'fish-style') {
                 const items: { name: string, type: string }[] = line.metadata.data?.items || [];
 
-                if (isTyped) {
-                    return (
-                        <View key={index} style={styles.fishLsContainer}>
-                            {items.map((item, i) => (
-                                <Text key={i} style={item.type === 'dir' ? styles.dirText : styles.fileText}>
-                                    {item.name}
-                                </Text>
-                            ))}
+                const renderItems = (isStatic: boolean) => (
+                    <View style={styles.cardContainer}>
+                        <View style={styles.cardHeader}>
+                            <Text style={styles.cardHeaderText}>[ DATA_NODES_STREAM ]</Text>
                         </View>
-                    );
-                }
+                        <View style={styles.cardBody}>
+                            <View style={styles.fishLsContainer}>
+                                {items.map((item, i) => {
+                                    const symbol = item.type === 'dir' ? '◆' : '◻';
+                                    const label = `${symbol} ${item.name}`;
+
+                                    if (isStatic) {
+                                        return (
+                                            <Text key={i} style={item.type === 'dir' ? styles.dirText : styles.fileText}>
+                                                {label}
+                                            </Text>
+                                        );
+                                    }
+
+                                    return (
+                                        <GhostWriter
+                                            key={i}
+                                            text={label}
+                                            speed={10}
+                                            style={item.type === 'dir' ? styles.dirText : styles.fileText}
+                                            isActive={isTyping}
+                                            onComplete={i === items.length - 1 ? onLineComplete : undefined}
+                                        />
+                                    );
+                                })}
+                                {items.length === 0 && (
+                                    <Text style={styles.outputText}>[ NO_DATA_DETECTED ]</Text>
+                                )}
+                            </View>
+                        </View>
+                    </View>
+                );
 
                 return (
-                    <View key={index} style={styles.fishLsContainer}>
-                        {items.map((item, i) => (
-                            <GhostWriter
-                                key={i}
-                                text={item.name}
-                                speed={10}
-                                style={item.type === 'dir' ? styles.dirText : styles.fileText}
-                                isActive={isTyping}
-                                onComplete={i === items.length - 1 ? onLineComplete : undefined}
-                            />
-                        ))}
-                        {items.length === 0 && (
-                            <Text style={styles.outputText}> </Text>
-                        )}
+                    <View key={index}>
+                        {renderItems(isTyped)}
                     </View>
                 );
             }

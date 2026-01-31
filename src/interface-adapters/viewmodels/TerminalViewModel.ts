@@ -418,6 +418,8 @@ export const useTerminalViewModel = (
         handleVimExit,
         handleStartMission,
         handleAbandonMission,
-        saveToArchive
+        saveToArchive,
+        toggleMinimize: outputController.toggleMinimize,
+        deleteGroup: outputController.deleteGroup
     };
 };

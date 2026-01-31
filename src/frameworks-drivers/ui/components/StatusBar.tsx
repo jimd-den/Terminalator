@@ -29,55 +29,47 @@ export const StatusBar: React.FC<StatusBarProps> = ({
     const styles = StyleSheet.create({
         container: {
             flexDirection: 'row',
-            justifyContent: 'space-between',
+            justifyContent: 'center', // [MOBILE-CENTRIC] Aligned to center for focal point
             alignItems: 'center',
-            backgroundColor: colors.primary, // Inverted by default
-            paddingHorizontal: THEME.spacing.sm,
-            paddingVertical: 4,
+            backgroundColor: colors.primary,
+            paddingHorizontal: THEME.spacing.md,
+            paddingVertical: 6,
             borderBottomWidth: 1,
             borderBottomColor: colors.primary,
+            gap: 16, // Spacing between groups
         },
         section: {
             flexDirection: 'row',
             alignItems: 'center',
-            gap: 8,
+            gap: 4,
         },
         label: {
-            color: colors.background, // Dark text on bright background
-            fontFamily: settings.fontFamily,
-            fontSize: 12, // Small, crisp font
-            fontWeight: 'bold',
-        },
-        value: {
             color: colors.background,
             fontFamily: settings.fontFamily,
-            fontSize: 12,
+            fontSize: 10, // Slightly smaller for dense technical look
             fontWeight: 'bold',
         }
     });
 
     // Formatting helpers
-    const formatUser = (u: string) => `[ USER: ${u.toUpperCase()} ]`;
-    const formatNet = (n: string) => `[ NET: ${n} ]`;
-    const formatMission = (m: string) => `[ MSN: ${m} ]`;
-
-    // Responsive: If mission is active, maybe hide SYS status to fit?
-    // Or just show NET and MSN and USER.
-    const showSys = !activeMissionName;
+    const formatValue = (label: string, value: string) => `[ ${label}: ${value.toUpperCase()} ]`;
 
     return (
         <View style={styles.container}>
             <View style={styles.section}>
-                {showSys && <Text style={styles.label}>[ SYS: {status} ]</Text>}
-                {activeMissionName && <Text style={styles.label}>{formatMission(activeMissionName)}</Text>}
+                {activeMissionName ? (
+                    <Text style={styles.label}>{formatValue('MSN', activeMissionName)}</Text>
+                ) : (
+                    <Text style={styles.label}>{formatValue('SYS', status)}</Text>
+                )}
             </View>
 
             <View style={styles.section}>
-                <Text style={styles.label}>{formatNet(connectionStatus)}</Text>
+                <Text style={styles.label}>{formatValue('NET', connectionStatus)}</Text>
             </View>
 
             <View style={styles.section}>
-                <Text style={styles.label}>{formatUser(user)}</Text>
+                <Text style={styles.label}>{formatValue('USR', user)}</Text>
             </View>
         </View>
     );

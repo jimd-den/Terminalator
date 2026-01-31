@@ -27,6 +27,8 @@ export interface TerminalOutputLine {
     type: 'input' | 'output' | 'system';
     exitCode?: number;
     pending?: boolean;
+    isMinimized?: boolean;
+    isDeleted?: boolean;
     timestamp?: number;
     metadata?: {
         renderType?: 'ls-pretty' | 'system-alert' | 'fish-style';
@@ -45,6 +47,8 @@ export interface OutputControllerActions {
     appendOutput: (text: string, metadata?: any) => void;
     appendSystemMessage: (text: string) => void;
     appendLine: (line: TerminalOutputLine) => void;
+    toggleMinimize: (index: number) => void;
+    deleteGroup: (index: number) => void;
     clear: () => void;
     getLineCount: () => number;
     markLineComplete: () => void;
@@ -94,8 +98,8 @@ export const useOutputController = (): OutputControllerState & OutputControllerA
                 timestamp: Date.now()
             }
         ]);
-        // Input is instant, so we increment rendered count immediately so the NEXT line knows it can start.
-        setRenderedLineCount(prev => prev + 1);
+        // [ANIMATION FIX] We no longer increment immediately here. 
+        // SequentialCommandEcho in the UI will call onComplete/markLineComplete when done typing.
     }, []);
 
     const updateInputStatus = useCallback((index: number, exitCode: number, pending: boolean) => {
@@ -163,6 +167,31 @@ export const useOutputController = (): OutputControllerState & OutputControllerA
         return outputLines.length;
     }, [outputLines.length]);
 
+    const toggleMinimize = useCallback((index: number) => {
+        setOutputLines(prev => {
+            const next = [...prev];
+            if (next[index] && next[index].type === 'input') {
+                next[index] = { ...next[index], isMinimized: !next[index].isMinimized };
+            }
+            return next;
+        });
+    }, []);
+
+    const deleteGroup = useCallback((index: number) => {
+        setOutputLines(prev => {
+            const next = [...prev];
+            if (next[index] && next[index].type === 'input') {
+                next[index] = { ...next[index], isDeleted: true };
+                // Also mark subsequent output lines as deleted until next input
+                for (let i = index + 1; i < next.length; i++) {
+                    if (next[i].type === 'input') break;
+                    next[i] = { ...next[i], isDeleted: true };
+                }
+            }
+            return next;
+        });
+    }, []);
+
     const markLineComplete = useCallback(() => {
         setRenderedLineCount(prev => prev + 1);
     }, []);
@@ -175,6 +204,8 @@ export const useOutputController = (): OutputControllerState & OutputControllerA
         appendOutput,
         appendSystemMessage,
         appendLine,
+        toggleMinimize,
+        deleteGroup,
         clear,
         getLineCount,
         markLineComplete

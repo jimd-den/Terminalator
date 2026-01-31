@@ -49,6 +49,8 @@ export interface ShellScreenProps {
     handleStartMission: (id: string) => void;
     handleAbandonMission: (id: string) => void;
     saveToArchive: (index: number) => void;
+    toggleMinimize: (index: number) => void;
+    deleteGroup: (index: number) => void;
 }
 
 export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
@@ -112,7 +114,9 @@ export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
         onRefocus: refocus,
         onKeyPress: props.handleKeyPress,
         onFKeyAction: handleFKeyAction,
-        onSave: props.saveToArchive
+        onSave: props.saveToArchive,
+        onMinimize: props.toggleMinimize,
+        onDelete: props.deleteGroup
     });
 
     // -- Derived State --

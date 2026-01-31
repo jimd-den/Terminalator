@@ -126,6 +126,8 @@ export const TerminalScreen: React.FC = () => {
                     handleStartMission={viewModel.handleStartMission}
                     handleAbandonMission={viewModel.handleAbandonMission}
                     saveToArchive={viewModel.saveToArchive}
+                    toggleMinimize={viewModel.toggleMinimize}
+                    deleteGroup={viewModel.deleteGroup}
                 />
             )}
             {viewModel.isTransitioning && <View style={styles.crtBlinkOverlay} />}
