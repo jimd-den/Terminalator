@@ -83,6 +83,16 @@ The codebase follows a strict **Clean Architecture** implementation, ensuring se
 *   **Pattern:** Logic is moved out of React components (`TerminalScreen`) and into `TerminalViewModel`.
 *   **Benefit:** Allows the UI logic to be tested without rendering components.
 *   **Rule:** `TerminalScreen.tsx` should primarily contain JSX and layout/style logic. State management belongs in the ViewModel.
+*   **Split Views:** Distinct modes (Shell, Vim, IRC) MUST be separate components (`ShellView`, `VimView`, `CommsView`) managed by a parent container.
+
+### The Virtual Console (Mainframe Architecture)
+*   **Concept:** The terminal is a multiplexer connecting to multiple Virtual TTYs (Channels).
+*   **TTY Structure:**
+    *   `TTY1`: System Shell (Local/Remote)
+    *   `TTY2`: Secure Comm Link (IRC/Story)
+    *   `TTY3`: Telemetry/Status
+*   **Control:** Switching is handled via F-Keys (represented as a hardware status line).
+*   **Interrupts:** High-priority messages use `wall` behavior to inject directly into the active TTY stream.
 
 ### The 8-Point GEMINI System (User Rules)
 1.  **Strict Architecture:** Respect the layers. No shortcuts.
@@ -227,6 +237,12 @@ src/
 ### Known Violations (To Be Refactored)
 1.  **MakeCommand:** Handles parsing and execution. Needs splitting.
 2.  **Parsers:** `ShellParser` logic complexity is high; consider visitor pattern if grammar grows.
+3.  **UI God Components:** `TerminalScreen.tsx` currently handles too much (Input, Output, Layout, Vim Switching). Refactor into `ShellView`, `InputBar`, and `OutputLog`.
+
+### UI Component Standards
+*   **No Inline Logic:** Components should receive data prop objects, not raw state.
+*   **Composition Over Configuration:** Use `children` props for layout wrappers like `ConsoleLayout`.
+*   **Memoization:** All list items (Output Lines) MUST be memoized to ensure O(1) performance during high-speed text streaming.
 
 ---
 

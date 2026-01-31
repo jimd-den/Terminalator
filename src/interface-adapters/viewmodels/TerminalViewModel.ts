@@ -70,6 +70,57 @@ export const useTerminalViewModel = (
     const [isTransitioning, setIsTransitioning] = useState(false);
     const [missions, setMissions] = useState(gameManager.getActiveMissions());
 
+    // -- Contextual Hint System --
+    const [contextualHint, setContextualHint] = useState<string | null>(null);
+    const lastActivityRef = useRef<number>(Date.now());
+    const hintTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    // -- View State (Shell vs Comms) --
+    // Moved from TerminalScreen to strictly adhere to Clean Architecture (ViewModel manages state)
+    const [activeView, setActiveView] = useState<'SHELL' | 'COMMS'>('SHELL');
+    const [ircMissionId, setIrcMissionId] = useState<string | null>(null);
+
+    const toggleCommsView = useCallback(() => {
+        setActiveView(prev => prev === 'SHELL' ? 'COMMS' : 'SHELL');
+
+        // Auto-select mission if opening
+        if (activeView === 'SHELL' && !ircMissionId) {
+            const active = missions.find(m => m.status === 'active');
+            setIrcMissionId(active ? active.id : (missions[0]?.id || null));
+        }
+    }, [activeView, ircMissionId, missions]);
+
+    // Reset timer on activity
+    const resetInactivityTimer = useCallback(() => {
+        lastActivityRef.current = Date.now();
+        if (contextualHint) setContextualHint(null);
+    }, [contextualHint]);
+
+    // Check for inactivity
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const idleTime = Date.now() - lastActivityRef.current;
+            if (idleTime > 15000 && !contextualHint && !gameManager.tutorEngine.isActive()) {
+                // Determine hint based on state
+                let hint = "[ HINT: TYPE 'help' FOR AVAILABLE COMMANDS ]";
+
+                // Context-aware overrides
+                const activeMission = missions.find(m => m.status === 'active');
+                if (activeMission) {
+                    if (activeMission.currentStep === 'PENDING') hint = "[ HINT: ESTABLISH CONNECTION TO TARGET SYSTEM ]";
+                    else if (activeMission.currentStep === 'CONNECTED') hint = "[ HINT: EXPLORE REMOTE DIRECTORY WITH 'ls' ]";
+                    else if (activeMission.currentStep === 'LOCATED') hint = "[ HINT: ACQUIRE OBJECTIVE FILE ]";
+                } else if (!state.fsContext) {
+                    // specific hints for local shell
+                    hint = "[ HINT: CHECK 'mail' OR 'jobs' ]";
+                }
+
+                setContextualHint(hint);
+            }
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [contextualHint, missions, state.fsContext, gameManager]);
+
     // -- Input Controller --
     const isTutorActive = useCallback(() => {
         return gameManager.tutorEngine.isActive();
@@ -231,6 +282,8 @@ export const useTerminalViewModel = (
 
     // -- Key Press Handler --
     const handleKeyPress = useCallback((key: string) => {
+        resetInactivityTimer();
+
         // 1. TUTOR INTERCEPTION
         if (gameManager.tutorEngine.isActive()) {
             const lesson = gameManager.tutorEngine.getCurrentLesson();
@@ -257,7 +310,7 @@ export const useTerminalViewModel = (
         } else if (key.length === 1) {
             inputController.appendChar(key);
         }
-    }, [inputController, handleCommand, gameManager]);
+    }, [inputController, handleCommand, gameManager, resetInactivityTimer]);
 
     // -- Input Change Handler --
     const handleInputChange = useCallback((text: string) => {
@@ -288,14 +341,23 @@ export const useTerminalViewModel = (
         // App State
         activeApp,
         state,
+        contextualHint,
+        activeView,
+        ircMissionId,
+        setIrcMissionId,
+        toggleCommsView,
         isTransitioning,
 
         // Input State (from InputController)
         input: inputController.input,
         ghostText: inputController.ghostText,
 
+
+
         // Output State (from OutputController)
         outputLines: outputController.outputLines,
+        renderedLineCount: outputController.renderedLineCount,
+        markLineComplete: outputController.markLineComplete,
 
         // Tutor State (from TutorController)
         tutorEmotion: tutorController.emotion,

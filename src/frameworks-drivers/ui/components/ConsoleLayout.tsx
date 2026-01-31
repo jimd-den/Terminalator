@@ -1,29 +1,31 @@
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ViewStyle, Pressable } from 'react-native';
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { THEME } from '../Theme';
 import { useTheme } from '../context/ThemeContext';
-import { useInput } from '../context/InputContext';
 
 interface ConsoleLayoutProps {
     status?: string;
+    headerComponent?: React.ReactNode;
     topContent: React.ReactNode;
     middleContent?: React.ReactNode;
     bottomContent: React.ReactNode;
     style?: ViewStyle;
+    sideContent?: React.ReactNode;
     children?: React.ReactNode;
 }
 
 export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
     status = "OPERATIONAL",
+    headerComponent,
     topContent,
     middleContent,
     bottomContent,
+    sideContent,
     style,
     children
 }) => {
     const { theme, settings } = useTheme();
     const colors = theme.colors;
-    const { refocus } = useInput();
 
     const dynamicStyles = StyleSheet.create({
         container: {
@@ -32,6 +34,20 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
         },
         flex: {
             flex: 1,
+        },
+        mainRow: {
+            flex: 1,
+            flexDirection: 'row',
+        },
+        leftColumn: {
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+        },
+        rightColumn: {
+            flex: 1,
+            borderLeftWidth: 1,
+            borderLeftColor: colors.primary,
         },
         header: {
             flexDirection: 'row',
@@ -45,18 +61,6 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
             color: colors.text.dim,
             fontFamily: settings.fontFamily,
             fontSize: THEME.typography.fontSize.sm,
-        },
-        keyboardBtn: {
-            borderWidth: 1,
-            borderColor: colors.primary,
-            paddingHorizontal: 8,
-            paddingVertical: 2,
-        },
-        keyboardBtnText: {
-            color: colors.primary,
-            fontFamily: settings.fontFamily,
-            fontSize: THEME.typography.fontSize.sm,
-            fontWeight: 'bold',
         },
         topBox: {
             flex: 2,
@@ -85,25 +89,42 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
                 behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
                 style={dynamicStyles.flex}
             >
-                <View style={dynamicStyles.header}>
-                    <Text style={dynamicStyles.headerText}>[ STATUS: {status} ]</Text>
-                    <Pressable style={dynamicStyles.keyboardBtn} onPress={refocus} hitSlop={15}>
-                        <Text style={dynamicStyles.keyboardBtnText}>KEYBOARD</Text>
-                    </Pressable>
+
+                {headerComponent ? (
+                    <View style={dynamicStyles.header}>
+                        {headerComponent}
+                    </View>
+                ) : (
+                    <View style={dynamicStyles.header}>
+                        <Text style={dynamicStyles.headerText}>[ STATUS: {status} ]</Text>
+                    </View>
+                )}
+
+                <View style={dynamicStyles.mainRow}>
+                    {/* Left Column (Main Terminal) */}
+                    <View style={dynamicStyles.leftColumn}>
+                        {/* TOP BOX: Output/Environment/Buffer */}
+                        <View style={dynamicStyles.topBox}>
+                            {topContent}
+                        </View>
+
+                        {/* MIDDLE: Virtual Toolbar (Optional) */}
+                        {middleContent}
+
+                        {/* BOTTOM BOX: Input/Prompt/Command */}
+                        <View style={dynamicStyles.bottomBox}>
+                            {bottomContent}
+                        </View>
+                    </View>
+
+                    {/* Right Column (Side Pane) */}
+                    {sideContent && (
+                        <View style={dynamicStyles.rightColumn}>
+                            {sideContent}
+                        </View>
+                    )}
                 </View>
 
-                {/* TOP BOX: Output/Environment/Buffer */}
-                <View style={dynamicStyles.topBox}>
-                    {topContent}
-                </View>
-
-                {/* MIDDLE: Virtual Toolbar (Optional) */}
-                {middleContent}
-
-                {/* BOTTOM BOX: Input/Prompt/Command */}
-                <View style={dynamicStyles.bottomBox}>
-                    {bottomContent}
-                </View>
             </KeyboardAvoidingView>
             {children}
         </SafeAreaView>

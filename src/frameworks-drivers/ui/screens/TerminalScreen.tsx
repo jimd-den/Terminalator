@@ -14,25 +14,20 @@
  */
 
 import React from 'react';
-import { View, StyleSheet, ScrollView, Text, Pressable } from 'react-native';
-import { THEME } from '../Theme';
-import { GhostWriter } from '../GhostWriter';
-import { VirtualKeyboard } from '../components/VirtualKeyboard';
+import { View, StyleSheet } from 'react-native';
 import { ConsoleLayout } from '../components/ConsoleLayout';
 import { useGame } from '../context/GameContext';
 import { useVimEditor } from '../components/vim/VimEditor';
 import { useInput } from '../context/InputContext';
 import { useTerminalViewModel } from '../../../interface-adapters/viewmodels/TerminalViewModel';
-
-import { Cursor } from '../components/Cursor';
-import { PopChar } from '../components/PopChar';
 import { useTheme } from '../context/ThemeContext';
-
-import { IrcTab } from '../components/IrcTab';
+import { CommsPane } from '../components/CommsPane';
+import { useShellView } from '../components/ShellView';
+import { StatusBar } from '../components/StatusBar';
 
 export const TerminalScreen: React.FC = () => {
     const { fs, gameManager, commandExecutor } = useGame();
-    const { theme, settings } = useTheme();
+    const { theme } = useTheme();
     const colors = theme.colors;
 
     const {
@@ -43,14 +38,19 @@ export const TerminalScreen: React.FC = () => {
         crashingIndices,
         outputLines,
         ghostText,
+        contextualHint,
+        activeView,
+        ircMissionId,
+        setIrcMissionId,
+        toggleCommsView,
         isTransitioning,
         missions,
-        handleInputChange,
         handleKeyPress,
-        handleCommand,
         handleVimExit,
         handleStartMission,
-        handleAbandonMission
+        handleAbandonMission,
+        renderedLineCount,
+        markLineComplete
     } = useTerminalViewModel(fs, commandExecutor, gameManager);
 
     const isShell = activeApp.type === 'SHELL';
@@ -58,101 +58,33 @@ export const TerminalScreen: React.FC = () => {
 
     const vim = useVimEditor(vimFilename, handleVimExit);
 
-    const status = isShell ? "OPERATIONAL" : `EDITING: ${vimFilename}`;
-
-    const dynamicStyles = StyleSheet.create({
-        scrollContent: {
-            paddingBottom: THEME.spacing.xl,
-        },
-        outputText: {
-            color: colors.text.primary,
-            fontFamily: settings.fontFamily,
-            fontSize: THEME.typography.fontSize.md,
-            marginBottom: THEME.spacing.sm,
-        },
-        inputEchoText: {
-            color: colors.secondary,
-            fontFamily: settings.fontFamily,
-            fontSize: THEME.typography.fontSize.md,
-            marginBottom: THEME.spacing.xs,
-            opacity: 0.7,
-        },
-        inputWrapper: {
-            width: '100%',
-            flexDirection: 'column',
-        },
-        inputLabel: {
-            color: colors.secondary,
-            fontFamily: settings.fontFamily,
-            fontSize: THEME.typography.fontSize.sm,
-            marginBottom: THEME.spacing.xs,
-            opacity: 0.8,
-            letterSpacing: 1,
-        },
-        inputContainer: {
-            width: '100%',
-            position: 'relative',
-            justifyContent: 'center',
-        },
-        inputChar: {
-            color: colors.text.primary,
-            fontFamily: settings.fontFamily,
-            fontSize: THEME.typography.fontSize.lg,
-            height: 35,
-            lineHeight: 35,
-        },
-        ghostText: {
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            color: colors.text.dim,
-            zIndex: 0,
-            height: 35,
-            lineHeight: 35,
-            textAlignVertical: 'center',
-            includeFontPadding: false,
-        },
-        crtBlinkOverlay: {
-            ...StyleSheet.absoluteFillObject,
-            backgroundColor: colors.background,
-            zIndex: 999,
+    const handleFKeyAction = (action: string) => {
+        if (action === 'HELP') {
+            handleKeyPress('h'); handleKeyPress('e'); handleKeyPress('l'); handleKeyPress('p'); handleKeyPress('ENTER');
+        } else if (action === 'IRC') {
+            toggleCommsView();
         }
+    };
+
+    const shell = useShellView({
+        outputLines,
+        renderedLineCount,
+        markLineComplete,
+        input,
+        ghostText,
+        user: state.environment.USER,
+        hostname: state.fsContext || state.environment.HOSTNAME || 'system',
+        tutorEmotion,
+        crashingIndices,
+        contextualHint,
+        onRefocus: useInput().refocus,
+        onKeyPress: handleKeyPress,
+        onFKeyAction: handleFKeyAction
     });
 
-    const topContent = isShell ? (
-        <ScrollView
-            contentContainerStyle={dynamicStyles.scrollContent}
-            ref={(ref) => ref?.scrollToEnd({ animated: true })}
-            keyboardShouldPersistTaps="always"
-        >
-            {outputLines.map((line, i) => (
-                line.type === 'output' ? (
-                    <GhostWriter
-                        key={i}
-                        text={line.text}
-                        speed={10}
-                        style={dynamicStyles.outputText}
-                    />
-                ) : (
-                    <Text key={i} style={dynamicStyles.inputEchoText}>
-                        {line.text}
-                        {line.exitCode !== undefined && (
-                            <Text style={{ color: line.exitCode === 0 ? colors.primary : colors.error }}>
-                                {'  '}[STATUS {line.exitCode === 0 ? 'OK' : 'ERR'}: {line.exitCode}]
-                            </Text>
-                        )}
-                    </Text>
-                )
-            ))}
-        </ScrollView>
-    ) : vim.topContent;
+    const status = isShell ? (activeView === 'COMMS' ? "COMMS LINK ACTIVE" : "OPERATIONAL") : `EDITING: ${vimFilename}`;
 
-    const middleContent = isShell ? (
-        <VirtualKeyboard onKeyPress={handleKeyPress} />
-    ) : vim.middleContent;
-
-    const { setOnInput, setOnKeyPress, refocus } = useInput();
+    const { setOnInput, setOnKeyPress } = useInput();
 
     React.useEffect(() => {
         if (isShell) {
@@ -167,42 +99,52 @@ export const TerminalScreen: React.FC = () => {
         }
     }, [isShell, handleKeyPress, setOnInput, setOnKeyPress]);
 
-    const bottomContent = (
-        <View style={dynamicStyles.inputWrapper}>
-            {!isShell ? (
-                vim.bottomContent
-            ) : (
-                <>
-                    <Text style={dynamicStyles.inputLabel}>
-                        INPUT // {state.environment.USER}@{state.fsContext || state.environment.HOSTNAME || 'system'}
-                    </Text>
-                    <Pressable style={dynamicStyles.inputContainer} onPress={refocus}>
-                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' }}>
-                            {input.split('').map((char, index) => (
-                                <PopChar key={`${index}-${char}`} style={dynamicStyles.inputChar} isCrashing={crashingIndices.includes(index)}>{char}</PopChar>
-                            ))}
-                            <Cursor color={colors.primary} inputTrigger={input.length} emotion={tutorEmotion} />
-                            <Text style={[dynamicStyles.inputChar, { color: colors.text.dim }]}>{ghostText}</Text>
-                        </View>
-                    </Pressable>
-                </>
-            )}
-        </View>
-    );
+    const styles = StyleSheet.create({
+        crtBlinkOverlay: {
+            ...StyleSheet.absoluteFillObject,
+            backgroundColor: colors.background,
+            zIndex: 999,
+        }
+    });
 
-    return (
-        <ConsoleLayout
-            status={status}
-            topContent={topContent}
-            middleContent={middleContent}
-            bottomContent={bottomContent}
-        >
-            {isTransitioning && <View style={dynamicStyles.crtBlinkOverlay} />}
-            <IrcTab
+    // Content Switching
+    let mainContent;
+    if (activeView === 'COMMS') {
+        mainContent = (
+            <CommsPane
                 missions={missions}
+                activeMissionId={ircMissionId}
+                onMissionSelect={setIrcMissionId}
                 onStartMission={handleStartMission}
                 onAbandonMission={handleAbandonMission}
             />
+        );
+    } else {
+        mainContent = isShell ? shell.topContent : vim.topContent;
+    }
+
+    // Calculate active mission name
+    const activeMission = missions.find(m => m.status === 'active');
+    const missionName = activeMission ? activeMission.type.toUpperCase() : null;
+
+    return (
+        <ConsoleLayout
+            headerComponent={
+                isShell ? (
+                    <StatusBar
+                        status={activeView === 'COMMS' ? "COMMS LINK" : (state.fsContext ? "REMOTE" : "OPERATIONAL")}
+                        user={state.environment.USER || "OPERATOR"}
+                        connectionStatus={state.fsContext ? 'SECURE' : 'LOCAL'}
+                        activeMissionName={missionName}
+                    />
+                ) : undefined
+            }
+            status={status}
+            topContent={mainContent}
+            middleContent={isShell ? shell.middleContent : vim.middleContent}
+            bottomContent={isShell ? shell.bottomContent : vim.bottomContent}
+        >
+            {isTransitioning && <View style={styles.crtBlinkOverlay} />}
         </ConsoleLayout>
     );
 };

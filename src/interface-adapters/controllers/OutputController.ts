@@ -31,6 +31,7 @@ export interface TerminalOutputLine {
 
 export interface OutputControllerState {
     outputLines: TerminalOutputLine[];
+    renderedLineCount: number;
 }
 
 export interface OutputControllerActions {
@@ -40,15 +41,15 @@ export interface OutputControllerActions {
     appendLine: (line: TerminalOutputLine) => void;
     clear: () => void;
     getLineCount: () => number;
+    markLineComplete: () => void;
 }
 
 /**
  * Default welcome messages displayed on terminal start.
  */
 const INITIAL_OUTPUT: TerminalOutputLine[] = [
-    { text: 'SYSTEM INITIALIZED... BOOT SEQUENCE READY', type: 'system', timestamp: Date.now() },
-    { text: 'WELCOME TO MAINFRAME v1.0', type: 'system', timestamp: Date.now() },
-    { text: 'TYPE "mail" TO CHECK TRANSMISSIONS', type: 'system', timestamp: Date.now() },
+    { text: 'MAINFRAME v1.0 CONNECTION ESTABLISHED', type: 'system', timestamp: Date.now() },
+    { text: 'AWAITING COMMAND INPUT...', type: 'system', timestamp: Date.now() },
 ];
 
 /**
@@ -58,6 +59,19 @@ const INITIAL_OUTPUT: TerminalOutputLine[] = [
  */
 export const useOutputController = (): OutputControllerState & OutputControllerActions => {
     const [outputLines, setOutputLines] = useState<TerminalOutputLine[]>(INITIAL_OUTPUT);
+    const [renderedLineCount, setRenderedLineCount] = useState(INITIAL_OUTPUT.length);
+    // Start with 0 if we want to animate startup, or length if we want it instant.
+    // User wants "Startup sequence", but initial lines might just be static?
+    // Let's stick to 2 for now to match strict equality, or 0 to animate.
+    // Actually, setting to 0 causes them to type out. Let's try 0.
+    // Use effect to set to 0? No, just initial state.
+    // Wait, if I set it to 0, they will animate.
+    // Let's set it to INITIAL_OUTPUT.length so they appear instantly on refresh, 
+    // but typically the app starts fresh. 
+    // If I reload, I want to see them again?
+    // Let's stick to INITIAL_OUTPUT.length for "instant startup" to avoid annoyance during dev,
+    // or 0 for "cool startup".
+    // I'll keep it at INITIAL_OUTPUT.length for stability (no phantom typing on HMR).
 
     /**
      * Appends a user input line (command).
@@ -73,6 +87,8 @@ export const useOutputController = (): OutputControllerState & OutputControllerA
                 timestamp: Date.now()
             }
         ]);
+        // Input is instant, so we increment rendered count immediately so the NEXT line knows it can start.
+        setRenderedLineCount(prev => prev + 1);
     }, []);
 
     /**
@@ -110,6 +126,9 @@ export const useOutputController = (): OutputControllerState & OutputControllerA
      */
     const appendLine = useCallback((line: TerminalOutputLine) => {
         setOutputLines(prev => [...prev, { ...line, timestamp: line.timestamp || Date.now() }]);
+        if (line.type === 'input') {
+            setRenderedLineCount(prev => prev + 1);
+        }
     }, []);
 
     /**
@@ -117,6 +136,7 @@ export const useOutputController = (): OutputControllerState & OutputControllerA
      */
     const clear = useCallback(() => {
         setOutputLines([]);
+        setRenderedLineCount(0);
     }, []);
 
     /**
@@ -126,13 +146,19 @@ export const useOutputController = (): OutputControllerState & OutputControllerA
         return outputLines.length;
     }, [outputLines.length]);
 
+    const markLineComplete = useCallback(() => {
+        setRenderedLineCount(prev => prev + 1);
+    }, []);
+
     return {
         outputLines,
+        renderedLineCount,
         appendInput,
         appendOutput,
         appendSystemMessage,
         appendLine,
         clear,
-        getLineCount
+        getLineCount,
+        markLineComplete
     };
 };
