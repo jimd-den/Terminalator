@@ -70,17 +70,16 @@ export const GhostWriter: React.FC<GhostWriterProps> = ({
                 setDisplayedText(text.slice(0, currentIdx + 1));
                 currentIdx++;
 
-                // Variable speed: base speed + random 0-40ms variance
-                // Simulates baud rate fluctuations
-                const variance = Math.random() * 40;
-                timeoutId = setTimeout(typeNextChar, speed + variance);
+                // Faster, more consistent "materialization" speed
+                // 10ms base is very fast, feeling more like a data stream than a human typing
+                timeoutId = setTimeout(typeNextChar, 10);
             } else {
                 setIsComplete(true);
                 onComplete?.();
             }
         };
 
-        timeoutId = setTimeout(typeNextChar, speed);
+        timeoutId = setTimeout(typeNextChar, 5);
 
         return () => {
             isMounted = false;
@@ -88,14 +87,13 @@ export const GhostWriter: React.FC<GhostWriterProps> = ({
         };
     }, [text, speed, isActive, isComplete, onComplete]);
 
-    // If not active yet, show nothing or cursor? 
-    // Usually nothing until it's "its turn".
+    // If not active yet, show nothing
     if (!isActive && !hasStartedRef.current) return null;
 
     return (
         <Text style={[dynamicStyles.text, style]}>
             {displayedText}
-            {isActive && !isComplete && <Text style={dynamicStyles.cursor}>_</Text>}
+            {/* Removed the sliding block cursor as requested for a cleaner 'materializing' look */}
         </Text>
     );
 };

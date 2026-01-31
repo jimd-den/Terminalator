@@ -16,6 +16,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { ConsoleLayout } from '../components/ConsoleLayout';
+import { FKeyBar } from '../components/FKeyBar';
 import { useGame } from '../context/GameContext';
 import { useVimEditor } from '../components/vim/VimEditor';
 import { useInput } from '../context/InputContext';
@@ -25,79 +26,19 @@ import { CommsPane } from '../components/CommsPane';
 import { useShellView } from '../components/ShellView';
 import { StatusBar } from '../components/StatusBar';
 
+import { ShellScreen } from './ShellScreen';
+import { VimScreen } from './VimScreen';
+import { BufferScreen } from './BufferScreen';
+
 export const TerminalScreen: React.FC = () => {
     const { fs, gameManager, commandExecutor } = useGame();
     const { theme } = useTheme();
     const colors = theme.colors;
 
-    const {
-        activeApp,
-        state,
-        input,
-        tutorEmotion,
-        crashingIndices,
-        outputLines,
-        ghostText,
-        contextualHint,
-        activeView,
-        ircMissionId,
-        setIrcMissionId,
-        toggleCommsView,
-        isTransitioning,
-        missions,
-        handleKeyPress,
-        handleVimExit,
-        handleStartMission,
-        handleAbandonMission,
-        renderedLineCount,
-        markLineComplete
-    } = useTerminalViewModel(fs, commandExecutor, gameManager);
+    const viewModel = useTerminalViewModel(fs, commandExecutor, gameManager);
 
-    const isShell = activeApp.type === 'SHELL';
-    const vimFilename = activeApp.type === 'VIM' ? activeApp.filename : '';
-
-    const vim = useVimEditor(vimFilename, handleVimExit);
-
-    const handleFKeyAction = (action: string) => {
-        if (action === 'HELP') {
-            handleKeyPress('h'); handleKeyPress('e'); handleKeyPress('l'); handleKeyPress('p'); handleKeyPress('ENTER');
-        } else if (action === 'IRC') {
-            toggleCommsView();
-        }
-    };
-
-    const shell = useShellView({
-        outputLines,
-        renderedLineCount,
-        markLineComplete,
-        input,
-        ghostText,
-        user: state.environment.USER,
-        hostname: state.fsContext || state.environment.HOSTNAME || 'system',
-        tutorEmotion,
-        crashingIndices,
-        contextualHint,
-        onRefocus: useInput().refocus,
-        onKeyPress: handleKeyPress,
-        onFKeyAction: handleFKeyAction
-    });
-
-    const status = isShell ? (activeView === 'COMMS' ? "COMMS LINK ACTIVE" : "OPERATIONAL") : `EDITING: ${vimFilename}`;
-
-    const { setOnInput, setOnKeyPress } = useInput();
-
-    React.useEffect(() => {
-        if (isShell) {
-            setOnInput((text) => {
-                for (const char of text) {
-                    handleKeyPress(char);
-                }
-            });
-            setOnKeyPress((key) => {
-                handleKeyPress(key);
-            });
-        }
-    }, [isShell, handleKeyPress, setOnInput, setOnKeyPress]);
+    const isShell = viewModel.activeApp.type === 'SHELL';
+    const vimFilename = viewModel.activeApp.type === 'VIM' ? viewModel.activeApp.filename : '';
 
     const styles = StyleSheet.create({
         crtBlinkOverlay: {
@@ -107,44 +48,87 @@ export const TerminalScreen: React.FC = () => {
         }
     });
 
-    // Content Switching
-    let mainContent;
-    if (activeView === 'COMMS') {
-        mainContent = (
-            <CommsPane
-                missions={missions}
-                activeMissionId={ircMissionId}
-                onMissionSelect={setIrcMissionId}
-                onStartMission={handleStartMission}
-                onAbandonMission={handleAbandonMission}
-            />
-        );
-    } else {
-        mainContent = isShell ? shell.topContent : vim.topContent;
-    }
-
-    // Calculate active mission name
-    const activeMission = missions.find(m => m.status === 'active');
-    const missionName = activeMission ? activeMission.type.toUpperCase() : null;
-
     return (
-        <ConsoleLayout
-            headerComponent={
-                isShell ? (
-                    <StatusBar
-                        status={activeView === 'COMMS' ? "COMMS LINK" : (state.fsContext ? "REMOTE" : "OPERATIONAL")}
-                        user={state.environment.USER || "OPERATOR"}
-                        connectionStatus={state.fsContext ? 'SECURE' : 'LOCAL'}
-                        activeMissionName={missionName}
-                    />
-                ) : undefined
-            }
-            status={status}
-            topContent={mainContent}
-            middleContent={isShell ? shell.middleContent : vim.middleContent}
-            bottomContent={isShell ? shell.bottomContent : vim.bottomContent}
-        >
-            {isTransitioning && <View style={styles.crtBlinkOverlay} />}
-        </ConsoleLayout>
+        <View style={{ flex: 1 }}>
+            {viewModel.activeApp.type === 'VIM' ? (
+                <VimScreen
+                    filename={vimFilename}
+                    onExit={viewModel.handleVimExit}
+                />
+            ) : viewModel.activeView === 'COMMS' ? (
+                <ConsoleLayout
+                    headerComponent={
+                        <StatusBar
+                            status="COMMS LINK"
+                            user={viewModel.state.environment.USER || "OPERATOR"}
+                            connectionStatus={viewModel.state.fsContext ? 'SECURE' : 'LOCAL'}
+                            activeMissionName={null}
+                        />
+                    }
+                    status="ENCRYPTED TRANSMISSION"
+                    topContent={
+                        <CommsPane
+                            missions={viewModel.missions}
+                            activeMissionId={viewModel.ircMissionId}
+                            onMissionSelect={viewModel.setIrcMissionId}
+                            onStartMission={viewModel.handleStartMission}
+                            onAbandonMission={viewModel.handleAbandonMission}
+                        />
+                    }
+                    middleContent={<FKeyBar keys={[
+                        { key: 'F2', label: 'CLOSE', action: viewModel.toggleCommsView },
+                        { key: 'ESC', label: 'BACK', action: viewModel.toggleCommsView }
+                    ]} />}
+                    bottomContent={<View style={{ height: 40 }} />} // Placeholder/Footer
+                />
+            ) : viewModel.activeView === 'BUFFERS' ? (
+                <ConsoleLayout
+                    headerComponent={
+                        <StatusBar
+                            status="ARCHIVE"
+                            user={viewModel.state.environment.USER || "OPERATOR"}
+                            connectionStatus={viewModel.state.fsContext ? 'SECURE' : 'LOCAL'}
+                            activeMissionName={null}
+                        />
+                    }
+                    status="RECOVERED DATA BANKS"
+                    topContent={
+                        <BufferScreen
+                            buffers={viewModel.buffers}
+                            onClose={viewModel.toggleBufferView}
+                        />
+                    }
+                    middleContent={<FKeyBar keys={[
+                        { key: 'F3', label: 'CLOSE', action: viewModel.toggleBufferView },
+                        { key: 'ESC', label: 'BACK', action: viewModel.toggleBufferView }
+                    ]} />}
+                    bottomContent={<View style={{ height: 40 }} />} // Placeholder/Footer
+                />
+            ) : (
+                <ShellScreen
+                    state={viewModel.state}
+                    input={viewModel.input}
+                    ghostText={viewModel.ghostText}
+                    outputLines={viewModel.outputLines}
+                    renderedLineCount={viewModel.renderedLineCount}
+                    tutorEmotion={viewModel.tutorEmotion}
+                    crashingIndices={viewModel.crashingIndices}
+                    contextualHint={viewModel.contextualHint}
+                    missions={viewModel.missions}
+                    buffers={viewModel.buffers}
+                    activeView={viewModel.activeView}
+                    ircMissionId={viewModel.ircMissionId}
+                    markLineComplete={viewModel.markLineComplete}
+                    handleKeyPress={viewModel.handleKeyPress}
+                    toggleCommsView={viewModel.toggleCommsView}
+                    toggleBufferView={viewModel.toggleBufferView}
+                    setIrcMissionId={viewModel.setIrcMissionId}
+                    handleStartMission={viewModel.handleStartMission}
+                    handleAbandonMission={viewModel.handleAbandonMission}
+                    saveToArchive={viewModel.saveToArchive}
+                />
+            )}
+            {viewModel.isTransitioning && <View style={styles.crtBlinkOverlay} />}
+        </View>
     );
 };

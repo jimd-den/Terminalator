@@ -29,6 +29,7 @@ export class LsCommand extends CommandBase {
 
         let exitCode = 0;
         let outputParts: string[] = [];
+        let metadataItems: { name: string, type: 'file' | 'dir' }[] = [];
 
         const pathsToProcess = targets.length > 0 ? targets : [''];
 
@@ -55,6 +56,11 @@ export class LsCommand extends CommandBase {
             }
 
             const formattedNames = files.map(f => {
+                metadataItems.push({
+                    name: f.name,
+                    type: fsService.isDirectory(f) ? 'dir' : 'file'
+                });
+
                 let name = f.name;
                 if (classify && fsService.isDirectory(f)) {
                     name += '/';
@@ -152,7 +158,13 @@ export class LsCommand extends CommandBase {
         return {
             output: finalOutput,
             newState: state,
-            exitCode: exitCode
+            exitCode: exitCode,
+            metadata: {
+                renderType: (longFormat || recursive) ? undefined : 'fish-style',
+                data: {
+                    items: metadataItems
+                }
+            }
         };
     }
 }

@@ -27,16 +27,21 @@ import { ExecuteCommand } from '../../domain/usecases/ExecuteCommand';
 import { CommandResponse } from '../../domain/entities/Command';
 import { GameManager } from '../GameManager';
 import { createInitialTerminalState, TerminalState } from '../../domain/entities/TerminalState';
+// Import Entities
+import { Lesson } from '../../domain/entities/TutorEngine';
+
+// Import Services
 import { AutocompleteService } from '../../domain/services/AutocompleteService';
 import { GameEventObserver } from '../../domain/services/GameEventObserver';
-import { Lesson } from '../../domain/entities/TutorEngine';
+import { ArchiveService, CapturedBuffer } from '../../domain/services/ArchiveService';
 
 // Import Controllers
 import { useInputController } from '../controllers/InputController';
 import { useOutputController, TerminalOutputLine } from '../controllers/OutputController';
-import { useTutorController, TutorControllerCallbacks, createTutorActiveChecker } from '../controllers/TutorController';
+import { useTutorController, TutorControllerCallbacks } from '../controllers/TutorController';
 
 export type ActiveApp = { type: 'SHELL' } | { type: 'VIM', filename: string };
+export type ActiveView = 'SHELL' | 'COMMS' | 'BUFFERS';
 
 // Re-export for backward compatibility
 export { TerminalOutputLine } from '../controllers/OutputController';
@@ -52,6 +57,9 @@ export const useTerminalViewModel = (
     const autocompleteService = useMemo(() => {
         return new AutocompleteService(new FileSystemService(fs));
     }, [fs]);
+
+    const archiveService = useMemo(() => new ArchiveService(), []);
+    const [buffers, setBuffers] = useState<CapturedBuffer[]>([]);
 
     const gameObserver = useMemo(() => {
         return new GameEventObserver(gameManager);
@@ -75,20 +83,23 @@ export const useTerminalViewModel = (
     const lastActivityRef = useRef<number>(Date.now());
     const hintTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-    // -- View State (Shell vs Comms) --
-    // Moved from TerminalScreen to strictly adhere to Clean Architecture (ViewModel manages state)
-    const [activeView, setActiveView] = useState<'SHELL' | 'COMMS'>('SHELL');
+    // -- View State (Shell vs Comms vs Buffers) --
+    const [activeView, setActiveView] = useState<ActiveView>('SHELL');
     const [ircMissionId, setIrcMissionId] = useState<string | null>(null);
 
     const toggleCommsView = useCallback(() => {
-        setActiveView(prev => prev === 'SHELL' ? 'COMMS' : 'SHELL');
+        setActiveView(prev => prev === 'COMMS' ? 'SHELL' : 'COMMS');
 
         // Auto-select mission if opening
-        if (activeView === 'SHELL' && !ircMissionId) {
+        if (activeView !== 'COMMS' && !ircMissionId) {
             const active = missions.find(m => m.status === 'active');
             setIrcMissionId(active ? active.id : (missions[0]?.id || null));
         }
     }, [activeView, ircMissionId, missions]);
+
+    const toggleBufferView = useCallback(() => {
+        setActiveView(prev => prev === 'BUFFERS' ? 'SHELL' : 'BUFFERS');
+    }, []);
 
     // Reset timer on activity
     const resetInactivityTimer = useCallback(() => {
@@ -203,19 +214,52 @@ export const useTerminalViewModel = (
         state.currentDirectory
     );
 
+    // -- Archive Handling --
+    const saveToArchive = useCallback((index: number) => {
+        const lines = outputController.outputLines;
+        const cmdLine = lines[index];
+        if (!cmdLine || cmdLine.type !== 'input') return;
+
+        // Clean command string (remove prefix '> ')
+        const command = cmdLine.text.replace(/^>\s*/, '');
+
+        // Collect following output/system lines until next input or end
+        const blockOutput: TerminalOutputLine[] = [];
+        for (let i = index + 1; i < lines.length; i++) {
+            if (lines[i].type === 'input') break;
+            blockOutput.push(lines[i]);
+        }
+
+        archiveService.record(
+            command,
+            blockOutput,
+            state.fsContext || 'LOCAL',
+            cmdLine.exitCode
+        );
+        setBuffers(archiveService.getAll());
+    }, [outputController.outputLines, archiveService, state.fsContext]);
+
     // -- Command Execution --
     const handleCommand = useCallback(async (manualCommand?: string) => {
         const cmdToRun = manualCommand !== undefined ? manualCommand : inputController.input;
         if (!cmdToRun) return;
 
-        // Execute via Domain Logic
-        // Use stateRef.current to ensure we have the absolute latest state (inc. previous command's side effects)
+        // -- Three-Phase Sci-Fi Execution --
+
+        // Phase 1: The Strike (Input Echo)
+        const cmdIndex = outputController.getLineCount();
+        outputController.appendInput(cmdToRun, undefined, true); // Mark as pending
+        inputController.clearInput();
+
+        // Phase 2: The Access (Cinematic Delay)
+        // Simulate machine "thinking" or data retrieval
+        await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 300));
+
+        // Phase 3: The Result (Execution)
         const response: CommandResponse = await commandExecutor.execute(cmdToRun, stateRef.current);
         const { output: cmdOutput, newState, navigationAction, uiAction, exitCode, controlFlow } = response;
 
         // [FIX] Synchronous State Update for the Ref
-        // This ensures the NEXT command in a sequence (e.g. from Tutor) sees this command's state changes
-        // even if React hasn't re-rendered yet.
         if (newState) {
             const updated = { ...stateRef.current, ...newState };
             stateRef.current = updated;
@@ -226,8 +270,6 @@ export const useTerminalViewModel = (
         if (controlFlow === 'EXIT') {
             gameManager.tutorEngine.stop();
             outputController.clear();
-            inputController.clearInput();
-            // Optional: outputController.appendSystemMessage('[ SYSTEM ] SESSION TERMINATED.');
             return;
         }
 
@@ -235,7 +277,6 @@ export const useTerminalViewModel = (
         if (uiAction === 'CLEAR') {
             outputController.clear();
             if (newState) setState(prev => ({ ...prev, ...newState }));
-            inputController.clearInput();
             return;
         }
 
@@ -253,16 +294,16 @@ export const useTerminalViewModel = (
             return;
         }
 
-        // Update Shell Output
-        outputController.appendInput(cmdToRun, exitCode);
-        if (cmdOutput) {
-            outputController.appendOutput(cmdOutput);
+        // Update Input Status (Reveal OK/ERR)
+        outputController.updateInputStatus(cmdIndex, exitCode, false);
+
+        // Phase 4: Materialization (Output Stream)
+        if (cmdOutput !== undefined && cmdOutput !== null) {
+            outputController.appendOutput(cmdOutput, response.metadata);
         }
 
         const prevFsContext = state.fsContext;
         const effectiveState = newState ? { ...state, ...newState } : state;
-
-        inputController.clearInput();
 
         // Notify GameManager (Tutor Analysis)
         gameManager.onCommandExecuted(effectiveState, response, prevFsContext);
@@ -366,12 +407,17 @@ export const useTerminalViewModel = (
         // Game State
         missions,
 
+        // Buffer State
+        archiveService,
+        toggleBufferView,
+        buffers,
+
         // Handlers
         handleInputChange,
         handleKeyPress,
-        handleCommand,
         handleVimExit,
         handleStartMission,
-        handleAbandonMission
+        handleAbandonMission,
+        saveToArchive
     };
 };

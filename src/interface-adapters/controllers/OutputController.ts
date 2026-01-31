@@ -26,7 +26,12 @@ export interface TerminalOutputLine {
     text: string;
     type: 'input' | 'output' | 'system';
     exitCode?: number;
+    pending?: boolean;
     timestamp?: number;
+    metadata?: {
+        renderType?: 'ls-pretty' | 'system-alert' | 'fish-style';
+        data?: any;
+    };
 }
 
 export interface OutputControllerState {
@@ -35,8 +40,9 @@ export interface OutputControllerState {
 }
 
 export interface OutputControllerActions {
-    appendInput: (command: string, exitCode?: number) => void;
-    appendOutput: (text: string) => void;
+    appendInput: (command: string, exitCode?: number, pending?: boolean) => void;
+    updateInputStatus: (index: number, exitCode: number, pending: boolean) => void;
+    appendOutput: (text: string, metadata?: any) => void;
     appendSystemMessage: (text: string) => void;
     appendLine: (line: TerminalOutputLine) => void;
     clear: () => void;
@@ -77,13 +83,14 @@ export const useOutputController = (): OutputControllerState & OutputControllerA
      * Appends a user input line (command).
      * Displayed with '>' prefix in the terminal.
      */
-    const appendInput = useCallback((command: string, exitCode?: number) => {
+    const appendInput = useCallback((command: string, exitCode?: number, pending?: boolean) => {
         setOutputLines(prev => [
             ...prev,
             {
                 text: `> ${command}`,
                 type: 'input',
                 exitCode,
+                pending,
                 timestamp: Date.now()
             }
         ]);
@@ -91,16 +98,26 @@ export const useOutputController = (): OutputControllerState & OutputControllerA
         setRenderedLineCount(prev => prev + 1);
     }, []);
 
+    const updateInputStatus = useCallback((index: number, exitCode: number, pending: boolean) => {
+        setOutputLines(prev => {
+            const next = [...prev];
+            if (next[index] && next[index].type === 'input') {
+                next[index] = { ...next[index], exitCode, pending };
+            }
+            return next;
+        });
+    }, []);
+
     /**
      * Appends command output.
      */
-    const appendOutput = useCallback((text: string) => {
-        if (!text) return;
+    const appendOutput = useCallback((text: string, metadata?: any) => {
         setOutputLines(prev => [
             ...prev,
             {
-                text,
+                text: text || '', // Allow empty for blank lines
                 type: 'output',
+                metadata,
                 timestamp: Date.now()
             }
         ]);
@@ -154,6 +171,7 @@ export const useOutputController = (): OutputControllerState & OutputControllerA
         outputLines,
         renderedLineCount,
         appendInput,
+        updateInputStatus,
         appendOutput,
         appendSystemMessage,
         appendLine,

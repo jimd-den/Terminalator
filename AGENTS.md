@@ -235,9 +235,8 @@ src/
 *   **Traversals:** Use `FileSystemService` for recursive operations. Do not manually recurse directory structures in Commands.
 
 ### Known Violations (To Be Refactored)
-1.  **MakeCommand:** Handles parsing and execution. Needs splitting.
-2.  **Parsers:** `ShellParser` logic complexity is high; consider visitor pattern if grammar grows.
-3.  **UI God Components:** `TerminalScreen.tsx` currently handles too much (Input, Output, Layout, Vim Switching). Refactor into `ShellView`, `InputBar`, and `OutputLog`.
+1. **Parsers:** `ShellParser` logic complexity is high; consider visitor pattern if grammar grows.
+2. **UI God Components:** `TerminalScreen.tsx` currently handles too much (Input, Output, Layout, Vim Switching). Refactor into `ShellView`, `InputBar`, and `OutputLog`.
 
 ### UI Component Standards
 *   **No Inline Logic:** Components should receive data prop objects, not raw state.
@@ -282,3 +281,18 @@ The user rules defined in section 2 are absolute.
 6.  **Universal Readability**
 7.  **Pragmatic Design Patterns**
 8.  **SOLID / KISS Equilibrium**
+
+---
+
+## 9. Engineering Log
+
+### 2026-01-30: SRP & DRY Refactoring (Batch 1)
+*   **CommandBase Extension:** Upgraded `CommandBase.ts` with a robust argument parser (supports bundled flags, options with values).
+*   **ValCommand Refactor:** Converted `ValCommand.ts` to extend `CommandBase`, eliminating 50+ lines of manual parsing logic (DRY).
+*   **MakeCommand SRP:** Decoupled `MakeCommand.ts` by creating `MakefileParser.ts` and `MakeExecutor.ts` domain services.
+*   **Verification:** Zero regressions in `posix_comprehensive_suite.ts`.
+### 2026-01-31: UI Decomposition & Aesthetic Refinement (Batch 2)
+*   **TerminalScreen Decomposition:** Refactored the monolithic `TerminalScreen.tsx` into a high-level router. Created `ShellScreen.tsx` and `VimScreen.tsx` to encapsulate application-specific logic (SRP).
+*   **Aesthetic Overhaul:** Transitioned to a "future 80s mainframe" look. Removed box outlines and margins in favor of a raw CRT phosphor aesthetic.
+*   **Phosphor Glow:** Implemented text-shadow glows across the output log and input prompts using pure, composable style generator functions.
+*   **Verification:** Confirmed zero regressions in command logic with the POSIX suite.

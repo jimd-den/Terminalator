@@ -37,18 +37,22 @@ export const InputBar: React.FC<InputBarProps> = ({
     const { theme, settings } = useTheme();
     const colors = theme.colors;
 
-    const styles = StyleSheet.create({
+    /**
+     * Generator for Phosphorus Input Aesthetics.
+     * Pure function to create themed styles for the input area.
+     */
+    const createInputStyles = (colors: any, settings: any) => StyleSheet.create({
         inputWrapper: {
             width: '100%',
             flexDirection: 'column',
         },
         inputLabel: {
-            color: colors.secondary,
+            color: colors.primary,
             fontFamily: settings.fontFamily,
             fontSize: THEME.typography.fontSize.sm,
             marginBottom: THEME.spacing.xs,
-            opacity: 0.8,
-            letterSpacing: 1,
+            opacity: 0.6,
+            letterSpacing: 2,
         },
         inputContainer: {
             width: '100%',
@@ -68,13 +72,16 @@ export const InputBar: React.FC<InputBarProps> = ({
             lineHeight: 35,
         },
         ghostText: {
-            color: colors.text.dim, // Distinct ghost color
+            color: colors.text.dim,
             fontFamily: settings.fontFamily,
             fontSize: THEME.typography.fontSize.lg,
             height: 35,
             lineHeight: 35,
+            opacity: 0.5,
         },
     });
+
+    const styles = React.useMemo(() => createInputStyles(colors, settings), [colors, settings]);
 
     return (
         <View style={styles.inputWrapper}>

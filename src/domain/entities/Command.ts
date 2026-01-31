@@ -21,6 +21,10 @@ export interface CommandResponse {
     };
     controlFlow?: 'RETURN' | 'BREAK' | 'CONTINUE' | 'EXIT';
     command?: string; // [NEW] Context: The command that produced this response
+    metadata?: {
+        renderType?: 'ls-pretty' | 'system-alert' | 'fish-style';
+        data?: any;
+    };
 }
 
 export interface ICommand {
