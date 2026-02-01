@@ -1,50 +1,27 @@
 /**
  * TerminalViewModel - Interface Adapter Layer
  *
- * Manages the state and logic for the Terminal Screen.
- * Implements the "Humble Object" pattern by stripping all logic from the View.
+ * " The Humble Composition Root "
+ *
+ * Manages the high-level orchestration of the Terminal Screen.
+ * Composes specialized ViewModels to drive the UI.
  *
  * Pillar: The Four-Fold Shield (Strict Architecture)
- * Pillar: The Balanced Scale (Passive View)
- *
- * Intent:
- * Decouples the UI (TerminalScreen) from the Business Logic (CommandExecutor).
- * Composes InputController, OutputController, and TutorController for clean separation.
- *
- * Design Pattern: Composite Controller
- * This ViewModel orchestrates three focused controllers:
- * - InputController: Input state and autocomplete
- * - OutputController: Output buffer management
- * - TutorController: Tutor engine events and state
+ * Pillar: The Balanced Scale (Composition > Inheritance)
  */
 
-import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import React from 'react';
-import { useNavigation } from '@react-navigation/native';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { FileSystem } from '../../domain/entities/FileSystem';
-import { FileSystemService } from '../../domain/services/FileSystemService';
 import { ExecuteCommand } from '../../domain/usecases/ExecuteCommand';
-import { CommandResponse } from '../../domain/entities/Command';
 import { GameManager } from '../GameManager';
-import { createInitialTerminalState, TerminalState } from '../../domain/entities/TerminalState';
-import { TerminalStateMapper } from '../mappers/TerminalStateMapper';
-// Import Entities
-import { Lesson } from '../../domain/entities/TutorEngine';
-
-// Import Services
-import { AutocompleteService } from '../../domain/services/AutocompleteService';
-import { GameEventObserver } from '../../domain/services/GameEventObserver';
 import { ArchiveService, CapturedBuffer } from '../../domain/services/ArchiveService';
+import { BufferMapper } from '../mappers/BufferMapper';
 
-// Import Controllers
-import { useInputController } from '../controllers/InputController';
-import { useOutputController, TerminalOutputLine } from '../controllers/OutputController';
-import { useTutorController, TutorControllerCallbacks } from '../controllers/TutorController';
+// Import Decomposed ViewModels
+import { useShellViewModel } from './useShellViewModel';
+import { useMissionViewModel } from './useMissionViewModel';
 
-export type ActiveApp = { type: 'SHELL' } | { type: 'VIM', filename: string };
 export type ActiveView = 'SHELL' | 'COMMS' | 'BUFFERS';
-
-// Re-export for backward compatibility
 export { TerminalOutputLine } from '../controllers/OutputController';
 
 export const useTerminalViewModel = (
@@ -52,375 +29,125 @@ export const useTerminalViewModel = (
     commandExecutor: ExecuteCommand,
     gameManager: GameManager
 ) => {
-    const navigation = useNavigation();
+    // -- View State (Top Level UI) --
+    const [activeView, setActiveView] = useState<ActiveView>('SHELL');
+    const [contextualHint, setContextualHint] = useState<string | null>(null);
+    const lastActivityRef = useRef<number>(Date.now());
 
-    // -- Services --
-    const autocompleteService = useMemo(() => {
-        return new AutocompleteService(new FileSystemService(fs));
-    }, [fs]);
+    // -- Sub-ViewModels --
+    const missionVM = useMissionViewModel(gameManager);
+
+    // We pass a setter to update mission state from shell (e.g. if command triggers update)
+    const shellVM = useShellViewModel(fs, commandExecutor, gameManager, missionVM.refreshMissions);
 
     const archiveService = useMemo(() => new ArchiveService(), []);
     const [buffers, setBuffers] = useState<CapturedBuffer[]>([]);
 
-    const gameObserver = useMemo(() => {
-        return new GameEventObserver(gameManager);
-    }, [gameManager]);
+    // -- Buffer Logic (Archive) --
+    // Kept here as it bridges Shell Output -> Archive Storage
+    const saveToArchive = useCallback((index: number) => {
+        const lines = shellVM.outputLines;
+        const cmdLine = lines[index];
+        if (!cmdLine || cmdLine.type !== 'input') return;
 
-    // -- Core State --
-    const [state, setState] = useState<TerminalState>(createInitialTerminalState());
-    const [activeApp, setActiveApp] = useState<ActiveApp>({ type: 'SHELL' });
-
-    // [FIX] State Ref to avoid stale closures in handleCommand and other callbacks
-    const stateRef = useRef(state);
-    useEffect(() => {
-        stateRef.current = state;
-    }, [state]);
-
-    const [isTransitioning, setIsTransitioning] = useState(false);
-    const [missions, setMissions] = useState(gameManager.getActiveMissions());
-
-    // -- Contextual Hint System --
-    const [contextualHint, setContextualHint] = useState<string | null>(null);
-    const lastActivityRef = useRef<number>(Date.now());
-    const hintTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-    // -- View State (Shell vs Comms vs Buffers) --
-    const [activeView, setActiveView] = useState<ActiveView>('SHELL');
-    const [ircMissionId, setIrcMissionId] = useState<string | null>(null);
-
-    const toggleCommsView = useCallback(() => {
-        setActiveView(prev => prev === 'COMMS' ? 'SHELL' : 'COMMS');
-
-        // Auto-select mission if opening
-        if (activeView !== 'COMMS' && !ircMissionId) {
-            const active = missions.find(m => m.status === 'active');
-            setIrcMissionId(active ? active.id : (missions[0]?.id || null));
+        const command = cmdLine.text.replace(/^>\s*/, '');
+        const blockOutput = [];
+        for (let i = index + 1; i < lines.length; i++) {
+            if (lines[i].type === 'input') break;
+            blockOutput.push(lines[i]);
         }
-    }, [activeView, ircMissionId, missions]);
+        archiveService.record(
+            command,
+            blockOutput,
+            shellVM.fsContext || 'LOCAL',
+            cmdLine.exitCode
+        );
+        setBuffers(archiveService.getAll());
+    }, [shellVM.outputLines, archiveService, shellVM.fsContext]);
 
     const toggleBufferView = useCallback(() => {
         setActiveView(prev => prev === 'BUFFERS' ? 'SHELL' : 'BUFFERS');
     }, []);
 
-    // Reset timer on activity
+    const toggleCommsView = useCallback(() => {
+        setActiveView(prev => prev === 'COMMS' ? 'SHELL' : 'COMMS');
+        // Auto-select mission logic
+        if (activeView !== 'COMMS' && !missionVM.ircMissionId) {
+            const active = missionVM.missions.find(m => m.status === 'active');
+            missionVM.setIrcMissionId(active ? active.id : (missionVM.missions[0]?.id || null));
+        }
+    }, [activeView, missionVM.ircMissionId, missionVM.missions, missionVM.setIrcMissionId]);
+
+    // -- Contextual Hint System --
     const resetInactivityTimer = useCallback(() => {
         lastActivityRef.current = Date.now();
         if (contextualHint) setContextualHint(null);
     }, [contextualHint]);
 
-    // Check for inactivity
     useEffect(() => {
         const interval = setInterval(() => {
             const idleTime = Date.now() - lastActivityRef.current;
             if (idleTime > 15000 && !contextualHint && !gameManager.tutorEngine.isActive()) {
-                // Determine hint based on state
                 let hint = "[ HINT: TYPE 'help' FOR AVAILABLE COMMANDS ]";
+                const activeMission = missionVM.missions.find(m => m.status === 'active');
 
-                // Context-aware overrides
-                const activeMission = missions.find(m => m.status === 'active');
                 if (activeMission) {
                     if (activeMission.currentStep === 'PENDING') hint = "[ HINT: ESTABLISH CONNECTION TO TARGET SYSTEM ]";
                     else if (activeMission.currentStep === 'CONNECTED') hint = "[ HINT: EXPLORE REMOTE DIRECTORY WITH 'ls' ]";
                     else if (activeMission.currentStep === 'LOCATED') hint = "[ HINT: ACQUIRE OBJECTIVE FILE ]";
-                } else if (!state.fsContext) {
-                    // specific hints for local shell
+                } else if (!shellVM.fsContext) {
                     hint = "[ HINT: CHECK 'mail' OR 'jobs' ]";
                 }
-
                 setContextualHint(hint);
             }
         }, 1000);
         return () => clearInterval(interval);
-    }, [contextualHint, missions, state.fsContext, gameManager]);
+    }, [contextualHint, missionVM.missions, shellVM.fsContext, gameManager]);
 
-    // -- Input Controller --
-    const isTutorActive = useCallback(() => {
-        return gameManager.tutorEngine.isActive();
-    }, [gameManager]);
-
-    const inputController = useInputController(
-        autocompleteService,
-        state.currentDirectory,
-        isTutorActive
-    );
-
-    // -- Output Controller --
-    const outputController = useOutputController();
-
-    // -- Command Execution Ref (for TutorController callback) --
-    const handleCommandRef = useRef<((cmd?: string) => Promise<void>) | null>(null);
-
-    // -- Tutor Controller Callbacks --
-    const tutorCallbacks: TutorControllerCallbacks = useMemo(() => ({
-        onStart: (lesson: Lesson, targetCwd: string) => {
-            // [FIX] Skip relocation for mission-related lessons to avoid resetting context
-            const isMission = lesson.id.startsWith('MISSION_');
-            if (isMission) return;
-
-            setState(prev => ({ ...prev, currentDirectory: targetCwd }));
-            outputController.appendSystemMessage(`[ SYSTEM ] RELOCATING TO TRAINING ENVIRONMENT: ${targetCwd}...`);
-        },
-        onStop: (originalCwd: string | null) => {
-            const current = stateRef.current;
-            // Only restore if we aren't in a remote session or mission
-            if (originalCwd && !current.fsContext) {
-                setState(prev => ({ ...prev, currentDirectory: originalCwd }));
-                outputController.appendSystemMessage(`[ SYSTEM ] TRAINING HALTED. RESTORING CONTEXT: ${originalCwd}`);
-            }
-        },
-        onProgress: (input: string, ghostText: string) => {
-            inputController.setInput(input);
-            inputController.updateGhostText(ghostText);
-        },
-        onCorrection: (input: string, ghostText: string) => {
-            inputController.setInput(input);
-            inputController.updateGhostText(ghostText);
-        },
-        onMistake: (input: string, ghostText: string, _droppedCount: number) => {
-            inputController.setInput(input);
-            inputController.updateGhostText(ghostText);
-        },
-        onComplete: (lesson: Lesson, originalCwd: string | null) => {
-            inputController.setInput(lesson.text);
-            inputController.updateGhostText('');
-
-            // Execute the completed command
-            if (handleCommandRef.current) {
-                handleCommandRef.current(lesson.text);
-                // [FIX] Clear input immediately after auto-exec to prevent double-firing from user ENTER
-                inputController.clearInput();
-            }
-
-            // Restore context (Relocation cleanup)
-            // [FIX] Skip restoration for mission-related lessons OR if we have actively switched FS context (SSH)
-            const isMission = lesson.id.startsWith('MISSION_');
-            const hasSwitchedContext = !!stateRef.current.fsContext;
-
-            if (originalCwd && !isMission && !hasSwitchedContext) {
-                setTimeout(() => {
-                    // Final check of the ref to ensure we don't overwrite a successful SSH that happened in the meantime
-                    if (!stateRef.current.fsContext) {
-                        setState(prev => ({ ...prev, currentDirectory: originalCwd }));
-                        outputController.appendSystemMessage(`[ SYSTEM ] CONTEXT RESTORED: ${originalCwd}`);
-                    }
-                }, 1000);
-            }
-        }
-    }), [inputController, outputController]);
-
-    // -- Tutor Controller --
-    const tutorController = useTutorController(
-        gameManager.tutorEngine,
-        tutorCallbacks,
-        state.currentDirectory
-    );
-
-    // -- Archive Handling --
-    const saveToArchive = useCallback((index: number) => {
-        const lines = outputController.outputLines;
-        const cmdLine = lines[index];
-        if (!cmdLine || cmdLine.type !== 'input') return;
-
-        // Clean command string (remove prefix '> ')
-        const command = cmdLine.text.replace(/^>\s*/, '');
-
-        // Collect following output/system lines until next input or end
-        const blockOutput: TerminalOutputLine[] = [];
-        for (let i = index + 1; i < lines.length; i++) {
-            if (lines[i].type === 'input') break;
-            blockOutput.push(lines[i]);
-        }
-
-        archiveService.record(
-            command,
-            blockOutput,
-            state.fsContext || 'LOCAL',
-            cmdLine.exitCode
-        );
-        setBuffers(archiveService.getAll());
-    }, [outputController.outputLines, archiveService, state.fsContext]);
-
-    // -- Command Execution --
-    const handleCommand = useCallback(async (manualCommand?: string) => {
-        const cmdToRun = manualCommand !== undefined ? manualCommand : inputController.input;
-        if (!cmdToRun) return;
-
-        // -- Three-Phase Sci-Fi Execution --
-
-        // Phase 1: The Strike (Input Echo)
-        const cmdIndex = outputController.getLineCount();
-        outputController.appendInput(cmdToRun, undefined, true); // Mark as pending
-        inputController.clearInput();
-
-        // Phase 2: The Access (Cinematic Delay)
-        // Simulate machine "thinking" or data retrieval
-        await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 300));
-
-        // Phase 3: The Result (Execution)
-        const response: CommandResponse = await commandExecutor.execute(cmdToRun, stateRef.current);
-        const { output: cmdOutput, newState, navigationAction, uiAction, exitCode, controlFlow } = response;
-
-        // [FIX] Synchronous State Update for the Ref
-        if (newState) {
-            const updated = { ...stateRef.current, ...newState };
-            stateRef.current = updated;
-            setState(updated);
-        }
-
-        // Handle Control Flow (e.g. EXIT)
-        if (controlFlow === 'EXIT') {
-            gameManager.tutorEngine.stop();
-            outputController.clear();
-            return;
-        }
-
-        // Handle UI Actions
-        if (uiAction === 'CLEAR') {
-            outputController.clear();
-            if (newState) setState(prev => ({ ...prev, ...newState }));
-            return;
-        }
-
-        // Handle Navigation
-        if (navigationAction && navigationAction.type === 'NAVIGATE') {
-            if (navigationAction.target === 'Editor') {
-                setIsTransitioning(true);
-                setTimeout(() => {
-                    setActiveApp({ type: 'VIM', filename: navigationAction.params.filename });
-                    setTimeout(() => setIsTransitioning(false), 300);
-                }, 100);
-                return;
-            }
-            (navigation.navigate as any)(navigationAction.target, navigationAction.params);
-            return;
-        }
-
-        // Update Input Status (Reveal OK/ERR)
-        outputController.updateInputStatus(cmdIndex, exitCode, false);
-
-        // Phase 4: Materialization (Output Stream)
-        if (cmdOutput !== undefined && cmdOutput !== null) {
-            outputController.appendOutput(cmdOutput, response.metadata);
-        }
-
-        const prevFsContext = state.fsContext;
-        const effectiveState = newState ? { ...state, ...newState } : state;
-
-        // Notify GameManager (Tutor Analysis)
-        gameManager.onCommandExecuted(effectiveState, response, prevFsContext);
-
-        // Simulate random procedural events (Game Logic)
-        const eventMsg = gameObserver.checkProceduralEvents(outputController.getLineCount());
-        if (eventMsg) {
-            outputController.appendSystemMessage(eventMsg);
-        }
-        setMissions([...gameManager.getActiveMissions()]);
-    }, [inputController, outputController, state, commandExecutor, navigation, gameManager, gameObserver]);
-
-    // Update ref for TutorController callback
-    useEffect(() => {
-        handleCommandRef.current = handleCommand;
-    }, [handleCommand]);
-
-    // -- Key Press Handler --
-    const handleKeyPress = useCallback((key: string) => {
+    // Wrap key press to reset timer
+    const handleKeyPressWrapped = useCallback((key: string) => {
         resetInactivityTimer();
-
-        // 1. TUTOR INTERCEPTION
-        if (gameManager.tutorEngine.isActive()) {
-            const lesson = gameManager.tutorEngine.getCurrentLesson();
-            if (lesson && lesson.type === 'SHELL') {
-                if (key.length === 1) {
-                    gameManager.tutorEngine.handleInput(key);
-                    return;
-                }
-                if (key === 'ENTER') {
-                    return;
-                }
-            }
-        }
-
-        // 2. STANDARD SHELL LOGIC
-        if (key === 'TAB') {
-            inputController.acceptAutocomplete();
-        } else if (key === 'ESC') {
-            inputController.clearInput();
-        } else if (key === 'BACKSPACE') {
-            inputController.deleteChar();
-        } else if (key === 'ENTER') {
-            handleCommand();
-        } else if (key.length === 1) {
-            inputController.appendChar(key);
-        }
-    }, [inputController, handleCommand, gameManager, resetInactivityTimer]);
-
-    // -- Input Change Handler --
-    const handleInputChange = useCallback((text: string) => {
-        inputController.setInput(text);
-    }, [inputController]);
-
-    // -- VIM Exit Handler --
-    const handleVimExit = useCallback(() => {
-        setIsTransitioning(true);
-        setTimeout(() => {
-            setActiveApp({ type: 'SHELL' });
-            setTimeout(() => setIsTransitioning(false), 300);
-        }, 100);
-    }, []);
-
-    // -- Mission Handlers --
-    const handleStartMission = useCallback((id: string) => {
-        gameManager.startMission(id);
-        setMissions([...gameManager.getActiveMissions()]); // Force update
-    }, [gameManager]);
-
-    const handleAbandonMission = useCallback((id: string) => {
-        gameManager.abandonMission(id);
-        setMissions([...gameManager.getActiveMissions()]); // Force update
-    }, [gameManager]);
+        shellVM.handleKeyPress(key);
+    }, [shellVM.handleKeyPress, resetInactivityTimer]);
 
     return {
         // App State
-        activeApp,
-        state: TerminalStateMapper.toDTO(state),
+        activeApp: shellVM.activeApp,
+        state: shellVM.state,
         contextualHint,
         activeView,
-        ircMissionId,
-        setIrcMissionId,
+        isTransitioning: shellVM.isTransitioning,
+
+        // Mission State
+        ircMissionId: missionVM.ircMissionId,
+        setIrcMissionId: missionVM.setIrcMissionId,
+        missions: missionVM.missions,
+        handleStartMission: missionVM.handleStartMission,
+        handleAbandonMission: missionVM.handleAbandonMission,
         toggleCommsView,
-        isTransitioning,
 
-        // Input State (from InputController)
-        input: inputController.input,
-        ghostText: inputController.ghostText,
+        // Shell/Input State
+        input: shellVM.input,
+        ghostText: shellVM.ghostText,
+        handleInputChange: shellVM.handleInputChange,
+        handleKeyPress: handleKeyPressWrapped,
+        handleVimExit: shellVM.handleVimExit,
 
+        // Output State
+        outputLines: shellVM.outputLines,
+        renderedLineCount: shellVM.renderedLineCount,
+        markLineComplete: shellVM.markLineComplete,
+        toggleMinimize: shellVM.toggleMinimize,
+        deleteGroup: shellVM.deleteGroup,
 
-
-        // Output State (from OutputController)
-        outputLines: outputController.outputLines,
-        renderedLineCount: outputController.renderedLineCount,
-        markLineComplete: outputController.markLineComplete,
-
-        // Tutor State (from TutorController)
-        tutorEmotion: tutorController.emotion,
-        crashingIndices: tutorController.crashingIndices,
-
-        // Game State
-        missions,
+        // Tutor State
+        tutorEmotion: shellVM.tutorEmotion,
+        crashingIndices: shellVM.crashingIndices,
 
         // Buffer State
         archiveService,
         toggleBufferView,
-        buffers,
-
-        // Handlers
-        handleInputChange,
-        handleKeyPress,
-        handleVimExit,
-        handleStartMission,
-        handleAbandonMission,
+        buffers: buffers.map(BufferMapper.toDTO),
         saveToArchive,
-        toggleMinimize: outputController.toggleMinimize,
-        deleteGroup: outputController.deleteGroup
     };
 };

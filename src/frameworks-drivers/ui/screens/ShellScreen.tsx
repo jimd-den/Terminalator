@@ -18,9 +18,9 @@ import { useShellView } from '../components/ShellView';
 import { useInput } from '../context/InputContext';
 import { useTheme } from '../context/ThemeContext';
 import { TerminalStateDTO } from '../../../domain/dtos/TerminalStateDTO';
-import { Mission } from '../../../domain/entities/Mission';
+import { MissionDTO } from '../../../domain/dtos/MissionDTO';
 import { BufferScreen } from './BufferScreen';
-import { CapturedBuffer } from '../../../domain/services/ArchiveService';
+import { BufferDTO } from '../../../domain/dtos/BufferDTO';
 import { FKeyBar, FKeyDef } from '../components/FKeyBar';
 
 export interface ShellScreenProps {
@@ -33,8 +33,8 @@ export interface ShellScreenProps {
     tutorEmotion: any;
     crashingIndices: number[];
     contextualHint: string | null;
-    missions: Mission[];
-    buffers: CapturedBuffer[];
+    missions: MissionDTO[];
+    buffers: BufferDTO[];
 
     // View State
     activeView: 'SHELL' | 'COMMS' | 'BUFFERS';

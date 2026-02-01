@@ -12,10 +12,10 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { THEME } from '../Theme';
 import { useTheme } from '../context/ThemeContext';
-import { CapturedBuffer } from '../../../domain/services/ArchiveService';
+import { BufferDTO } from '../../../domain/dtos/BufferDTO';
 
 interface BufferScreenProps {
-    buffers: CapturedBuffer[];
+    buffers: BufferDTO[];
     onClose: () => void;
 }
 

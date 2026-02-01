@@ -1657,7 +1657,7 @@ UTILITY: who
 [FAIL] WHO_02: Headers -H
        -> Stdout Regex Mismatch.
    Expected: /NAME/
-   Got: "operator   tty1   2026-02-01 00:16"
+   Got: "operator   tty1   2026-02-01 00:31"
 [PASS] WHO_03
 [PASS] WHO_04
 [PASS] WHO_05

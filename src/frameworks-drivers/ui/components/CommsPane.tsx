@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Dimensions } from 'react-native';
-import { Mission } from '../../../domain/entities/Mission';
+import { MissionDTO } from '../../../domain/dtos/MissionDTO';
 import { THEME } from '../Theme';
 import { useTheme } from '../context/ThemeContext';
 import { GhostWriter } from '../GhostWriter';
 
 interface CommsPaneProps {
-    missions: Mission[];
+    missions: MissionDTO[];
     activeMissionId: string | null;
     onMissionSelect: (id: string | null) => void;
     onStartMission: (id: string) => void;
