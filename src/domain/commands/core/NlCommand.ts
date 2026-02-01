@@ -15,7 +15,8 @@ import { ICommand } from '../ICommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../usecases/ExecuteCommand';
+import { CommandResponse } from '../../entities/Command';
+
 import { FileSystem } from '../../entities/FileSystem';
 
 export class NlCommand implements ICommand {

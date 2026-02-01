@@ -10,7 +10,8 @@ import { getStdinAsString } from '../../entities/ProcessContext';
  *
  * Reference: IEEE Std 1003.1-2024 (SUSv5) - val utility
  */
-import { ICommand, CommandResponse } from '../ICommand';
+import { CommandBase } from '../CommandBase';
+import { CommandResponse } from '../ICommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 
@@ -39,20 +40,26 @@ interface ValOptions {
      type?: string;           // -y: Type to check against %Y%
 }
 
-export class ValCommand implements ICommand {
-     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+export class ValCommand extends CommandBase {
+     protected async executeInternal(
+          args: string[],
+          flags: Set<string>,
+          operands: string[],
+          context: ProcessContext,
+          state: TerminalState
+     ): Promise<CommandResponse> {
+          // Re-parse with SCCS specific options
+          this.parseArgs(args, ['m', 'r', 'y']);
           const input = getStdinAsString(context);
 
-          // Parse options
-          const { opts, files, error } = this.parseOptions(args);
+          const opts: ValOptions = {
+               silent: this.hasFlag('s'),
+               moduleName: this.options.get('m'),
+               sid: this.options.get('r'),
+               type: this.options.get('y')
+          };
 
-          if (error) {
-               return {
-                    output: opts.silent ? '' : error,
-                    newState: state,
-                    exitCode: VAL_EXIT.UNKNOWN_OPTION
-               };
-          }
+          const files = this.operands;
 
           // Special case: "val -" reads file arguments from stdin
           if (files.length === 1 && files[0] === '-') {
@@ -74,42 +81,27 @@ export class ValCommand implements ICommand {
      }
 
      /**
-      * Parse command line options per POSIX.
+      * Helper for inner parsing (stdin mode)
       */
-     private parseOptions(args: string[]): { opts: ValOptions, files: string[], error?: string } {
-          const opts: ValOptions = { silent: false };
-          const files: string[] = [];
-
-          let i = 0;
-          while (i < args.length) {
-               const arg = args[i];
-
-               if (arg === '-s') {
-                    opts.silent = true;
-               } else if (arg === '-m' && i + 1 < args.length) {
-                    opts.moduleName = args[++i];
-               } else if (arg.startsWith('-m')) {
-                    opts.moduleName = arg.substring(2);
-               } else if (arg === '-r' && i + 1 < args.length) {
-                    opts.sid = args[++i];
-               } else if (arg.startsWith('-r')) {
-                    opts.sid = arg.substring(2);
-               } else if (arg === '-y' && i + 1 < args.length) {
-                    opts.type = args[++i];
-               } else if (arg.startsWith('-y')) {
-                    opts.type = arg.substring(2);
-               } else if (arg === '--') {
-                    files.push(...args.slice(i + 1));
-                    break;
-               } else if (arg.startsWith('-') && arg !== '-') {
-                    return { opts, files, error: `val: unknown option: ${arg}` };
-               } else {
-                    files.push(arg);
+     private parseArgsInner(args: string[]): { opts: ValOptions, files: string[] } {
+          const parser = new (class extends CommandBase {
+               public parse(a: string[]) { this.parseArgs(a, ['m', 'r', 'y']); }
+               public get() {
+                    return {
+                         opts: {
+                              silent: this.hasFlag('s'),
+                              moduleName: this.options.get('m'),
+                              sid: this.options.get('r'),
+                              type: this.options.get('y')
+                         },
+                         files: this.operands
+                    };
                }
-               i++;
-          }
+               protected executeInternal(): any { return null; }
+          })();
 
-          return { opts, files };
+          parser.parse(args);
+          return parser.get();
      }
 
      /**
@@ -135,18 +127,10 @@ export class ValCommand implements ICommand {
                if (lineArgs.length === 0) continue;
 
                // Parse this line's options and files
-               const { opts: lineOpts, files: lineFiles, error } = this.parseOptions(lineArgs);
+               const { opts: lineOpts, files: lineFiles } = this.parseArgsInner(lineArgs);
 
                // Merge with base opts (command line opts take precedence initially, then line opts)
                const mergedOpts = { ...opts, ...lineOpts };
-
-               if (error) {
-                    if (!mergedOpts.silent) {
-                         outputs.push(`${line}\n\n    ${error}`);
-                    }
-                    aggregateExitCode |= VAL_EXIT.UNKNOWN_OPTION;
-                    continue;
-               }
 
                if (lineFiles.length === 0) {
                     continue;

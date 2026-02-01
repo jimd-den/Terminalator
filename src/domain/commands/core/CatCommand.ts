@@ -15,13 +15,15 @@ import { getStdinAsString } from '../../entities/ProcessContext';
 import { ICommand } from '../ICommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../usecases/ExecuteCommand';
+import { CommandResponse } from '../../entities/Command';
+
 import { FileSystemService } from '../../services/FileSystemService';
 
 export class CatCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const fsService = context.fileSystemService || this.fs;
         const input = getStdinAsString(context);
         const files: string[] = [];
 
@@ -57,12 +59,12 @@ export class CatCommand implements ICommand {
                 }
 
                 try {
-                    const node = this.fs.resolve(path);
-                    const inode = node ? this.fs.getInode(node.inodeId) : undefined;
+                    const node = fsService.resolve(path);
+                    const inode = node ? fsService.getInode(node.inodeId) : undefined;
                     if (node && inode && (inode.mode & 0o040000)) { // S_IFDIR
                         return { output: `cat: ${filename}: Is a directory`, newState: state, exitCode: 1 };
                     }
-                    const content = this.fs.readFile(path);
+                    const content = fsService.readFile(path);
                     output += content;
                 } catch (error: any) {
                     return {

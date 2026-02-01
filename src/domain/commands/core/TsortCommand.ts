@@ -15,7 +15,8 @@ import { ICommand } from '../ICommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../usecases/ExecuteCommand';
+import { CommandResponse } from '../../entities/Command';
+
 import { FileSystem } from '../../entities/FileSystem';
 
 export class TsortCommand implements ICommand {
@@ -41,7 +42,7 @@ export class TsortCommand implements ICommand {
         const items = content.trim().split(/\s+/).filter(x => x);
 
         if (items.length % 2 !== 0) {
-             return { output: 'tsort: odd input', newState: state, exitCode: 1 };
+            return { output: 'tsort: odd input', newState: state, exitCode: 1 };
         }
 
         const adj = new Map<string, string[]>();
@@ -51,7 +52,7 @@ export class TsortCommand implements ICommand {
         // Build Graph
         for (let i = 0; i < items.length; i += 2) {
             const u = items[i];
-            const v = items[i+1];
+            const v = items[i + 1];
             nodes.add(u);
             nodes.add(v);
 

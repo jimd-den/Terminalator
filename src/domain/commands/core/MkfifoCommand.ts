@@ -15,11 +15,12 @@ import { ICommand } from '../ICommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../usecases/ExecuteCommand';
+import { CommandResponse } from '../../entities/Command';
+
 import { FileSystem } from '../../entities/FileSystem';
 
 export class MkfifoCommand implements ICommand {
-    constructor(private fs: FileSystemService) {}
+    constructor(private fs: FileSystemService) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         const input = getStdinAsString(context);
@@ -37,11 +38,11 @@ export class MkfifoCommand implements ICommand {
                     mode = parseInt(modeStr, 8);
                     if (isNaN(mode)) throw new Error('Invalid octal');
                 } catch (e) {
-                     return { output: `mkfifo: invalid mode: '${modeStr}'`, newState: state, exitCode: 1 };
+                    return { output: `mkfifo: invalid mode: '${modeStr}'`, newState: state, exitCode: 1 };
                 }
                 i++;
             } else if (args[i].startsWith('-')) {
-                 return { output: `mkfifo: invalid option -- '${args[i]}'`, newState: state, exitCode: 1 };
+                return { output: `mkfifo: invalid option -- '${args[i]}'`, newState: state, exitCode: 1 };
             } else {
                 targets.push(args[i]);
             }

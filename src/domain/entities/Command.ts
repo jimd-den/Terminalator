@@ -6,7 +6,7 @@
  */
 
 import { ProcessContext } from './ProcessContext';
-import { FileSystemService } from '../../../domain/services/FileSystemService';
+import { FileSystemService } from '../services/FileSystemService';
 import { TerminalState } from './TerminalState';
 
 export interface CommandResponse {
@@ -18,6 +18,12 @@ export interface CommandResponse {
         type: 'NAVIGATE';
         target: string;
         params?: any;
+    };
+    controlFlow?: 'RETURN' | 'BREAK' | 'CONTINUE' | 'EXIT';
+    command?: string; // [NEW] Context: The command that produced this response
+    metadata?: {
+        renderType?: 'ls-pretty' | 'system-alert' | 'fish-style';
+        data?: any;
     };
 }
 

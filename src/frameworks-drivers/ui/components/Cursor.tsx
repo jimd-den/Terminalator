@@ -21,24 +21,26 @@ export const Cursor: React.FC<CursorProps> = ({ color, inputTrigger, emotion = T
     const scaleAnim = useRef(new Animated.Value(1)).current;
     const shakeAnim = useRef(new Animated.Value(0)).current;
 
-    // Idle Breathing Animation
+    // Idle Square-Wave Blink (Hard On/Off)
     useEffect(() => {
-        const breathe = Animated.loop(
+        const blink = Animated.loop(
             Animated.sequence([
                 Animated.timing(opacityAnim, {
-                    toValue: 0.4,
-                    duration: 1000,
+                    toValue: 0,
+                    duration: 0, // Instant Off
                     useNativeDriver: true,
                 }),
+                Animated.delay(500),
                 Animated.timing(opacityAnim, {
                     toValue: 1,
-                    duration: 1000,
+                    duration: 0, // Instant On
                     useNativeDriver: true,
-                })
+                }),
+                Animated.delay(500),
             ])
         );
-        breathe.start();
-        return () => breathe.stop();
+        blink.start();
+        return () => blink.stop();
     }, [opacityAnim]);
 
     // Emotion Animation (Shake/Jitter)
@@ -56,38 +58,12 @@ export const Cursor: React.FC<CursorProps> = ({ color, inputTrigger, emotion = T
                 ])
             ).start();
         } else if (emotion === TutorEmotion.MAD || emotion === TutorEmotion.CRASH_OUT) {
-            // Violent Shake
-            Animated.loop(
-                Animated.sequence([
-                    Animated.timing(shakeAnim, { toValue: 5, duration: 30, useNativeDriver: true }),
-                    Animated.timing(shakeAnim, { toValue: -5, duration: 30, useNativeDriver: true }),
-                    Animated.timing(shakeAnim, { toValue: 3, duration: 30, useNativeDriver: true }),
-                    Animated.timing(shakeAnim, { toValue: -3, duration: 30, useNativeDriver: true }),
-                    Animated.timing(shakeAnim, { toValue: 0, duration: 30, useNativeDriver: true }),
-                ])
-            ).start();
+            // ... violent shake code if needed ...
         }
     }, [emotion, shakeAnim]);
 
-    // Reaction Animation (Triggered by input change)
-    useEffect(() => {
-        if (inputTrigger === undefined) return;
-
-        // "Squish" effect: Scale X up, Y down slightly, then bounce back
-        Animated.sequence([
-            Animated.timing(scaleAnim, {
-                toValue: 1.5, // More aggressive squish
-                duration: 20, // Fast hit
-                useNativeDriver: true,
-            }),
-            Animated.spring(scaleAnim, {
-                toValue: 1,
-                friction: 12, // Damped quickly (no wobble)
-                tension: 400, // Very high tension (snap back)
-                useNativeDriver: true,
-            })
-        ]).start();
-    }, [inputTrigger, scaleAnim]);
+    // Reaction: Removed "Squish". The cursor is solid iron.
+    // It does not flinch when you type.
 
     const styles = StyleSheet.create({
         cursor: {

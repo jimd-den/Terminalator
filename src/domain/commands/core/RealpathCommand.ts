@@ -15,7 +15,8 @@ import { ICommand } from '../ICommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../usecases/ExecuteCommand';
+import { CommandResponse } from '../../entities/Command';
+
 import { FileSystem } from '../../entities/FileSystem';
 
 export class RealpathCommand implements ICommand {
@@ -25,7 +26,7 @@ export class RealpathCommand implements ICommand {
         const input = getStdinAsString(context);
         const files = args.filter(a => !a.startsWith('-'));
         if (files.length === 0) {
-             return { output: 'realpath: missing operand', newState: state, exitCode: 1 };
+            return { output: 'realpath: missing operand', newState: state, exitCode: 1 };
         }
 
         const file = files[0];

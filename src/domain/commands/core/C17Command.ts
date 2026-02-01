@@ -7,7 +7,8 @@ import { getStdinAsString } from '../../entities/ProcessContext';
  */
 
 import { ICommand } from '../ICommand';
-import { CommandResponse } from '../../usecases/ExecuteCommand';
+import { CommandResponse } from '../../entities/Command';
+
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { ICompilerService, CompilerOptions } from '../../interfaces/ICompilerService';

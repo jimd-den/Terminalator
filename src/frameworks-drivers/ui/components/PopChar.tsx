@@ -17,8 +17,9 @@ interface PopCharProps {
  * Animates text entry with different styles.
  */
 export const PopChar: React.FC<PopCharProps> = ({ children, style, delay = 0, variant = 'pop', isCrashing = false }) => {
-    const scaleAnim = useRef(new Animated.Value(variant === 'star' || variant === 'pop' ? 0 : 1)).current;
-    const opacityAnim = useRef(new Animated.Value(variant === 'crawl' ? 0 : 1)).current;
+    // Phosphor Strike: Scale starts at 1 (no Zoom), Opacity starts at 0 (Dark)
+    const scaleAnim = useRef(new Animated.Value(1)).current;
+    const opacityAnim = useRef(new Animated.Value(0)).current;
     const translateAnim = useRef(new Animated.Value(variant === 'crawl' ? 10 : 0)).current;
     const rotateAnim = useRef(new Animated.Value(0)).current;
 
@@ -53,11 +54,15 @@ export const PopChar: React.FC<PopCharProps> = ({ children, style, delay = 0, va
         const animations = [];
 
         if (variant === 'pop') {
+            // "Phosphor Strike" - Instant appearance with slight over-brightness (simulated by opacity) or just stable appearance.
+            // Sci-fi style: No bounces. Just data.
+            scaleAnim.setValue(1); // Ensure scale is 1
+
+            // Fast fade-in to simulate phosphor lighting up (very fast)
             animations.push(
-                Animated.spring(scaleAnim, {
+                Animated.timing(opacityAnim, {
                     toValue: 1,
-                    friction: 4,
-                    tension: 200,
+                    duration: 50, // 50ms "strike"
                     useNativeDriver: true,
                     delay
                 })
@@ -80,26 +85,15 @@ export const PopChar: React.FC<PopCharProps> = ({ children, style, delay = 0, va
                 ])
             );
         } else if (variant === 'star') {
+            // Deprecated logic, treat as pop
+            scaleAnim.setValue(1);
             animations.push(
-                Animated.parallel([
-                    Animated.sequence([
-                        Animated.timing(scaleAnim, {
-                            toValue: 1.5,
-                            duration: 100,
-                            useNativeDriver: true,
-                        }),
-                        Animated.spring(scaleAnim, {
-                            toValue: 1,
-                            friction: 4,
-                            useNativeDriver: true,
-                        })
-                    ]),
-                    Animated.timing(rotateAnim, {
-                        toValue: 1,
-                        duration: 300,
-                        useNativeDriver: true,
-                    })
-                ])
+                Animated.timing(opacityAnim, {
+                    toValue: 1,
+                    duration: 50,
+                    useNativeDriver: true,
+                    delay
+                })
             );
         }
 

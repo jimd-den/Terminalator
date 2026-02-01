@@ -15,7 +15,8 @@ import { ICommand } from '../ICommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../usecases/ExecuteCommand';
+import { CommandResponse } from '../../entities/Command';
+
 import { FileSystem } from '../../entities/FileSystem';
 
 export class BcCommand implements ICommand {
@@ -26,7 +27,7 @@ export class BcCommand implements ICommand {
         const expression = input || '';
 
         if (!expression) {
-             return { output: '', newState: state, exitCode: 0 };
+            return { output: '', newState: state, exitCode: 0 };
         }
 
         // Simplified: eval math expression using strict parsing?

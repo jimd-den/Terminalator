@@ -15,7 +15,8 @@ import { ICommand } from '../ICommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../usecases/ExecuteCommand';
+import { CommandResponse } from '../../entities/Command';
+
 import { FileSystem } from '../../entities/FileSystem';
 
 export class TalkCommand implements ICommand {
@@ -25,7 +26,7 @@ export class TalkCommand implements ICommand {
         const input = getStdinAsString(context);
         const target = args[0];
         if (!target) {
-             return { output: 'talk: missing operand', newState: state, exitCode: 1 };
+            return { output: 'talk: missing operand', newState: state, exitCode: 1 };
         }
 
         // Simulation

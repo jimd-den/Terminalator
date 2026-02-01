@@ -12,13 +12,15 @@ import { getStdinAsString } from '../../entities/ProcessContext';
 import { CommandBase } from '../CommandBase';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../usecases/ExecuteCommand';
+import { CommandResponse } from '../../entities/Command';
+
 import { FileSystemService } from '../../services/FileSystemService';
 
 export class LsCommand extends CommandBase {
     constructor(private fsService: FileSystemService) { super(); }
 
     executeInternal(args: string[], flags: Set<string>, targets: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const fsService = context.fileSystemService || this.fsService;
         const showHidden = this.hasFlag('a');
         const classify = this.hasFlag('F');
         const recursive = this.hasFlag('R');
@@ -27,11 +29,11 @@ export class LsCommand extends CommandBase {
 
         let exitCode = 0;
         let outputParts: string[] = [];
+        let metadataItems: { name: string, type: 'file' | 'dir' }[] = [];
 
         const pathsToProcess = targets.length > 0 ? targets : [''];
 
         // Helper for recursive listing
-        // Note: fsService usage inside
         const listDirectory = (dirNode: any, dirPath: string, printHeader: boolean) => {
             if (printHeader) {
                 outputParts.push(`\n${dirPath}:`);
@@ -54,18 +56,23 @@ export class LsCommand extends CommandBase {
             }
 
             const formattedNames = files.map(f => {
+                metadataItems.push({
+                    name: f.name,
+                    type: fsService.isDirectory(f) ? 'dir' : 'file'
+                });
+
                 let name = f.name;
-                if (classify && this.fsService.isDirectory(f)) {
+                if (classify && fsService.isDirectory(f)) {
                     name += '/';
                 }
 
                 if (longFormat) {
-                    const isDir = this.fsService.isDirectory(f);
+                    const isDir = fsService.isDirectory(f);
                     const type = isDir ? 'd' : '-';
                     const perm = 'rw-r--r--';
                     const user = 'operator';
                     const group = 'operator';
-                    const stats = this.fsService.getStat(f);
+                    const stats = fsService.getStat(f);
                     const size = stats ? stats.size : 0;
                     const date = 'Jan 1 00:00';
                     return `${type}${perm} 1 ${user} ${group} ${size} ${date} ${name}`;
@@ -82,7 +89,7 @@ export class LsCommand extends CommandBase {
 
             if (recursive) {
                 for (const f of files) {
-                    if (this.fsService.isDirectory(f)) {
+                    if (fsService.isDirectory(f)) {
                         if (f.name === '.' || f.name === '..') continue;
 
                         let childPath;
@@ -103,10 +110,10 @@ export class LsCommand extends CommandBase {
 
             // Resolve using absolute path
             const absPath = targetPath
-                ? this.fsService.resolveAbsolutePath(targetPath, state.currentDirectory)
+                ? fsService.resolveAbsolutePath(targetPath, state.currentDirectory)
                 : state.currentDirectory;
 
-            const node = this.fsService.resolve(absPath);
+            const node = fsService.resolve(absPath);
 
             if (!node) {
                 outputParts.push(`ls: cannot access '${targetPath}': No such file or directory`);
@@ -114,14 +121,14 @@ export class LsCommand extends CommandBase {
                 continue;
             }
 
-            if (!this.fsService.isDirectory(node)) {
+            if (!fsService.isDirectory(node)) {
                 // It's a file
                 if (longFormat) {
                     const type = '-';
                     const perm = 'rw-r--r--';
                     const user = 'operator';
                     const group = 'operator';
-                    const stats = this.fsService.getStat(node);
+                    const stats = fsService.getStat(node);
                     const size = stats ? stats.size : 0;
                     const date = 'Jan 1 00:00';
                     const name = targetPath || node.name;
@@ -151,7 +158,13 @@ export class LsCommand extends CommandBase {
         return {
             output: finalOutput,
             newState: state,
-            exitCode: exitCode
+            exitCode: exitCode,
+            metadata: {
+                renderType: (longFormat || recursive) ? undefined : 'fish-style',
+                data: {
+                    items: metadataItems
+                }
+            }
         };
     }
 }

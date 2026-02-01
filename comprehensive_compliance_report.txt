@@ -764,10 +764,9 @@ UTILITY: sh
        -> Exit Code: Expected 0, got 127
 [PASS] SH_06
 [FAIL] SH_07: Positional args
-       -> Exit Code: Expected 0, got 127
        -> Stdout Regex Mismatch.
    Expected: /123/
-   Got: "sh: sh: No such file or directory"
+   Got: "\n"
 [PASS] SH_08
 [PASS] SH_09
 [PASS] SH_10
@@ -1583,8 +1582,7 @@ UTILITY: logger
 [PASS] LOGGER_05
 [PASS] LOGGER_06
 [PASS] LOGGER_07
-[FAIL] LOGGER_08: Fail args
-       -> Exit Code: Expected 1, got 0
+[PASS] LOGGER_08
 [PASS] LOGGER_09
 [PASS] LOGGER_10
 UTILITY: tput
@@ -1655,19 +1653,13 @@ UTILITY: tabs
 [PASS] TABS_09
 [PASS] TABS_10
 UTILITY: who
-[FAIL] WHO_01: List users
-       -> Stdout Regex Mismatch.
-   Expected: /operator/
-   Got: "[object Object]   tty1   2026-01-24 20:50"
+[PASS] WHO_01
 [FAIL] WHO_02: Headers -H
        -> Stdout Regex Mismatch.
    Expected: /NAME/
-   Got: "[object Object]   tty1   2026-01-24 20:50"
+   Got: "operator   tty1   2026-02-01 00:31"
 [PASS] WHO_03
-[FAIL] WHO_04: Am I -m
-       -> Stdout Regex Mismatch.
-   Expected: /operator/
-   Got: "[object Object]   tty1   2026-01-24 20:50"
+[PASS] WHO_04
 [PASS] WHO_05
 [PASS] WHO_06
 [PASS] WHO_07
@@ -2762,12 +2754,12 @@ ps            |    10 |    7 |    3 |     70.0%
 nice          |    10 |    8 |    2 |     80.0%
 renice        |    10 |    7 |    3 |     70.0%
 nohup         |    10 |    9 |    1 |     90.0%
-logger        |    10 |    9 |    1 |     90.0%
+logger        |    10 |   10 |    0 |    100.0%
 tput          |    10 |    6 |    4 |     60.0%
 tty           |    10 |    6 |    4 |     60.0%
 stty          |    10 |    8 |    2 |     80.0%
 tabs          |    10 |    9 |    1 |     90.0%
-who           |    10 |    6 |    4 |     60.0%
+who           |    10 |    8 |    2 |     80.0%
 write         |    10 |    7 |    3 |     70.0%
 talk          |    10 |    7 |    3 |     70.0%
 at            |    10 |    8 |    2 |     80.0%
@@ -2834,7 +2826,7 @@ uustat        |    10 |    9 |    1 |     90.0%
 uux           |    10 |    2 |    8 |     20.0%
 xgettext      |    10 |    6 |    4 |     60.0%
 
-TOTAL COMPLIANCE: 71.9% (1259/1752)
+TOTAL COMPLIANCE: 72.0% (1262/1752)
 
 === MISSING UTILITIES (Implemented but failing) ===
 None

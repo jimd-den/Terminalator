@@ -83,6 +83,16 @@ The codebase follows a strict **Clean Architecture** implementation, ensuring se
 *   **Pattern:** Logic is moved out of React components (`TerminalScreen`) and into `TerminalViewModel`.
 *   **Benefit:** Allows the UI logic to be tested without rendering components.
 *   **Rule:** `TerminalScreen.tsx` should primarily contain JSX and layout/style logic. State management belongs in the ViewModel.
+*   **Split Views:** Distinct modes (Shell, Vim, IRC) MUST be separate components (`ShellView`, `VimView`, `CommsView`) managed by a parent container.
+
+### The Virtual Console (Mainframe Architecture)
+*   **Concept:** The terminal is a multiplexer connecting to multiple Virtual TTYs (Channels).
+*   **TTY Structure:**
+    *   `TTY1`: System Shell (Local/Remote)
+    *   `TTY2`: Secure Comm Link (IRC/Story)
+    *   `TTY3`: Telemetry/Status
+*   **Control:** Switching is handled via F-Keys (represented as a hardware status line).
+*   **Interrupts:** High-priority messages use `wall` behavior to inject directly into the active TTY stream.
 
 ### The 8-Point GEMINI System (User Rules)
 1.  **Strict Architecture:** Respect the layers. No shortcuts.
@@ -135,7 +145,9 @@ src/
 │   │   ├── ProcessContext.ts    # Environment Context (with jobControl)
 │   │   ├── Stream.ts            # IStream, StringStream, PipeStream
 │   │   ├── Job.ts               # Job entity for job control
-│   │   └── Signal.ts            # POSIX signal definitions
+│   │   ├── Signal.ts            # POSIX signal definitions
+│   │   ├── Mission.ts           # Procedural Game Missions
+│   │   └── NPC.ts               # Non-Player Characters
 │   ├── factories/               # Object Creation
 │   │   └── ShellFactory.ts      # Assembles Shell Context
 │   ├── modules/                 # DI Modules
@@ -160,7 +172,9 @@ src/
 ├── frameworks-drivers/          # INFRASTRUCTURE
 │   ├── ui/                      # React Native UI
 │   │   ├── screens/             # Top-level Views
-│   │   └── components/          # Reusable UI Blocks
+│   │   ├── components/          # Reusable UI Blocks
+│   │   │   └── IrcTab.tsx       # IRC Sidebar (Missions)
+│   │   └── context/             # React Context
 │   ├── telemetry/               # Logging/Tracing
 │   └── wasm/                    # WebAssembly Drivers
 ├── infrastructure/              # SERVICES
@@ -221,10 +235,43 @@ src/
 *   **Traversals:** Use `FileSystemService` for recursive operations. Do not manually recurse directory structures in Commands.
 
 ### Known Violations (To Be Refactored)
-1.  **MakeCommand:** Handles parsing and execution. Needs splitting.
-2.  **Parsers:** `ShellParser` logic complexity is high; consider visitor pattern if grammar grows.
+1. **Parsers:** `ShellParser` logic complexity is high; consider visitor pattern if grammar grows.
+2. **UI God Components:** `TerminalScreen.tsx` currently handles too much (Input, Output, Layout, Vim Switching). Refactor into `ShellView`, `InputBar`, and `OutputLog`.
 
-### User Rules (The 8-Point GEMINI System)
+### UI Component Standards
+*   **No Inline Logic:** Components should receive data prop objects, not raw state.
+*   **Composition Over Configuration:** Use `children` props for layout wrappers like `ConsoleLayout`.
+*   **Memoization:** All list items (Output Lines) MUST be memoized to ensure O(1) performance during high-speed text streaming.
+
+---
+
+## 7. Mission System Architecture ✅ REFACTORED
+
+### Overview
+Missions are implemented using a **State Machine** managed by `GameManager` and a **Strategy Pattern** for rule evaluation. This ensures that progression logic is decoupled from command implementations and is based on the actual state of the File System.
+
+### Components
+1.  **Mission Entity** (`src/domain/entities/Mission.ts`):
+    *   Tracks `currentStep` using the `MissionStep` enum:
+        *   `PENDING`: Mission started, user needs to connect.
+        *   `CONNECTED`: SSH session established to target.
+        *   `LOCATED`: User has found the objective file.
+        *   `COMPLETED`: Objective accomplished (e.g., file exfiltrated/modified).
+
+2.  **IMissionStrategy** (`src/domain/services/mission-strategies/`):
+    *   `evaluate(mission, state, lastResponse)`: Evaluates the current state and return hints or progression triggers.
+    *   **ExfiltrateStrategy**: Rules for moving files from remote to local.
+    *   **ModifyStrategy**: Rules for altering remote files.
+
+3.  **Tutor Synchronization**:
+    *   Missions use the `MISSION_` lesson ID prefix.
+    *   `TerminalViewModel` skips directory context restoration for these lessons to persist SSH sessions.
+    *   `GameManager` uses a low-latency transition (200ms) between steps to prevent UI flicker.
+
+---
+
+## 8. The 8-Point GEMINI System (User Rules)
+
 The user rules defined in section 2 are absolute.
 1.  **Strict Architecture**
 2.  **Literate Documentation**
@@ -234,3 +281,18 @@ The user rules defined in section 2 are absolute.
 6.  **Universal Readability**
 7.  **Pragmatic Design Patterns**
 8.  **SOLID / KISS Equilibrium**
+
+---
+
+## 9. Engineering Log
+
+### 2026-01-30: SRP & DRY Refactoring (Batch 1)
+*   **CommandBase Extension:** Upgraded `CommandBase.ts` with a robust argument parser (supports bundled flags, options with values).
+*   **ValCommand Refactor:** Converted `ValCommand.ts` to extend `CommandBase`, eliminating 50+ lines of manual parsing logic (DRY).
+*   **MakeCommand SRP:** Decoupled `MakeCommand.ts` by creating `MakefileParser.ts` and `MakeExecutor.ts` domain services.
+*   **Verification:** Zero regressions in `posix_comprehensive_suite.ts`.
+### 2026-01-31: UI Decomposition & Aesthetic Refinement (Batch 2)
+*   **TerminalScreen Decomposition:** Refactored the monolithic `TerminalScreen.tsx` into a high-level router. Created `ShellScreen.tsx` and `VimScreen.tsx` to encapsulate application-specific logic (SRP).
+*   **Aesthetic Overhaul:** Transitioned to a "future 80s mainframe" look. Removed box outlines and margins in favor of a raw CRT phosphor aesthetic.
+*   **Phosphor Glow:** Implemented text-shadow glows across the output log and input prompts using pure, composable style generator functions.
+*   **Verification:** Confirmed zero regressions in command logic with the POSIX suite.

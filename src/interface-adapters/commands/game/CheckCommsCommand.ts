@@ -12,11 +12,30 @@ export class CheckCommsCommand implements ICommand {
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         const input = context.stdin;
-        const mail = this.gameManager.spawnNPCEvent();
+        const mission = this.gameManager.spawnNPCEvent();
+
+        if (!mission) {
+            return {
+                output: `
+ERROR: SECURE CHANNEL LIMIT REACHED.
+Active conduits saturated (4/4). 
+Close existing channels to establish new connections.
+`.trim(),
+                newState: state,
+                exitCode: 1
+            };
+        }
+
         return {
-            output: `[ SECURE CHANNEL ESTABLISHED ]\nIncoming transmission from ${mail.from}...\nMessage saved to /home/operator/mail/${mail.id}`,
-            exitCode: 0,
-            newState: state
+            output: `
+[SECURE CONNECTION ESTABLISHED]
+Channel ID: ${mission.id}
+Source: ${mission.assignerName}
+Encryption: AES-256-GCM
+Status: HANDSHAKE_COMPLETE
+`.trim(),
+            newState: state,
+            exitCode: 0
         };
     }
 }

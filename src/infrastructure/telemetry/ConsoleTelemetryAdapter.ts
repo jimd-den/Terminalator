@@ -46,6 +46,17 @@ export class ConsoleTelemetryAdapter implements TelemetryPort {
         this.debug(`Executing ${fnName}`, { arguments: args });
         try {
             const result = fn(...args);
+
+            if (result instanceof Promise) {
+                return result.then(res => {
+                    this.debug(`Completed ${fnName}`, { result: res });
+                    return res;
+                }).catch(err => {
+                    this.error(`Failed ${fnName}`, { error: err, arguments: args });
+                    throw err;
+                }) as any;
+            }
+
             this.debug(`Completed ${fnName}`, { result });
             return result;
         } catch (error) {

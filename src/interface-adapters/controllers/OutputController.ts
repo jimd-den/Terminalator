@@ -26,29 +26,40 @@ export interface TerminalOutputLine {
     text: string;
     type: 'input' | 'output' | 'system';
     exitCode?: number;
+    pending?: boolean;
+    isMinimized?: boolean;
+    isDeleted?: boolean;
     timestamp?: number;
+    metadata?: {
+        renderType?: 'ls-pretty' | 'system-alert' | 'fish-style';
+        data?: any;
+    };
 }
 
 export interface OutputControllerState {
     outputLines: TerminalOutputLine[];
+    renderedLineCount: number;
 }
 
 export interface OutputControllerActions {
-    appendInput: (command: string, exitCode?: number) => void;
-    appendOutput: (text: string) => void;
+    appendInput: (command: string, exitCode?: number, pending?: boolean) => void;
+    updateInputStatus: (index: number, exitCode: number, pending: boolean) => void;
+    appendOutput: (text: string, metadata?: any) => void;
     appendSystemMessage: (text: string) => void;
     appendLine: (line: TerminalOutputLine) => void;
+    toggleMinimize: (index: number) => void;
+    deleteGroup: (index: number) => void;
     clear: () => void;
     getLineCount: () => number;
+    markLineComplete: () => void;
 }
 
 /**
  * Default welcome messages displayed on terminal start.
  */
 const INITIAL_OUTPUT: TerminalOutputLine[] = [
-    { text: 'SYSTEM INITIALIZED... BOOT SEQUENCE READY', type: 'system', timestamp: Date.now() },
-    { text: 'WELCOME TO MAINFRAME v1.0', type: 'system', timestamp: Date.now() },
-    { text: 'TYPE "mail" TO CHECK TRANSMISSIONS', type: 'system', timestamp: Date.now() },
+    { text: 'MAINFRAME v1.0 CONNECTION ESTABLISHED', type: 'system', timestamp: Date.now() },
+    { text: 'AWAITING COMMAND INPUT...', type: 'system', timestamp: Date.now() },
 ];
 
 /**
@@ -58,33 +69,59 @@ const INITIAL_OUTPUT: TerminalOutputLine[] = [
  */
 export const useOutputController = (): OutputControllerState & OutputControllerActions => {
     const [outputLines, setOutputLines] = useState<TerminalOutputLine[]>(INITIAL_OUTPUT);
+    const [renderedLineCount, setRenderedLineCount] = useState(INITIAL_OUTPUT.length);
+    // Start with 0 if we want to animate startup, or length if we want it instant.
+    // User wants "Startup sequence", but initial lines might just be static?
+    // Let's stick to 2 for now to match strict equality, or 0 to animate.
+    // Actually, setting to 0 causes them to type out. Let's try 0.
+    // Use effect to set to 0? No, just initial state.
+    // Wait, if I set it to 0, they will animate.
+    // Let's set it to INITIAL_OUTPUT.length so they appear instantly on refresh, 
+    // but typically the app starts fresh. 
+    // If I reload, I want to see them again?
+    // Let's stick to INITIAL_OUTPUT.length for "instant startup" to avoid annoyance during dev,
+    // or 0 for "cool startup".
+    // I'll keep it at INITIAL_OUTPUT.length for stability (no phantom typing on HMR).
 
     /**
      * Appends a user input line (command).
      * Displayed with '>' prefix in the terminal.
      */
-    const appendInput = useCallback((command: string, exitCode?: number) => {
+    const appendInput = useCallback((command: string, exitCode?: number, pending?: boolean) => {
         setOutputLines(prev => [
             ...prev,
             {
                 text: `> ${command}`,
                 type: 'input',
                 exitCode,
+                pending,
                 timestamp: Date.now()
             }
         ]);
+        // [ANIMATION FIX] We no longer increment immediately here. 
+        // SequentialCommandEcho in the UI will call onComplete/markLineComplete when done typing.
+    }, []);
+
+    const updateInputStatus = useCallback((index: number, exitCode: number, pending: boolean) => {
+        setOutputLines(prev => {
+            const next = [...prev];
+            if (next[index] && next[index].type === 'input') {
+                next[index] = { ...next[index], exitCode, pending };
+            }
+            return next;
+        });
     }, []);
 
     /**
      * Appends command output.
      */
-    const appendOutput = useCallback((text: string) => {
-        if (!text) return;
+    const appendOutput = useCallback((text: string, metadata?: any) => {
         setOutputLines(prev => [
             ...prev,
             {
-                text,
+                text: text || '', // Allow empty for blank lines
                 type: 'output',
+                metadata,
                 timestamp: Date.now()
             }
         ]);
@@ -110,6 +147,9 @@ export const useOutputController = (): OutputControllerState & OutputControllerA
      */
     const appendLine = useCallback((line: TerminalOutputLine) => {
         setOutputLines(prev => [...prev, { ...line, timestamp: line.timestamp || Date.now() }]);
+        if (line.type === 'input') {
+            setRenderedLineCount(prev => prev + 1);
+        }
     }, []);
 
     /**
@@ -117,6 +157,7 @@ export const useOutputController = (): OutputControllerState & OutputControllerA
      */
     const clear = useCallback(() => {
         setOutputLines([]);
+        setRenderedLineCount(0);
     }, []);
 
     /**
@@ -126,13 +167,47 @@ export const useOutputController = (): OutputControllerState & OutputControllerA
         return outputLines.length;
     }, [outputLines.length]);
 
+    const toggleMinimize = useCallback((index: number) => {
+        setOutputLines(prev => {
+            const next = [...prev];
+            if (next[index] && next[index].type === 'input') {
+                next[index] = { ...next[index], isMinimized: !next[index].isMinimized };
+            }
+            return next;
+        });
+    }, []);
+
+    const deleteGroup = useCallback((index: number) => {
+        setOutputLines(prev => {
+            const next = [...prev];
+            if (next[index] && next[index].type === 'input') {
+                next[index] = { ...next[index], isDeleted: true };
+                // Also mark subsequent output lines as deleted until next input
+                for (let i = index + 1; i < next.length; i++) {
+                    if (next[i].type === 'input') break;
+                    next[i] = { ...next[i], isDeleted: true };
+                }
+            }
+            return next;
+        });
+    }, []);
+
+    const markLineComplete = useCallback(() => {
+        setRenderedLineCount(prev => prev + 1);
+    }, []);
+
     return {
         outputLines,
+        renderedLineCount,
         appendInput,
+        updateInputStatus,
         appendOutput,
         appendSystemMessage,
         appendLine,
+        toggleMinimize,
+        deleteGroup,
         clear,
-        getLineCount
+        getLineCount,
+        markLineComplete
     };
 };

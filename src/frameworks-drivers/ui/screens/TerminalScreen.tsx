@@ -14,100 +14,33 @@
  */
 
 import React from 'react';
-import { View, StyleSheet, ScrollView, Text, Pressable } from 'react-native';
-import { THEME } from '../Theme';
-import { GhostWriter } from '../GhostWriter';
-import { VirtualKeyboard } from '../components/VirtualKeyboard';
+import { View, StyleSheet } from 'react-native';
 import { ConsoleLayout } from '../components/ConsoleLayout';
+import { FKeyBar } from '../components/FKeyBar';
 import { useGame } from '../context/GameContext';
 import { useVimEditor } from '../components/vim/VimEditor';
 import { useInput } from '../context/InputContext';
 import { useTerminalViewModel } from '../../../interface-adapters/viewmodels/TerminalViewModel';
-
-import { Cursor } from '../components/Cursor';
-import { PopChar } from '../components/PopChar';
 import { useTheme } from '../context/ThemeContext';
+import { CommsPane } from '../components/CommsPane';
+import { useShellView } from '../components/ShellView';
+import { StatusBar } from '../components/StatusBar';
+
+import { ShellScreen } from './ShellScreen';
+import { VimScreen } from './VimScreen';
+import { BufferScreen } from './BufferScreen';
 
 export const TerminalScreen: React.FC = () => {
     const { fs, gameManager, commandExecutor } = useGame();
-    const { theme, settings } = useTheme();
+    const { theme } = useTheme();
     const colors = theme.colors;
 
-    const {
-        activeApp,
-        state,
-        input,
-        tutorEmotion,
-        crashingIndices,
-        outputLines,
-        ghostText,
-        isTransitioning,
-        handleInputChange,
-        handleKeyPress,
-        handleCommand,
-        handleVimExit
-    } = useTerminalViewModel(fs, commandExecutor, gameManager);
+    const viewModel = useTerminalViewModel(fs, commandExecutor, gameManager);
 
-    const isShell = activeApp.type === 'SHELL';
-    const vimFilename = activeApp.type === 'VIM' ? activeApp.filename : '';
+    const isShell = viewModel.activeApp.type === 'SHELL';
+    const vimFilename = viewModel.activeApp.type === 'VIM' ? viewModel.activeApp.filename : '';
 
-    const vim = useVimEditor(vimFilename, handleVimExit);
-
-    const status = isShell ? "OPERATIONAL" : `EDITING: ${vimFilename}`;
-
-    const dynamicStyles = StyleSheet.create({
-        scrollContent: {
-            paddingBottom: THEME.spacing.xl,
-        },
-        outputText: {
-            color: colors.text.primary,
-            fontFamily: settings.fontFamily,
-            fontSize: THEME.typography.fontSize.md,
-            marginBottom: THEME.spacing.sm,
-        },
-        inputEchoText: {
-            color: colors.secondary,
-            fontFamily: settings.fontFamily,
-            fontSize: THEME.typography.fontSize.md,
-            marginBottom: THEME.spacing.xs,
-            opacity: 0.7,
-        },
-        inputWrapper: {
-            width: '100%',
-            flexDirection: 'column',
-        },
-        inputLabel: {
-            color: colors.secondary,
-            fontFamily: settings.fontFamily,
-            fontSize: THEME.typography.fontSize.sm,
-            marginBottom: THEME.spacing.xs,
-            opacity: 0.8,
-            letterSpacing: 1,
-        },
-        inputContainer: {
-            width: '100%',
-            position: 'relative',
-            justifyContent: 'center',
-        },
-        inputChar: {
-            color: colors.text.primary,
-            fontFamily: settings.fontFamily,
-            fontSize: THEME.typography.fontSize.lg,
-            height: 35,
-            lineHeight: 35,
-        },
-        ghostText: {
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            color: colors.text.dim,
-            zIndex: 0,
-            height: 35,
-            lineHeight: 35,
-            textAlignVertical: 'center',
-            includeFontPadding: false,
-        },
+    const styles = StyleSheet.create({
         crtBlinkOverlay: {
             ...StyleSheet.absoluteFillObject,
             backgroundColor: colors.background,
@@ -115,84 +48,89 @@ export const TerminalScreen: React.FC = () => {
         }
     });
 
-    const topContent = isShell ? (
-        <ScrollView
-            contentContainerStyle={dynamicStyles.scrollContent}
-            ref={(ref) => ref?.scrollToEnd({ animated: true })}
-            keyboardShouldPersistTaps="always"
-        >
-            {outputLines.map((line, i) => (
-                line.type === 'output' ? (
-                    <GhostWriter
-                        key={i}
-                        text={line.text}
-                        speed={10}
-                        style={dynamicStyles.outputText}
-                    />
-                ) : (
-                    <Text key={i} style={dynamicStyles.inputEchoText}>
-                        {line.text}
-                        {line.exitCode !== undefined && (
-                            <Text style={{ color: line.exitCode === 0 ? colors.primary : colors.error }}>
-                                {'  '}[STATUS {line.exitCode === 0 ? 'OK' : 'ERR'}: {line.exitCode}]
-                            </Text>
-                        )}
-                    </Text>
-                )
-            ))}
-        </ScrollView>
-    ) : vim.topContent;
-
-    const middleContent = isShell ? (
-        <VirtualKeyboard onKeyPress={handleKeyPress} />
-    ) : vim.middleContent;
-
-    const { setOnInput, setOnKeyPress, refocus } = useInput();
-
-    React.useEffect(() => {
-        if (isShell) {
-            setOnInput((text) => {
-                for (const char of text) {
-                    handleKeyPress(char);
-                }
-            });
-            setOnKeyPress((key) => {
-                handleKeyPress(key);
-            });
-        }
-    }, [isShell, handleKeyPress, setOnInput, setOnKeyPress]);
-
-    const bottomContent = (
-        <View style={dynamicStyles.inputWrapper}>
-            {!isShell ? (
-                vim.bottomContent
-            ) : (
-                <>
-                    <Text style={dynamicStyles.inputLabel}>
-                        INPUT // {state.environment.USER}@system
-                    </Text>
-                    <Pressable style={dynamicStyles.inputContainer} onPress={refocus}>
-                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' }}>
-                            {input.split('').map((char, index) => (
-                                <PopChar key={`${index}-${char}`} style={dynamicStyles.inputChar} isCrashing={crashingIndices.includes(index)}>{char}</PopChar>
-                            ))}
-                            <Cursor color={colors.primary} inputTrigger={input.length} emotion={tutorEmotion} />
-                            <Text style={[dynamicStyles.inputChar, { color: colors.text.dim }]}>{ghostText}</Text>
-                        </View>
-                    </Pressable>
-                </>
-            )}
-        </View>
-    );
-
     return (
-        <ConsoleLayout
-            status={status}
-            topContent={topContent}
-            middleContent={middleContent}
-            bottomContent={bottomContent}
-        >
-            {isTransitioning && <View style={dynamicStyles.crtBlinkOverlay} />}
-        </ConsoleLayout>
+        <View style={{ flex: 1 }}>
+            {viewModel.activeApp.type === 'VIM' ? (
+                <VimScreen
+                    filename={vimFilename}
+                    onExit={viewModel.handleVimExit}
+                />
+            ) : viewModel.activeView === 'COMMS' ? (
+                <ConsoleLayout
+                    headerComponent={
+                        <StatusBar
+                            status="COMMS LINK"
+                            user={viewModel.state.environment.USER || "OPERATOR"}
+                            connectionStatus={viewModel.state.fsContext ? 'SECURE' : 'LOCAL'}
+                            activeMissionName={null}
+                        />
+                    }
+                    status="ENCRYPTED TRANSMISSION"
+                    topContent={
+                        <CommsPane
+                            missions={viewModel.missions}
+                            activeMissionId={viewModel.ircMissionId}
+                            onMissionSelect={viewModel.setIrcMissionId}
+                            onStartMission={viewModel.handleStartMission}
+                            onAbandonMission={viewModel.handleAbandonMission}
+                        />
+                    }
+                    middleContent={<FKeyBar keys={[
+                        { key: 'F2', label: 'CLOSE', action: viewModel.toggleCommsView },
+                        { key: 'ESC', label: 'BACK', action: viewModel.toggleCommsView }
+                    ]} />}
+                    bottomContent={<View style={{ height: 40 }} />} // Placeholder/Footer
+                />
+            ) : viewModel.activeView === 'BUFFERS' ? (
+                <ConsoleLayout
+                    headerComponent={
+                        <StatusBar
+                            status="ARCHIVE"
+                            user={viewModel.state.environment.USER || "OPERATOR"}
+                            connectionStatus={viewModel.state.fsContext ? 'SECURE' : 'LOCAL'}
+                            activeMissionName={null}
+                        />
+                    }
+                    status="RECOVERED DATA BANKS"
+                    topContent={
+                        <BufferScreen
+                            buffers={viewModel.buffers}
+                            onClose={viewModel.toggleBufferView}
+                        />
+                    }
+                    middleContent={<FKeyBar keys={[
+                        { key: 'F3', label: 'CLOSE', action: viewModel.toggleBufferView },
+                        { key: 'ESC', label: 'BACK', action: viewModel.toggleBufferView }
+                    ]} />}
+                    bottomContent={<View style={{ height: 40 }} />} // Placeholder/Footer
+                />
+            ) : (
+                <ShellScreen
+                    state={viewModel.state}
+                    input={viewModel.input}
+                    ghostText={viewModel.ghostText}
+                    outputLines={viewModel.outputLines}
+                    renderedLineCount={viewModel.renderedLineCount}
+                    tutorEmotion={viewModel.tutorEmotion}
+                    crashingIndices={viewModel.crashingIndices}
+                    contextualHint={viewModel.contextualHint}
+                    missions={viewModel.missions}
+                    buffers={viewModel.buffers}
+                    activeView={viewModel.activeView}
+                    ircMissionId={viewModel.ircMissionId}
+                    markLineComplete={viewModel.markLineComplete}
+                    handleKeyPress={viewModel.handleKeyPress}
+                    toggleCommsView={viewModel.toggleCommsView}
+                    toggleBufferView={viewModel.toggleBufferView}
+                    setIrcMissionId={viewModel.setIrcMissionId}
+                    handleStartMission={viewModel.handleStartMission}
+                    handleAbandonMission={viewModel.handleAbandonMission}
+                    saveToArchive={viewModel.saveToArchive}
+                    toggleMinimize={viewModel.toggleMinimize}
+                    deleteGroup={viewModel.deleteGroup}
+                />
+            )}
+            {viewModel.isTransitioning && <View style={styles.crtBlinkOverlay} />}
+        </View>
     );
 };

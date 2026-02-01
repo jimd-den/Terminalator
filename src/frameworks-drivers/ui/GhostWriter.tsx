@@ -13,6 +13,7 @@ interface GhostWriterProps {
     text: string;
     speed?: number;
     style?: TextStyle;
+    isActive?: boolean;
     onComplete?: () => void;
 }
 
@@ -22,11 +23,14 @@ export const GhostWriter: React.FC<GhostWriterProps> = ({
     text,
     speed = 30,
     style,
+    isActive = true, // Default to true if not controlled
     onComplete
 }) => {
     const { theme, settings } = useTheme();
     const colors = theme.colors;
     const [displayedText, setDisplayedText] = useState('');
+    const [isComplete, setIsComplete] = useState(false);
+    const hasStartedRef = useRef(false);
 
     const dynamicStyles = StyleSheet.create({
         text: {
@@ -36,31 +40,60 @@ export const GhostWriter: React.FC<GhostWriterProps> = ({
         },
         cursor: {
             color: colors.primary,
-            opacity: 0.8,
+            backgroundColor: colors.primary, // Block cursor
+            opacity: 0.9,
+            width: 10,
+            height: 16,
         },
     });
 
     useEffect(() => {
-        let currentIdx = 0;
-        setDisplayedText(''); // Reset on new text
+        if (!isActive) return;
 
-        const intervalId = setInterval(() => {
+        // If we were already complete (e.g. re-render), don't restart
+        if (isComplete) return;
+
+        let currentIdx = 0;
+        let timeoutId: NodeJS.Timeout;
+        let isMounted = true;
+
+        // Only reset if we haven't started yet
+        if (!hasStartedRef.current) {
+            setDisplayedText('');
+            hasStartedRef.current = true;
+        }
+
+        const typeNextChar = () => {
+            if (!isMounted) return;
+
             if (currentIdx < text.length) {
                 setDisplayedText(text.slice(0, currentIdx + 1));
                 currentIdx++;
+
+                // Faster, more consistent "materialization" speed
+                // 10ms base is very fast, feeling more like a data stream than a human typing
+                timeoutId = setTimeout(typeNextChar, 10);
             } else {
-                clearInterval(intervalId);
+                setIsComplete(true);
                 onComplete?.();
             }
-        }, speed);
+        };
 
-        return () => clearInterval(intervalId);
-    }, [text, speed, onComplete]);
+        timeoutId = setTimeout(typeNextChar, 5);
+
+        return () => {
+            isMounted = false;
+            clearTimeout(timeoutId);
+        };
+    }, [text, speed, isActive, isComplete, onComplete]);
+
+    // If not active yet, show nothing
+    if (!isActive && !hasStartedRef.current) return null;
 
     return (
         <Text style={[dynamicStyles.text, style]}>
             {displayedText}
-            <Text style={dynamicStyles.cursor}>_</Text>
+            {/* Removed the sliding block cursor as requested for a cleaner 'materializing' look */}
         </Text>
     );
 };

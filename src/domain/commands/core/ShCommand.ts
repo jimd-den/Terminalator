@@ -33,14 +33,28 @@ export class ShCommand implements ICommand {
             if (arg === '-c') {
                 if (i + 1 < args.length) {
                     commandString = args[++i];
-                    // remaining args are positional params $0, $1...
-                    // Stub: we don't inject $1 yet in ExecuteCommand state
+                    // Capture remaining args as positional params ($0, $1...)
+                    const params = args.slice(i + 1);
+                    // Inject into state for expansion
+                    const newEnv = { ...state.environment };
+                    // $0 is usually the shell name or first arg if provided
+                    if (params.length > 0) newEnv['0'] = params[0];
+                    for (let k = 1; k < params.length; k++) {
+                        newEnv[k.toString()] = params[k];
+                    }
+                    // Update state with new env
+                    state = { ...state, environment: newEnv };
+                    break; // Stop parsing args
                 } else {
                     return { output: 'sh: -c: option requires an argument', newState: state, exitCode: 2 };
                 }
             } else if (arg === '-s') {
                 // Read from stdin
-            } else if (!arg.startsWith('-')) {
+            } else if (arg.startsWith('-') || arg.startsWith('+')) {
+                // Ignore other flags for POSIX compliance (e.g. -v, -x, -e, +m)
+                // In a real shell these enable modes. Here we mock support by ignoring them.
+                continue;
+            } else {
                 scriptFile = arg;
                 // remaining args are params
                 break;

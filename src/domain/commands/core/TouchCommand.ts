@@ -15,7 +15,8 @@ import { getStdinAsString } from '../../entities/ProcessContext';
 import { ICommand } from '../ICommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../usecases/ExecuteCommand';
+import { CommandResponse } from '../../entities/Command';
+
 import { FileSystemService } from '../../services/FileSystemService';
 import { S_IFREG } from '../../entities/FileSystem';
 
@@ -23,6 +24,7 @@ export class TouchCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const fsService = context.fileSystemService || this.fs;
         const input = getStdinAsString(context);
         // Parse flags
         let noCreate = false; // -c
@@ -69,11 +71,11 @@ export class TouchCommand implements ICommand {
                 path = path.slice(0, -1);
             }
 
-            const existing = this.fs.resolve(path);
+            const existing = fsService.resolve(path);
 
             if (existing) {
                 // Update timestamps
-                const inode = this.fs.getInode(existing.inodeId);
+                const inode = fsService.getInode(existing.inodeId);
                 if (inode) {
                     const now = Date.now();
                     inode.mtime = now;
@@ -91,16 +93,16 @@ export class TouchCommand implements ICommand {
                 const lastSlashIndex = path.lastIndexOf('/');
                 const parentPath = lastSlashIndex === 0 ? '/' : path.substring(0, lastSlashIndex);
 
-                const parent = this.fs.resolve(parentPath);
+                const parent = fsService.resolve(parentPath);
 
-                if (!parent || !this.fs.isDirectory(parent)) {
+                if (!parent || !fsService.isDirectory(parent)) {
                     output += `touch: cannot touch '${target}': No such file or directory\n`;
                     exitCode = 1;
                     continue;
                 }
 
                 try {
-                    this.fs.writeFile(path, '', 'w');
+                    fsService.writeFile(path, '', 'w');
                 } catch (e: any) {
                     output += `touch: cannot touch '${target}': ${e.message}\n`;
                     exitCode = 1;

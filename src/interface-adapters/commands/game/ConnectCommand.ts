@@ -35,49 +35,46 @@ export class ConnectCommand implements ICommand {
             hostname = parts[1];
         }
 
-        // 1. Resolve System
-        // If we are already connected to a remote host, can we jump?
-        // SSH jumping is valid. The NetworkMap handles validation.
-
         const system = this.networkMap.getSystem(hostname);
 
         // Simulate connection delay
         await new Promise(resolve => setTimeout(resolve, 800));
 
-        if (!system && hostname !== 'localhost' && hostname !== 'home' && hostname !== 'MyComputer') {
-            // If NetworkMap returns undefined, it might be an invalid host?
-            // NetworkMap currently generates valid systems for ANY hostname.
-            // But if we wanted to restrict it, we would check here.
-            // For now, let's assume if getSystem returns something, it works.
-            // If we want to simulate "Connection refused", we can add logic.
-        }
-
         // Special handling for distinct hosts
         if (hostname === 'localhost' || hostname === '127.0.0.1') {
-            // Return to local
             return {
                 output: `Connection to ${hostname} established.`,
                 exitCode: 0,
                 newState: {
-                    hostname: 'localhost',
-                    user: state.user, // Reset user? Or keep? usually ssh localhost logs in as same user or specified.
-                    currentDirectory: '/home/operator' // Reset cwd to home
+                    user: state.user,
+                    currentDirectory: '/home/operator',
+                    fsContext: undefined,
+                    environment: { ...state.environment, HOSTNAME: 'localhost', USER: 'operator', HOME: '/home/operator' }
                 }
             };
         }
 
-        // Check if destination exists (NetworkMap generates it if not)
         if (system) {
-            // Validate user?
-            // SystemGenerator creates 'guest' and 'admin' usually.
-            // We can check /etc/passwd on the remote system!
+            const service = new FileSystemService(system);
+            let targetUid = 1000;
+            let targetGid = 1000;
+
             try {
-                const passwd = system.readFile('/etc/passwd');
-                if (!passwd.includes(`${user}:`)) {
+                // Check /etc/passwd for user
+                const passwd = service.readFile('/etc/passwd');
+                const userLine = passwd.split('\n').find(line => line.startsWith(`${user}:`));
+
+                if (!userLine) {
                     return { output: `Permission denied (publickey,password).\nssh: connect to host ${hostname}: User unknown`, exitCode: 1 };
                 }
+
+                const parts = userLine.split(':');
+                targetUid = parseInt(parts[2]);
+                targetGid = parseInt(parts[3]);
+
             } catch (e) {
-                // ignore
+                // If read fails, fail connection
+                return { output: `ssh: Connection failed: Unable to verify user context.`, exitCode: 1 };
             }
 
             // Success
@@ -85,9 +82,10 @@ export class ConnectCommand implements ICommand {
                 output: `\nConnecting to ${hostname}...\nWelcome to ${hostname.toUpperCase()} SystemOS v4.2\nLast login: ${new Date().toUTCString()}`,
                 exitCode: 0,
                 newState: {
-                    hostname: hostname,
-                    user: user,
-                    currentDirectory: `/home/${user}` // Default to home
+                    user: { uid: targetUid, gid: targetGid, groups: [targetGid] },
+                    currentDirectory: `/home/${user}`,
+                    fsContext: hostname,
+                    environment: { ...state.environment, HOSTNAME: hostname, USER: user, HOME: `/home/${user}` }
                 }
             };
         }
