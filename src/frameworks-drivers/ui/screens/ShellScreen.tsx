@@ -17,7 +17,7 @@ import { StatusBar } from '../components/StatusBar';
 import { useShellView } from '../components/ShellView';
 import { useInput } from '../context/InputContext';
 import { useTheme } from '../context/ThemeContext';
-import { TerminalState } from '../../../domain/entities/TerminalState';
+import { TerminalStateDTO } from '../../../domain/dtos/TerminalStateDTO';
 import { Mission } from '../../../domain/entities/Mission';
 import { BufferScreen } from './BufferScreen';
 import { CapturedBuffer } from '../../../domain/services/ArchiveService';
@@ -25,7 +25,7 @@ import { FKeyBar, FKeyDef } from '../components/FKeyBar';
 
 export interface ShellScreenProps {
     // State
-    state: TerminalState;
+    state: TerminalStateDTO;
     input: string;
     ghostText: string;
     outputLines: any[];

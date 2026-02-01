@@ -25,6 +25,7 @@ import { CommandResponse } from '../../entities/Command';
 
 import { FileSystemService } from '../../services/FileSystemService';
 import { S_IFDIR } from '../../entities/FileSystem';
+import { DirectoryNode } from '../../entities/filesystem/DirectoryNode';
 
 /**
  * GrepOptions encapsulates the configuration parsed from command line arguments.
@@ -311,7 +312,7 @@ export class GrepCommand implements ICommand {
 
                         if (inode.mode & S_IFDIR) {
                             if (options.recursive) {
-                                for (const [name, child] of node.children) {
+                                for (const [name, child] of (node as DirectoryNode).children) {
                                     const childPath = path === '/' ? `/${name}` : `${path}/${name}`;
                                     processNode(childPath);
                                 }

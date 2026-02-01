@@ -27,6 +27,7 @@ import { ExecuteCommand } from '../../domain/usecases/ExecuteCommand';
 import { CommandResponse } from '../../domain/entities/Command';
 import { GameManager } from '../GameManager';
 import { createInitialTerminalState, TerminalState } from '../../domain/entities/TerminalState';
+import { TerminalStateMapper } from '../mappers/TerminalStateMapper';
 // Import Entities
 import { Lesson } from '../../domain/entities/TutorEngine';
 
@@ -381,7 +382,7 @@ export const useTerminalViewModel = (
     return {
         // App State
         activeApp,
-        state,
+        state: TerminalStateMapper.toDTO(state),
         contextualHint,
         activeView,
         ircMissionId,
