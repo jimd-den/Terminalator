@@ -1,7 +1,7 @@
 # Mission Pipeline & World Simulation Architecture Report
 
 ## Executive Summary
-This report analyzes the current "Mission Generation Pipeline" and "Tutor System" to identify architectural bottlenecks preventing the expansion into a "Netrunner Simulator" with deep Unix integration, Assembly programming, and a living NPC universe. It outlines a strict refactoring roadmap adhering to SOLID, KISS, DRY, and Clean Architecture principles.
+This report analyzes the current "Mission Generation Pipeline" and "Tutor System" to identify architectural bottlenecks preventing the expansion into a **"Netrunner Simulator"** with deep Unix integration, Assembly programming, and a living NPC universe. It outlines a strict refactoring roadmap adhering to SOLID, KISS, DRY, and Clean Architecture principles, targeting a **Data-Driven Procedural World Generator** that supports "Donald Knuth" style algorithmic missions, "Space Station" RPG dungeon crawls, and a robust "Delegation Economy" (Do it yourself vs. Pay an NPC).
 
 ## 1. Current Architecture Analysis & Violations
 
@@ -9,7 +9,7 @@ This report analyzes the current "Mission Generation Pipeline" and "Tutor System
 
 *   **Open/Closed Principle (OCP) Violation [CRITICAL]**
     *   **Location:** `src/domain/services/TutorService.ts` and `MissionRepository.ts`.
-    *   **Issue:** The `strategies` map in `TutorService` and the `MissionCatalog.json` import in `MissionRepository` are hardcoded. Adding a new mission type (e.g., "Assembly Hack") requires modifying the *source code* of these services.
+    *   **Issue:** The `strategies` map in `TutorService` and the `MissionCatalog.json` import in `MissionRepository` are hardcoded. Adding a new mission type (e.g., "Alien Containment Protocol") requires modifying the *source code*.
     *   **Impact:** Extending the game with new mechanics requires constant core code modification, increasing regression risk.
 *   **Single Responsibility Principle (SRP) Violation**
     *   **Location:** `src/domain/services/mission-strategies/ExfiltrateStrategy.ts` (and others).
@@ -21,109 +21,100 @@ This report analyzes the current "Mission Generation Pipeline" and "Tutor System
 
 ### 1.2. DRY (Don't Repeat Yourself) & KISS (Keep It Simple, Stupid) Violations
 
-*   **Procedural Hardcoding (KISS Violation):** `SystemGenerator.ts` contains hardcoded user lists and file paths (`/home/admin/test_code.sh`). This is simple to write but complex to maintain as the world grows. It should be data-driven.
-*   **Logic Duplication (DRY Violation):** `MissionService` and `MissionRepository` both contain logic for "random selection" and "variable injection". This logic should be centralized in a generic `ContentGenerator` or `TemplateEngine`.
+*   **Procedural Hardcoding (KISS Violation):** `SystemGenerator.ts` contains hardcoded user lists and file paths. This prevents the dynamic generation of "Corporations" or "Abandoned Stations" with unique file structures.
+*   **Logic Duplication (DRY Violation):** `MissionService` and `MissionRepository` both contain logic for "random selection" and "variable injection". This should be centralized.
 
 ### 1.3. Clean Architecture Violations
 
-*   **Data Leakage:** `MissionRepository` imports a specific JSON file (`MissionCatalog.json`) directly. In a strict Clean Architecture, the Repository should definition an interface for data retrieval, and the implementation (Data Layer) should handle file I/O or JSON loading, allowing the source to be swapped (e.g., from a folder of files) without affecting the Domain.
+*   **Data Leakage:** `MissionRepository` imports a specific JSON file (`MissionCatalog.json`) directly. The Data Layer should be abstract, allowing for a folder-based or mod-based loading system.
 
 ---
 
-## 2. Proposed "Netrunner" Architecture
+## 2. Proposed Architecture: The "Mainframe World" Generator
 
-To support a dynamic universe, real Unix tools, and Assembly, we must move from a **Procedural** architecture to a **Data-Driven, Event-Based** architecture.
+We will move from a static script system to a **Procedural Generation Engine** driven by definable Data Entities. This engine will support three pillars: **Algorithmic Puzzles**, **Spatial RPG Exploration**, and **Economic Agency**.
 
-### 2.1. Dynamic Mission Loading (The "Folder of JSONs" Solution)
+### 2.1. The Three Pillars of Gameplay
 
-**Pattern:** *Abstract Factory + Repository Pattern*
+1.  **The Knuthian Protocol (Algorithms):** Coding and Logic puzzles (Sorting, Searching, Optimization).
+2.  **The Spatial Crawl (RPG):** Navigating file systems that represent physical spaces (Stations, Ruins), managing environmental state (Doors, Power).
+3.  **The Agency Economy (Delegation):** The constant choice: "Do I use my skill to solve this, or my credits to hire an NPC?"
 
-Instead of bundling one JSON, the system should scan a `data/missions/` directory.
+### 2.2. Data-Driven Procedural Generation
 
-*   **Refactoring:**
-    1.  Create `IMissionLoader` interface in Domain.
-    2.  Implement `FileSystemMissionLoader` in Infrastructure/Data layer.
-    3.  `MissionRepository` depends on `IMissionLoader`.
-    4.  **Result:** You can drop a new `assembly_hack_01.json` into the folder, and the game automatically registers it.
+**Pattern:** *Abstract Factory + Builder Pattern*
 
-**JSON Structure Proposal:**
-```json
-{
-  "id": "assembly_injection",
-  "type": "assembly",
-  "objectives": [
-    {
-      "step": "compile",
-      "validator": "FileExistsValidator",
-      "params": { "path": "payload.o" }
-    },
-    {
-      "step": "execute",
-      "validator": "ProcessOutputValidator",
-      "params": { "expected_stdout": "Subject Zero" }
-    }
-  ]
-}
-```
+*   **Entity: LocationTemplate (The Setting)**
+    *   Defines the physical/digital environment.
+    *   *Example JSON (Abandoned Station):*
+        ```json
+        {
+          "id": "station_ruin",
+          "theme": "horror",
+          "structure": {
+            "/bridge": { "devices": ["door_control", "log_terminal"] },
+            "/medbay": { "devices": ["stasis_pod"], "locked": true }
+          },
+          "threats": ["rogue_process_daemon", "oxygen_leak"]
+        }
+        ```
+*   **Entity: JobTemplate (The Task)**
+    *   Defines the objective and the "Success" state.
 
-### 2.2. The "Real Unix" & "Assembly" Extension
+### 2.3. RPG & Spatial Exploration Mechanics
 
-**Pattern:** *Strategy Pattern + Adapter Pattern*
+**Pattern:** *State Pattern + Composite Pattern*
 
-To "get dirty with Unix" and teach Assembly, the Tutor needs to stop looking for specific hardcoded commands (like `ls` or `scp`) and start looking at **System State Changes**.
+We map the **File System** to **Physical Space**.
 
-*   **The Assembly Sandbox:**
-    *   Create a `VirtualCPU` entity (registers, stack, flags).
-    *   Implement an `AssemblyInterpreter` service.
-    *   **Integration:** The "Assembly Mission" validator checks the `VirtualCPU` state (e.g., "Is the EAX register 0xFF?"), not just the text output.
-*   **Real Unix Tools:**
-    *   Instead of `if (cmd == 'grep')`, use a **State Validator**.
-    *   **Example:** "Find the password in the logs."
-    *   **Validator:** "Does the user's clipboard/knowledge-base contain the string 'P@ssw0rd'?" OR "Has the file `decrypted.txt` been created?"
-    *   This allows the user to use *any* tool (`grep`, `awk`, `sed`, or manual inspection) to solve the problem.
+*   **Directories as Rooms:** `cd /medbay` is equivalent to "Walking into the Medbay".
+*   **Devices as Files:** To open a door, you don't click a button; you interact with the device driver.
+    *   `echo "OPEN" > /dev/door_control`
+    *   `cat /var/log/sensor_array` (Read description of the room)
+*   **The "Evil Alien" (Threat System):**
+    *   Antagonists are represented as **Background Processes**.
+    *   *Example:* A "Hunter" process (`pid 666`) continually greps for your user. If it finds you, it kills your session.
+    *   *Counterplay:* `kill -9 666` or isolate the process in a `chroot` jail.
 
-### 2.3. The Living Universe (NPCs, Orgs, Tech)
+### 2.4. Agency & Delegation System (The Economy)
 
-**Pattern:** *Entity Component System (ECS) or Event-Driven Architecture*
+**Pattern:** *Strategy Pattern (Resolution)*
 
-Currently, NPCs are just static names in `SystemGenerator`. We need them to "talk" and have relationships.
+Every problem should offer multiple resolution paths.
 
-*   **The World State Graph:**
-    *   **Entities:** NPCs, Organizations, Servers, Secrets.
-    *   **Relationships:** `NPC_A --[WORKS_FOR]--> ORG_B`, `ORG_B --[HOSTILE_TO]--> ORG_C`.
-*   **The Event Bus:**
-    *   When a player hacks a server, an event `SECURITY_BREACH` is published.
-    *   **Reaction:**
-        *   `OrgAI` sees the breach.
-        *   `OrgAI` publishes `HIRE_MERCENARY` mission.
-        *   `MercenaryNPC` accepts mission and emails the player.
+*   **The Problem:** "The door is encrypted with a Rolling Bitmask Cipher."
+*   **Path A (Skill - Knuthian):** Write an Assembly program to reverse the bitmask and output the key to `/dev/door`. (Cost: 0 Credits, High Skill).
+*   **Path B (Delegation - Social):** Open your `comm` tool and hire "ZeroCool" (NPC).
+    *   *Command:* `mail -s "JOB_OFFER" zerocool@underground.net < cash_transfer.dat`
+    *   *Result:* NPC logs in remotely, solves the puzzle, and takes 500 credits.
 *   **Implementation:**
-    *   `src/domain/services/WorldSimulationService.ts` (Manages the graph).
-    *   `src/domain/events/GameEventBus.ts` (Pub/Sub system).
+    *   `MissionService` checks for *both* "Puzzle Solved" state AND "Transaction Complete" state.
+
+### 2.5. The "Knuth" Sandbox (Assembly & Validation)
+
+To support the Skill Path, we need real computing tools.
+
+*   **VirtualCPU:** A lightweight 16/32-bit CPU emulator (Registers, Stack, Flags).
+*   **State Validators:** The Tutor checks `VirtualCPU.EAX == 0xKEY` instead of simple text matching.
 
 ---
 
 ## 3. Implementation Roadmap
 
-### Phase 1: Foundation (The Data Layer)
-1.  **Extract Interfaces:** define `IMissionSource` and `IWorldState`.
-2.  **Refactor MissionRepository:** Remove `MissionCatalog.json` import. Inject `IMissionSource`.
-3.  **Implement FileSystemLoader:** Write logic to `glob` all `*.json` files in a directory.
+### Phase 1: The Foundation (Data & Economy)
+1.  **Schema Definition:** Create `ILocationTemplate` and `INPCProfile`.
+2.  **Economy Service:** Implement a `BankService` and `ContractService` to handle payments and NPC hiring.
+3.  **FileSystem Loader:** Implement the "Folder of JSONs" loader.
 
-### Phase 2: The Tutor Brain (The Strategies)
-1.  **Decouple Strategies:** Create a `StrategyRegistry` that can dynamically register strategies at runtime.
-2.  **State-Based Validation:** Rewrite `ExfiltrateStrategy` to use `FileSystem.exists()` checks instead of `Command.history.includes()`. This enables "Real Unix" solving.
+### Phase 2: The Spatial Engine (RPG)
+1.  **Device Drivers:** Create a system where writing to specific files triggers game events (e.g., `Door.open()`).
+2.  **Process AI:** Implement simple "AI" processes that react to player presence (The "Evil Alien").
 
-### Phase 3: The Assembly Module
-1.  **Create VirtualCPU:** TypeScript implementation of a simple 16-bit or 32-bit CPU.
-2.  **Create Assembler:** A simple parser converting `MOV EAX, 1` to bytecode.
-3.  **Create AssemblyStrategy:** A Tutor strategy that steps through the CPU ticks and validates register states.
-
-### Phase 4: The Living World
-1.  **World Graph:** Implement the relationship database (in-memory graph).
-2.  **Event System:** Create the bus. Hook `MissionService` to listen for events.
-3.  **Tech Embedding:** Add "Cyberdecks" or "Hardware" as items in the `FileSystem` (e.g., `/dev/deck0`).
+### Phase 3: The Assembly Sandbox
+1.  **VirtualCPU:** Implement the CPU emulator.
+2.  **Assembler:** A simple parser for `MOV`, `ADD`, `JMP`.
+3.  **Knuth Strategies:** Implement validators for Sorting and Logic puzzles.
 
 ## 4. Conclusion
 
-By shifting from **Procedural Hardcoding** to **Data-Driven Composition**, the system will gain the flexibility required for a complex "Netrunner" simulation. The core shift is treating the Game World not as a script to be followed, but as a State Machine to be manipulated by standard Unix tools.
+This architecture transforms the system into a rich **Simulated World**. It respects the player's agency by allowing them to be a "Master Hacker" (solving Knuthian puzzles in Assembly) or a "Fixer" (managing resources and hiring NPCs). The Unix shell becomes the interface for *dungeon crawling*, *combat*, and *economics* simultaneously.
