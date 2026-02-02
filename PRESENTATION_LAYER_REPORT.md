@@ -143,7 +143,7 @@ Since the user wants a real shell under the guise of the game:
 ## Summary Checklist for Next Steps
 
 1.  [ ] **Extract `VimView`**: Move JSX out of `useVimEditor`.
-2.  [ ] **De-God `TerminalViewModel`**: Split into `Logic` vs `Layout` hooks.
+2.  [ ] **Apply SRP to `TerminalViewModel`**: Split into `Logic` vs `Layout` hooks.
 3.  [ ] **Inject Services**: Remove `new Service()` calls; use Context.
 4.  [ ] **Stable Keys**: Ensure all lists (buffer lines, vim lines) use stable IDs for animation support.
 
