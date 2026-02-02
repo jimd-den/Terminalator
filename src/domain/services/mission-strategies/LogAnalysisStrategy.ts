@@ -7,7 +7,15 @@ import { MissionRepository } from '../MissionRepository';
 import { LessonRegistry } from '../LessonRegistry';
 import { StrategyUtils } from './StrategyUtils';
 
-export class ModifyStrategy implements IMissionStrategy {
+/**
+ * LogAnalysisStrategy - Domain Layer
+ * 
+ * Archetype: "The Needle"
+ * 
+ * Narrative: Splunk is down. CloudWatch is lagging. The player must use
+ * raw terminal power to find a specific request ID in a massive log file.
+ */
+export class LogAnalysisStrategy implements IMissionStrategy {
     evaluate(
         mission: Mission,
         state: TerminalState,
@@ -20,87 +28,78 @@ export class ModifyStrategy implements IMissionStrategy {
 
         const steps = missionRepository.getStepsForArchetype(mission.type);
 
-        // Step 1: Connect -> Locate
+        // Step 1: Connect -> Identify
         if (mission.currentStep === MissionStep.PENDING) {
             if (state.fsContext === mission.targetSystem) {
-                const nextStepData = steps.find(s => s.type === 'MODIFY');
+                const step = steps.find(s => s.type === 'IDENTIFY');
 
                 // [NEW] Check Navigation
-                const nav = StrategyUtils.handleNavigation(mission, state, nextStepData?.cwd);
+                const nav = StrategyUtils.handleNavigation(mission, state, step?.cwd);
                 if (nav) return { hint: null, progression: nav };
 
                 progression = {
                     type: 'START_LESSON',
-                    lessonId: `MISSION_SCAN_${mission.id}`,
-                    objectiveTarget: mission.objectiveTarget,
+                    lessonId: `LOG_SCAN_${mission.id}`,
                     nextStep: MissionStep.CONNECTED,
-                    text: missionRepository.injectVariables('ls -la', mission as any), // Suggest ls -la after ssh
-                    instructions: missionRepository.injectVariables(nextStepData?.instructions || 'NAVIGATE TO TARGET.', mission as any),
+                    text: missionRepository.injectVariables(step?.command || '', { targetSystem: mission.targetSystem, objectiveTarget: mission.objectiveTarget }),
+                    instructions: missionRepository.injectVariables(step?.instructions || '', { targetSystem: mission.targetSystem, objectiveTarget: mission.objectiveTarget }),
                     isMission: true
                 };
                 hint = {
-                    message: `Connection established. Target: ${mission.objectiveTarget}. Begin search.`,
+                    message: lessonRegistry.getDialogue('efficiency.grep_hint') || "Connection secured. Now locate the fault ID.",
                     type: 'HINT',
                     confidence: 1.0
                 };
             } else {
                 hint = {
-                    message: `Connect to target system: 'ssh admin@${mission.targetSystem}'.`,
+                    message: `Establish link: 'ssh admin@${mission.targetSystem}'.`,
                     type: 'HINT',
                     confidence: 0.5
                 };
             }
         }
 
-        // Step 2: Locate
+        // Step 2: Identify the Needle
         else if (mission.currentStep === MissionStep.CONNECTED) {
-            const step = steps.find(s => s.type === 'MODIFY');
-            const isSearchCmd = lastResponse.command?.includes('ls') || lastResponse.command?.includes('find');
-            if (isSearchCmd && lastResponse.output.includes(mission.objectiveTarget)) {
+            const step = steps.find(s => s.type === 'IDENTIFY');
+            if (lastResponse.output.includes(mission.objectiveTarget)) {
                 progression = {
                     type: 'START_LESSON',
-                    lessonId: `MISSION_EDIT_${mission.id}`,
-                    objectiveTarget: mission.objectiveTarget,
+                    lessonId: `LOG_REPAIR_${mission.id}`,
                     nextStep: MissionStep.LOCATED,
-                    text: missionRepository.injectVariables(step?.command || '', mission as any),
-                    instructions: missionRepository.injectVariables(step?.instructions || '', mission as any),
+                    text: `vim /etc/httpd/conf.d/proxy.conf`,
+                    instructions: `ID RECOVERY SUCCESSFUL. FAULT IDENTIFIED: ${mission.objectiveTarget}. FIX THE PROXY CONFIG.`,
                     isMission: true
                 };
                 hint = {
-                    message: `Target found. Append signature to ${mission.objectiveTarget}.`,
+                    message: `Fault isolated. Request ID ${mission.objectiveTarget} found. Open the config to fix the route.`,
                     type: 'HINT',
                     confidence: 1.0
                 };
             } else {
-                // [NEW] Check Navigation
+                // If not met, check if we need to nudge them to the right directory
                 const nav = StrategyUtils.handleNavigation(mission, state, step?.cwd);
                 if (nav) return { hint: null, progression: nav };
 
                 hint = {
-                    message: `Locate the target file '${mission.objectiveTarget}'.`,
+                    message: missionRepository.injectVariables(step?.instructions || '', { targetSystem: mission.targetSystem }),
                     type: 'HINT',
-                    confidence: 0.7
+                    confidence: 0.8
                 };
             }
         }
 
         // Step 3: Complete
         else if (mission.currentStep === MissionStep.LOCATED) {
-            const step = steps.find(s => s.type === 'MODIFY');
-            const isModifyCmd = lastResponse.command?.includes('echo') || lastResponse.command?.includes('>>');
-            if (lastResponse.exitCode === 0 && isModifyCmd) {
+            if (lastResponse.command?.includes('vim') && lastResponse.exitCode === 0) {
                 hint = {
-                    message: `Modifications detected. Mission Accomplished.`,
+                    message: `Infrastructure stabilized. Mission Accomplished.`,
                     type: 'CONGRATS',
                     confidence: 1.0
                 };
             } else {
-                // [NEW] Check Navigation
-                const nav = StrategyUtils.handleNavigation(mission, state, step?.cwd);
-                if (nav) return { hint: null, progression: nav };
-
                 hint = {
-                    message: `Append the signature 'HACKED' to '${mission.objectiveTarget}'.`,
+                    message: `Perform the repair using 'vim'. The infrastructure is counting on you.`,
                     type: 'HINT',
                     confidence: 0.8
                 };

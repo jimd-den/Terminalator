@@ -73,7 +73,8 @@ export class ExecuteCommand implements IShellExecutor {
             this.jobControl,
             this.redirectionService,
             this.binaryRunner,
-            () => this
+            () => this,
+            this.networkMap
         );
     }
 
@@ -91,7 +92,8 @@ export class ExecuteCommand implements IShellExecutor {
             this.jobControl,
             new RedirectionService(fsService),
             this.binaryRunner,
-            () => this
+            () => this,
+            this.networkMap
         );
     }
 

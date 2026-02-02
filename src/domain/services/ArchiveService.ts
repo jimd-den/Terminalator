@@ -60,6 +60,30 @@ export class ArchiveService {
     }
 
     /**
+     * Specialized recording that extracts a block from shell output lines.
+     * Transfers logic from ViewModel to Service (SRP).
+     */
+    public recordFromOutput(
+        index: number,
+        lines: TerminalOutputLine[],
+        hostname: string
+    ): void {
+        const cmdLine = lines[index];
+        if (!cmdLine || cmdLine.type !== 'input') return;
+
+        const command = cmdLine.text.replace(/^>\s*/, '');
+        const blockOutput: TerminalOutputLine[] = [];
+
+        // Collect lines until next input or end
+        for (let i = index + 1; i < lines.length; i++) {
+            if (lines[i].type === 'input') break;
+            blockOutput.push(lines[i]);
+        }
+
+        this.record(command, blockOutput, hostname, cmdLine.exitCode);
+    }
+
+    /**
      * Retrives the entire archived history.
      */
     public getAll(): CapturedBuffer[] {

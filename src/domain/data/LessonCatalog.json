@@ -1,0 +1,14 @@
+{
+    "operator_dialogue": {
+        "boot": "Operator active. Systems ready. Remember: the terminal doesn't lie, it only executes.",
+        "efficiency": {
+            "grep_hint": "Why look with your eyes when 'grep' has laser focus?",
+            "pipe_praise": "Beautiful usage of pipes. You're thinking in streams now.",
+            "gui_critique": "That dashboard is for people who like loading spinners. We have work to do."
+        },
+        "failure": {
+            "ssh_error": "Connection refused. Either they know we're coming, or you mistyped the host.",
+            "permission_denied": "You lack the clearance. Find the keys, then try the door."
+        }
+    }
+}

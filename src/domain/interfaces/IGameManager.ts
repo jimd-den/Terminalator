@@ -8,13 +8,18 @@ import { MailMessage } from '../usecases/MailSystem';
 import { Mission } from '../entities/Mission';
 import { TerminalState } from '../entities/TerminalState';
 import { CommandResponse } from '../entities/Command';
-import { TutorEngine } from '../entities/TutorEngine';
+import { TutorEngine, Lesson } from '../entities/TutorEngine';
+import { NPC } from '../entities/NPC';
 
 export interface IGameManager {
     tutorEngine: TutorEngine;
     spawnNPCEvent(): Mission | null;
     getActiveMissions(): Mission[];
-    startMission(id: string): void;
+    getActiveNPCs(): NPC[];
+    startMission(id: string, currentState?: TerminalState): void;
     abandonMission(id: string): void;
     onCommandExecuted(state: TerminalState, response: CommandResponse, prevFsContext?: string): void;
+    startTutor(lessonId: string): void;
+    startRandomLesson(): Lesson;
+    ensureSystemPrepared(hostname: string): void;
 }

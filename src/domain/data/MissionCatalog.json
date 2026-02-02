@@ -1,0 +1,130 @@
+{
+    "archetypes": {
+        "log-analysis": {
+            "id": "log-analysis",
+            "display_name": "Infrastructure Haystack",
+            "narrative_fallback": "A critical system is throwing 500 errors. We need the specific Fault ID from the logs.",
+            "steps": [
+                {
+                    "type": "CONNECT",
+                    "instructions": "INITIALIZE SATLINK // CONNECT TO {{targetSystem}}",
+                    "command": "ssh admin@{{targetSystem}}",
+                    "nextStep": "CONNECTED"
+                },
+                {
+                    "type": "IDENTIFY",
+                    "instructions": "ID RECOVERY IN PROGRESS. FILTER LOGS FOR '500' ERRORS.",
+                    "command": "grep \"500\" access.log",
+                    "cwd": "/var/log/httpd",
+                    "nextStep": "LOCATED"
+                }
+            ],
+            "templates": [
+                {
+                    "description": "Critical infrastructure failure detected on {{targetSystem}}. Narrative: {{faultType}} event. Extract Fault ID from access logs.",
+                    "reward": "1500 Credits"
+                }
+            ]
+        },
+        "dispatcher": {
+            "id": "dispatcher",
+            "display_name": "Manual Override Dispatch",
+            "narrative_fallback": "Emergency services GUI is unresponsive. Use the flat-file database to route units.",
+            "steps": [
+                {
+                    "type": "CONNECT",
+                    "instructions": "ESTABLISH EMERGENCY LINK TO {{targetSystem}}",
+                    "command": "ssh admin@{{targetSystem}}",
+                    "nextStep": "CONNECTED"
+                },
+                {
+                    "type": "DISPATCH",
+                    "instructions": "ADMIN DASHBOARD HUNG. USE 'dispatch' TO ROUTE UNITS.",
+                    "command": "dispatch {{unitId}} {{incidentId}}",
+                    "cwd": "/usr/bin",
+                    "nextStep": "LOCATED"
+                }
+            ],
+            "templates": [
+                {
+                    "description": "Emergency services gridlock on {{targetSystem}}. Manual routing required for {{unitId}} to {{incidentId}}.",
+                    "reward": "2500 Credits"
+                }
+            ]
+        },
+        "exfiltrate": {
+            "id": "exfiltrate",
+            "display_name": "Data Recovery",
+            "narrative_fallback": "A sensitive file was left on a remote host. Recover it via scp.",
+            "steps": [
+                {
+                    "type": "CONNECT",
+                    "instructions": "ESTABLISH CONNECTION TO {{targetSystem}}",
+                    "command": "ssh admin@{{targetSystem}}",
+                    "nextStep": "CONNECTED"
+                },
+                {
+                    "type": "LOCATE",
+                    "instructions": "TARGET IDENTIFIED: {{objectiveTarget}}. SCAN SYSTEM TO LOCATE.",
+                    "command": "ls -la",
+                    "cwd": "/home/admin",
+                    "nextStep": "LOCATED"
+                },
+                {
+                    "type": "RECOVER",
+                    "instructions": "TARGET FOUND. DOWNLOAD {{objectiveTarget}} VIA SCP.",
+                    "command": "scp {{objectiveTarget}} ~/",
+                    "cwd": "/home/admin",
+                    "nextStep": "COMPLETED"
+                }
+            ],
+            "templates": [
+                {
+                    "description": "Critical data retrieval from {{targetSystem}}. Secure {{objectiveTarget}} and extract to local storage.",
+                    "reward": "2000 Credits"
+                }
+            ]
+        },
+        "modify": {
+            "id": "modify",
+            "display_name": "Network Sabotage",
+            "narrative_fallback": "A competitor's infrastructure needs a signature touch. Modify the file.",
+            "steps": [
+                {
+                    "type": "CONNECT",
+                    "instructions": "SATLINK ACTIVE. CONNECT TO {{targetSystem}}.",
+                    "command": "ssh admin@{{targetSystem}}",
+                    "nextStep": "CONNECTED"
+                },
+                {
+                    "type": "MODIFY",
+                    "instructions": "NAVIGATE TO {{objectiveTarget}} AND APPEND SIGNATURE.",
+                    "command": "echo \"HACKED\" >> {{objectiveTarget}}",
+                    "cwd": "/tmp",
+                    "nextStep": "LOCATED"
+                }
+            ],
+            "templates": [
+                {
+                    "description": "Infiltrate {{targetSystem}}. Location: {{objectiveTarget}}. Apply the designated patch.",
+                    "reward": "1800 Credits"
+                }
+            ]
+        }
+    },
+    "variable_pools": {
+        "faultType": [
+            "Critical IO",
+            "Memory Leak",
+            "Kernel Panic",
+            "Socket Hangup",
+            "Buffer Overflow"
+        ],
+        "faction": [
+            "Corporate",
+            "Rebel",
+            "Freelance",
+            "Military"
+        ]
+    }
+}

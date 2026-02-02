@@ -3,6 +3,7 @@ import { FileSystemService } from '../services/FileSystemService';
 import { IShellExecutor } from '../interfaces/IShellExecutor';
 import { IStream } from './Stream';
 import { JobControlService } from '../services/JobControlService';
+import { NetworkMap } from '../services/NetworkMap';
 
 /**
  * ProcessContext Entity - Domain Layer
@@ -70,6 +71,11 @@ export interface ProcessContext {
      * Optional because not all contexts need job control (e.g., subshells).
      */
     jobControl?: JobControlService;
+
+    /**
+     * Network Map for cross-system operations (e.g., scp)
+     */
+    networkMap?: NetworkMap;
 }
 
 

@@ -3,28 +3,41 @@ import { Mission, MissionStep } from '../../entities/Mission';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
 import { TutorAction, TutorProgressionResult } from '../TutorService';
+import { MissionRepository } from '../MissionRepository';
+import { LessonRegistry } from '../LessonRegistry';
+import { StrategyUtils } from './StrategyUtils';
 
 export class ExfiltrateStrategy implements IMissionStrategy {
-    evaluate(mission: Mission, state: TerminalState, lastResponse: CommandResponse): { hint: TutorAction | null; progression: TutorProgressionResult | null } {
+    evaluate(
+        mission: Mission,
+        state: TerminalState,
+        lastResponse: CommandResponse,
+        missionRepository: MissionRepository,
+        lessonRegistry: LessonRegistry
+    ): { hint: TutorAction | null; progression: TutorProgressionResult | null } {
         let hint: TutorAction | null = null;
         let progression: TutorProgressionResult | null = null;
 
-        // Step 1: Connect
+        const steps = missionRepository.getStepsForArchetype(mission.type);
+
+        // Step 1: Connect -> Locate
         if (mission.currentStep === MissionStep.PENDING) {
-            if (state.fsContext === mission.targetSystem && lastResponse.command?.includes('ssh')) {
-                // Progression: Connected!
+            if (state.fsContext === mission.targetSystem) {
+                const nextStepData = steps.find(s => s.type === 'LOCATE');
+
+                // [NEW] Check Navigation
+                const nav = StrategyUtils.handleNavigation(mission, state, nextStepData?.cwd);
+                if (nav) return { hint: null, progression: nav };
+
                 progression = {
                     type: 'START_LESSON',
                     lessonId: `MISSION_SCAN_${mission.id}`,
                     objectiveTarget: mission.objectiveTarget,
-                    nextStep: MissionStep.CONNECTED
+                    nextStep: MissionStep.CONNECTED,
+                    text: missionRepository.injectVariables(nextStepData?.command || 'ls -la', mission as any),
+                    instructions: missionRepository.injectVariables(nextStepData?.instructions || '', mission as any),
+                    isMission: true
                 };
-
-                // We don't advance step here directly, GameManager/TutorService handling the result should do it.
-                // But wait, the strategy is stateless logic. The caller needs to update the mission entity.
-                // For now, let's assume the caller updates currentStep if progression is returned.
-                // Actually, to avoid side effects in evaluate, we should return the NEW STEP too?
-                // Or just rely on the fact that if we return START_LESSON, the game manager updates the state.
 
                 hint = {
                     message: `Connection established. Begin scanning for payload: ${mission.objectiveTarget}`,
@@ -32,50 +45,50 @@ export class ExfiltrateStrategy implements IMissionStrategy {
                     confidence: 1.0
                 };
             } else {
-                if (lastResponse.output.includes('ssh:') || lastResponse.output.includes('Could not resolve')) {
-                    hint = {
-                        message: `Connection failed. Syntax: 'ssh user@${mission.targetSystem}'.`,
-                        type: 'HINT',
-                        confidence: 0.9
-                    };
-                } else {
-                    hint = {
-                        message: `Initiate connection: 'ssh admin@${mission.targetSystem}'.`,
-                        type: 'HINT',
-                        confidence: 0.5
-                    };
-                }
+                hint = {
+                    message: `Initiate connection: 'ssh admin@${mission.targetSystem}'.`,
+                    type: 'HINT',
+                    confidence: 0.5
+                };
             }
         }
 
         // Step 2: Locate
         else if (mission.currentStep === MissionStep.CONNECTED) {
-            // Check if user found the file (e.g. ls output contains it)
+            const step = steps.find(s => s.type === 'LOCATE');
             const isSearchCmd = lastResponse.command?.includes('ls') || lastResponse.command?.includes('find');
             if (isSearchCmd && lastResponse.output.includes(mission.objectiveTarget)) {
+                const nextStepData = steps.find(s => s.type === 'RECOVER');
                 progression = {
                     type: 'START_LESSON',
                     lessonId: `MISSION_SCP_${mission.id}`,
                     objectiveTarget: mission.objectiveTarget,
-                    nextStep: MissionStep.LOCATED
+                    nextStep: MissionStep.LOCATED,
+                    text: missionRepository.injectVariables(nextStepData?.command || '', mission as any),
+                    instructions: missionRepository.injectVariables(nextStepData?.instructions || '', mission as any),
+                    isMission: true
                 };
                 hint = {
-                    message: `Target located. Retrieve it: 'scp ${mission.objectiveTarget} ~/'`,
+                    message: `Target located. Retrieve it using scp.`,
                     type: 'HINT',
                     confidence: 1.0
                 };
             } else {
+                // [NEW] Check Navigation
+                const nav = StrategyUtils.handleNavigation(mission, state, step?.cwd);
+                if (nav) return { hint: null, progression: nav };
+
                 hint = {
-                    message: `Target hidden. Try 'ls' or 'find . -name ${mission.objectiveTarget}'`,
+                    message: missionRepository.injectVariables(step?.instructions || '', mission as any),
                     type: 'HINT',
                     confidence: 0.7
                 };
             }
         }
 
-        // Step 3: Complete (Check local loot)
+        // Step 3: Complete
         else if (mission.currentStep === MissionStep.LOCATED) {
-            // Strictly check command output for successful SCP.
+            const step = steps.find(s => s.type === 'RECOVER');
             if (lastResponse.command?.includes('scp') && lastResponse.exitCode === 0) {
                 hint = {
                     message: `Payload secured. Mission Accomplished.`,
@@ -83,6 +96,10 @@ export class ExfiltrateStrategy implements IMissionStrategy {
                     confidence: 1.0
                 };
             } else {
+                // [NEW] Check Navigation
+                const nav = StrategyUtils.handleNavigation(mission, state, step?.cwd);
+                if (nav) return { hint: null, progression: nav };
+
                 hint = {
                     message: `Extract the payload to your local machine using 'scp'.`,
                     type: 'HINT',

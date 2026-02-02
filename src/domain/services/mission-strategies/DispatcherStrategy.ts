@@ -7,7 +7,12 @@ import { MissionRepository } from '../MissionRepository';
 import { LessonRegistry } from '../LessonRegistry';
 import { StrategyUtils } from './StrategyUtils';
 
-export class ModifyStrategy implements IMissionStrategy {
+/**
+ * DispatcherStrategy - Domain Layer
+ * 
+ * Archetype: "The Dispatch"
+ */
+export class DispatcherStrategy implements IMissionStrategy {
     evaluate(
         mission: Mission,
         state: TerminalState,
@@ -20,54 +25,50 @@ export class ModifyStrategy implements IMissionStrategy {
 
         const steps = missionRepository.getStepsForArchetype(mission.type);
 
-        // Step 1: Connect -> Locate
+        // Step 1: Connect -> Dispatch
         if (mission.currentStep === MissionStep.PENDING) {
             if (state.fsContext === mission.targetSystem) {
-                const nextStepData = steps.find(s => s.type === 'MODIFY');
+                const nextStep = steps.find(s => s.type === 'DISPATCH');
 
                 // [NEW] Check Navigation
-                const nav = StrategyUtils.handleNavigation(mission, state, nextStepData?.cwd);
+                const nav = StrategyUtils.handleNavigation(mission, state, nextStep?.cwd);
                 if (nav) return { hint: null, progression: nav };
 
                 progression = {
                     type: 'START_LESSON',
-                    lessonId: `MISSION_SCAN_${mission.id}`,
-                    objectiveTarget: mission.objectiveTarget,
+                    lessonId: `DISPATCH_LOOKUP_${mission.id}`,
                     nextStep: MissionStep.CONNECTED,
-                    text: missionRepository.injectVariables('ls -la', mission as any), // Suggest ls -la after ssh
-                    instructions: missionRepository.injectVariables(nextStepData?.instructions || 'NAVIGATE TO TARGET.', mission as any),
+                    text: missionRepository.injectVariables(nextStep?.command || 'cat /var/db/incidents.csv', { targetSystem: mission.targetSystem, unitId: 'unit-104', incidentId: mission.objectiveTarget }),
+                    instructions: missionRepository.injectVariables(nextStep?.instructions || 'READ THE INCIDENT TABLE.', { targetSystem: mission.targetSystem, unitId: 'unit-104', incidentId: mission.objectiveTarget }),
                     isMission: true
                 };
                 hint = {
-                    message: `Connection established. Target: ${mission.objectiveTarget}. Begin search.`,
+                    message: `Incident log accessed. Find the zone for incident ${mission.objectiveTarget}.`,
                     type: 'HINT',
                     confidence: 1.0
                 };
             } else {
                 hint = {
-                    message: `Connect to target system: 'ssh admin@${mission.targetSystem}'.`,
+                    message: `Log in to Dispatch: 'ssh operator@${mission.targetSystem}'.`,
                     type: 'HINT',
                     confidence: 0.5
                 };
             }
         }
-
-        // Step 2: Locate
+        // Step 2: Query Available Units
         else if (mission.currentStep === MissionStep.CONNECTED) {
-            const step = steps.find(s => s.type === 'MODIFY');
-            const isSearchCmd = lastResponse.command?.includes('ls') || lastResponse.command?.includes('find');
-            if (isSearchCmd && lastResponse.output.includes(mission.objectiveTarget)) {
+            const step = steps.find(s => s.type === 'DISPATCH');
+            if (lastResponse.command?.includes('units.csv')) {
                 progression = {
                     type: 'START_LESSON',
-                    lessonId: `MISSION_EDIT_${mission.id}`,
-                    objectiveTarget: mission.objectiveTarget,
+                    lessonId: `DISPATCH_COMMAND_${mission.id}`,
                     nextStep: MissionStep.LOCATED,
-                    text: missionRepository.injectVariables(step?.command || '', mission as any),
-                    instructions: missionRepository.injectVariables(step?.instructions || '', mission as any),
+                    text: missionRepository.injectVariables(step?.command || '', { unitId: 'unit-104', incidentId: mission.objectiveTarget }),
+                    instructions: missionRepository.injectVariables(step?.instructions || '', { unitId: 'unit-104', incidentId: mission.objectiveTarget }),
                     isMission: true
                 };
                 hint = {
-                    message: `Target found. Append signature to ${mission.objectiveTarget}.`,
+                    message: `Route found. Issue the dispatch command to resolve the incident.`,
                     type: 'HINT',
                     confidence: 1.0
                 };
@@ -77,30 +78,24 @@ export class ModifyStrategy implements IMissionStrategy {
                 if (nav) return { hint: null, progression: nav };
 
                 hint = {
-                    message: `Locate the target file '${mission.objectiveTarget}'.`,
+                    message: `Incident ${mission.objectiveTarget} is in ZONE_B. Check 'cat /var/db/units.csv' for IDLE units there.`,
                     type: 'HINT',
-                    confidence: 0.7
+                    confidence: 0.8
                 };
             }
         }
 
         // Step 3: Complete
         else if (mission.currentStep === MissionStep.LOCATED) {
-            const step = steps.find(s => s.type === 'MODIFY');
-            const isModifyCmd = lastResponse.command?.includes('echo') || lastResponse.command?.includes('>>');
-            if (lastResponse.exitCode === 0 && isModifyCmd) {
+            if (lastResponse.command?.includes('dispatch') && lastResponse.exitCode === 0) {
                 hint = {
-                    message: `Modifications detected. Mission Accomplished.`,
+                    message: `Unit en route. Scene under control. Mission Accomplished.`,
                     type: 'CONGRATS',
                     confidence: 1.0
                 };
             } else {
-                // [NEW] Check Navigation
-                const nav = StrategyUtils.handleNavigation(mission, state, step?.cwd);
-                if (nav) return { hint: null, progression: nav };
-
                 hint = {
-                    message: `Append the signature 'HACKED' to '${mission.objectiveTarget}'.`,
+                    message: lessonRegistry.getDialogue('failure.permission_denied') || `Use the 'dispatch' command to assign the unit. Lives are on the line.`,
                     type: 'HINT',
                     confidence: 0.8
                 };

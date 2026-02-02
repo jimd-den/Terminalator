@@ -32,8 +32,8 @@ export class MissionController {
      * 
      * @param id - The UUID of the mission to start.
      */
-    public startMission(id: string): void {
-        this.gameManager.startMission(id);
+    public startMission(id: string, currentState?: any): void {
+        this.gameManager.startMission(id, currentState);
         this.refreshMissions();
         if (this.onStartCallback) this.onStartCallback(id);
     }
