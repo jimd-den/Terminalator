@@ -139,11 +139,12 @@ Since the user wants a real shell under the guise of the game:
     *   Current: `GameCommandExecutor` (In-memory JS logic).
     *   Future: `SshCommandExecutor` or `WebContainerExecutor` (Real POSIX).
 2.  **Bridge Pattern:** The `TerminalViewModel` should call `executor.execute(cmd)`. It shouldn't care if the result comes from a JS function or a real Linux kernel.
+    *   *Note:* By abstracting the executor, the "Mainframe" UI remains consistent and preserves the 80s aesthetic whether it's running a simulated JS command or piping output from a remote SSH session.
 
 ## Summary Checklist for Next Steps
 
 1.  [ ] **Extract `VimView`**: Move JSX out of `useVimEditor`.
-2.  [ ] **Apply SRP to `TerminalViewModel`**: Split into `Logic` vs `Layout` hooks.
+2.  [ ] **De-God `TerminalViewModel`**: Split into `Logic` vs `Layout` hooks.
 3.  [ ] **Inject Services**: Remove `new Service()` calls; use Context.
 4.  [ ] **Stable Keys**: Ensure all lists (buffer lines, vim lines) use stable IDs for animation support.
 
