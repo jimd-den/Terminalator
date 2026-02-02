@@ -1,7 +1,7 @@
 # Mission Pipeline & World Simulation Architecture Report
 
 ## Executive Summary
-This report analyzes the current "Mission Generation Pipeline" and "Tutor System" to identify architectural bottlenecks preventing the expansion into a **"Netrunner Simulator"** with deep Unix integration, Assembly programming, and a living NPC universe. It outlines a strict refactoring roadmap adhering to SOLID, KISS, DRY, and Clean Architecture principles, targeting a **Data-Driven Procedural World Generator** that simulates an 80s futuristic mainframe environment inspired by the algorithmic rigor of Donald Knuth's *The Art of Computer Programming*.
+This report analyzes the current "Mission Generation Pipeline" and "Tutor System" to identify architectural bottlenecks preventing the expansion into a **"Netrunner Simulator"** with deep Unix integration, Assembly programming, and a living NPC universe. It outlines a strict refactoring roadmap adhering to SOLID, KISS, DRY, and Clean Architecture principles, targeting a **Data-Driven Procedural World Generator** that simulates a universe built by "Unix Edge Lords" where reality is controlled via POSIX-compliant terminals, and mastery of *The Art of Computer Programming* is the ultimate weapon.
 
 ## 1. Current Architecture Analysis & Violations
 
@@ -9,7 +9,7 @@ This report analyzes the current "Mission Generation Pipeline" and "Tutor System
 
 *   **Open/Closed Principle (OCP) Violation [CRITICAL]**
     *   **Location:** `src/domain/services/TutorService.ts` and `MissionRepository.ts`.
-    *   **Issue:** The `strategies` map in `TutorService` and the `MissionCatalog.json` import in `MissionRepository` are hardcoded. Adding a new mission type (e.g., "Alien Containment Protocol") requires modifying the *source code*.
+    *   **Issue:** The `strategies` map in `TutorService` and the `MissionCatalog.json` import in `MissionRepository` are hardcoded. Adding a new mission type (e.g., "Knuthian Sort") requires modifying the *source code*.
     *   **Impact:** Extending the game with new mechanics requires constant core code modification, increasing regression risk.
 *   **Single Responsibility Principle (SRP) Violation**
     *   **Location:** `src/domain/services/mission-strategies/ExfiltrateStrategy.ts` (and others).
@@ -21,7 +21,7 @@ This report analyzes the current "Mission Generation Pipeline" and "Tutor System
 
 ### 1.2. DRY (Don't Repeat Yourself) & KISS (Keep It Simple, Stupid) Violations
 
-*   **Procedural Hardcoding (KISS Violation):** `SystemGenerator.ts` contains hardcoded user lists and file paths. This prevents the dynamic generation of "Corporations" or "Abandoned Stations" with unique file structures.
+*   **Procedural Hardcoding (KISS Violation):** `SystemGenerator.ts` contains hardcoded user lists and file paths. This prevents the dynamic generation of "Corporations" or "Stations".
 *   **Logic Duplication (DRY Violation):** `MissionService` and `MissionRepository` both contain logic for "random selection" and "variable injection". This should be centralized.
 
 ### 1.3. Clean Architecture Violations
@@ -30,86 +30,73 @@ This report analyzes the current "Mission Generation Pipeline" and "Tutor System
 
 ---
 
-## 2. Proposed Architecture: The "Diegetic Netrunner" World
+## 2. Proposed Architecture: The "Unix Edge Lord" Universe
 
-We will move from a static script system to a **Procedural Generation Engine** that simulates a consistent fictional universe. Crucially, the **Unix Shell is the interface**, not the world itself. The player is a character *using* a terminal to interact with a physical reality.
+We will move from a static script system to a **Procedural Generation Engine** simulating a world where *everything*—from airlocks to coffee machines—is controlled by strict POSIX-compliant systems.
 
-### 2.1. The Diegetic Interface (Unix as a Tool)
+### 2.1. The "Real World" POSIX Simulation
 
-*   **The Player Character:** A "Netrunner" or "SysOp" sitting at a console.
-*   **The World:** A graph of **Rooms** (Physical Locations) containing **Nodes** (Computers, PDAs, Door Controls).
-*   **Interaction:** You do not `cd` into a room. You `ssh` into the room's terminal to open the door.
-    *   *Physical Action:* "I need to open the Medbay door."
-    *   *Digital Action:* `ssh root@medbay_console` -> `echo "OPEN" > /dev/door_control`
+In this universe, computers are the interface to reality.
 
-### 2.2. Data-Driven Procedural Generation
+*   **Diegetic Interface:** The player sits at a terminal. The "World" is a graph of connected nodes.
+*   **Environmental Manipulation (Not "Hacking"):**
+    *   You don't "hack" an alien. You use `ssh` to access the *Life Support Control Node*.
+    *   *Action:* `echo "VENT" > /dev/airlock_3`
+    *   *Constraint:* You need `root` or `sudo` privileges, or you need to find a user who has them.
+*   **Social Engineering & Deception:**
+    *   *Problem:* An alien is in the Mess Hall. You need it in the Airlock.
+    *   *Solution:* Use `talk` or `mail` to impersonate a Commanding Officer (`-f commander@station.net`).
+    *   *Command:* `talk private_hudson` -> "Order: Lure target to Airlock 3. Bait required."
+    *   *Outcome:* The NPC moves (bait), the Alien follows. Then you trigger the vent.
+
+### 2.2. The "Knuthian" Curriculum: The Art of Computer Programming
+
+Missions are not just "find the file"; they are rigorous tests of Computer Science fundamentals. The "Edge Lords" who built this world locked high-level functions behind algorithmic performance gates.
+
+**Pattern:** *Strategy Pattern (Performance Validators)*
+
+*   **Concept:** To access the *Mainframe Core*, your script must process data efficiently. Inefficient code triggers "Timeout" defenses.
+*   **Mission Types:**
+    *   **Vol 1 (Fundamental Algorithms):** "The door lock requires a valid Stack Permutation. Write a program to generate it."
+    *   **Vol 3 (Sorting & Searching):** "The firewall throttles traffic. Sort this routing table (`routes.dat`) using a QuickSort implementation to minimize latency and bypass the throttle."
+    *   **Optimization Challenges:** "Your recursive solution caused a Stack Overflow. Rewrite it iteratively."
+*   **Implementation:** The Tutor evaluates the *Time Complexity* and *Correctness* of the user's submitted binary/script.
+
+### 2.3. Technology: Help vs. Hurt
+
+The architecture must support the theme that reliance on technology is a double-edged sword.
+
+*   **The Help:** Automated systems (Doors, Oxygen, Drones) allow one person to run a station.
+*   **The Hurt:** If the `oxygen_daemon` crashes or is killed (`kill -9 $(pidof oxygen)`), everyone dies.
+*   **Scenario:** A mission might require you to *manually* operate a system via Assembly interrupts because the high-level OS is corrupted.
+
+### 2.4. Data-Driven Procedural Generation
 
 **Pattern:** *Abstract Factory + Builder Pattern*
 
-*   **Entity: LocationTemplate (Physical Space)**
-    *   Defines the physical layout and the *digital footprint* of that layout.
-    *   *Example:* An "Abandoned Station" has 10 Rooms.
-    *   *Room Content:* 1 Mainframe (locked), 3 Crew PDAs (floating in zero-g), 1 Life Support System.
+*   **Entity: LocationTemplate (The Setting)**
+    *   Defines the physical layout and the *Unix Device Map*.
+    *   *Example:* `/dev/airlock_1`, `/sys/class/sensors/motion`.
 *   **Entity: JobTemplate (The Contract)**
-    *   Defines the objective (e.g., "Retrieve the Captain's Log").
-    *   The Log is a file located on the *Captain's PDA*, which is in the *Bridge*.
-
-### 2.3. NPC Interaction & The "Living" Network
-
-**Pattern:** *Observer / Event Bus*
-
-NPCs are distinct entities in the world, not just processes. They carry devices (PDAs, Cyberdecks) that act as their digital interface.
-
-*   **Communication Protocols:**
-    *   **Asynchronous:** `mail -s "Job Offer" fixer@underground.net` (Wait for reply).
-    *   **Synchronous:** `write user@host` or `talk user@host` (Real-time chat).
-    *   **VOIP:** `comm --call 555-0199` (Voice link).
-*   **The "Evil Alien" Scenario:**
-    *   The Alien is a physical entity moving through rooms.
-    *   **Detection:** You `tail -f /var/log/motion_sensors` on the Security Terminal to track it.
-    *   **Interaction:** You cannot "hack" the alien directly. You hack the *Airlock Control* to vent the room it is currently in.
-
-### 2.4. Agency & Delegation System (The Economy)
-
-**Pattern:** *Strategy Pattern (Resolution)*
-
-The player manages **Time**, **Money**, and **Skill**.
-
-*   **The Problem:** "I need the encryption key from the Chief Scientist."
-*   **Path A (Hacking - Knuthian):** Breach the scientist's private server and solve a "Sorting Algorithm" puzzle to decrypt their files. (High Skill).
-*   **Path B (Social Engineering):** `mail` the scientist posing as IT support (`-f admin@corp.net`) asking for a password reset. (Social Skill).
-*   **Path C (Delegation):** Hire a mercenary NPC to physically steal the PDA.
-    *   *Command:* `transfer --amount 1000 --account MERC_01`
-    *   *Feedback:* You receive a message 10 minutes later: "Item acquired. Uploading dump..."
-
-### 2.5. The "Knuth" Sandbox (Assembly & Validation)
-
-When the player chooses the "Hacking" path, they face deep algorithmic challenges appropriate for an 80s Mainframe.
-
-*   **VirtualCPU:** A lightweight 16/32-bit CPU emulator.
-*   **Algorithmic Missions:**
-    *   "The mainframe uses a custom compression algorithm. Write an assembly routine to unpack this data stream."
-    *   "Optimize this sorting routine to run in under 1000 cycles."
+    *   Defines the objective and the "Success" state (e.g., "Alien Status: VENTED").
 
 ---
 
 ## 3. Implementation Roadmap
 
-### Phase 1: The World Graph (Data Layer)
-1.  **Schema Definition:** Create `ILocation`, `IDevice` (Terminal, PDA), and `INPC`.
-2.  **Network Simulator:** Define how devices connect (LANs, Airgaps, Subnets).
-3.  **Procedural Builder:** Generate a "Station" with rooms, placing PDAs and Terminals in realistic network topologies.
+### Phase 1: The Diegetic World (Data Layer)
+1.  **Schema Definition:** Create `ILocation` (Rooms), `IDevice` (Unix Nodes), and `INPC`.
+2.  **Simulation Engine:** Implement the logic that maps Unix file writes (`/dev/door`) to World State changes (`Room.Locked = false`).
 
-### Phase 2: The Communication Layer
-1.  **Mail Server:** Implement a simulated `sendmail`/`postfix` backend.
-2.  **Chat Daemon:** Implement `talkd` for real-time NPC interaction.
-3.  **NPC AI:** Simple state machines that respond to emails or chat messages based on keywords and "Reputation".
+### Phase 2: The Social & Environmental Engine
+1.  **Communication Protocols:** Implement `mail`, `talk`, `write` with "Impersonation" checks (headers, user spoofing).
+2.  **NPC AI:** Simple state machines that react to orders based on "Authority Level" and "Persuasion" (determined by chat choice).
+3.  **Threat Simulation:** Entities (Aliens) that move through the Room Graph, trackable via simulated sensors (`tail /var/log/syslog`).
 
-### Phase 3: The Assembly Sandbox & Economy
-1.  **VirtualCPU:** Implement the CPU emulator.
-2.  **Knuth Strategies:** Implement validators for algorithmic puzzles.
-3.  **Bank Service:** Implement the economy for paying NPCs.
+### Phase 3: The Knuthian Sandbox
+1.  **VirtualCPU:** Implement a lightweight 16/32-bit CPU emulator.
+2.  **CS Validator:** Create strategies that benchmark user code (cycles/memory) against known algorithms (Bubble vs Quick Sort).
 
 ## 4. Conclusion
 
-This architecture clarifies the distinction between the **Simulated World** and the **Player's Tool (Unix)**. The player enacts their will upon the physical world (opening doors, tracking aliens, talking to people) *exclusively* through the realistic constraints of a terminal interface, creating a deeply immersive "Diegetic Netrunner" experience.
+This architecture transforms the system into a **"Unix Edge Lord" Simulator**. It respects the player's intelligence by requiring real Computer Science skills (Knuthian Algorithms) and real Unix comprehension to manipulate a dangerous, indifferent world.
