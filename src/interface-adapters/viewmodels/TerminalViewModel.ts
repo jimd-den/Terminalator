@@ -15,6 +15,7 @@ import { FileSystem } from '../../domain/entities/FileSystem';
 import { ExecuteCommand } from '../../domain/usecases/ExecuteCommand';
 import { GameManager } from '../GameManager';
 import { ArchiveService, CapturedBuffer } from '../../domain/services/ArchiveService';
+import { HintService } from '../../domain/services/HintService';
 import { BufferMapper } from '../mappers/BufferMapper';
 
 // Import Decomposed ViewModels
@@ -41,26 +42,15 @@ export const useTerminalViewModel = (
     const shellVM = useShellViewModel(fs, commandExecutor, gameManager, missionVM.refreshMissions);
 
     const archiveService = useMemo(() => new ArchiveService(), []);
+    const hintService = useMemo(() => new HintService(), []);
     const [buffers, setBuffers] = useState<CapturedBuffer[]>([]);
 
     // -- Buffer Logic (Archive) --
-    // Kept here as it bridges Shell Output -> Archive Storage
     const saveToArchive = useCallback((index: number) => {
-        const lines = shellVM.outputLines;
-        const cmdLine = lines[index];
-        if (!cmdLine || cmdLine.type !== 'input') return;
-
-        const command = cmdLine.text.replace(/^>\s*/, '');
-        const blockOutput = [];
-        for (let i = index + 1; i < lines.length; i++) {
-            if (lines[i].type === 'input') break;
-            blockOutput.push(lines[i]);
-        }
-        archiveService.record(
-            command,
-            blockOutput,
-            shellVM.fsContext || 'LOCAL',
-            cmdLine.exitCode
+        archiveService.recordFromOutput(
+            index,
+            shellVM.outputLines,
+            shellVM.fsContext || 'LOCAL'
         );
         setBuffers(archiveService.getAll());
     }, [shellVM.outputLines, archiveService, shellVM.fsContext]);
@@ -87,22 +77,17 @@ export const useTerminalViewModel = (
     useEffect(() => {
         const interval = setInterval(() => {
             const idleTime = Date.now() - lastActivityRef.current;
-            if (idleTime > 15000 && !contextualHint && !gameManager.tutorEngine.isActive()) {
-                let hint = "[ HINT: TYPE 'help' FOR AVAILABLE COMMANDS ]";
-                const activeMission = missionVM.missions.find(m => m.status === 'active');
-
-                if (activeMission) {
-                    if (activeMission.currentStep === 'PENDING') hint = "[ HINT: ESTABLISH CONNECTION TO TARGET SYSTEM ]";
-                    else if (activeMission.currentStep === 'CONNECTED') hint = "[ HINT: EXPLORE REMOTE DIRECTORY WITH 'ls' ]";
-                    else if (activeMission.currentStep === 'LOCATED') hint = "[ HINT: ACQUIRE OBJECTIVE FILE ]";
-                } else if (!shellVM.fsContext) {
-                    hint = "[ HINT: CHECK 'mail' OR 'jobs' ]";
-                }
+            if (idleTime > 15000 && !contextualHint) {
+                const hint = hintService.getHint(
+                    missionVM.missions,
+                    gameManager.tutorEngine.isActive(),
+                    !!shellVM.fsContext
+                );
                 setContextualHint(hint);
             }
         }, 1000);
         return () => clearInterval(interval);
-    }, [contextualHint, missionVM.missions, shellVM.fsContext, gameManager]);
+    }, [contextualHint, missionVM.missions, shellVM.fsContext, gameManager, hintService]);
 
     // Wrap key press to reset timer
     const handleKeyPressWrapped = useCallback((key: string) => {

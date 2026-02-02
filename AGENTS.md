@@ -43,7 +43,7 @@ The codebase follows a strict **Clean Architecture** implementation, ensuring se
     *   **Role:** Adapts data between the Domain and the Frameworks. Implements the **Humble Object** pattern to strip logic from Views.
     *   **Dependencies:** Use Cases, Ports (Interfaces).
     *   **Key Files:**
-        *   `TerminalViewModel.ts`: Manages presentation state, input handling, and autocomplete.
+        *   `TerminalViewModel.ts`: Passive orchestration of specialized ViewModels and services.
         *   `GameManager.ts`: Coordinator Facade for game subsystems.
         *   `LessonCoordinator.ts`: Bridges Tutor events to high-level game consequences.
         *   `GameCommandExecutor.ts`: Interface for UI components to execute shell commands.
@@ -157,20 +157,22 @@ src/
 │   │   ├── CoreUtilsModule.ts   # Registers Core Commands
 │   │   └── SystemUtilsModule.ts # Registers System Commands
 │   ├── ports/                   # Interfaces (Ports)
-│   ├── services/                # DOMAIN SERVICES
-│   │   ├── shell/               # Grammar Strategies
-│   │   │   ├── IStatementParser.ts
-│   │   │   ├── IfParser.ts
-│   │   │   ├── ForParser.ts
-│   │   │   ├── WhileParser.ts
-│   │   │   ├── SubshellParser.ts
-│   │   │   ├── BlockParser.ts
-│   │   │   ├── FunctionDefParser.ts
-│   │   │   └── SimpleCommandParser.ts
-│   │   ├── FileSystemService.ts # POSIX Logic
-│   │   ├── JobControlService.ts # Job table, signals, job ID resolution
-│   │   ├── ShellExpansionService.ts # Globbing & Expansion
-│   │   └── ShellParser.ts       # Input Parser (Coordinator)
+    ├── services/                # DOMAIN SERVICES
+    │   ├── shell/               # Grammar Strategies
+    │   │   ├── IStatementParser.ts
+    │   │   ├── IfParser.ts
+    │   │   ├── ForParser.ts
+    │   │   ├── WhileParser.ts
+    │   │   ├── SubshellParser.ts
+    │   │   ├── BlockParser.ts
+    │   │   ├── FunctionDefParser.ts
+    │   │   └── SimpleCommandParser.ts
+    │   ├── FileSystemService.ts # POSIX Logic
+    │   ├── JobControlService.ts # Job table, signals, job ID resolution
+    │   ├── ShellExpansionService.ts # Globbing & Expansion
+    │   ├── ShellParser.ts       # Input Parser (Coordinator)
+    │   ├── HintService.ts       # Contextual Hint Logic
+    │   └── ArchiveService.ts    # Command/Buffer Archiving
 │   └── usecases/                # Application Logic
 │       └── ExecuteCommand.ts    # Main Command Dispatcher
 ├── interface-adapters/          # ADAPTERS
@@ -249,7 +251,7 @@ src/
 
 ### Known Violations (To Be Refactored)
 1. **Parsers:** ✅ REFACTORED. `ShellParser` now uses the Strategy Pattern for grammar rules.
-2. **UI God Components:** `TerminalScreen.tsx` currently handles too much (Input, Output, Layout, Vim Switching). Refactor into `ShellView`, `InputBar`, and `OutputLog`.
+2. **UI God Components:** ✅ REFACTORED. `TerminalScreen.tsx` refactored into a passive router with sub-screens. `TerminalViewModel` decomposed into specialized service-backed logic.
 
 ### UI Component Standards
 *   **No Inline Logic:** Components should receive data prop objects, not raw state.
