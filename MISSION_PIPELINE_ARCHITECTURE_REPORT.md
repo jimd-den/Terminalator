@@ -1,7 +1,7 @@
 # Mission Pipeline & World Simulation Architecture Report
 
 ## Executive Summary
-This report analyzes the current "Mission Generation Pipeline" and "Tutor System" to identify architectural bottlenecks preventing the expansion into a **"Netrunner Simulator"** with deep Unix integration, Assembly programming, and a living NPC universe. It outlines a strict refactoring roadmap adhering to SOLID, KISS, DRY, and Clean Architecture principles, targeting a **Data-Driven Procedural World Generator** that supports "Donald Knuth" style algorithmic missions, "Space Station" RPG dungeon crawls, and a robust "Delegation Economy" (Do it yourself vs. Pay an NPC).
+This report analyzes the current "Mission Generation Pipeline" and "Tutor System" to identify architectural bottlenecks preventing the expansion into a **"Netrunner Simulator"** with deep Unix integration, Assembly programming, and a living NPC universe. It outlines a strict refactoring roadmap adhering to SOLID, KISS, DRY, and Clean Architecture principles, targeting a **Data-Driven Procedural World Generator** that simulates an 80s futuristic mainframe environment inspired by the algorithmic rigor of Donald Knuth's *The Art of Computer Programming*.
 
 ## 1. Current Architecture Analysis & Violations
 
@@ -30,91 +30,86 @@ This report analyzes the current "Mission Generation Pipeline" and "Tutor System
 
 ---
 
-## 2. Proposed Architecture: The "Mainframe World" Generator
+## 2. Proposed Architecture: The "Diegetic Netrunner" World
 
-We will move from a static script system to a **Procedural Generation Engine** driven by definable Data Entities. This engine will support three pillars: **Algorithmic Puzzles**, **Spatial RPG Exploration**, and **Economic Agency**.
+We will move from a static script system to a **Procedural Generation Engine** that simulates a consistent fictional universe. Crucially, the **Unix Shell is the interface**, not the world itself. The player is a character *using* a terminal to interact with a physical reality.
 
-### 2.1. The Three Pillars of Gameplay
+### 2.1. The Diegetic Interface (Unix as a Tool)
 
-1.  **The Knuthian Protocol (Algorithms):** Coding and Logic puzzles (Sorting, Searching, Optimization).
-2.  **The Spatial Crawl (RPG):** Navigating file systems that represent physical spaces (Stations, Ruins), managing environmental state (Doors, Power).
-3.  **The Agency Economy (Delegation):** The constant choice: "Do I use my skill to solve this, or my credits to hire an NPC?"
+*   **The Player Character:** A "Netrunner" or "SysOp" sitting at a console.
+*   **The World:** A graph of **Rooms** (Physical Locations) containing **Nodes** (Computers, PDAs, Door Controls).
+*   **Interaction:** You do not `cd` into a room. You `ssh` into the room's terminal to open the door.
+    *   *Physical Action:* "I need to open the Medbay door."
+    *   *Digital Action:* `ssh root@medbay_console` -> `echo "OPEN" > /dev/door_control`
 
 ### 2.2. Data-Driven Procedural Generation
 
 **Pattern:** *Abstract Factory + Builder Pattern*
 
-*   **Entity: LocationTemplate (The Setting)**
-    *   Defines the physical/digital environment.
-    *   *Example JSON (Abandoned Station):*
-        ```json
-        {
-          "id": "station_ruin",
-          "theme": "horror",
-          "structure": {
-            "/bridge": { "devices": ["door_control", "log_terminal"] },
-            "/medbay": { "devices": ["stasis_pod"], "locked": true }
-          },
-          "threats": ["rogue_process_daemon", "oxygen_leak"]
-        }
-        ```
-*   **Entity: JobTemplate (The Task)**
-    *   Defines the objective and the "Success" state.
+*   **Entity: LocationTemplate (Physical Space)**
+    *   Defines the physical layout and the *digital footprint* of that layout.
+    *   *Example:* An "Abandoned Station" has 10 Rooms.
+    *   *Room Content:* 1 Mainframe (locked), 3 Crew PDAs (floating in zero-g), 1 Life Support System.
+*   **Entity: JobTemplate (The Contract)**
+    *   Defines the objective (e.g., "Retrieve the Captain's Log").
+    *   The Log is a file located on the *Captain's PDA*, which is in the *Bridge*.
 
-### 2.3. RPG & Spatial Exploration Mechanics
+### 2.3. NPC Interaction & The "Living" Network
 
-**Pattern:** *State Pattern + Composite Pattern*
+**Pattern:** *Observer / Event Bus*
 
-We map the **File System** to **Physical Space**.
+NPCs are distinct entities in the world, not just processes. They carry devices (PDAs, Cyberdecks) that act as their digital interface.
 
-*   **Directories as Rooms:** `cd /medbay` is equivalent to "Walking into the Medbay".
-*   **Devices as Files:** To open a door, you don't click a button; you interact with the device driver.
-    *   `echo "OPEN" > /dev/door_control`
-    *   `cat /var/log/sensor_array` (Read description of the room)
-*   **The "Evil Alien" (Threat System):**
-    *   Antagonists are represented as **Background Processes**.
-    *   *Example:* A "Hunter" process (`pid 666`) continually greps for your user. If it finds you, it kills your session.
-    *   *Counterplay:* `kill -9 666` or isolate the process in a `chroot` jail.
+*   **Communication Protocols:**
+    *   **Asynchronous:** `mail -s "Job Offer" fixer@underground.net` (Wait for reply).
+    *   **Synchronous:** `write user@host` or `talk user@host` (Real-time chat).
+    *   **VOIP:** `comm --call 555-0199` (Voice link).
+*   **The "Evil Alien" Scenario:**
+    *   The Alien is a physical entity moving through rooms.
+    *   **Detection:** You `tail -f /var/log/motion_sensors` on the Security Terminal to track it.
+    *   **Interaction:** You cannot "hack" the alien directly. You hack the *Airlock Control* to vent the room it is currently in.
 
 ### 2.4. Agency & Delegation System (The Economy)
 
 **Pattern:** *Strategy Pattern (Resolution)*
 
-Every problem should offer multiple resolution paths.
+The player manages **Time**, **Money**, and **Skill**.
 
-*   **The Problem:** "The door is encrypted with a Rolling Bitmask Cipher."
-*   **Path A (Skill - Knuthian):** Write an Assembly program to reverse the bitmask and output the key to `/dev/door`. (Cost: 0 Credits, High Skill).
-*   **Path B (Delegation - Social):** Open your `comm` tool and hire "ZeroCool" (NPC).
-    *   *Command:* `mail -s "JOB_OFFER" zerocool@underground.net < cash_transfer.dat`
-    *   *Result:* NPC logs in remotely, solves the puzzle, and takes 500 credits.
-*   **Implementation:**
-    *   `MissionService` checks for *both* "Puzzle Solved" state AND "Transaction Complete" state.
+*   **The Problem:** "I need the encryption key from the Chief Scientist."
+*   **Path A (Hacking - Knuthian):** Breach the scientist's private server and solve a "Sorting Algorithm" puzzle to decrypt their files. (High Skill).
+*   **Path B (Social Engineering):** `mail` the scientist posing as IT support (`-f admin@corp.net`) asking for a password reset. (Social Skill).
+*   **Path C (Delegation):** Hire a mercenary NPC to physically steal the PDA.
+    *   *Command:* `transfer --amount 1000 --account MERC_01`
+    *   *Feedback:* You receive a message 10 minutes later: "Item acquired. Uploading dump..."
 
 ### 2.5. The "Knuth" Sandbox (Assembly & Validation)
 
-To support the Skill Path, we need real computing tools.
+When the player chooses the "Hacking" path, they face deep algorithmic challenges appropriate for an 80s Mainframe.
 
-*   **VirtualCPU:** A lightweight 16/32-bit CPU emulator (Registers, Stack, Flags).
-*   **State Validators:** The Tutor checks `VirtualCPU.EAX == 0xKEY` instead of simple text matching.
+*   **VirtualCPU:** A lightweight 16/32-bit CPU emulator.
+*   **Algorithmic Missions:**
+    *   "The mainframe uses a custom compression algorithm. Write an assembly routine to unpack this data stream."
+    *   "Optimize this sorting routine to run in under 1000 cycles."
 
 ---
 
 ## 3. Implementation Roadmap
 
-### Phase 1: The Foundation (Data & Economy)
-1.  **Schema Definition:** Create `ILocationTemplate` and `INPCProfile`.
-2.  **Economy Service:** Implement a `BankService` and `ContractService` to handle payments and NPC hiring.
-3.  **FileSystem Loader:** Implement the "Folder of JSONs" loader.
+### Phase 1: The World Graph (Data Layer)
+1.  **Schema Definition:** Create `ILocation`, `IDevice` (Terminal, PDA), and `INPC`.
+2.  **Network Simulator:** Define how devices connect (LANs, Airgaps, Subnets).
+3.  **Procedural Builder:** Generate a "Station" with rooms, placing PDAs and Terminals in realistic network topologies.
 
-### Phase 2: The Spatial Engine (RPG)
-1.  **Device Drivers:** Create a system where writing to specific files triggers game events (e.g., `Door.open()`).
-2.  **Process AI:** Implement simple "AI" processes that react to player presence (The "Evil Alien").
+### Phase 2: The Communication Layer
+1.  **Mail Server:** Implement a simulated `sendmail`/`postfix` backend.
+2.  **Chat Daemon:** Implement `talkd` for real-time NPC interaction.
+3.  **NPC AI:** Simple state machines that respond to emails or chat messages based on keywords and "Reputation".
 
-### Phase 3: The Assembly Sandbox
+### Phase 3: The Assembly Sandbox & Economy
 1.  **VirtualCPU:** Implement the CPU emulator.
-2.  **Assembler:** A simple parser for `MOV`, `ADD`, `JMP`.
-3.  **Knuth Strategies:** Implement validators for Sorting and Logic puzzles.
+2.  **Knuth Strategies:** Implement validators for algorithmic puzzles.
+3.  **Bank Service:** Implement the economy for paying NPCs.
 
 ## 4. Conclusion
 
-This architecture transforms the system into a rich **Simulated World**. It respects the player's agency by allowing them to be a "Master Hacker" (solving Knuthian puzzles in Assembly) or a "Fixer" (managing resources and hiring NPCs). The Unix shell becomes the interface for *dungeon crawling*, *combat*, and *economics* simultaneously.
+This architecture clarifies the distinction between the **Simulated World** and the **Player's Tool (Unix)**. The player enacts their will upon the physical world (opening doors, tracking aliens, talking to people) *exclusively* through the realistic constraints of a terminal interface, creating a deeply immersive "Diegetic Netrunner" experience.
