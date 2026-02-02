@@ -17,5 +17,5 @@ export interface IStatementParser {
     /**
      * Parses the construct and returns an AST node.
      */
-    parse(facade: IShellParserFacade): ASTNode;
+    parse(facade: IShellParserFacade): ASTNode | null;
 }
