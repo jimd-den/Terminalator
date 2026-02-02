@@ -5,6 +5,7 @@ import { CommandResponse } from '../../entities/Command';
 import { TutorAction, TutorProgressionResult } from '../TutorService';
 import { MissionRepository } from '../MissionRepository';
 import { LessonRegistry } from '../LessonRegistry';
+import { StrategyUtils } from './StrategyUtils';
 
 export class ExfiltrateStrategy implements IMissionStrategy {
     evaluate(
@@ -23,6 +24,11 @@ export class ExfiltrateStrategy implements IMissionStrategy {
         if (mission.currentStep === MissionStep.PENDING) {
             if (state.fsContext === mission.targetSystem) {
                 const nextStepData = steps.find(s => s.type === 'LOCATE');
+
+                // [NEW] Check Navigation
+                const nav = StrategyUtils.handleNavigation(mission, state, nextStepData?.cwd);
+                if (nav) return { hint: null, progression: nav };
+
                 progression = {
                     type: 'START_LESSON',
                     lessonId: `MISSION_SCAN_${mission.id}`,
@@ -59,7 +65,8 @@ export class ExfiltrateStrategy implements IMissionStrategy {
                     objectiveTarget: mission.objectiveTarget,
                     nextStep: MissionStep.LOCATED,
                     text: missionRepository.injectVariables(nextStepData?.command || '', mission as any),
-                    instructions: missionRepository.injectVariables(nextStepData?.instructions || '', mission as any)
+                    instructions: missionRepository.injectVariables(nextStepData?.instructions || '', mission as any),
+                    isMission: true
                 };
                 hint = {
                     message: `Target located. Retrieve it using scp.`,
@@ -67,6 +74,10 @@ export class ExfiltrateStrategy implements IMissionStrategy {
                     confidence: 1.0
                 };
             } else {
+                // [NEW] Check Navigation
+                const nav = StrategyUtils.handleNavigation(mission, state, step?.cwd);
+                if (nav) return { hint: null, progression: nav };
+
                 hint = {
                     message: missionRepository.injectVariables(step?.instructions || '', mission as any),
                     type: 'HINT',
@@ -77,6 +88,7 @@ export class ExfiltrateStrategy implements IMissionStrategy {
 
         // Step 3: Complete
         else if (mission.currentStep === MissionStep.LOCATED) {
+            const step = steps.find(s => s.type === 'RECOVER');
             if (lastResponse.command?.includes('scp') && lastResponse.exitCode === 0) {
                 hint = {
                     message: `Payload secured. Mission Accomplished.`,
@@ -84,6 +96,10 @@ export class ExfiltrateStrategy implements IMissionStrategy {
                     confidence: 1.0
                 };
             } else {
+                // [NEW] Check Navigation
+                const nav = StrategyUtils.handleNavigation(mission, state, step?.cwd);
+                if (nav) return { hint: null, progression: nav };
+
                 hint = {
                     message: `Extract the payload to your local machine using 'scp'.`,
                     type: 'HINT',

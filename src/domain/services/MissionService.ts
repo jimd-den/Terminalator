@@ -38,11 +38,11 @@ export class MissionService {
             objectiveTarget,
             unitId: `UNIT-${Math.floor(Math.random() * 900 + 100)}`,
             incidentId: `INC-${Math.floor(Math.random() * 9000 + 1000)}`,
-            faultType: ['Critical IO', 'Memory Leak', 'Kernel Panic', 'Socket Hangup'][Math.floor(Math.random() * 4)]
+            faultType: this.missionRepository.getPool('faultType')[Math.floor(Math.random() * this.missionRepository.getPool('faultType').length)] || 'System Fault'
         };
 
-        const types = ['log-analysis', 'dispatcher']; // Prefer new types for now
-        const type = types[Math.floor(Math.random() * types.length)];
+        const archetypes = this.missionRepository.getArchetypeKeys();
+        const type = archetypes[Math.floor(Math.random() * archetypes.length)];
 
         const mission = this.missionRepository.createMissionFromTemplate(type, npc, variables);
 

@@ -5,6 +5,7 @@ import { CommandResponse } from '../../entities/Command';
 import { TutorAction, TutorProgressionResult } from '../TutorService';
 import { MissionRepository } from '../MissionRepository';
 import { LessonRegistry } from '../LessonRegistry';
+import { StrategyUtils } from './StrategyUtils';
 
 /**
  * DispatcherStrategy - Domain Layer
@@ -28,6 +29,11 @@ export class DispatcherStrategy implements IMissionStrategy {
         if (mission.currentStep === MissionStep.PENDING) {
             if (state.fsContext === mission.targetSystem) {
                 const nextStep = steps.find(s => s.type === 'DISPATCH');
+
+                // [NEW] Check Navigation
+                const nav = StrategyUtils.handleNavigation(mission, state, nextStep?.cwd);
+                if (nav) return { hint: null, progression: nav };
+
                 progression = {
                     type: 'START_LESSON',
                     lessonId: `DISPATCH_LOOKUP_${mission.id}`,
@@ -58,7 +64,8 @@ export class DispatcherStrategy implements IMissionStrategy {
                     lessonId: `DISPATCH_COMMAND_${mission.id}`,
                     nextStep: MissionStep.LOCATED,
                     text: missionRepository.injectVariables(step?.command || '', { unitId: 'unit-104', incidentId: mission.objectiveTarget }),
-                    instructions: missionRepository.injectVariables(step?.instructions || '', { unitId: 'unit-104', incidentId: mission.objectiveTarget })
+                    instructions: missionRepository.injectVariables(step?.instructions || '', { unitId: 'unit-104', incidentId: mission.objectiveTarget }),
+                    isMission: true
                 };
                 hint = {
                     message: `Route found. Issue the dispatch command to resolve the incident.`,
@@ -66,6 +73,10 @@ export class DispatcherStrategy implements IMissionStrategy {
                     confidence: 1.0
                 };
             } else {
+                // [NEW] Check Navigation
+                const nav = StrategyUtils.handleNavigation(mission, state, step?.cwd);
+                if (nav) return { hint: null, progression: nav };
+
                 hint = {
                     message: `Incident ${mission.objectiveTarget} is in ZONE_B. Check 'cat /var/db/units.csv' for IDLE units there.`,
                     type: 'HINT',

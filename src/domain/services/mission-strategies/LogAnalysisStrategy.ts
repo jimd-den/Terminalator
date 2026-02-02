@@ -5,6 +5,7 @@ import { CommandResponse } from '../../entities/Command';
 import { TutorAction, TutorProgressionResult } from '../TutorService';
 import { MissionRepository } from '../MissionRepository';
 import { LessonRegistry } from '../LessonRegistry';
+import { StrategyUtils } from './StrategyUtils';
 
 /**
  * LogAnalysisStrategy - Domain Layer
@@ -31,6 +32,11 @@ export class LogAnalysisStrategy implements IMissionStrategy {
         if (mission.currentStep === MissionStep.PENDING) {
             if (state.fsContext === mission.targetSystem) {
                 const step = steps.find(s => s.type === 'IDENTIFY');
+
+                // [NEW] Check Navigation
+                const nav = StrategyUtils.handleNavigation(mission, state, step?.cwd);
+                if (nav) return { hint: null, progression: nav };
+
                 progression = {
                     type: 'START_LESSON',
                     lessonId: `LOG_SCAN_${mission.id}`,
@@ -62,7 +68,8 @@ export class LogAnalysisStrategy implements IMissionStrategy {
                     lessonId: `LOG_REPAIR_${mission.id}`,
                     nextStep: MissionStep.LOCATED,
                     text: `vim /etc/httpd/conf.d/proxy.conf`,
-                    instructions: `ID RECOVERY SUCCESSFUL. FAULT IDENTIFIED: ${mission.objectiveTarget}. FIX THE PROXY CONFIG.`
+                    instructions: `ID RECOVERY SUCCESSFUL. FAULT IDENTIFIED: ${mission.objectiveTarget}. FIX THE PROXY CONFIG.`,
+                    isMission: true
                 };
                 hint = {
                     message: `Fault isolated. Request ID ${mission.objectiveTarget} found. Open the config to fix the route.`,
@@ -70,6 +77,10 @@ export class LogAnalysisStrategy implements IMissionStrategy {
                     confidence: 1.0
                 };
             } else {
+                // If not met, check if we need to nudge them to the right directory
+                const nav = StrategyUtils.handleNavigation(mission, state, step?.cwd);
+                if (nav) return { hint: null, progression: nav };
+
                 hint = {
                     message: missionRepository.injectVariables(step?.instructions || '', { targetSystem: mission.targetSystem }),
                     type: 'HINT',

@@ -14,7 +14,8 @@
                 {
                     "type": "IDENTIFY",
                     "instructions": "ID RECOVERY IN PROGRESS. FILTER LOGS FOR '500' ERRORS.",
-                    "command": "grep \"500\" /var/log/httpd/access.log",
+                    "command": "grep \"500\" access.log",
+                    "cwd": "/var/log/httpd",
                     "nextStep": "LOCATED"
                 }
             ],
@@ -40,6 +41,7 @@
                     "type": "DISPATCH",
                     "instructions": "ADMIN DASHBOARD HUNG. USE 'dispatch' TO ROUTE UNITS.",
                     "command": "dispatch {{unitId}} {{incidentId}}",
+                    "cwd": "/usr/bin",
                     "nextStep": "LOCATED"
                 }
             ],
@@ -65,12 +67,14 @@
                     "type": "LOCATE",
                     "instructions": "TARGET IDENTIFIED: {{objectiveTarget}}. SCAN SYSTEM TO LOCATE.",
                     "command": "ls -la",
+                    "cwd": "/home/admin",
                     "nextStep": "LOCATED"
                 },
                 {
                     "type": "RECOVER",
                     "instructions": "TARGET FOUND. DOWNLOAD {{objectiveTarget}} VIA SCP.",
                     "command": "scp {{objectiveTarget}} ~/",
+                    "cwd": "/home/admin",
                     "nextStep": "COMPLETED"
                 }
             ],
@@ -96,6 +100,7 @@
                     "type": "MODIFY",
                     "instructions": "NAVIGATE TO {{objectiveTarget}} AND APPEND SIGNATURE.",
                     "command": "echo \"HACKED\" >> {{objectiveTarget}}",
+                    "cwd": "/tmp",
                     "nextStep": "LOCATED"
                 }
             ],
@@ -106,5 +111,20 @@
                 }
             ]
         }
+    },
+    "variable_pools": {
+        "faultType": [
+            "Critical IO",
+            "Memory Leak",
+            "Kernel Panic",
+            "Socket Hangup",
+            "Buffer Overflow"
+        ],
+        "faction": [
+            "Corporate",
+            "Rebel",
+            "Freelance",
+            "Military"
+        ]
     }
 }

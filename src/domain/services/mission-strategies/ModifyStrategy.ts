@@ -5,6 +5,7 @@ import { CommandResponse } from '../../entities/Command';
 import { TutorAction, TutorProgressionResult } from '../TutorService';
 import { MissionRepository } from '../MissionRepository';
 import { LessonRegistry } from '../LessonRegistry';
+import { StrategyUtils } from './StrategyUtils';
 
 export class ModifyStrategy implements IMissionStrategy {
     evaluate(
@@ -23,6 +24,11 @@ export class ModifyStrategy implements IMissionStrategy {
         if (mission.currentStep === MissionStep.PENDING) {
             if (state.fsContext === mission.targetSystem) {
                 const nextStepData = steps.find(s => s.type === 'MODIFY');
+
+                // [NEW] Check Navigation
+                const nav = StrategyUtils.handleNavigation(mission, state, nextStepData?.cwd);
+                if (nav) return { hint: null, progression: nav };
+
                 progression = {
                     type: 'START_LESSON',
                     lessonId: `MISSION_SCAN_${mission.id}`,
@@ -57,7 +63,8 @@ export class ModifyStrategy implements IMissionStrategy {
                     objectiveTarget: mission.objectiveTarget,
                     nextStep: MissionStep.LOCATED,
                     text: missionRepository.injectVariables(step?.command || '', mission as any),
-                    instructions: missionRepository.injectVariables(step?.instructions || '', mission as any)
+                    instructions: missionRepository.injectVariables(step?.instructions || '', mission as any),
+                    isMission: true
                 };
                 hint = {
                     message: `Target found. Append signature to ${mission.objectiveTarget}.`,
@@ -65,6 +72,10 @@ export class ModifyStrategy implements IMissionStrategy {
                     confidence: 1.0
                 };
             } else {
+                // [NEW] Check Navigation
+                const nav = StrategyUtils.handleNavigation(mission, state, step?.cwd);
+                if (nav) return { hint: null, progression: nav };
+
                 hint = {
                     message: `Locate the target file '${mission.objectiveTarget}'.`,
                     type: 'HINT',
@@ -75,6 +86,7 @@ export class ModifyStrategy implements IMissionStrategy {
 
         // Step 3: Complete
         else if (mission.currentStep === MissionStep.LOCATED) {
+            const step = steps.find(s => s.type === 'MODIFY');
             const isModifyCmd = lastResponse.command?.includes('echo') || lastResponse.command?.includes('>>');
             if (lastResponse.exitCode === 0 && isModifyCmd) {
                 hint = {
@@ -83,6 +95,10 @@ export class ModifyStrategy implements IMissionStrategy {
                     confidence: 1.0
                 };
             } else {
+                // [NEW] Check Navigation
+                const nav = StrategyUtils.handleNavigation(mission, state, step?.cwd);
+                if (nav) return { hint: null, progression: nav };
+
                 hint = {
                     message: `Append the signature 'HACKED' to '${mission.objectiveTarget}'.`,
                     type: 'HINT',

@@ -21,6 +21,7 @@ export interface MissionTemplate {
         instructions: string;
         command: string;
         nextStep: string;
+        cwd?: string; // [NEW] Required working directory for this step
     }[];
     templates: {
         description: string;
@@ -33,6 +34,14 @@ export class MissionRepository {
 
     public getRandomTemplate(archetype: string): MissionTemplate | null {
         return (this.catalog.archetypes as any)[archetype] || null;
+    }
+
+    public getArchetypeKeys(): string[] {
+        return Object.keys(this.catalog.archetypes);
+    }
+
+    public getPool(key: string): string[] {
+        return (this.catalog as any).variable_pools[key] || [];
     }
 
     /**
