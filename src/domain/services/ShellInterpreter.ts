@@ -11,6 +11,7 @@ import { RedirectionService } from './RedirectionService';
 import { FileSystem } from '../entities/FileSystem';
 import { IShellExecutor } from '../interfaces/IShellExecutor';
 import { NodeExecutor } from './shell/NodeExecutor';
+import { NetworkMap } from './NetworkMap';
 
 // Executors
 import { CommandExecutor } from './shell/executors/CommandExecutor';
@@ -38,7 +39,8 @@ export class ShellInterpreter {
         private jobControl: JobControlService,
         private redirectionService: RedirectionService,
         private binaryRunner?: IBinaryRunner,
-        private executorFactory?: () => IShellExecutor
+        private executorFactory?: () => IShellExecutor,
+        private networkMap?: NetworkMap
     ) {
         this.initializeExecutors();
     }
@@ -53,7 +55,8 @@ export class ShellInterpreter {
             this.fs,
             this.redirectionService,
             this.binaryRunner,
-            this.executorFactory
+            this.executorFactory,
+            this.networkMap
         );
         this.handlerMap.set(NodeType.COMMAND, cmdExec);
 

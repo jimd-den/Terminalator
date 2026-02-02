@@ -189,6 +189,9 @@ import { WasmCompilerService } from '../../infrastructure/services/WasmCompilerS
 import { GccCommand } from '../commands/core/GccCommand';
 import { WhoamiCommand } from '../commands/core/WhoamiCommand';
 import { DateCommand } from '../commands/core/DateCommand';
+import { GuiCommand } from '../commands/special/GuiCommand';
+import { DispatchCommand } from '../commands/special/DispatchCommand';
+import { ScpCommand } from '../commands/core/ScpCommand';
 
 export class CoreUtilsModule implements CommandModule {
     private fsService: FileSystemService;
@@ -383,6 +386,9 @@ export class CoreUtilsModule implements CommandModule {
 
         registry.register('whoami', new WhoamiCommand());
         registry.register('date', new DateCommand());
+        registry.register('gui', new GuiCommand());
+        registry.register('dispatch', new DispatchCommand());
+        registry.register('scp', new ScpCommand());
 
         // Clear (Simple inline)
         registry.register('clear', {

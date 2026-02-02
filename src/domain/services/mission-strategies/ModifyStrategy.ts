@@ -3,20 +3,34 @@ import { Mission, MissionStep } from '../../entities/Mission';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
 import { TutorAction, TutorProgressionResult } from '../TutorService';
+import { MissionRepository } from '../MissionRepository';
+import { LessonRegistry } from '../LessonRegistry';
 
 export class ModifyStrategy implements IMissionStrategy {
-    evaluate(mission: Mission, state: TerminalState, lastResponse: CommandResponse): { hint: TutorAction | null; progression: TutorProgressionResult | null } {
+    evaluate(
+        mission: Mission,
+        state: TerminalState,
+        lastResponse: CommandResponse,
+        missionRepository: MissionRepository,
+        lessonRegistry: LessonRegistry
+    ): { hint: TutorAction | null; progression: TutorProgressionResult | null } {
         let hint: TutorAction | null = null;
         let progression: TutorProgressionResult | null = null;
 
-        // Step 1: Connect
+        const steps = missionRepository.getStepsForArchetype(mission.type);
+
+        // Step 1: Connect -> Locate
         if (mission.currentStep === MissionStep.PENDING) {
-            if (state.fsContext === mission.targetSystem && lastResponse.command?.includes('ssh')) {
+            if (state.fsContext === mission.targetSystem) {
+                const nextStepData = steps.find(s => s.type === 'MODIFY');
                 progression = {
                     type: 'START_LESSON',
                     lessonId: `MISSION_SCAN_${mission.id}`,
                     objectiveTarget: mission.objectiveTarget,
-                    nextStep: MissionStep.CONNECTED
+                    nextStep: MissionStep.CONNECTED,
+                    text: missionRepository.injectVariables('ls -la', mission as any), // Suggest ls -la after ssh
+                    instructions: missionRepository.injectVariables(nextStepData?.instructions || 'NAVIGATE TO TARGET.', mission as any),
+                    isMission: true
                 };
                 hint = {
                     message: `Connection established. Target: ${mission.objectiveTarget}. Begin search.`,
@@ -34,16 +48,19 @@ export class ModifyStrategy implements IMissionStrategy {
 
         // Step 2: Locate
         else if (mission.currentStep === MissionStep.CONNECTED) {
+            const step = steps.find(s => s.type === 'MODIFY');
             const isSearchCmd = lastResponse.command?.includes('ls') || lastResponse.command?.includes('find');
             if (isSearchCmd && lastResponse.output.includes(mission.objectiveTarget)) {
                 progression = {
                     type: 'START_LESSON',
                     lessonId: `MISSION_EDIT_${mission.id}`,
                     objectiveTarget: mission.objectiveTarget,
-                    nextStep: MissionStep.LOCATED
+                    nextStep: MissionStep.LOCATED,
+                    text: missionRepository.injectVariables(step?.command || '', mission as any),
+                    instructions: missionRepository.injectVariables(step?.instructions || '', mission as any)
                 };
                 hint = {
-                    message: `Target found. Append signature: 'echo "HACKED" >> ${mission.objectiveTarget}'`,
+                    message: `Target found. Append signature to ${mission.objectiveTarget}.`,
                     type: 'HINT',
                     confidence: 1.0
                 };
@@ -56,13 +73,12 @@ export class ModifyStrategy implements IMissionStrategy {
             }
         }
 
-        // Step 3: Complete (Check modification)
+        // Step 3: Complete
         else if (mission.currentStep === MissionStep.LOCATED) {
-            // Check if echo or vim was used successfully
-            const isModifyCmd = lastResponse.command?.includes('echo') || lastResponse.command?.includes('vim');
+            const isModifyCmd = lastResponse.command?.includes('echo') || lastResponse.command?.includes('>>');
             if (lastResponse.exitCode === 0 && isModifyCmd) {
                 hint = {
-                    message: `Modifications detected. Mission Accomplished. Disconnect immediately.`,
+                    message: `Modifications detected. Mission Accomplished.`,
                     type: 'CONGRATS',
                     confidence: 1.0
                 };

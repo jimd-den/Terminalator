@@ -107,7 +107,12 @@ export const useTerminalViewModel = (
         ircMissionId: missionVM.ircMissionId,
         setIrcMissionId: missionVM.setIrcMissionId,
         missions: missionVM.missions,
-        handleStartMission: missionVM.handleStartMission,
+        handleStartMission: (id: string) => {
+            // Map DTO back to a minimal entity for context check
+            const minimalState = { fsContext: shellVM.fsContext } as any;
+            gameManager.startMission(id, minimalState);
+            missionVM.refreshMissions();
+        },
         handleAbandonMission: missionVM.handleAbandonMission,
         toggleCommsView,
 

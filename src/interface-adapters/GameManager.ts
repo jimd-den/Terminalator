@@ -17,6 +17,9 @@ import { LessonType } from '../domain/services/LessonGenerator';
 import { MissionService } from '../domain/services/MissionService';
 import { NPCService } from '../domain/services/NPCService';
 import { SystemPreparationService } from '../domain/services/SystemPreparationService';
+import { MissionRepository } from '../domain/services/MissionRepository';
+import { LessonRegistry } from '../domain/services/LessonRegistry';
+import { TutorService } from '../domain/services/TutorService';
 import { LessonCoordinator } from './LessonCoordinator';
 
 /**
@@ -49,9 +52,12 @@ export class GameManager implements IGameManager {
         }
 
         const fsService = new FileSystemService(fs);
+        const missionRepository = new MissionRepository();
+        const lessonRegistry = new LessonRegistry();
+        const tutorService = new TutorService(missionRepository, lessonRegistry);
 
         // Initialize Domain Services
-        this.missionService = new MissionService();
+        this.missionService = new MissionService(missionRepository, tutorService);
         this.npcService = new NPCService();
         this.systemPreparationService = new SystemPreparationService(networkMap);
 
@@ -88,15 +94,17 @@ export class GameManager implements IGameManager {
 
         // Trigger Lessons based on progression
         if (progression && progression.result && progression.result.type === 'START_LESSON') {
-            const lessonId = progression.result.lessonId;
-            const objective = progression.result.objectiveTarget || 'TARGET';
+            const result = progression.result;
+            const lessonId = result.lessonId;
+            const objective = result.objectiveTarget || 'TARGET';
 
             setTimeout(() => {
                 const lesson: Lesson = {
                     id: lessonId,
                     type: 'SHELL',
-                    text: 'ls -la',
-                    instructions: `CONNECTION ESTABLISHED. SCAN SYSTEM FOR ${objective}`
+                    text: result.text || 'ls -la', // Dynamic command from strategy
+                    instructions: result.instructions || `CONNECTION ESTABLISHED. SCAN SYSTEM FOR ${objective}`,
+                    isMission: result.isMission || true
                 };
                 this.tutorEngine.startLesson(lesson);
             }, 200);
@@ -137,7 +145,7 @@ export class GameManager implements IGameManager {
         return this.missionService.getActiveMissions();
     }
 
-    public startMission(missionId: string) {
+    public startMission(missionId: string, currentState?: TerminalState) {
         const mission = this.missionService.getMissionById(missionId);
         if (mission && mission.status === 'pending') {
             mission.status = 'active';
@@ -146,6 +154,20 @@ export class GameManager implements IGameManager {
                 message: `MISSION STARTED. TARGET: ${mission.targetSystem}`,
                 timestamp: Date.now()
             });
+
+            // If already connected, skip the SSH lesson and trigger next step analysis
+            if (currentState && currentState.fsContext === mission.targetSystem) {
+                mission.chatHistory.push({
+                    sender: 'TutorBot',
+                    message: `Link verified. You are already on ${mission.targetSystem}. Proceed with objectives.`,
+                    timestamp: Date.now() + 100
+                });
+
+                // Manually trigger one update to get the next lesson
+                this.onCommandExecuted(currentState, { output: 'SYSTEM RECOVERY INITIALIZED', exitCode: 0, newState: currentState } as any);
+                return;
+            }
+
             mission.chatHistory.push({
                 sender: 'TutorBot',
                 message: `Acknowledged. Initiate connection protocol: 'ssh admin@${mission.targetSystem}'.`,
@@ -158,7 +180,8 @@ export class GameManager implements IGameManager {
                 id: `MISSION_${mission.id}`,
                 type: 'SHELL' as const,
                 text: sshCommand,
-                instructions: `INITIATE SATLINK // CONNECT TO ${mission.targetSystem}`
+                instructions: `INITIATE SATLINK // CONNECT TO ${mission.targetSystem}`,
+                isMission: true
             };
 
             this.tutorEngine.startLesson(lesson);

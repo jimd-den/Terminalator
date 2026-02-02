@@ -53,14 +53,14 @@ export const GhostWriter: React.FC<GhostWriterProps> = ({
         // If we were already complete (e.g. re-render), don't restart
         if (isComplete) return;
 
-        let currentIdx = 0;
+        let currentIdx = displayedText.length;
         let timeoutId: NodeJS.Timeout;
         let isMounted = true;
 
-        // Only reset if we haven't started yet
         if (!hasStartedRef.current) {
             setDisplayedText('');
             hasStartedRef.current = true;
+            currentIdx = 0;
         }
 
         const typeNextChar = () => {
@@ -70,22 +70,22 @@ export const GhostWriter: React.FC<GhostWriterProps> = ({
                 setDisplayedText(text.slice(0, currentIdx + 1));
                 currentIdx++;
 
-                // Faster, more consistent "materialization" speed
-                // 10ms base is very fast, feeling more like a data stream than a human typing
-                timeoutId = setTimeout(typeNextChar, 10);
+                // Respect the speed prop for authentic terminal materialization
+                timeoutId = setTimeout(typeNextChar, speed);
             } else {
                 setIsComplete(true);
                 onComplete?.();
             }
         };
 
-        timeoutId = setTimeout(typeNextChar, 5);
+        // Initial delay before starting to type
+        timeoutId = setTimeout(typeNextChar, 10);
 
         return () => {
             isMounted = false;
             clearTimeout(timeoutId);
         };
-    }, [text, speed, isActive, isComplete, onComplete]);
+    }, [text, speed, isActive, isComplete, onComplete, displayedText.length]);
 
     // If not active yet, show nothing
     if (!isActive && !hasStartedRef.current) return null;

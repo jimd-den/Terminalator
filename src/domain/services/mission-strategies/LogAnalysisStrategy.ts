@@ -6,7 +6,15 @@ import { TutorAction, TutorProgressionResult } from '../TutorService';
 import { MissionRepository } from '../MissionRepository';
 import { LessonRegistry } from '../LessonRegistry';
 
-export class ExfiltrateStrategy implements IMissionStrategy {
+/**
+ * LogAnalysisStrategy - Domain Layer
+ * 
+ * Archetype: "The Needle"
+ * 
+ * Narrative: Splunk is down. CloudWatch is lagging. The player must use
+ * raw terminal power to find a specific request ID in a massive log file.
+ */
+export class LogAnalysisStrategy implements IMissionStrategy {
     evaluate(
         mission: Mission,
         state: TerminalState,
@@ -19,73 +27,68 @@ export class ExfiltrateStrategy implements IMissionStrategy {
 
         const steps = missionRepository.getStepsForArchetype(mission.type);
 
-        // Step 1: Connect -> Locate
+        // Step 1: Connect -> Identify
         if (mission.currentStep === MissionStep.PENDING) {
             if (state.fsContext === mission.targetSystem) {
-                const nextStepData = steps.find(s => s.type === 'LOCATE');
+                const step = steps.find(s => s.type === 'IDENTIFY');
                 progression = {
                     type: 'START_LESSON',
-                    lessonId: `MISSION_SCAN_${mission.id}`,
-                    objectiveTarget: mission.objectiveTarget,
+                    lessonId: `LOG_SCAN_${mission.id}`,
                     nextStep: MissionStep.CONNECTED,
-                    text: missionRepository.injectVariables(nextStepData?.command || 'ls -la', mission as any),
-                    instructions: missionRepository.injectVariables(nextStepData?.instructions || '', mission as any),
+                    text: missionRepository.injectVariables(step?.command || '', { targetSystem: mission.targetSystem, objectiveTarget: mission.objectiveTarget }),
+                    instructions: missionRepository.injectVariables(step?.instructions || '', { targetSystem: mission.targetSystem, objectiveTarget: mission.objectiveTarget }),
                     isMission: true
                 };
-
                 hint = {
-                    message: `Connection established. Begin scanning for payload: ${mission.objectiveTarget}`,
+                    message: lessonRegistry.getDialogue('efficiency.grep_hint') || "Connection secured. Now locate the fault ID.",
                     type: 'HINT',
                     confidence: 1.0
                 };
             } else {
                 hint = {
-                    message: `Initiate connection: 'ssh admin@${mission.targetSystem}'.`,
+                    message: `Establish link: 'ssh admin@${mission.targetSystem}'.`,
                     type: 'HINT',
                     confidence: 0.5
                 };
             }
         }
 
-        // Step 2: Locate
+        // Step 2: Identify the Needle
         else if (mission.currentStep === MissionStep.CONNECTED) {
-            const step = steps.find(s => s.type === 'LOCATE');
-            const isSearchCmd = lastResponse.command?.includes('ls') || lastResponse.command?.includes('find');
-            if (isSearchCmd && lastResponse.output.includes(mission.objectiveTarget)) {
-                const nextStepData = steps.find(s => s.type === 'RECOVER');
+            const step = steps.find(s => s.type === 'IDENTIFY');
+            if (lastResponse.output.includes(mission.objectiveTarget)) {
                 progression = {
                     type: 'START_LESSON',
-                    lessonId: `MISSION_SCP_${mission.id}`,
-                    objectiveTarget: mission.objectiveTarget,
+                    lessonId: `LOG_REPAIR_${mission.id}`,
                     nextStep: MissionStep.LOCATED,
-                    text: missionRepository.injectVariables(nextStepData?.command || '', mission as any),
-                    instructions: missionRepository.injectVariables(nextStepData?.instructions || '', mission as any)
+                    text: `vim /etc/httpd/conf.d/proxy.conf`,
+                    instructions: `ID RECOVERY SUCCESSFUL. FAULT IDENTIFIED: ${mission.objectiveTarget}. FIX THE PROXY CONFIG.`
                 };
                 hint = {
-                    message: `Target located. Retrieve it using scp.`,
+                    message: `Fault isolated. Request ID ${mission.objectiveTarget} found. Open the config to fix the route.`,
                     type: 'HINT',
                     confidence: 1.0
                 };
             } else {
                 hint = {
-                    message: missionRepository.injectVariables(step?.instructions || '', mission as any),
+                    message: missionRepository.injectVariables(step?.instructions || '', { targetSystem: mission.targetSystem }),
                     type: 'HINT',
-                    confidence: 0.7
+                    confidence: 0.8
                 };
             }
         }
 
         // Step 3: Complete
         else if (mission.currentStep === MissionStep.LOCATED) {
-            if (lastResponse.command?.includes('scp') && lastResponse.exitCode === 0) {
+            if (lastResponse.command?.includes('vim') && lastResponse.exitCode === 0) {
                 hint = {
-                    message: `Payload secured. Mission Accomplished.`,
+                    message: `Infrastructure stabilized. Mission Accomplished.`,
                     type: 'CONGRATS',
                     confidence: 1.0
                 };
             } else {
                 hint = {
-                    message: `Extract the payload to your local machine using 'scp'.`,
+                    message: `Perform the repair using 'vim'. The infrastructure is counting on you.`,
                     type: 'HINT',
                     confidence: 0.8
                 };

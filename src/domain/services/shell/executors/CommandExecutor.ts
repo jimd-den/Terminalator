@@ -13,6 +13,7 @@ import { IShellExecutor } from '../../../interfaces/IShellExecutor';
 import { ProcessContext } from '../../../entities/ProcessContext';
 import { createStdinStream, createOutputStream } from '../../../entities/Stream';
 import { mergeState, fail } from '../../../utils/TerminalStateUtils';
+import { NetworkMap } from '../../NetworkMap';
 
 export class CommandExecutor implements NodeExecutor {
     constructor(
@@ -23,7 +24,8 @@ export class CommandExecutor implements NodeExecutor {
         private fs: FileSystem,
         private redirectionService: RedirectionService,
         private binaryRunner?: IBinaryRunner,
-        private executorFactory?: () => IShellExecutor
+        private executorFactory?: () => IShellExecutor,
+        private networkMap?: NetworkMap
     ) { }
 
     async execute(
@@ -73,7 +75,8 @@ export class CommandExecutor implements NodeExecutor {
                         },
                         getRegistry: () => this.registry
                     } as IShellExecutor,
-                    jobControl: this.jobControl
+                    jobControl: this.jobControl,
+                    networkMap: this.networkMap
                 };
 
                 const res = await command.execute(expandedArgs, context, state);

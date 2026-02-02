@@ -16,7 +16,7 @@ export interface IGameManager {
     spawnNPCEvent(): Mission | null;
     getActiveMissions(): Mission[];
     getActiveNPCs(): NPC[];
-    startMission(id: string): void;
+    startMission(id: string, currentState?: TerminalState): void;
     abandonMission(id: string): void;
     onCommandExecuted(state: TerminalState, response: CommandResponse, prevFsContext?: string): void;
     startTutor(lessonId: string): void;

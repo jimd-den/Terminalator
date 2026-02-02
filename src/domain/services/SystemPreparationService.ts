@@ -14,6 +14,8 @@ import { Mission } from '../entities/Mission';
 import { FileSystem } from '../entities/FileSystem';
 import { SystemGenerator } from './SystemGenerator';
 
+import { FileSystemPopulator } from './FileSystemPopulator';
+
 export class SystemPreparationService {
     constructor(private networkMap: NetworkMap) { }
 
@@ -27,21 +29,35 @@ export class SystemPreparationService {
         if (!system) return;
 
         const service = new FileSystemService(system);
+        const populator = new FileSystemPopulator(system);
         const relevantMissions = missions.filter(m => m.targetSystem === hostname);
 
         relevantMissions.forEach(mission => {
-            const targetPath = `/home/admin/${mission.objectiveTarget}`;
-            try {
-                service.mkdirp('/home/admin');
-                service.writeFile(
-                    targetPath,
-                    `[ SECURE DATA ]\nSYSTEM: ${hostname}\nPAYLOAD: ${mission.objectiveTarget}\nAUTHENTICATION: REQUIRED\n\n${mission.description}`,
-                    'w',
-                    1002, // admin
-                    1002  // admin
-                );
-            } catch (e) {
-                // Ignore if exists/fails
+            // -- Archetype-Specific Preparation --
+            if (mission.type === 'log-analysis') {
+                service.mkdirp('/var/log/httpd');
+                service.mkdirp('/etc/httpd/conf.d');
+                populator.populateAccessLog('/var/log/httpd/access.log', 2000, mission.objectiveTarget, 'DB_FAIL');
+                service.writeFile('/etc/httpd/conf.d/proxy.conf', '# HTTP PROXY CONFIGURATION\n# Route all traffic to backends\n# BUG: Invalid route at 10.0.0.5');
+            } else if (mission.type === 'dispatcher') {
+                service.mkdirp('/var/db');
+                populator.populateIncidentLogs('/var/db/incidents.csv', 10, mission.objectiveTarget, 'ZONE_B');
+                populator.populateUnitDatabase('/var/db/units.csv', 15);
+            } else {
+                // -- Standard Payload Generation --
+                const targetPath = `/home/admin/${mission.objectiveTarget}`;
+                try {
+                    service.mkdirp('/home/admin');
+                    service.writeFile(
+                        targetPath,
+                        `[ SECURE DATA ]\nSYSTEM: ${hostname}\nPAYLOAD: ${mission.objectiveTarget}\nAUTHENTICATION: REQUIRED\n\n${mission.description}`,
+                        'w',
+                        1002, // admin
+                        1002  // admin
+                    );
+                } catch (e) {
+                    // Ignore if exists/fails
+                }
             }
         });
     }

@@ -34,6 +34,7 @@ export interface Lesson {
     text: string;
     type: 'SHELL' | 'VIM_INSERT' | 'VIM_COMMAND';
     instructions: string;
+    isMission?: boolean; // [NEW] Distinguish from training context
     setup?: (fs: FileSystem) => void;
 }
 

@@ -70,7 +70,7 @@ export const useShellViewModel = (
     // Tutor Callbacks (Refactored logic)
     const tutorCallbacks: TutorControllerCallbacks = useMemo(() => ({
         onStart: (lesson: Lesson, targetCwd: string) => {
-            const isMission = lesson.id.startsWith('MISSION_');
+            const isMission = lesson.isMission || lesson.id.startsWith('MISSION_');
             if (isMission) return;
             setState(prev => ({ ...prev, currentDirectory: targetCwd }));
             outputController.appendLine(
@@ -79,7 +79,8 @@ export const useShellViewModel = (
         },
         onStop: (originalCwd: string | null) => {
             const current = stateRef.current;
-            if (originalCwd && !current.fsContext) {
+            const isMission = gameManager.tutorEngine.getCurrentLesson()?.isMission;
+            if (originalCwd && !current.fsContext && !isMission) {
                 setState(prev => ({ ...prev, currentDirectory: originalCwd }));
                 outputController.appendLine(
                     ShellPresenter.presentSystemMessage(`TRAINING HALTED. RESTORING CONTEXT: ${originalCwd}`)
@@ -105,7 +106,7 @@ export const useShellViewModel = (
                 handleCommandRef.current(lesson.text);
                 inputController.clearInput();
             }
-            const isMission = lesson.id.startsWith('MISSION_');
+            const isMission = lesson.isMission || lesson.id.startsWith('MISSION_');
             const hasSwitchedContext = !!stateRef.current.fsContext;
             if (originalCwd && !isMission && !hasSwitchedContext) {
                 setTimeout(() => {

@@ -211,7 +211,7 @@ const SequentialCommandEcho = ({
                 {stage === 'dots' && isActive ? (
                     <GhostWriter
                         text={dotsText}
-                        speed={80} // Slower, crunchier dots
+                        speed={120} // Even crunchier, more deliberate dots for mainframe feel
                         style={styles.inputEchoText}
                         isActive={true}
                         onComplete={() => {
@@ -455,7 +455,7 @@ export const OutputContainer: React.FC<OutputContainerProps> = ({
                 <GhostWriter
                     key={index}
                     text={line.text}
-                    speed={15}
+                    speed={10} // Fast data stream materialization
                     style={line.type === 'system' ? styles.systemText : styles.outputText}
                     isActive={isTyping}
                     onComplete={onLineComplete}

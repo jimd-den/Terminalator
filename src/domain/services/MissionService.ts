@@ -9,21 +9,42 @@
  * Pillar: The Balanced Scale (SOLID) - Decouples mission state from UI logic.
  */
 
-import { Mission, MissionGenerator, MissionStep } from '../entities/Mission';
+import { Mission, MissionStep } from '../entities/Mission';
 import { NPC } from '../entities/NPC';
 import { TerminalState } from '../entities/TerminalState';
 import { CommandResponse } from '../entities/Command';
-import { analyzeGameState, checkMissionProgression, TutorProgressionResult } from './TutorService';
+import { TutorService, TutorProgressionResult } from './TutorService';
+import { MissionRepository } from './MissionRepository';
+import { generateHostname, generateObjectiveFilename } from '../utils/NameGenerator';
 
 export class MissionService {
     private activeMissions: Mission[] = [];
+
+    constructor(
+        private missionRepository: MissionRepository,
+        private tutorService: TutorService
+    ) { }
 
     /**
      * Creates a new mission assigned by the given NPC.
      * @param npc - The NPC assigning the mission.
      */
     public createMission(npc: NPC): Mission {
-        const mission = MissionGenerator.generate(npc);
+        const targetSystem = generateHostname(npc.faction || 'corporate');
+        const objectiveTarget = generateObjectiveFilename();
+
+        const variables = {
+            targetSystem,
+            objectiveTarget,
+            unitId: `UNIT-${Math.floor(Math.random() * 900 + 100)}`,
+            incidentId: `INC-${Math.floor(Math.random() * 9000 + 1000)}`,
+            faultType: ['Critical IO', 'Memory Leak', 'Kernel Panic', 'Socket Hangup'][Math.floor(Math.random() * 4)]
+        };
+
+        const types = ['log-analysis', 'dispatcher']; // Prefer new types for now
+        const type = types[Math.floor(Math.random() * types.length)];
+
+        const mission = this.missionRepository.createMissionFromTemplate(type, npc, variables);
 
         // Setup initial chat history
         mission.chatHistory = [
@@ -43,10 +64,10 @@ export class MissionService {
      */
     public updateMissions(state: TerminalState, response: CommandResponse): { hints: { missionId: string, sender: string, message: string, type: string }[], progression: { result: TutorProgressionResult | null, missionId: string } | null } {
         const hints: { missionId: string, sender: string, message: string, type: string }[] = [];
-        const progression = checkMissionProgression(state, this.activeMissions, undefined, response);
+        const progression = this.tutorService.checkMissionProgression(state, this.activeMissions, response);
 
         for (const mission of this.activeMissions) {
-            const hint = analyzeGameState(mission, state, response);
+            const hint = this.tutorService.analyzeGameState(mission, state, response);
             if (hint) {
                 const alreadySent = mission.chatHistory.some(m => m.message === hint.message);
                 if (!alreadySent) {
