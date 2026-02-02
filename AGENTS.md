@@ -28,7 +28,9 @@ The codebase follows a strict **Clean Architecture** implementation, ensuring se
     *   **Dependencies:** Entities.
     *   **Key Files:**
         *   `FileSystemService.ts`: Implements POSIX logic (mkdir, touch) using the `FileSystem` entity.
-        *   `ShellParser.ts`: Tokenizes and parses command input into AST.
+        *   `ShellLexer.ts`: State-machine tokenizer (POSIX).
+        *   `ShellParser.ts`: Strategy-based Recursive Descent Parser.
+        *   `shell/`: Specialized grammar rule parsers (If, For, While, etc.).
         *   `ShellExpansionService.ts`: Handles variable expansion, arithmetic, globbing, and quote removal.
 
 3.  **Use Cases (Application)** (`src/domain/usecases`)
@@ -42,7 +44,8 @@ The codebase follows a strict **Clean Architecture** implementation, ensuring se
     *   **Dependencies:** Use Cases, Ports (Interfaces).
     *   **Key Files:**
         *   `TerminalViewModel.ts`: Manages presentation state, input handling, and autocomplete.
-        *   `GameManager.ts`: Coordinates game-specific logic and event systems.
+        *   `GameManager.ts`: Coordinator Facade for game subsystems.
+        *   `LessonCoordinator.ts`: Bridges Tutor events to high-level game consequences.
         *   `GameCommandExecutor.ts`: Interface for UI components to execute shell commands.
 
 5.  **Frameworks & Drivers** (`src/frameworks-drivers`)
@@ -154,11 +157,20 @@ src/
 │   │   ├── CoreUtilsModule.ts   # Registers Core Commands
 │   │   └── SystemUtilsModule.ts # Registers System Commands
 │   ├── ports/                   # Interfaces (Ports)
-│   ├── services/                # Domain Services
+│   ├── services/                # DOMAIN SERVICES
+│   │   ├── shell/               # Grammar Strategies
+│   │   │   ├── IStatementParser.ts
+│   │   │   ├── IfParser.ts
+│   │   │   ├── ForParser.ts
+│   │   │   ├── WhileParser.ts
+│   │   │   ├── SubshellParser.ts
+│   │   │   ├── BlockParser.ts
+│   │   │   ├── FunctionDefParser.ts
+│   │   │   └── SimpleCommandParser.ts
 │   │   ├── FileSystemService.ts # POSIX Logic
 │   │   ├── JobControlService.ts # Job table, signals, job ID resolution
 │   │   ├── ShellExpansionService.ts # Globbing & Expansion
-│   │   └── ShellParser.ts       # Input Parser
+│   │   └── ShellParser.ts       # Input Parser (Coordinator)
 │   └── usecases/                # Application Logic
 │       └── ExecuteCommand.ts    # Main Command Dispatcher
 ├── interface-adapters/          # ADAPTERS
@@ -168,7 +180,8 @@ src/
 │   │   └── TerminalViewModel.ts # UI State Logic
 │   ├── vim/                     # Vim Simulation Logic
 │   ├── GameCommandExecutor.ts   # UI-Shell Bridge
-│   └── GameManager.ts           # Game Subsystem Coordinator
+│   ├── GameManager.ts           # Game Subsystem Coordinator (Facade)
+│   └── LessonCoordinator.ts     # Tutor Event Bridge
 ├── frameworks-drivers/          # INFRASTRUCTURE
 │   ├── ui/                      # React Native UI
 │   │   ├── screens/             # Top-level Views
@@ -235,7 +248,7 @@ src/
 *   **Traversals:** Use `FileSystemService` for recursive operations. Do not manually recurse directory structures in Commands.
 
 ### Known Violations (To Be Refactored)
-1. **Parsers:** `ShellParser` logic complexity is high; consider visitor pattern if grammar grows.
+1. **Parsers:** ✅ REFACTORED. `ShellParser` now uses the Strategy Pattern for grammar rules.
 2. **UI God Components:** `TerminalScreen.tsx` currently handles too much (Input, Output, Layout, Vim Switching). Refactor into `ShellView`, `InputBar`, and `OutputLog`.
 
 ### UI Component Standards
@@ -248,7 +261,7 @@ src/
 ## 7. Mission System Architecture ✅ REFACTORED
 
 ### Overview
-Missions are implemented using a **State Machine** managed by `GameManager` and a **Strategy Pattern** for rule evaluation. This ensures that progression logic is decoupled from command implementations and is based on the actual state of the File System.
+Missions are implemented using a **State Machine** managed by `MissionService` (Domain) and a **Strategy Pattern** for rule evaluation. `GameManager` acts as an Interface Adapter facade that coordinates between the mission system, NPC generation, and system preparation.
 
 ### Components
 1.  **Mission Entity** (`src/domain/entities/Mission.ts`):
