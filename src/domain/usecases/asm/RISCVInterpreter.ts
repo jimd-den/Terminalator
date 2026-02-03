@@ -19,10 +19,12 @@ import { Instruction, Opcode, Funct3 } from '../../entities/asm/Instruction';
 export interface InterpreterOutput {
     stdout: string;
     exitCode: number;
+    instructionCount: number;
 }
 
 export class RISCVInterpreter {
     private stdout: string[] = [];
+    private instructionCount: number = 0;
 
     /**
      * Executes a program from start to finish.
@@ -33,6 +35,7 @@ export class RISCVInterpreter {
      */
     run(program: Instruction[], memory: Uint8Array, state: CpuState, labels: Map<string, number>): InterpreterOutput {
         this.stdout = [];
+        this.instructionCount = 0;
         state.reset();
         state.loadMemory(memory);
 
@@ -56,6 +59,7 @@ export class RISCVInterpreter {
 
     private runWithMap(instrMap: Map<number, Instruction>, memory: Uint8Array, state: CpuState, labels: Map<string, number>): InterpreterOutput {
         while (!state.isHalted) {
+            this.instructionCount++;
             const instruction = instrMap.get(state.pc);
             if (!instruction) {
                 // Check if we ran past the program
@@ -70,7 +74,8 @@ export class RISCVInterpreter {
 
         return {
             stdout: this.stdout.join(''),
-            exitCode: state.exitCode
+            exitCode: state.exitCode,
+            instructionCount: this.instructionCount
         };
     }
 

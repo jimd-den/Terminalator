@@ -1,7 +1,7 @@
 import { TerminalState } from '../../entities/TerminalState';
 import { Mission, MissionStep } from '../../entities/Mission';
 import { CommandResponse } from '../../entities/Command';
-import { TutorAction, TutorProgressionResult } from '../TutorService';
+import { TutorAction, TutorProgressionResult } from '../../interfaces/ITutorService';
 import { MissionRepository } from '../MissionRepository';
 import { LessonRegistry } from '../LessonRegistry';
 

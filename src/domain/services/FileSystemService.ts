@@ -35,6 +35,7 @@ export class FileSystemService {
     private ownershipService: OwnershipService;
     private fileOps: FileOperationService;
     private dirService: DirectoryService;
+    private writeListeners: ((path: string, content: string | Uint8Array, actingUser?: { uid: number, gid: number, groups: number[] }) => void)[] = [];
 
     constructor(private fs: FileSystem) {
         // Dependency Injection / Composition Root for FS Sub-system
@@ -58,6 +59,13 @@ export class FileSystemService {
             fs.root,
             updateUsage
         );
+    }
+
+    /**
+     * Registers a listener for all write operations.
+     */
+    public onWrite(listener: (path: string, content: string | Uint8Array) => void): void {
+        this.writeListeners.push(listener);
     }
 
     get fileSystem(): FileSystem {
@@ -152,6 +160,11 @@ export class FileSystemService {
         }
 
         this.fileOps.writeFile(dentry, content, modeStr, actingUser);
+        
+        // Notify listeners
+        const absPath = this.resolveAbsolutePath(path, cwd);
+        this.writeListeners.forEach(l => l(absPath, content, actingUser));
+
         return dentry;
     }
 

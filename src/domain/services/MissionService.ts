@@ -16,13 +16,20 @@ import { CommandResponse } from '../entities/Command';
 import { TutorService, TutorProgressionResult } from './TutorService';
 import { MissionRepository } from './MissionRepository';
 import { generateHostname, generateObjectiveFilename } from '../utils/NameGenerator';
+import { IWorldStateProvider } from '../interfaces/IWorldStateProvider';
+import { ProceduralMissionFactory } from '../factories/ProceduralMissionFactory';
+import { ConstraintValidator } from './constraints/ConstraintValidator';
+import { ComplexityEstimator } from './constraints/ComplexityEstimator';
 
 export class MissionService {
     private activeMissions: Mission[] = [];
 
     constructor(
         private missionRepository: MissionRepository,
-        private tutorService: TutorService
+        private tutorService: TutorService,
+        private worldState?: IWorldStateProvider,
+        private proceduralFactory?: ProceduralMissionFactory,
+        private constraintValidator?: ConstraintValidator
     ) { }
 
     /**
@@ -30,6 +37,30 @@ export class MissionService {
      * @param npc - The NPC assigning the mission.
      */
     public createMission(npc: NPC): Mission {
+        // 1. Try Procedural Generation based on World State
+        if (this.worldState && this.proceduralFactory) {
+            const devices = this.worldState.getAllDevices();
+            // Find a device that is not ACTIVE/OPEN/CLOSED (e.g. Broken, Error, or non-standard state)
+            // For now, let's assume 'INACTIVE' or 'ERROR' means broken.
+            // Or just pick a random one to generate a maintenance mission.
+            
+            // Filter for devices that might need attention (for now, any device)
+            const candidates = devices.filter(d => d.type !== 'UPLINK'); 
+            
+            if (candidates.length > 0) {
+                const targetDevice = candidates[Math.floor(Math.random() * candidates.length)];
+                const location = this.worldState.getLocationById(targetDevice.locationId);
+                
+                if (location) {
+                    const mission = this.proceduralFactory.createRepairMission(npc, location, targetDevice);
+                    this.setupMissionChat(mission, npc);
+                    this.activeMissions.push(mission);
+                    return mission;
+                }
+            }
+        }
+
+        // 2. Fallback to Template Generation
         const targetSystem = generateHostname(npc.faction || 'corporate');
         const objectiveTarget = generateObjectiveFilename();
 
@@ -45,17 +76,19 @@ export class MissionService {
         const type = archetypes[Math.floor(Math.random() * archetypes.length)];
 
         const mission = this.missionRepository.createMissionFromTemplate(type, npc, variables);
+        this.setupMissionChat(mission, npc);
 
-        // Setup initial chat history
+        this.activeMissions.push(mission);
+        return mission;
+    }
+
+    private setupMissionChat(mission: Mission, npc: NPC) {
         mission.chatHistory = [
             { sender: 'SYSTEM', message: `CONNECTING TO SECURE CHANNEL ${mission.id}...`, timestamp: Date.now() },
             { sender: npc.name, message: `Operator, I require assistance with a ${mission.type} operation.`, timestamp: Date.now() },
             { sender: npc.name, message: mission.description, timestamp: Date.now() },
             { sender: 'SYSTEM', message: `REWARD ESCROW: ${mission.reward}`, timestamp: Date.now() },
         ];
-
-        this.activeMissions.push(mission);
-        return mission;
     }
 
     /**
@@ -93,6 +126,25 @@ export class MissionService {
         if (progression && progression.result && progression.result.nextStep) {
             const mission = this.activeMissions.find(m => m.id === progression.missionId);
             if (mission) {
+                // Check Constraints (Knuthian Physics)
+                if (this.constraintValidator && response.executionStats && mission.constraints) {
+                    const validation = this.constraintValidator.validate(mission, response.executionStats);
+                    if (!validation.valid) {
+                        const rejectionMsg = `CONSTRAINT VIOLATION: ${validation.reason}`;
+                        
+                        mission.chatHistory.push({
+                            sender: 'SYSTEM',
+                            message: rejectionMsg,
+                            timestamp: Date.now()
+                        });
+                        
+                        hints.push({ missionId: mission.id, sender: 'SYSTEM', message: rejectionMsg, type: 'WARNING' });
+                        
+                        // Abort progression
+                        return { hints, progression: null };
+                    }
+                }
+
                 mission.currentStep = progression.result.nextStep;
             }
         }

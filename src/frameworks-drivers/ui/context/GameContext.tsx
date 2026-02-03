@@ -5,6 +5,7 @@ import { GameCommandExecutor } from '../../../interface-adapters/GameCommandExec
 import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { NetworkMap } from '../../../domain/services/NetworkMap';
 import { ConsoleTelemetryAdapter } from '../../../infrastructure/telemetry/ConsoleTelemetryAdapter';
+import { DependencyContainer } from '../../../infrastructure/di/DependencyContainer';
 
 /**
  * GameContext - Presentation Layer
@@ -35,7 +36,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Create service for adapters that need it (GameManager, Executor)
     const [fsService] = useState(() => new FileSystemService(fs));
 
-    const [gameManager] = useState(() => new GameManager(fs, networkMap, telemetry));
+    const [gameManager] = useState(() => DependencyContainer.createGameManager(fs, networkMap, telemetry));
     const [commandExecutor] = useState(() => new GameCommandExecutor(fsService, gameManager, networkMap, telemetry));
 
     return (

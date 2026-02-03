@@ -43,9 +43,14 @@ export class SchemeVM {
     private pc: number = 0;
     private code: Instruction[] = [];
     private callStack: any[] = [];
+    private instructionCount: number = 0;
 
     constructor(env: Environment) {
         this.env = env;
+    }
+
+    public getInstructionCount(): number {
+        return this.instructionCount;
     }
 
     /**
@@ -56,8 +61,10 @@ export class SchemeVM {
         this.pc = 0;
         this.stack = [];
         this.callStack = [];
+        this.instructionCount = 0;
 
         while (this.pc < this.code.length) {
+            this.instructionCount++;
             const instr = this.code[this.pc];
             // console.log(`VM Trace: PC=${this.pc} OP=${instr.op} Stack=[${this.stack.map(s => schemeToString(s)).join(', ')}]`);
 

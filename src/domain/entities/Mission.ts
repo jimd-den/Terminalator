@@ -13,6 +13,7 @@
  */
 
 import { NPC } from './NPC';
+import { JobConstraints } from './world/JobTemplate';
 
 export type MissionType = 'hack' | 'exfiltrate' | 'modify' | 'decrypt' | 'log-analysis' | 'dispatcher';
 
@@ -43,5 +44,8 @@ export interface Mission {
     assignedBy: string; // NPC ID
     assignerName: string; // NPC Name
     chatHistory: ChatMessage[];
+    
+    constraints?: JobConstraints;
+    problemSize?: number;
 }
 

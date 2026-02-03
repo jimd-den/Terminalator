@@ -4,11 +4,10 @@ import { NetworkMap } from '../domain/services/NetworkMap';
 import { TerminalState } from '../domain/entities/TerminalState';
 import { CommandResponse } from '../domain/entities/Command';
 import { NPC } from '../domain/entities/NPC';
-import { Mission, MissionStep } from '../domain/entities/Mission';
+import { Mission } from '../domain/entities/Mission';
 import { MailSystem } from '../domain/usecases/MailSystem';
 import { FileSystem } from '../domain/entities/FileSystem';
 import { TelemetryPort } from '../domain/ports/TelemetryPort';
-import { FileSystemService } from '../domain/services/FileSystemService';
 import { TutorEngine, Lesson } from '../domain/entities/TutorEngine';
 import { LessonService } from '../domain/services/LessonService';
 import { LessonType } from '../domain/services/LessonGenerator';
@@ -17,10 +16,9 @@ import { LessonType } from '../domain/services/LessonGenerator';
 import { MissionService } from '../domain/services/MissionService';
 import { NPCService } from '../domain/services/NPCService';
 import { SystemPreparationService } from '../domain/services/SystemPreparationService';
-import { MissionRepository } from '../domain/services/MissionRepository';
-import { LessonRegistry } from '../domain/services/LessonRegistry';
-import { TutorService } from '../domain/services/TutorService';
 import { LessonCoordinator } from './LessonCoordinator';
+import { IWorldManager } from '../domain/interfaces/IWorldManager';
+import { IWorldStateProvider } from '../domain/interfaces/IWorldStateProvider';
 
 /**
  * GameManager - Interface Adapter layer
@@ -39,38 +37,39 @@ export class GameManager implements IGameManager {
     private lessonCoordinator: LessonCoordinator;
     private mailSystem: MailSystem;
     private lessonService: LessonService;
+    private worldManager: IWorldManager & IWorldStateProvider;
 
     public readonly tutorEngine: TutorEngine;
 
     constructor(
         private fs: FileSystem,
         private networkMap: NetworkMap,
+        missionService: MissionService,
+        npcService: NPCService,
+        systemPreparationService: SystemPreparationService,
+        lessonCoordinator: LessonCoordinator,
+        mailSystem: MailSystem,
+        lessonService: LessonService,
+        worldManager: IWorldManager & IWorldStateProvider,
+        tutorEngine: TutorEngine,
         private telemetry?: TelemetryPort
     ) {
         if (!this.fs) {
             throw new Error("GameManager initialized without FileSystem! Critical Error.");
         }
 
-        const fsService = new FileSystemService(fs);
-        const missionRepository = new MissionRepository();
-        const lessonRegistry = new LessonRegistry();
-        const tutorService = new TutorService(missionRepository, lessonRegistry);
+        this.missionService = missionService;
+        this.npcService = npcService;
+        this.systemPreparationService = systemPreparationService;
+        this.lessonCoordinator = lessonCoordinator;
+        this.mailSystem = mailSystem;
+        this.lessonService = lessonService;
+        this.worldManager = worldManager;
+        this.tutorEngine = tutorEngine;
+    }
 
-        // Initialize Domain Services
-        this.missionService = new MissionService(missionRepository, tutorService);
-        this.npcService = new NPCService();
-        this.systemPreparationService = new SystemPreparationService(networkMap);
-
-        // Initialize Core Use Cases / Engines
-        this.mailSystem = new MailSystem(fsService, telemetry);
-        this.tutorEngine = new TutorEngine();
-        this.lessonService = new LessonService();
-
-        // Initialize Coordinator (Interface Adapter)
-        this.lessonCoordinator = new LessonCoordinator(this.tutorEngine, this.mailSystem, this.missionService);
-
-        // Initial setup
-        this.systemPreparationService.initializeRootFileSystem(fs);
+    public getWorldManager(): IWorldManager & IWorldStateProvider {
+        return this.worldManager;
     }
 
     /**

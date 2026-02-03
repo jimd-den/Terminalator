@@ -25,6 +25,11 @@ export interface CommandResponse {
         renderType?: 'ls-pretty' | 'system-alert' | 'fish-style';
         data?: any;
     };
+    executionStats?: {
+        timeMs: number;
+        memoryUsed: number;
+        iterations: number;
+    };
 }
 
 export interface ICommand {
