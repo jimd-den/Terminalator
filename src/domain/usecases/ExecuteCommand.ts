@@ -114,6 +114,17 @@ export class ExecuteCommand implements IShellExecutor {
         }
 
         // 2. Remote Context (SSH)
+        if (state.fsContext && this.worldManager) {
+            const remoteService = this.worldManager.getHostFileSystem(state.fsContext);
+            if (remoteService) {
+                if (this.telemetry) {
+                    this.telemetry.info(`[ExecuteCommand] Switching to remote interpreter for host: ${state.fsContext}`);
+                }
+                return this.createInterpreter(remoteService);
+            }
+        }
+
+        // 3. Fallback to NetworkMap (Legacy)
         if (this.networkMap) {
             const remoteFs = this.networkMap.getSystem(state.fsContext);
             if (remoteFs) {
@@ -121,12 +132,6 @@ export class ExecuteCommand implements IShellExecutor {
                     this.telemetry.info(`[ExecuteCommand] Switching to remote interpreter for host: ${state.fsContext}`);
                 }
                 const remoteService = new FileSystemService(remoteFs);
-                
-                // Register with World Manager if available
-                if (this.worldManager) {
-                    this.worldManager.registerHost(state.fsContext, remoteService);
-                }
-
                 return this.createInterpreter(remoteService);
             }
         }

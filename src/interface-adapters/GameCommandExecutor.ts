@@ -59,7 +59,7 @@ export class GameCommandExecutor extends ExecuteCommand {
         new SystemUtilsModule(fs).register(registry);
 
         // Pass dependencies to super
-        super(fs, telemetry, registry, undefined, networkMap);
+        super(fs, telemetry, registry, undefined, networkMap, gameManager.getWorldManager());
 
         this.networkMap = networkMap;
         this.mailSystem = new MailSystem(fs, telemetry);

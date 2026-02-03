@@ -14,4 +14,9 @@ export interface IWorldManager {
      * Registers a host's filesystem with the simulation loop.
      */
     registerHost(hostname: string, service: FileSystemService): void;
+
+    /**
+     * Retrieves the FileSystem service for a given hostname.
+     */
+    getHostFileSystem(hostname: string): FileSystemService | undefined;
 }

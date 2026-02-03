@@ -20,16 +20,21 @@ import { IWorldStateProvider } from '../interfaces/IWorldStateProvider';
 import { ProceduralMissionFactory } from '../factories/ProceduralMissionFactory';
 import { ConstraintValidator } from './constraints/ConstraintValidator';
 import { ComplexityEstimator } from './constraints/ComplexityEstimator';
+import { OrganizationGenerator } from './generation/OrganizationGenerator';
+import { KnuthianMissionFactory } from '../factories/KnuthianMissionFactory';
+import { Organization } from '../entities/world/Organization';
 
 export class MissionService {
     private activeMissions: Mission[] = [];
+    private organizationGenerator = new OrganizationGenerator();
 
     constructor(
         private missionRepository: MissionRepository,
         private tutorService: TutorService,
         private worldState?: IWorldStateProvider,
         private proceduralFactory?: ProceduralMissionFactory,
-        private constraintValidator?: ConstraintValidator
+        private constraintValidator?: ConstraintValidator,
+        private knuthianFactory?: KnuthianMissionFactory
     ) { }
 
     /**
@@ -37,6 +42,28 @@ export class MissionService {
      * @param npc - The NPC assigning the mission.
      */
     public createMission(npc: NPC): Mission {
+        // 0. The Knuthian Path: Algorithms & Organizations
+        if (this.knuthianFactory) {
+            // Generate Context on the fly (for now, eventually WorldManager holds this)
+            const seed = Date.now().toString();
+            const employer = this.organizationGenerator.generateFaction(seed + '_A');
+            const target = this.organizationGenerator.generateFaction(seed + '_B');
+
+            // Determine mission type based on "Plot"
+            const rng = Math.random();
+            let mission: Mission;
+
+            if (rng > 0.5) {
+                mission = this.knuthianFactory.createSortingMission(npc, employer, target);
+            } else {
+                mission = this.knuthianFactory.createSearchMission(npc, employer, target);
+            }
+
+            this.setupMissionChat(mission, npc);
+            this.activeMissions.push(mission);
+            return mission;
+        }
+
         // 1. Try Procedural Generation based on World State
         if (this.worldState && this.proceduralFactory) {
             const devices = this.worldState.getAllDevices();

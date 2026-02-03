@@ -9,6 +9,7 @@ import { StrategyRegistry } from '../../domain/services/mission-strategies/Strat
 import { TutorService } from '../../domain/services/TutorService';
 import { WorldManager } from '../../interface-adapters/WorldManager';
 import { ProceduralMissionFactory } from '../../domain/factories/ProceduralMissionFactory';
+import { KnuthianMissionFactory } from '../../domain/factories/KnuthianMissionFactory';
 import { ComplexityEstimator } from '../../domain/services/constraints/ComplexityEstimator';
 import { ConstraintValidator } from '../../domain/services/constraints/ConstraintValidator';
 import { MissionService } from '../../domain/services/MissionService';
@@ -48,6 +49,7 @@ export class DependencyContainer {
 
         // Procedural & Constraint Services
         const proceduralFactory = new ProceduralMissionFactory();
+        const knuthianFactory = new KnuthianMissionFactory();
         const complexityEstimator = new ComplexityEstimator();
         const constraintValidator = new ConstraintValidator(complexityEstimator);
 
@@ -57,7 +59,8 @@ export class DependencyContainer {
             tutorService, 
             worldManager, 
             proceduralFactory, 
-            constraintValidator
+            constraintValidator,
+            knuthianFactory
         );
         const npcService = new NPCService();
         const systemPreparationService = new SystemPreparationService(networkMap);
