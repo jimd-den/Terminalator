@@ -40,7 +40,8 @@ async function runScenario() {
         steps++;
         
         // Wait for Tutor to catch up (async state)
-        await new Promise(r => setTimeout(r, 100));
+        // GameManager has a 200ms delay before starting the next lesson.
+        await new Promise(r => setTimeout(r, 300));
 
         if (!engine.isActive()) {
             console.log("[INFO] Tutor idle. Checking mission status...");

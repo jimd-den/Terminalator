@@ -9,7 +9,8 @@ export const LogAnalysisInspector: MissionInspector = (mission, state, lastRespo
             return state.fsContext === mission.targetSystem;
         
         case MissionStep.CONNECTED:
-            return lastResponse.output.includes(mission.objectiveTarget);
+            const searchTerm = mission.metadata?.searchTerm || mission.objectiveTarget;
+            return lastResponse.output.includes(searchTerm);
             
         case MissionStep.LOCATED:
             return !!(lastResponse.command?.includes('vim') && lastResponse.exitCode === 0);

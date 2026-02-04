@@ -15,24 +15,31 @@ export const LogAnalysisProgression: MissionProgressor = (
 ) => {
     const steps = missionRepository.getStepsForArchetype(mission.type);
 
+    const getTargetCwd = (stepType: string): string | undefined => {
+        const step = steps.find(s => s.type === stepType);
+        if (mission.metadata?.searchTerm) {
+            return '/var/log';
+        }
+        return step?.cwd;
+    };
+
     switch (mission.currentStep) {
         case MissionStep.PENDING:
             if (isStepComplete) {
                 const step = steps.find(s => s.type === 'IDENTIFY');
+                const targetCwd = getTargetCwd('IDENTIFY');
                 
-                let targetCwd = step?.cwd;
+                const nav = StrategyUtils.handleNavigation(mission, state, targetCwd);
+                if (nav) return nav;
+
                 let command = step?.command || '';
                 let instructions = step?.instructions || '';
 
                 if (mission.metadata?.searchTerm) {
-                    targetCwd = '/var/log';
                     const targetFile = mission.objectiveTarget;
                     command = `grep "${mission.metadata.searchTerm}" ${targetFile}`;
                     instructions = `SEARCH PROTOCOL INITIATED. LOCATE "${mission.metadata.searchTerm}" IN ${mission.objectiveTarget}.`;
                 }
-
-                const nav = StrategyUtils.handleNavigation(mission, state, targetCwd);
-                if (nav) return nav;
 
                 return {
                     type: 'START_LESSON',
@@ -62,7 +69,8 @@ export const LogAnalysisProgression: MissionProgressor = (
                     isMission: true
                 };
             } else {
-                const nav = StrategyUtils.handleNavigation(mission, state, step?.cwd);
+                const targetCwd = getTargetCwd('IDENTIFY');
+                const nav = StrategyUtils.handleNavigation(mission, state, targetCwd);
                 if (nav) return nav;
             }
             break;
