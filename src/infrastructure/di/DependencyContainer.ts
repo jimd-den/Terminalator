@@ -12,6 +12,7 @@ import { ProceduralMissionFactory } from '../../domain/factories/ProceduralMissi
 import { KnuthianMissionFactory } from '../../domain/factories/KnuthianMissionFactory';
 import { ComplexityEstimator } from '../../domain/services/constraints/ComplexityEstimator';
 import { ConstraintValidator } from '../../domain/services/constraints/ConstraintValidator';
+import { MissionPopulator } from '../../domain/services/MissionPopulator';
 import { MissionService } from '../../domain/services/MissionService';
 import { NPCService } from '../../domain/services/NPCService';
 import { SystemPreparationService } from '../../domain/services/SystemPreparationService';
@@ -52,6 +53,7 @@ export class DependencyContainer {
         const knuthianFactory = new KnuthianMissionFactory();
         const complexityEstimator = new ComplexityEstimator();
         const constraintValidator = new ConstraintValidator(complexityEstimator);
+        const missionPopulator = new MissionPopulator(worldManager);
 
         // Domain Services
         const missionService = new MissionService(
@@ -60,10 +62,11 @@ export class DependencyContainer {
             worldManager, 
             proceduralFactory, 
             constraintValidator,
-            knuthianFactory
+            knuthianFactory,
+            missionPopulator
         );
         const npcService = new NPCService();
-        const systemPreparationService = new SystemPreparationService(networkMap);
+        const systemPreparationService = new SystemPreparationService(worldManager);
 
         // Core Use Cases / Engines
         const mailSystem = new MailSystem(fsService, telemetry);

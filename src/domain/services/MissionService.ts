@@ -23,6 +23,7 @@ import { ComplexityEstimator } from './constraints/ComplexityEstimator';
 import { OrganizationGenerator } from './generation/OrganizationGenerator';
 import { KnuthianMissionFactory } from '../factories/KnuthianMissionFactory';
 import { Organization } from '../entities/world/Organization';
+import { MissionPopulator } from './MissionPopulator';
 
 export class MissionService {
     private activeMissions: Mission[] = [];
@@ -34,7 +35,8 @@ export class MissionService {
         private worldState?: IWorldStateProvider,
         private proceduralFactory?: ProceduralMissionFactory,
         private constraintValidator?: ConstraintValidator,
-        private knuthianFactory?: KnuthianMissionFactory
+        private knuthianFactory?: KnuthianMissionFactory,
+        private missionPopulator?: MissionPopulator
     ) { }
 
     /**
@@ -61,6 +63,12 @@ export class MissionService {
 
             this.setupMissionChat(mission, npc);
             this.activeMissions.push(mission);
+            
+            // [NEW] Populate the world with the objective
+            if (this.missionPopulator) {
+                this.missionPopulator.populateMissionObjectives(mission);
+            }
+
             return mission;
         }
 

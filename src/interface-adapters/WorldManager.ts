@@ -48,9 +48,23 @@ export class WorldManager implements IWorldStateProvider, IWorldManager {
 
     /**
      * Retrieves the FileSystem service for a given hostname.
-     * Returns undefined if host not found (simulating connection timeout).
+     * Auto-provisions the host if it doesn't exist (Lazy Generation).
      */
     public getHostFileSystem(hostname: string): FileSystemService | undefined {
+        if (!this.hostFileSystems.has(hostname)) {
+            // Lazy Provisioning for Mission Targets
+            const fs = new FileSystem();
+            const service = new FileSystemService(fs);
+            
+            // Basic OS scaffolding
+            service.mkdirp('/bin');
+            service.mkdirp('/home/admin');
+            service.mkdirp('/var/log');
+            service.mkdirp('/dev');
+            service.writeFile('/var/log/syslog', 'System initialized (Lazy Provision)...\n');
+
+            this.registerHost(hostname, service);
+        }
         return this.hostFileSystems.get(hostname);
     }
 

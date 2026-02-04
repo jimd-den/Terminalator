@@ -9,6 +9,34 @@
 
 ---
 
+## 0. THE GOLDEN RULES (MANDATORY)
+
+Every agent working on this codebase MUST adhere to the following workflow without exception.
+
+### 0.1 Test-Driven Development (TDD) First
+**"If it isn't tested, it doesn't exist."**
+1.  **Write the Test:** Before modifying any logic, write a failing test case that defines the expected behavior.
+2.  **The "Primary Directive" Test:** For *any* change, you must verify the application still compiles and the UI starts.
+    *   *Verification Command:* `npm run test` (or project equivalent) + `npx tsc --noEmit`.
+3.  **Implement:** Write the minimum code necessary to pass the test.
+4.  **Refactor:** Clean up the code while keeping the test passing.
+
+### 0.2 The Developer's Litany
+For **every single file** you touch, you must explicitly ask and answer these questions:
+1.  **Is this SOLID?**
+    *   *SRP:* Does this module have one reason to change?
+    *   *OCP:* Is it open for extension, closed for modification?
+    *   *LSP:* Can derived classes be substituted without breaking behavior?
+    *   *ISP:* Are interfaces segregated?
+    *   *DIP:* Do high-level modules depend on abstractions, not details?
+2.  **Is this DRY Compliant?**
+    *   Are we repeating logic that should be centralized?
+3.  **Are we working in CLEAN Architecture?**
+    *   Does the dependency flow INWARD? (Domain <- Adapters <- Frameworks)
+    *   Are we leaking details (e.g., UI concepts) into the Domain?
+
+---
+
 ## 1. Architectural Philosophy: The Four-Fold Shield
 
 The codebase follows a strict **Clean Architecture** implementation, ensuring separation of concerns and testability. Dependencies always flow **inwards**.
@@ -90,9 +118,11 @@ The codebase follows a strict **Clean Architecture** implementation, ensuring se
 *   ✅ **OCP (Strategies):** `StrategyRegistry` implemented.
 *   ✅ **DIP (Mission Data):** `IMissionDataProvider` and `JsonMissionDataProvider` implemented.
 *   ✅ **SRP (FileSystem):** `FileSystemService` refactored into specialized sub-services.
+*   ✅ **DIP (World Simulation):** `IWorldManager` interface implemented to decouple Domain from Adapters.
+*   ✅ **DI (GameManager):** `DependencyContainer` implemented to remove Composition Root anti-pattern.
 
 ### Active Technical Debt & Violations
-1.  **SRP Violation in Strategies:** Strategies (e.g., `ExfiltrateStrategy.ts`) still mix state inspection, narrative text generation, and progression logic.
+1.  **SRP Violation in Strategies:** Strategies (e.g., `ExfiltrateStrategy.ts`) still mix state inspection, narrative text generation, and progression logic. (Partially addressed via `ComposableMissionStrategy` but needs rollout).
 2.  **Redirection:** Only `>` and `>>` are supported. `2>&1` and input redirection `<` are missing.
 
 ### Future Architecture (Planned)

@@ -13,11 +13,12 @@ import { FileSystemService } from './FileSystemService';
 import { Mission } from '../entities/Mission';
 import { FileSystem } from '../entities/FileSystem';
 import { SystemGenerator } from './SystemGenerator';
+import { IWorldManager } from '../interfaces/IWorldManager';
 
 import { FileSystemPopulator } from './FileSystemPopulator';
 
 export class SystemPreparationService {
-    constructor(private networkMap: NetworkMap) { }
+    constructor(private worldManager: IWorldManager) { }
 
     /**
      * Prepares a target system for mission objectives.
@@ -25,10 +26,14 @@ export class SystemPreparationService {
      * @param missions - The list of missions targetting this system.
      */
     public prepareSystemForMissions(hostname: string, missions: Mission[]) {
-        const system = this.networkMap.getSystem(hostname);
-        if (!system) return;
+        // Use WorldManager to get/provision the host
+        // Cast to any to access getHostFileSystem if strictly typed to IWorldManager without it, 
+        // but we updated IWorldManager interface recently.
+        const service = (this.worldManager as any).getHostFileSystem(hostname) as FileSystemService;
+        
+        if (!service) return;
+        const system = service.fileSystem;
 
-        const service = new FileSystemService(system);
         const populator = new FileSystemPopulator(system);
         const relevantMissions = missions.filter(m => m.targetSystem === hostname);
 

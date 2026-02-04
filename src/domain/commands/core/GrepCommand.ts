@@ -117,10 +117,12 @@ export class GrepCommand implements ICommand {
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
         const input = getStdinAsString(context);
         const timestamp = new Date().toISOString();
+        const fs = context.fileSystemService || this.fs; // Use context FS or fallback
+
         this.log(`[${timestamp}] GrepCommand.execute(args=${JSON.stringify(args)}, input=${input ? '(length ' + input.length + ')' : 'undefined'})`);
 
         try {
-            const { options, patterns, targets } = this.parseArgs(args, state);
+            const { options, patterns, targets } = this.parseArgs(args, state, fs);
 
             // POSIX requirement: if no file operands, read standard input.
             if (targets.length === 0 && input === undefined) {
@@ -131,7 +133,7 @@ export class GrepCommand implements ICommand {
                 ? new FixedStringStrategy(patterns, options)
                 : new BasicMatchingStrategy(patterns, options);
 
-            const result = this.runGrep(targets, patterns, options, strategy, state, input);
+            const result = this.runGrep(targets, patterns, options, strategy, state, fs, input);
 
             this.log(`[${new Date().toISOString()}] GrepCommand.execute returns exitCode=${result.exitCode}`);
             return {
@@ -153,7 +155,7 @@ export class GrepCommand implements ICommand {
     /**
      * parseArgs extracts options, patterns, and target files from the argument list.
      */
-    private parseArgs(args: string[], state: TerminalState): { options: GrepOptions, patterns: string[], targets: string[] } {
+    private parseArgs(args: string[], state: TerminalState, fs: FileSystemService): { options: GrepOptions, patterns: string[], targets: string[] } {
         const options: GrepOptions = {
             extended: false, fixed: false, countOnly: false, listOnly: false,
             quiet: false, suppressErrors: false, caseInsensitive: false,
@@ -204,7 +206,7 @@ export class GrepCommand implements ICommand {
                             } else {
                                 throw new Error('option -f requires an argument');
                             }
-                            patterns.push(...this.readPatternsFromFile(patternFile, state));
+                            patterns.push(...this.readPatternsFromFile(patternFile, state, fs));
                             break;
                         default:
                             // Ignore unknown flags for robustness
@@ -230,9 +232,9 @@ export class GrepCommand implements ICommand {
         return { options, patterns, targets };
     }
 
-    private readPatternsFromFile(path: string, state: TerminalState): string[] {
+    private readPatternsFromFile(path: string, state: TerminalState, fs: FileSystemService): string[] {
         try {
-            const content = this.fs.readFile(path);
+            const content = fs.readFile(path);
             return content.split('\n').filter(p => p.length > 0);
         } catch (e) {
             throw new Error(`could not read patterns from file ${path}`);
@@ -242,7 +244,7 @@ export class GrepCommand implements ICommand {
     /**
      * runGrep performs the actual searching across targets.
      */
-    private runGrep(targets: string[], patterns: string[], options: GrepOptions, strategy: MatchingStrategy, state: TerminalState, input?: string): { output: string, exitCode: number } {
+    private runGrep(targets: string[], patterns: string[], options: GrepOptions, strategy: MatchingStrategy, state: TerminalState, fs: FileSystemService, input?: string): { output: string, exitCode: number } {
         let output = '';
         let matchedOverall = false;
         let anyError = false;
@@ -298,7 +300,7 @@ export class GrepCommand implements ICommand {
             for (const target of targets) {
                 const processNode = (path: string) => {
                     try {
-                        const node = this.fs.resolve(path);
+                        const node = fs.resolve(path);
                         if (!node) {
                             if (!options.suppressErrors) {
                                 output += `grep: ${path}: No such file or directory\n`;
@@ -307,7 +309,7 @@ export class GrepCommand implements ICommand {
                             return;
                         }
 
-                        const inode = this.fs.getInode(node.inodeId);
+                        const inode = fs.getInode(node.inodeId);
                         if (!inode) return;
 
                         if (inode.mode & S_IFDIR) {
@@ -323,7 +325,7 @@ export class GrepCommand implements ICommand {
                                 anyError = true;
                             }
                         } else {
-                            const content = this.fs.readFile(path);
+                            const content = fs.readFile(path);
                             processRows(content, path);
                         }
                     } catch (e: any) {

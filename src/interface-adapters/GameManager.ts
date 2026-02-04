@@ -123,7 +123,7 @@ export class GameManager implements IGameManager {
             const mission = this.missionService.createMission(npc);
 
             // Ensure target system exists and is prepared
-            this.networkMap.getSystem(mission.targetSystem);
+            // this.networkMap.getSystem(mission.targetSystem); // DEPRECATED
             this.systemPreparationService.prepareSystemForMissions(mission.targetSystem, [mission]);
 
             return mission;
