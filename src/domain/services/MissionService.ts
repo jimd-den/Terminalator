@@ -44,18 +44,16 @@ export class MissionService {
      * @param npc - The NPC assigning the mission.
      */
     public createMission(npc: NPC): Mission {
-        // 0. The Knuthian Path: Algorithms & Organizations
-        if (this.knuthianFactory) {
-            // Generate Context on the fly (for now, eventually WorldManager holds this)
+        const rng = Math.random();
+        
+        // 0. The Knuthian Path: Algorithms (30% chance if factory exists)
+        if (this.knuthianFactory && rng < 0.3) {
             const seed = Date.now().toString();
             const employer = this.organizationGenerator.generateFaction(seed + '_A');
             const target = this.organizationGenerator.generateFaction(seed + '_B');
 
-            // Determine mission type based on "Plot"
-            const rng = Math.random();
             let mission: Mission;
-
-            if (rng > 0.5) {
+            if (Math.random() > 0.5) {
                 mission = this.knuthianFactory.createSortingMission(npc, employer, target);
             } else {
                 mission = this.knuthianFactory.createSearchMission(npc, employer, target);
@@ -64,7 +62,6 @@ export class MissionService {
             this.setupMissionChat(mission, npc);
             this.activeMissions.push(mission);
             
-            // [NEW] Populate the world with the objective
             if (this.missionPopulator) {
                 this.missionPopulator.populateMissionObjectives(mission);
             }
@@ -72,14 +69,9 @@ export class MissionService {
             return mission;
         }
 
-        // 1. Try Procedural Generation based on World State
-        if (this.worldState && this.proceduralFactory) {
+        // 1. Try Procedural Generation based on World State (30% chance if available)
+        if (this.worldState && this.proceduralFactory && rng < 0.6) {
             const devices = this.worldState.getAllDevices();
-            // Find a device that is not ACTIVE/OPEN/CLOSED (e.g. Broken, Error, or non-standard state)
-            // For now, let's assume 'INACTIVE' or 'ERROR' means broken.
-            // Or just pick a random one to generate a maintenance mission.
-            
-            // Filter for devices that might need attention (for now, any device)
             const candidates = devices.filter(d => d.type !== 'UPLINK'); 
             
             if (candidates.length > 0) {
@@ -95,7 +87,7 @@ export class MissionService {
             }
         }
 
-        // 2. Fallback to Template Generation
+        // 2. Fallback to Template Generation (Default)
         const targetSystem = generateHostname(npc.faction || 'corporate');
         const objectiveTarget = generateObjectiveFilename();
 

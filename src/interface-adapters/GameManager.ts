@@ -144,6 +144,10 @@ export class GameManager implements IGameManager {
         return this.missionService.getActiveMissions();
     }
 
+    public getMissionById(id: string): Mission | undefined {
+        return this.missionService.getMissionById(id);
+    }
+
     public startMission(missionId: string, currentState?: TerminalState) {
         const mission = this.missionService.getMissionById(missionId);
         if (mission && mission.status === 'pending') {
