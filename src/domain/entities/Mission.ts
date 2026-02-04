@@ -47,5 +47,6 @@ export interface Mission {
     
     constraints?: JobConstraints;
     problemSize?: number;
+    metadata?: Record<string, any>;
 }
 

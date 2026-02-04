@@ -42,6 +42,9 @@ export class KnuthianMissionFactory {
             constraints: {
                 requiredComplexity: 'O(log n)', // Actually O(n log n) for sort, but let's map it roughly
                 maxTimeMs: 5000
+            },
+            metadata: {
+                searchTerm: "SORT_REQUIRED"
             }
         };
     }
@@ -70,6 +73,9 @@ export class KnuthianMissionFactory {
             constraints: {
                 requiredComplexity: 'O(log n)',
                 maxTimeMs: 2000
+            },
+            metadata: {
+                searchTerm: "BAD-BEEF"
             }
         };
     }

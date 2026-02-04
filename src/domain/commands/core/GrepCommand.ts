@@ -234,7 +234,7 @@ export class GrepCommand implements ICommand {
 
     private readPatternsFromFile(path: string, state: TerminalState, fs: FileSystemService): string[] {
         try {
-            const content = fs.readFile(path);
+            const content = fs.readFile(path, state.currentDirectory);
             return content.split('\n').filter(p => p.length > 0);
         } catch (e) {
             throw new Error(`could not read patterns from file ${path}`);
@@ -300,7 +300,7 @@ export class GrepCommand implements ICommand {
             for (const target of targets) {
                 const processNode = (path: string) => {
                     try {
-                        const node = fs.resolve(path);
+                        const node = fs.resolve(path, state.currentDirectory);
                         if (!node) {
                             if (!options.suppressErrors) {
                                 output += `grep: ${path}: No such file or directory\n`;
@@ -325,7 +325,7 @@ export class GrepCommand implements ICommand {
                                 anyError = true;
                             }
                         } else {
-                            const content = fs.readFile(path);
+                            const content = fs.readFile(path, state.currentDirectory);
                             processRows(content, path);
                         }
                     } catch (e: any) {

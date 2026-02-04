@@ -27,8 +27,10 @@ export const LogAnalysisNarrative: MissionNarrator = (mission, state, isStepComp
                     confidence: 1.0
                 };
             }
+            
+            const term = mission.metadata?.searchTerm || 'anomalies';
             return {
-                message: `Scan system for ${mission.objectiveTarget}.`,
+                message: `Scan ${mission.objectiveTarget} for ${term}.`,
                 type: 'HINT',
                 confidence: 0.8
             };

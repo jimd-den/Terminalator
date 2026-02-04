@@ -19,15 +19,27 @@ export const LogAnalysisProgression: MissionProgressor = (
         case MissionStep.PENDING:
             if (isStepComplete) {
                 const step = steps.find(s => s.type === 'IDENTIFY');
-                const nav = StrategyUtils.handleNavigation(mission, state, step?.cwd);
+                
+                let targetCwd = step?.cwd;
+                let command = step?.command || '';
+                let instructions = step?.instructions || '';
+
+                if (mission.metadata?.searchTerm) {
+                    targetCwd = '/var/log';
+                    const targetFile = mission.objectiveTarget;
+                    command = `grep "${mission.metadata.searchTerm}" ${targetFile}`;
+                    instructions = `SEARCH PROTOCOL INITIATED. LOCATE "${mission.metadata.searchTerm}" IN ${mission.objectiveTarget}.`;
+                }
+
+                const nav = StrategyUtils.handleNavigation(mission, state, targetCwd);
                 if (nav) return nav;
 
                 return {
                     type: 'START_LESSON',
                     lessonId: `LOG_SCAN_${mission.id}`,
                     nextStep: MissionStep.CONNECTED,
-                    text: missionRepository.injectVariables(step?.command || '', { targetSystem: mission.targetSystem, objectiveTarget: mission.objectiveTarget }),
-                    instructions: missionRepository.injectVariables(step?.instructions || '', { targetSystem: mission.targetSystem, objectiveTarget: mission.objectiveTarget }),
+                    text: missionRepository.injectVariables(command, { targetSystem: mission.targetSystem, objectiveTarget: mission.objectiveTarget }),
+                    instructions: missionRepository.injectVariables(instructions, { targetSystem: mission.targetSystem, objectiveTarget: mission.objectiveTarget }),
                     isMission: true
                 };
             }
@@ -36,12 +48,17 @@ export const LogAnalysisProgression: MissionProgressor = (
         case MissionStep.CONNECTED:
             const step = steps.find(s => s.type === 'IDENTIFY');
             if (isStepComplete) {
+                // Determine repair/action command based on objective
+                const targetFile = mission.objectiveTarget.startsWith('/') 
+                    ? mission.objectiveTarget 
+                    : `/var/log/${mission.objectiveTarget}`;
+
                 return {
                     type: 'START_LESSON',
                     lessonId: `LOG_REPAIR_${mission.id}`,
                     nextStep: MissionStep.LOCATED,
-                    text: `vim /etc/httpd/conf.d/proxy.conf`,
-                    instructions: `ID RECOVERY SUCCESSFUL. FAULT IDENTIFIED: ${mission.objectiveTarget}. FIX THE PROXY CONFIG.`,
+                    text: `vim ${targetFile}`,
+                    instructions: `TARGET LOCATED: ${mission.objectiveTarget}. COMMENCE ANALYSIS/MODIFICATION.`,
                     isMission: true
                 };
             } else {
