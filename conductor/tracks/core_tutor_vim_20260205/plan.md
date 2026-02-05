@@ -11,7 +11,7 @@
 - [x] Task: Create `TutorMessage` Entity 35baf75 and `ITutorService` Interface.
     - [ ] Write Tests: Service can queue and retrieve messages.
     - [ ] Implement: Basic in-memory message queue.
-- [ ] Task: Create `TutorBar` Component (Frameworks/Drivers).
+- [x] Task: Create `TutorBar` Component (Frameworks/Drivers).
     - [ ] Write Tests: Component renders messages from the service.
     - [ ] Implement: React Native component positioned above keyboard area. Styling: "Cold Kawaii".
 - [ ] Task: Integrate `TutorService` with Global State/Context.
