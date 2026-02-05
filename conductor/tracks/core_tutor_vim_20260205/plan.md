@@ -18,17 +18,9 @@
 - [x] Task: Add Integrated Command Mode Actions (e.g., :exit, :mission). d3c78a0
 - [x] Task: Conductor - User Manual Verification 'Mission Control & Navigation' (Protocol in workflow.md)
 
-## Phase 4: Sinister Tutor & High-Fidelity Languages
-- [x] Task: Implement `TutorSpy` Analysis Engine.
-    - [ ] Write Tests: Calculate WPM, accuracy, and identify "stalls".
-    - [ ] Implement: Data-driven comment generation (JSON templates) based on metrics.
-- [x] Task: Synchronize Crash Effects with Tutor State.
-    - [ ] Write Tests: Ensure "shake" triggers only on specific Tutor states (CRITICAL/WARN).
-    - [ ] Implement: `useTutorAnimation` hook that binds UI effects to `activeTutorMessage.type`.
-- [~] Task: Implement Scheme - [ ] Task: Implement Scheme & Assembly Assembly Language Support.
-    - [ ] Write Tests: Syntax highlighter recognizes `.scm` and `.asm` tokens.
-    - [ ] Implement: `LanguageService` with basic linting/parsing for Scheme and ASM.
-- [x] Task: Create `CompilerService` / `InterpreterService`.
-    - [ ] Write Tests: "Run" a basic Scheme/ASM program and capture output.
-    - [ ] Implement: Mock execution environment that simulates program behavior (exit codes, stdout).
-- [ ] Task: Conductor - User Manual Verification 'Sinister Tutor & High-Fidelity Languages' (Protocol in workflow.md)
+## Phase 4: Sinister Tutor & High-Fidelity Languages [checkpoint: 6aa4988]
+- [x] Task: Implement `TutorSpy` Analysis Engine. fc4866e
+- [x] Task: Synchronize Crash Effects with Tutor State. 3d2ede5
+- [x] Task: Implement Scheme & Assembly Language Support. 8968128
+- [x] Task: Create `CompilerService` / `InterpreterService`. 9c30d9d
+- [x] Task: Conductor - User Manual Verification 'Sinister Tutor & High-Fidelity Languages' (Protocol in workflow.md)
