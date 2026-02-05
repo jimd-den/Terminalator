@@ -1,6 +1,6 @@
 # Implementation Plan: Mission & Tutor Scaling Mega Track
 
-## Phase 1: The Grammar Foundation
+## Phase 1: The Grammar Foundation [checkpoint: cc35385]
 - [x] Task: Define the `GrammarRegistry` (Motives, Verbs, Nouns) and the `StructuredCommand` protocol. 9639e0a
 - [x] Task: Implement the `CombinatorialFactory` Use Case for basic mission assembly. 7687b9b
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: The Grammar Foundation' (Protocol in workflow.md)
