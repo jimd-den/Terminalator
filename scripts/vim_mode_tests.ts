@@ -56,7 +56,7 @@ function testNormalModeDeletion() {
 }
 
 function testNormalModeWordMovement() {
-    console.log("Testing NormalMode word movement (w)...");
+    console.log("Testing NormalMode word movement (w, $)...");
     const mode = new NormalMode();
     const state = new VimStateEntity('NORMAL', { line: 0, col: 0 });
     const buffer = new EditorBuffer("test.txt", "hello world");
@@ -65,6 +65,9 @@ function testNormalModeWordMovement() {
     mode.handleKey('w', state, buffer, cmdMgr);
     if (state.cursor.col !== 6) throw new Error(`Expected col 6 after 'w'. Got: ${state.cursor.col}`);
     
+    mode.handleKey('$', state, buffer, cmdMgr);
+    if (state.cursor.col !== 10) throw new Error(`Expected col 10 after '$'. Got: ${state.cursor.col}`);
+
     console.log("PASS");
 }
 
@@ -90,12 +93,27 @@ function testNormalModeDeleteMotion() {
     console.log("PASS");
 }
 
+function testNormalModeDeleteMotionAtEnd() {
+    console.log("Testing d$ at end of line...");
+    const mode = new NormalMode();
+    const buffer = new EditorBuffer("test.txt", "abc");
+    const cmdMgr = new VimCommandManager(buffer);
+    const state = new VimStateEntity('NORMAL', { line: 0, col: 2 }); // at 'c'
+
+    mode.handleKey('d', state, buffer, cmdMgr);
+    mode.handleKey('$', state, buffer, cmdMgr);
+    if (buffer.getLine(0) !== "ab") throw new Error(`d$ at end failed. Got: ${buffer.getLine(0)}`);
+
+    console.log("PASS");
+}
+
 try {
     testNormalModeNavigation();
     testNormalModeTransitions();
     testNormalModeDeletion();
     testNormalModeWordMovement();
     testNormalModeDeleteMotion();
+    testNormalModeDeleteMotionAtEnd();
     console.log("\nPHASE 2 TASK 2 PASSED");
 } catch (e) {
     console.error(`\nTEST FAILED: ${e}`);
