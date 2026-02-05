@@ -8,7 +8,7 @@
 - [x] Task: Implement `VimCommandManager` to handle the Undo/Redo stack. 1fb0c81
 
 ## Phase 2: The State Pattern (Modes & OCP)
-- [~] Task: Define `IVimMode` Interface (Use Case Layer).
+- [x] Task: Define `IVimMode` Interface (Use Case Layer). 4d5b958
 - [ ] Task: Implement `NormalMode` Strategy.
     - [ ] Move `hjkl` and mode transitions (`i`, `a`, `:`) into this class.
     - [ ] TDD: Verify mode transition logic in isolation.
