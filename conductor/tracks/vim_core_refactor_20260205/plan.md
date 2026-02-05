@@ -12,7 +12,7 @@
 - [x] Task: Implement `NormalMode` Strategy. 4d5b958
     - [ ] Move `hjkl` and mode transitions (`i`, `a`, `:`) into this class.
     - [ ] TDD: Verify mode transition logic in isolation.
-- [ ] Task: Implement `InsertMode` Strategy.
+- [x] Task: Implement `InsertMode` Strategy. 1478630
     - [ ] Handle `BACKSPACE`, `ENTER`, and character delegation to `InsertCharCommand`.
 - [ ] Task: Refactor `VimEngine` to delegate to the active `IVimMode`.
 
