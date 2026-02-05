@@ -6,8 +6,8 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: The Grammar Foundation' (Protocol in workflow.md)
 
 ## Phase 2: POSIX Smart Migration
-- [ ] Task: Refactor "Core File Ops" group (20 tools) to implement `UtilityCapability` protocols.
-- [ ] Task: Refactor "Text Processing" group (10 tools) to implement `UtilityCapability` protocols (Grep, Cat, etc.).
+- [x] Task: Refactor "Core File Ops" group (20 tools) to implement `UtilityCapability` protocols. 8e639bc
+- [x] Task: Refactor "Text Processing" group (10 tools) to implement `UtilityCapability` protocols (Grep, Cat, etc.). 32563f7
 - [ ] Task: Verify compliance for the first 30 tools using `posix_comprehensive_suite.ts`.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: POSIX Smart Migration' (Protocol in workflow.md)
 
