@@ -7,6 +7,7 @@ import { NetworkMap } from '../../../domain/services/NetworkMap';
 import { ConsoleTelemetryAdapter } from '../../../infrastructure/telemetry/ConsoleTelemetryAdapter';
 import { DependencyContainer } from '../../../infrastructure/di/DependencyContainer';
 import { TutorMessagingService } from '../../../domain/services/tutor/TutorMessagingService';
+import { TutorMessage } from '../../../domain/entities/tutor/TutorMessage';
 
 /**
  * GameContext - Presentation Layer
@@ -24,6 +25,8 @@ interface GameContextType {
     commandExecutor: GameCommandExecutor;
     telemetry: ConsoleTelemetryAdapter;
     tutorMessaging: TutorMessagingService;
+    activeTutorMessage: TutorMessage | null;
+    sendTutorMessage: (text: string, type?: TutorMessage['type'], sender?: string) => Promise<void>;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -35,6 +38,9 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [telemetry] = useState(() => new ConsoleTelemetryAdapter());
     const [networkMap] = useState(() => new NetworkMap()); // [NEW] Singleton
     const [tutorMessaging] = useState(() => new TutorMessagingService());
+    
+    // Reactive state for UI
+    const [activeTutorMessage, setActiveTutorMessage] = useState<TutorMessage | null>(null);
 
     // Create service for adapters that need it (GameManager, Executor)
     const [fsService] = useState(() => new FileSystemService(fs));
@@ -42,8 +48,22 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [gameManager] = useState(() => DependencyContainer.createGameManager(fs, networkMap, telemetry));
     const [commandExecutor] = useState(() => new GameCommandExecutor(fsService, gameManager, networkMap, telemetry));
 
+    const sendTutorMessage = async (text: string, type: TutorMessage['type'] = 'info', sender: string = 'TUTOR') => {
+        await tutorMessaging.sendMessage(text, type, sender);
+        const messages = await tutorMessaging.getAllMessages();
+        setActiveTutorMessage(messages[messages.length - 1]);
+    };
+
     return (
-        <GameContext.Provider value={{ fs, gameManager, commandExecutor, telemetry, tutorMessaging }}>
+        <GameContext.Provider value={{ 
+            fs, 
+            gameManager, 
+            commandExecutor, 
+            telemetry, 
+            tutorMessaging,
+            activeTutorMessage,
+            sendTutorMessage
+        }}>
             {children}
         </GameContext.Provider>
     );

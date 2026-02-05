@@ -19,6 +19,9 @@ import { GameProvider } from './src/frameworks-drivers/ui/context/GameContext';
 import { ThemeProvider } from './src/frameworks-drivers/ui/context/ThemeContext';
 import { InputProvider } from './src/frameworks-drivers/ui/context/InputContext';
 import { AppNavigator } from './src/frameworks-drivers/ui/navigation/AppNavigator';
+import { GlobalTutorBar } from './src/frameworks-drivers/ui/components/GlobalTutorBar';
+import { AppInitializer } from './src/frameworks-drivers/ui/components/AppInitializer';
+import { View, StyleSheet } from 'react-native';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -39,8 +42,14 @@ export default function App() {
       <GameProvider>
         <ThemeProvider>
           <InputProvider>
+            <AppInitializer />
             <NavigationContainer>
-              <AppNavigator />
+              <View style={styles.container}>
+                <View style={styles.navigator}>
+                  <AppNavigator />
+                </View>
+                <GlobalTutorBar />
+              </View>
             </NavigationContainer>
           </InputProvider>
         </ThemeProvider>
@@ -48,3 +57,13 @@ export default function App() {
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  navigator: {
+    flex: 1,
+  },
+});
