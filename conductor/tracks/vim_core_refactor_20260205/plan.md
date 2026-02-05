@@ -9,7 +9,7 @@
 
 ## Phase 2: The State Pattern (Modes & OCP)
 - [x] Task: Define `IVimMode` Interface (Use Case Layer). 4d5b958
-- [ ] Task: Implement `NormalMode` Strategy.
+- [x] Task: Implement `NormalMode` Strategy. 4d5b958
     - [ ] Move `hjkl` and mode transitions (`i`, `a`, `:`) into this class.
     - [ ] TDD: Verify mode transition logic in isolation.
 - [ ] Task: Implement `InsertMode` Strategy.
