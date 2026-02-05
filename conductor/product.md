@@ -10,7 +10,7 @@ Terminalator is a Trojan horse of technical enlightenment. On the surface, it pr
 
 # Key Features
 - **The Grid:** A procedural world generation engine that creates a sprawling network of locations, devices, and connections inhabited by simulated entities.
-- **POSIX Fidelity:** A deep simulation of a Unix-like environment, including file systems, process management, and core utilities.
+- **POSIX Fidelity:** A deep simulation of a Unix-like environment, featuring a combinatorial mission engine that generates 10,000+ reality-based scenarios covering the full POSIX utility landscape.
 - **The "Horror" Narrative:** A thematic focus on the dehumanizing effects of excessive technical complexity, delivered through mission logs and world interaction.
 - **Subliminal Mastery (Assembly Typing):** A tutor engine that guides users through writing assembly code under the guise of a typing accuracy and speed game. Users become proficient in low-level logic while they believe they are merely mastering their keyboard.
 - **The Sinister Tutor:** An adaptive, data-driven entity that monitors typing speed, accuracy, and command patterns. It employs a "Cold Kawaii" persona to coach, mock, and guide the user through an IRC-style interface, reacting viscerally to incompetence. Supports swappable personas (Standard, Rogue).

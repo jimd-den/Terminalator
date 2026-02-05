@@ -8,7 +8,7 @@
 ## Domain-Specific Engines
   - **Terminal Simulation:** 
     - `VimEngine`: State-pattern based Vim engine with persistent Undo/Redo capability.
-    - `TutorEngine`: Interactive pedagogical system for guided learning.
+    - `TutorEngine`: Context-aware pedagogical system capable of interpreting procedural mission intent.
     - `TutorBrain`: Persona orchestration engine.
     - `TutorSpy`: Performance analysis engine (WPM, Accuracy, Stalls).
     - `MasteryTracker`: Command-level skill tracking algorithm.
