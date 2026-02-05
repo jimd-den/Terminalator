@@ -6,6 +6,7 @@ import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { NetworkMap } from '../../../domain/services/NetworkMap';
 import { ConsoleTelemetryAdapter } from '../../../infrastructure/telemetry/ConsoleTelemetryAdapter';
 import { DependencyContainer } from '../../../infrastructure/di/DependencyContainer';
+import { TutorMessagingService } from '../../../domain/services/tutor/TutorMessagingService';
 
 /**
  * GameContext - Presentation Layer
@@ -22,6 +23,7 @@ interface GameContextType {
     gameManager: GameManager;
     commandExecutor: GameCommandExecutor;
     telemetry: ConsoleTelemetryAdapter;
+    tutorMessaging: TutorMessagingService;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -32,6 +34,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [fs] = useState(() => new FileSystem());
     const [telemetry] = useState(() => new ConsoleTelemetryAdapter());
     const [networkMap] = useState(() => new NetworkMap()); // [NEW] Singleton
+    const [tutorMessaging] = useState(() => new TutorMessagingService());
 
     // Create service for adapters that need it (GameManager, Executor)
     const [fsService] = useState(() => new FileSystemService(fs));
@@ -40,7 +43,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [commandExecutor] = useState(() => new GameCommandExecutor(fsService, gameManager, networkMap, telemetry));
 
     return (
-        <GameContext.Provider value={{ fs, gameManager, commandExecutor, telemetry }}>
+        <GameContext.Provider value={{ fs, gameManager, commandExecutor, telemetry, tutorMessaging }}>
             {children}
         </GameContext.Provider>
     );

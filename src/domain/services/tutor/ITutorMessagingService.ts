@@ -1,6 +1,6 @@
 import { TutorMessage } from '../../entities/tutor/TutorMessage';
 
-export interface ITutorService {
+export interface ITutorMessagingService {
     sendMessage(text: string, type?: TutorMessage['type'], sender?: string): Promise<void>;
     getNextMessage(): Promise<TutorMessage | null>;
     getAllMessages(): Promise<TutorMessage[]>;

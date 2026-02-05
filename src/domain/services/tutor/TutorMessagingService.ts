@@ -1,7 +1,7 @@
-import { ITutorService } from './ITutorService';
+import { ITutorMessagingService } from './ITutorMessagingService';
 import { TutorMessage } from '../../entities/tutor/TutorMessage';
 
-export class TutorService implements ITutorService {
+export class TutorMessagingService implements ITutorMessagingService {
     private queue: TutorMessage[] = [];
 
     async sendMessage(text: string, type: TutorMessage['type'] = 'info', sender: string = 'TUTOR'): Promise<void> {
