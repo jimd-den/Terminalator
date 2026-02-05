@@ -9,9 +9,11 @@ import { getStdinAsString } from '../../entities/ProcessContext';
  *
  * Intent:
  * Sorts input lines.
+ * Refactored to implement IStructuredCommand for combinatorial scaling.
  */
 
-import { ICommand } from '../ICommand';
+import { CommandBase } from '../CommandBase';
+import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
@@ -28,47 +30,36 @@ interface SortOptions {
     files: string[];
 }
 
-export class SortCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+export class SortCommand extends CommandBase {
+    public readonly capabilities = [CommandCapability.TRANSFORM];
+    public readonly utility = 'sort';
 
-    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+    constructor(private fs: FileSystemService) { 
+        super();
+    }
+
+    protected override parseArgs(args: string[]) {
+        // sort options that take arguments: -o, -k
+        super.parseArgs(args, ['o', 'k']);
+    }
+
+    protected async executeInternal(
+        rawArgs: string[],
+        flags: Set<string>,
+        operands: string[],
+        context: ProcessContext,
+        state: TerminalState
+    ): Promise<CommandResponse> {
         const input = getStdinAsString(context);
         const options: SortOptions = {
-            reverse: false,
-            numeric: false,
-            unique: false,
-            check: false,
-            files: []
+            reverse: flags.has('r'),
+            numeric: flags.has('n'),
+            unique: flags.has('u'),
+            check: flags.has('c'),
+            outputFile: this.options.get('o'),
+            key: this.options.get('k') ? parseInt(this.options.get('k')!) : undefined,
+            files: operands
         };
-
-        let skipNext = false;
-        for (let i = 0; i < args.length; i++) {
-            if (skipNext) {
-                skipNext = false;
-                continue;
-            }
-            const arg = args[i];
-            if (arg === '-r') options.reverse = true;
-            else if (arg === '-n') options.numeric = true;
-            else if (arg === '-u') options.unique = true;
-            else if (arg === '-c') options.check = true;
-            else if (arg === '-f') { /* ignore fold case for now */ }
-            else if (arg === '-o') {
-                if (i + 1 < args.length) {
-                    options.outputFile = args[i + 1];
-                    skipNext = true;
-                }
-            }
-            else if (arg === '-k') {
-                if (i + 1 < args.length) {
-                    options.key = parseInt(args[i + 1]);
-                    skipNext = true;
-                }
-            }
-            else if (!arg.startsWith('-')) {
-                options.files.push(arg);
-            }
-        }
 
         let content = '';
         if (options.files.length > 0) {

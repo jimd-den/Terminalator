@@ -9,16 +9,11 @@ import { getStdinAsString } from '../../entities/ProcessContext';
  * Pillar: The Balanced Scale (SOLID / KISS) - Strategy Pattern
  * Pillar: The Storyteller’s Code (Literate Documentation)
  *
- * Design Pattern: Strategy
- * We use the Strategy pattern to decouple the matching logic (BRE, ERE, Fixed) from the 
- * file traversal and output formatting logic. This allows for easier extension and 
- * maintenance of various matching requirements.
- *
- * Design Pattern: Factory (Simple)
- * The `MatchingStrategyFactory` creates the appropriate strategy based on the command-line flags.
+ * Refactored to implement IStructuredCommand for combinatorial scaling.
  */
 
-import { ICommand } from '../ICommand';
+import { CommandBase } from '../CommandBase';
+import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
@@ -28,35 +23,26 @@ import { S_IFDIR } from '../../entities/FileSystem';
 import { DirectoryNode } from '../../entities/filesystem/DirectoryNode';
 
 /**
- * GrepOptions encapsulates the configuration parsed from command line arguments.
+ * GrepOptions encapsulates the configuration.
  */
 interface GrepOptions {
-    extended: boolean;      // -E
-    fixed: boolean;         // -F
-    countOnly: boolean;     // -c
-    listOnly: boolean;      // -l
-    quiet: boolean;         // -q
-    suppressErrors: boolean; // -s
-    caseInsensitive: boolean;// -i
-    lineNumbers: boolean;   // -n
-    invertMatch: boolean;   // -v
-    exactLine: boolean;     // -x
-    recursive: boolean;     // -r, -R
+    extended: boolean;
+    fixed: boolean;
+    countOnly: boolean;
+    listOnly: boolean;
+    quiet: boolean;
+    suppressErrors: boolean;
+    caseInsensitive: boolean;
+    lineNumbers: boolean;
+    invertMatch: boolean;
+    exactLine: boolean;
+    recursive: boolean;
 }
 
-/**
- * MatchingStrategy defines the contract for various pattern matching algorithms.
- */
 interface MatchingStrategy {
-    match(line: string, patterns: string[]): boolean;
+    match(line: string): boolean;
 }
 
-/**
- * BasicMatchingStrategy handles both BRE (Basic Regular Expressions) and ERE 
- * (Extended Regular Expressions) using JavaScript's built-in RegExp.
- * Note: While POSIX specifies BRE/ERE differences, JS RegExp is a hybrid that 
- * satisfies most requirements for this simulation.
- */
 class BasicMatchingStrategy implements MatchingStrategy {
     private regexes: RegExp[];
 
@@ -70,8 +56,6 @@ class BasicMatchingStrategy implements MatchingStrategy {
             try {
                 return new RegExp(finalPattern, flags);
             } catch (e) {
-                // Return a regex that never matches if pattern is invalid
-                // and we're not supposed to crash.
                 return /.^/;
             }
         });
@@ -82,9 +66,6 @@ class BasicMatchingStrategy implements MatchingStrategy {
     }
 }
 
-/**
- * FixedStringStrategy handles -F option, matching patterns as literal strings.
- */
 class FixedStringStrategy implements MatchingStrategy {
     private patterns: string[];
     private caseInsensitive: boolean;
@@ -108,128 +89,94 @@ class FixedStringStrategy implements MatchingStrategy {
     }
 }
 
-export class GrepCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+export class GrepCommand extends CommandBase {
+    public readonly capabilities = [CommandCapability.FILTER, CommandCapability.READ];
+    public readonly utility = 'grep';
 
-    /**
-     * Entry point for the grep command.
-     */
-    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = getStdinAsString(context);
-        const timestamp = new Date().toISOString();
-        const fs = context.fileSystemService || this.fs; // Use context FS or fallback
-
-        this.log(`[${timestamp}] GrepCommand.execute(args=${JSON.stringify(args)}, input=${input ? '(length ' + input.length + ')' : 'undefined'})`);
-
-        try {
-            const { options, patterns, targets } = this.parseArgs(args, state, fs);
-
-            // POSIX requirement: if no file operands, read standard input.
-            if (targets.length === 0 && input === undefined) {
-                return { output: 'grep: missing input', newState: state, exitCode: 1 };
-            }
-
-            const strategy = options.fixed
-                ? new FixedStringStrategy(patterns, options)
-                : new BasicMatchingStrategy(patterns, options);
-
-            const result = this.runGrep(targets, patterns, options, strategy, state, fs, input);
-
-            this.log(`[${new Date().toISOString()}] GrepCommand.execute returns exitCode=${result.exitCode}`);
-            return {
-                output: result.output,
-                newState: state,
-                exitCode: result.exitCode
-            };
-
-        } catch (e: any) {
-            this.log(`[${new Date().toISOString()}] GrepCommand.execute error: ${e.message}`);
-            return {
-                output: `grep: ${e.message}\n`,
-                newState: state,
-                exitCode: 2
-            };
-        }
+    constructor(private fs: FileSystemService) {
+        super();
     }
 
     /**
-     * parseArgs extracts options, patterns, and target files from the argument list.
+     * Protocol: Build arguments programmatically.
      */
-    private parseArgs(args: string[], state: TerminalState, fs: FileSystemService): { options: GrepOptions, patterns: string[], targets: string[] } {
+    public override buildArgs(requirements: Record<string, any>): string[] {
+        const args: string[] = [];
+        if (requirements.caseInsensitive) args.push('-i');
+        if (requirements.recursive) args.push('-r');
+        if (requirements.pattern) {
+            args.push('-e', requirements.pattern);
+        }
+        if (requirements.path) args.push(requirements.path);
+        return args;
+    }
+
+    protected override parseArgs(args: string[]) {
+        // Grep options that take arguments: -e, -f
+        super.parseArgs(args, ['e', 'f']);
+    }
+
+    protected async executeInternal(
+        rawArgs: string[],
+        flags: Set<string>,
+        operands: string[],
+        context: ProcessContext,
+        state: TerminalState
+    ): Promise<CommandResponse> {
+        const input = getStdinAsString(context);
+        const fs = context.fileSystemService || this.fs;
+
         const options: GrepOptions = {
-            extended: false, fixed: false, countOnly: false, listOnly: false,
-            quiet: false, suppressErrors: false, caseInsensitive: false,
-            lineNumbers: false, invertMatch: false, exactLine: false, recursive: false
+            extended: flags.has('E'),
+            fixed: flags.has('F'),
+            countOnly: flags.has('c'),
+            listOnly: flags.has('l'),
+            quiet: flags.has('q'),
+            suppressErrors: flags.has('s'),
+            caseInsensitive: flags.has('i'),
+            lineNumbers: flags.has('n'),
+            invertMatch: flags.has('v'),
+            exactLine: flags.has('x'),
+            recursive: flags.has('r') || flags.has('R')
         };
+
         const patterns: string[] = [];
         const targets: string[] = [];
 
-        let i = 0;
-        while (i < args.length) {
-            const arg = args[i];
-            if (arg === '--') {
-                i++;
-                break;
-            } else if (arg.startsWith('-') && arg.length > 1) {
-                for (let j = 1; j < arg.length; j++) {
-                    const char = arg[j];
-                    switch (char) {
-                        case 'E': options.extended = true; break;
-                        case 'F': options.fixed = true; break;
-                        case 'c': options.countOnly = true; break;
-                        case 'l': options.listOnly = true; break;
-                        case 'q': options.quiet = true; break;
-                        case 's': options.suppressErrors = true; break;
-                        case 'i': options.caseInsensitive = true; break;
-                        case 'n': options.lineNumbers = true; break;
-                        case 'v': options.invertMatch = true; break;
-                        case 'x': options.exactLine = true; break;
-                        case 'r':
-                        case 'R': options.recursive = true; break;
-                        case 'e':
-                            if (j + 1 < arg.length) {
-                                patterns.push(arg.substring(j + 1));
-                                j = arg.length; // Skip rest of this arg
-                            } else if (i + 1 < args.length) {
-                                patterns.push(args[++i]);
-                            } else {
-                                throw new Error('option -e requires an argument');
-                            }
-                            break;
-                        case 'f':
-                            let patternFile: string;
-                            if (j + 1 < arg.length) {
-                                patternFile = arg.substring(j + 1);
-                                j = arg.length;
-                            } else if (i + 1 < args.length) {
-                                patternFile = args[++i];
-                            } else {
-                                throw new Error('option -f requires an argument');
-                            }
-                            patterns.push(...this.readPatternsFromFile(patternFile, state, fs));
-                            break;
-                        default:
-                            // Ignore unknown flags for robustness
-                            break;
-                    }
-                }
-            } else {
-                break;
-            }
-            i++;
+        // Patterns from -e
+        const eOptions = this.options.get('e');
+        if (eOptions) patterns.push(eOptions);
+
+        // Patterns from -f
+        const fOptions = this.options.get('f');
+        if (fOptions) {
+            patterns.push(...this.readPatternsFromFile(fOptions, state, fs));
         }
 
-        // If no patterns specified via -e or -f, the first operand is the pattern_list.
-        if (patterns.length === 0 && i < args.length) {
-            patterns.push(...args[i++].split('\n'));
+        let opIndex = 0;
+        if (patterns.length === 0 && operands.length > 0) {
+            patterns.push(...operands[opIndex++].split('\n'));
         }
 
-        // Remaining arguments are files.
-        while (i < args.length) {
-            targets.push(args[i++]);
+        while (opIndex < operands.length) {
+            targets.push(operands[opIndex++]);
         }
 
-        return { options, patterns, targets };
+        if (targets.length === 0 && input === undefined) {
+            return { output: 'grep: missing input', newState: state, exitCode: 1 };
+        }
+
+        const strategy = options.fixed
+            ? new FixedStringStrategy(patterns, options)
+            : new BasicMatchingStrategy(patterns, options);
+
+        const result = this.runGrep(targets, patterns, options, strategy, state, fs, input);
+
+        return {
+            output: result.output,
+            newState: state,
+            exitCode: result.exitCode
+        };
     }
 
     private readPatternsFromFile(path: string, state: TerminalState, fs: FileSystemService): string[] {
@@ -241,9 +188,6 @@ export class GrepCommand implements ICommand {
         }
     }
 
-    /**
-     * runGrep performs the actual searching across targets.
-     */
     private runGrep(targets: string[], patterns: string[], options: GrepOptions, strategy: MatchingStrategy, state: TerminalState, fs: FileSystemService, input?: string): { output: string, exitCode: number } {
         let output = '';
         let matchedOverall = false;
@@ -253,7 +197,6 @@ export class GrepCommand implements ICommand {
 
         const processRows = (content: string, filename: string): boolean => {
             const lines = content.split('\n');
-            // Remove last empty line if file ends with newline
             if (lines.length > 0 && lines[lines.length - 1] === '' && content.endsWith('\n')) {
                 lines.pop();
             }
@@ -263,7 +206,7 @@ export class GrepCommand implements ICommand {
 
             for (let idx = 0; idx < lines.length; idx++) {
                 const line = lines[idx];
-                const matches = strategy.match(line, patterns);
+                const matches = strategy.match(line);
                 const selected = options.invertMatch ? !matches : matches;
 
                 if (selected) {
@@ -345,10 +288,5 @@ export class GrepCommand implements ICommand {
         if (anyError && !matchedOverall) exitCode = 2;
 
         return { output: options.quiet ? '' : output, exitCode };
-    }
-
-    private log(message: string) {
-        // Observability hook
-        // console.log(message);
     }
 }

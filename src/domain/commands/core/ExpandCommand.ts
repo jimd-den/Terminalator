@@ -9,32 +9,40 @@ import { getStdinAsString } from '../../entities/ProcessContext';
  *
  * Intent:
  * Tab expansion.
+ * Refactored to implement IStructuredCommand for combinatorial scaling.
  */
 
-import { ICommand } from '../ICommand';
+import { CommandBase } from '../CommandBase';
+import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
-import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
 
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
-export class ExpandCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+export class ExpandCommand extends CommandBase {
+    public readonly capabilities = [CommandCapability.TRANSFORM];
+    public readonly utility = 'expand';
 
-    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+    constructor(private fs: FileSystemService) { 
+        super();
+    }
+
+    protected override parseArgs(args: string[]) {
+        // expand options that take arguments: -t
+        super.parseArgs(args, ['t']);
+    }
+
+    protected async executeInternal(
+        rawArgs: string[],
+        flags: Set<string>,
+        operands: string[],
+        context: ProcessContext,
+        state: TerminalState
+    ): Promise<CommandResponse> {
         const input = getStdinAsString(context);
-        let tabStop = 8;
-        const files: string[] = [];
-
-        for (let i = 0; i < args.length; i++) {
-            const arg = args[i];
-            if (arg === '-t') {
-                tabStop = parseInt(args[++i], 10) || 8;
-            } else if (!arg.startsWith('-')) {
-                files.push(arg);
-            }
-        }
+        let tabStop = parseInt(this.options.get('t') || '8', 10) || 8;
+        const files = operands;
 
         let content = '';
         if (files.length > 0) {

@@ -9,31 +9,35 @@ import { getStdinAsString } from '../../entities/ProcessContext';
  *
  * Intent:
  * Convert runs of spaces to tabs.
+ * Refactored to implement IStructuredCommand for combinatorial scaling.
  */
 
-import { ICommand } from '../ICommand';
+import { CommandBase } from '../CommandBase';
+import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
-import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
 
-import { FileSystem } from '../../entities/FileSystem';
+import { FileSystemService } from '../../services/FileSystemService';
 
-export class UnexpandCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+export class UnexpandCommand extends CommandBase {
+    public readonly capabilities = [CommandCapability.TRANSFORM];
+    public readonly utility = 'unexpand';
 
-    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+    constructor(private fs: FileSystemService) { 
+        super();
+    }
+
+    protected async executeInternal(
+        rawArgs: string[],
+        flags: Set<string>,
+        operands: string[],
+        context: ProcessContext,
+        state: TerminalState
+    ): Promise<CommandResponse> {
         const input = getStdinAsString(context);
-        let all = false;
-        const files: string[] = [];
-
-        for (const arg of args) {
-            if (arg === '-a') {
-                all = true;
-            } else if (!arg.startsWith('-')) {
-                files.push(arg);
-            }
-        }
+        const all = flags.has('a');
+        const files = operands;
 
         let content = '';
         if (files.length > 0) {
@@ -52,23 +56,15 @@ export class UnexpandCommand implements ICommand {
 
         const lines = content.split('\n');
         const output: string[] = [];
-        const tabStop = 8; // Simplified fixed tab stops
+        const tabStop = 8;
 
         for (const line of lines) {
-            // Simplified logic: replace 8 spaces with tab?
-            // Correct logic: calculate tab stops.
-
             if (!all) {
-                // Only leading blank characters
-                // Count leading spaces
                 let spaces = 0;
                 while (spaces < line.length && line[spaces] === ' ') {
                     spaces++;
                 }
                 if (spaces > 0) {
-                    // Convert leading spaces to tabs + spaces
-                    // number of tabs = spaces / tabStop
-                    // remainder spaces
                     const tabs = Math.floor(spaces / tabStop);
                     const rem = spaces % tabStop;
                     output.push('\t'.repeat(tabs) + ' '.repeat(rem) + line.slice(spaces));
@@ -76,12 +72,6 @@ export class UnexpandCommand implements ICommand {
                     output.push(line);
                 }
             } else {
-                // -a: convert all sequences of two or more spaces immediately preceding a tab stop
-                // This is complex. Simplified: convert all runs of >=2 spaces?
-                // Or simply re-tabulate line?
-                // Let's implement a re-tabulation: iterate chars, track column.
-                // If we see space, accumulate. If accumulated spaces reach tab stop, emit tab.
-
                 let res = '';
                 let col = 0;
                 let pendingSpaces = 0;
@@ -91,20 +81,16 @@ export class UnexpandCommand implements ICommand {
                     if (char === ' ') {
                         pendingSpaces++;
                         col++;
-                        if (col % tabStop === 0 && pendingSpaces > 1) { // >1 requirement? standard says "two or more"?
-                            // Standard unexpand -a: "convert all strings of whitespace... to tabs"
-                            // Actually just compress to tabs where possible.
+                        if (col % tabStop === 0 && pendingSpaces > 1) {
                             res += '\t';
                             pendingSpaces = 0;
                         }
                     } else {
-                        // flush pending spaces
                         res += ' '.repeat(pendingSpaces);
                         pendingSpaces = 0;
                         res += char;
                         col++;
                         if (char === '\t') {
-                            // Align col to next tab stop
                             col = Math.ceil((col + 1) / tabStop) * tabStop;
                         } else if (char === '\b') {
                             col--;

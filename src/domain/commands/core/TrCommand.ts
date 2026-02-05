@@ -9,9 +9,11 @@ import { getStdinAsString } from '../../entities/ProcessContext';
  *
  * Intent:
  * Allows character-level transformations on standard input.
+ * Refactored to implement IStructuredCommand for combinatorial scaling.
  */
 
-import { ICommand } from '../ICommand';
+import { CommandBase } from '../CommandBase';
+import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
@@ -26,39 +28,37 @@ interface TrOptions {
     set2: string;
 }
 
-export class TrCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+export class TrCommand extends CommandBase {
+    public readonly capabilities = [CommandCapability.TRANSFORM];
+    public readonly utility = 'tr';
 
-    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+    constructor(private fs: FileSystemService) { 
+        super();
+    }
+
+    protected async executeInternal(
+        rawArgs: string[],
+        flags: Set<string>,
+        operands: string[],
+        context: ProcessContext,
+        state: TerminalState
+    ): Promise<CommandResponse> {
         const input = getStdinAsString(context);
         const options: TrOptions = {
-            delete: false,
-            squeeze: false,
-            complement: false,
+            delete: flags.has('d'),
+            squeeze: flags.has('s'),
+            complement: flags.has('c') || flags.has('C'),
             set1: '',
             set2: ''
         };
 
-        const sets: string[] = [];
-
-        // Argument Parsing
-        for (let i = 0; i < args.length; i++) {
-            const arg = args[i];
-            if (arg === '-d') options.delete = true;
-            else if (arg === '-s') options.squeeze = true;
-            else if (arg === '-c' || arg === '-C') options.complement = true;
-            else if (!arg.startsWith('-')) {
-                sets.push(arg);
-            }
-        }
-
-        if (sets.length === 0) {
+        if (operands.length === 0) {
             return { output: 'tr: missing operand', newState: state, exitCode: 1 };
         }
 
-        options.set1 = this.expandSet(sets[0]);
-        if (sets.length > 1) {
-            options.set2 = this.expandSet(sets[1]);
+        options.set1 = this.expandSet(operands[0]);
+        if (operands.length > 1) {
+            options.set2 = this.expandSet(operands[1]);
         }
 
         if (input === undefined) {
@@ -68,17 +68,16 @@ export class TrCommand implements ICommand {
         let output = input;
 
         if (options.delete) {
-            if (options.squeeze && sets.length > 1) {
+            if (options.squeeze && operands.length > 1) {
                 output = this.deleteChars(output, options.set1, options.complement);
                 output = this.squeezeChars(output, options.set2);
             } else {
-                if (sets.length < 1) return { output: 'tr: missing operand', newState: state, exitCode: 1 };
                 output = this.deleteChars(output, options.set1, options.complement);
             }
-        } else if (options.squeeze && sets.length === 1) {
+        } else if (options.squeeze && operands.length === 1) {
             output = this.squeezeChars(output, options.set1);
         } else {
-            if (sets.length < 2) {
+            if (operands.length < 2) {
                 return { output: 'tr: missing operand', newState: state, exitCode: 1 };
             }
             output = this.translate(output, options.set1, options.set2, options.complement);
