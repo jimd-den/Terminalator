@@ -31,6 +31,7 @@ export class VimInputHandler {
 
         // 2. Guards
         if (nextState.isLocked) return nextState;
+        if (['SHIFT', 'CONTROL', 'ALT', 'META'].includes(key.toUpperCase())) return nextState;
 
         // 3. Global Keys (like ESC)
         if (key === 'ESC') {

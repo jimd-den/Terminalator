@@ -84,11 +84,35 @@ function testVimSimulatorCustomCommands() {
     console.log("PASS");
 }
 
+function testVimInputHandlerModifierIgnored() {
+    console.log("Testing VimInputHandler modifier key handling...");
+    const handler = new VimInputHandler();
+    const state = new VimStateEntity('NORMAL');
+    const buffer = new MockBuffer(['hello world']);
+    const commands = new VimCommandManager(buffer);
+    
+    // Press 'd'
+    let nextState = handler.handleKey('d', state, buffer, commands);
+    if (nextState.pendingAction !== 'DELETE') throw new Error("Expected pendingAction DELETE");
+    
+    // Press 'SHIFT'
+    nextState = handler.handleKey('SHIFT', nextState, buffer, commands);
+    if (nextState.pendingAction !== 'DELETE') throw new Error("SHIFT should NOT clear pendingAction");
+    
+    // Press '$'
+    nextState = handler.handleKey('$', nextState, buffer, commands);
+    if (buffer.getLine(0) !== '') throw new Error(`d$ failed after SHIFT. Got: ${buffer.getLine(0)}`);
+    if (nextState.pendingAction !== null) throw new Error("Action should be cleared after completion");
+    
+    console.log("PASS");
+}
+
 try {
     testVimStateInitialization();
     testVimInputHandlerModeSwitch();
     testVimEngineDelegation();
     testVimSimulatorCustomCommands();
+    testVimInputHandlerModifierIgnored();
     console.log("\nALL VIM UNIT TESTS PASSED");
 } catch (e) {
     console.error(`\nTEST FAILED: ${e}`);
