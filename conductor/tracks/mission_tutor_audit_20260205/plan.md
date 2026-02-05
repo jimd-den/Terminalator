@@ -8,9 +8,9 @@ This plan outlines the steps to audit the Mission Generator's combinatorial capa
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Combinatorial Discovery' (Protocol in workflow.md)
 
 ## Phase 2: Tutor Contextual Logic Audit
-- [ ] Task: Audit the `TutorEngine` and `TutorBrain` for hardcoded response triggers vs. dynamic intent reading of mission states.
-- [ ] Task: Evaluate the binding between `TutorSpy` metrics and persona-specific reactions in the context of procedurally varied missions.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Tutor Contextual Logic' (Protocol in workflow.md)
+- [x] Task: Audit the `TutorEngine` and `TutorBrain` for hardcoded response triggers vs. dynamic intent reading of mission states.
+- [x] Task: Evaluate the binding between `TutorSpy` metrics and persona-specific reactions in the context of procedurally varied missions.
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Tutor Contextual Logic' (Protocol in workflow.md)
 
 ## Phase 3: Pattern Identification & Roadmap
 - [ ] Task: Identify opportunities for the **Combinatorial Factory** pattern to scale mission variety to 10,000+ permutations.
