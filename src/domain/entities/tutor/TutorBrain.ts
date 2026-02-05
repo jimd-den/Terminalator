@@ -48,7 +48,8 @@ export class TutorBrain {
             const chance = exitCode !== 0 ? 0.8 : (this.activePersona.config?.commentChance ?? 0.3);
             
             if (Math.random() < chance) {
-                const reaction = this.activePersona.getReaction(event, payload);
+                const reactionKey = exitCode !== 0 ? 'ERROR_LOW' : 'COMMAND_GENERIC';
+                const reaction = this.activePersona.getReaction(reactionKey, payload);
                 if (reaction && reaction !== '...') {
                     this.emitReaction(reaction, exitCode !== 0 ? 'warn' : 'info');
                 }
