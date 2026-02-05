@@ -44,12 +44,7 @@ export default function App() {
           <InputProvider>
             <AppInitializer />
             <NavigationContainer>
-              <View style={styles.container}>
-                <View style={styles.navigator}>
-                  <AppNavigator />
-                </View>
-                <GlobalTutorBar />
-              </View>
+              <AppNavigator />
             </NavigationContainer>
           </InputProvider>
         </ThemeProvider>
@@ -57,13 +52,3 @@ export default function App() {
     </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  navigator: {
-    flex: 1,
-  },
-});

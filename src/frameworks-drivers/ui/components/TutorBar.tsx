@@ -39,11 +39,11 @@ export const TutorBar: React.FC<TutorBarProps> = ({ message }) => {
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: THEME.colors.surface,
-        borderTopWidth: THEME.borders.width,
-        borderTopColor: THEME.colors.primary,
+        backgroundColor: '#0D0D0D', // Slightly different from surface for IRC-feel
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(0, 255, 65, 0.2)',
         padding: THEME.spacing.sm,
-        minHeight: 50,
+        minHeight: 60,
         width: '100%',
     },
     header: {
