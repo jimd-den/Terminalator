@@ -117,8 +117,8 @@ export class ArCommand implements ICommand {
         } else if (mode.includes('x')) { // Extract
             const targets = files.length > 0 ? entries.filter(e => files.includes(e.header.name)) : entries;
             for (const entry of targets) {
-                const outPath = state.currentDirectory + '/' + entry.header.name;
-                this.fs.writeFile(outPath, entry.content, 'w', state.currentDirectory);
+                const outPath = entry.header.name;
+                this.fs.writeFile(outPath, entry.content, 'w', 1000, 1000, state.currentDirectory);
                 if (verbose) outputLines.push(`x - ${entry.header.name}`);
             }
         } else if (mode.includes('r') || mode.includes('q')) { // Append/Replace
@@ -181,7 +181,7 @@ export class ArCommand implements ICommand {
 
     private writeArchive(path: string, entries: ArEntry[], cwd: string) {
         const json = JSON.stringify(entries);
-        this.fs.writeFile(path, '!<arch>\n' + json, 'w', cwd);
+        this.fs.writeFile(path, '!<arch>\n' + json, 'w', 1000, 1000, cwd);
     }
 
     private formatVerbose(entry: ArEntry): string {

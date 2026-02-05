@@ -64,7 +64,7 @@ export class FileSystemService {
     /**
      * Registers a listener for all write operations.
      */
-    public onWrite(listener: (path: string, content: string | Uint8Array) => void): void {
+    public onWrite(listener: (path: string, content: string | Uint8Array, actingUser?: { uid: number, gid: number, groups: number[] }) => void): void {
         this.writeListeners.push(listener);
     }
 

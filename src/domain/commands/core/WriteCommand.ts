@@ -33,8 +33,10 @@ export class WriteCommand implements ICommand {
         const message = input || args.slice(1).join(' '); // Allow inline msg for simulation simplicity
 
         // Simulating "sending"
+        const hostname = state.environment.HOSTNAME || 'terminalator';
+        const user = state.environment.USER || 'operator';
         return {
-            output: `Message from ${state.user || 'operator'}@${state.hostname} on ${new Date().toLocaleTimeString()} ...\n${message}\nEOF`,
+            output: `Message from ${user}@${hostname} on ${new Date().toLocaleTimeString()} ...\n${message}\nEOF`,
             newState: state,
             exitCode: 0
         };

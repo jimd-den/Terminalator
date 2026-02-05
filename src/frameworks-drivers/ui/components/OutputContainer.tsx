@@ -44,6 +44,8 @@ const StatusIndicator = ({
     onDelete: () => void,
     isMinimized?: boolean
 }) => {
+    const { components } = useTheme();
+    const { TextRenderer } = components;
     const [blinkCount, setBlinkCount] = React.useState(0);
     const [isSettled, setIsSettled] = React.useState(false);
 
@@ -73,14 +75,11 @@ const StatusIndicator = ({
             marginLeft: THEME.spacing.md,
         },
         status: {
-            color: exitCode === 0 ? colors.primary : colors.error, // Red for errors, Green for OK
-            fontFamily: settings.fontFamily,
             fontWeight: 'bold',
-            opacity: visible ? 1 : 0.3
+            opacity: visible ? 1 : 0.3,
+            fontSize: 12,
         },
         loadingText: {
-            color: colors.primary,
-            fontFamily: settings.fontFamily,
             fontSize: 10,
             opacity: visible ? 0.8 : 0.3,
             letterSpacing: 1,
@@ -94,8 +93,6 @@ const StatusIndicator = ({
             opacity: 0.8,
         },
         saveText: {
-            color: colors.primary,
-            fontFamily: settings.fontFamily,
             fontSize: 10,
         },
         deleteBtn: {
@@ -107,8 +104,6 @@ const StatusIndicator = ({
             opacity: 0.8,
         },
         deleteText: {
-            color: colors.error,
-            fontFamily: settings.fontFamily,
             fontSize: 10,
         }
     });
@@ -116,7 +111,10 @@ const StatusIndicator = ({
     if (pending) {
         return (
             <View style={indicatorStyles.container}>
-                <Text style={indicatorStyles.loadingText}>[ ACCESSING DATA BANKS... ]</Text>
+                <TextRenderer 
+                    style={indicatorStyles.loadingText} 
+                    content="[ ACCESSING DATA BANKS... ]" 
+                />
             </View>
         );
     }
@@ -125,9 +123,11 @@ const StatusIndicator = ({
 
     return (
         <View style={indicatorStyles.container}>
-            <Text style={indicatorStyles.status}>
-                {exitCode === 0 ? `${smiley} STATUS OK` : `SYSTEM ERR`}: {exitCode}
-            </Text>
+            <TextRenderer 
+                style={indicatorStyles.status}
+                type={exitCode === 0 ? 'primary' : 'error'}
+                content={`${exitCode === 0 ? `${smiley} STATUS OK` : `SYSTEM ERR`}: ${exitCode}`}
+            />
             <React.Suspense fallback={null}>
                 <Pressable
                     onPress={onSave}
@@ -136,7 +136,7 @@ const StatusIndicator = ({
                         pressed && { backgroundColor: 'rgba(0, 255, 65, 0.2)' }
                     ]}
                 >
-                    <Text style={indicatorStyles.saveText}>SAVE</Text>
+                    <TextRenderer style={indicatorStyles.saveText} content="SAVE" />
                 </Pressable>
                 <Pressable
                     onPress={onMinimize}
@@ -145,7 +145,7 @@ const StatusIndicator = ({
                         pressed && { backgroundColor: 'rgba(0, 255, 65, 0.2)' }
                     ]}
                 >
-                    <Text style={indicatorStyles.saveText}>{isMinimized ? 'MAX' : 'MIN'}</Text>
+                    <TextRenderer style={indicatorStyles.saveText} content={isMinimized ? 'MAX' : 'MIN'} />
                 </Pressable>
                 <Pressable
                     onPress={onDelete}
@@ -154,7 +154,7 @@ const StatusIndicator = ({
                         pressed && { backgroundColor: 'rgba(255, 0, 0, 0.2)' }
                     ]}
                 >
-                    <Text style={indicatorStyles.deleteText}>DEL</Text>
+                    <TextRenderer type="error" style={indicatorStyles.deleteText} content="DEL" />
                 </Pressable>
             </React.Suspense>
         </View>
@@ -182,6 +182,8 @@ const SequentialCommandEcho = ({
     isActive: boolean,
     isTyped: boolean
 }) => {
+    const { components } = useTheme();
+    const { TextRenderer } = components;
     const [stage, setStage] = React.useState<'text' | 'dots' | 'final'>(isTyped ? 'final' : 'text');
     const cleanText = line.text.replace(/^>\s*/, '');
     const baseText = `COMMAND: ${cleanText}`;
@@ -205,7 +207,7 @@ const SequentialCommandEcho = ({
                         onComplete={() => setStage('dots')}
                     />
                 ) : (
-                    <Text style={styles.inputEchoText}>{baseText}</Text>
+                    <TextRenderer type="secondary" style={styles.inputEchoText} content={baseText} />
                 )}
 
                 {stage === 'dots' && isActive ? (
@@ -220,7 +222,7 @@ const SequentialCommandEcho = ({
                         }}
                     />
                 ) : (stage !== 'text') ? (
-                    <Text style={styles.inputEchoText}>{dotsText}</Text>
+                    <TextRenderer type="secondary" style={styles.inputEchoText} content={dotsText} />
                 ) : null}
             </View>
 
@@ -269,7 +271,8 @@ export const OutputContainer: React.FC<OutputContainerProps> = ({
     onMinimize,
     onDelete
 }) => {
-    const { theme, settings } = useTheme();
+    const { theme, settings, components } = useTheme();
+    const { TextRenderer } = components;
     const colors = theme.colors;
     const scrollViewRef = React.useRef<ScrollView>(null);
 
@@ -282,9 +285,6 @@ export const OutputContainer: React.FC<OutputContainerProps> = ({
             paddingBottom: THEME.spacing.xl,
         },
         outputText: {
-            color: colors.text.primary,
-            fontFamily: settings.fontFamily,
-            fontSize: THEME.typography.fontSize.md,
             marginBottom: THEME.spacing.sm,
         },
         inputEchoText: {
@@ -302,9 +302,6 @@ export const OutputContainer: React.FC<OutputContainerProps> = ({
             width: '100%',
         },
         systemText: {
-            color: colors.primary,
-            fontFamily: settings.fontFamily,
-            fontSize: THEME.typography.fontSize.md,
             marginBottom: THEME.spacing.sm,
             fontWeight: 'bold',
         },
@@ -399,7 +396,7 @@ export const OutputContainer: React.FC<OutputContainerProps> = ({
                 const renderItems = (isStatic: boolean) => (
                     <View style={styles.cardContainer}>
                         <View style={styles.cardHeader}>
-                            <Text style={styles.cardHeaderText}>[ DATA_NODES_STREAM ]</Text>
+                            <TextRenderer style={styles.cardHeaderText} content="[ DATA_NODES_STREAM ]" />
                         </View>
                         <View style={styles.cardBody}>
                             <View style={styles.fishLsContainer}>
@@ -409,9 +406,12 @@ export const OutputContainer: React.FC<OutputContainerProps> = ({
 
                                     if (isStatic) {
                                         return (
-                                            <Text key={i} style={item.type === 'dir' ? styles.dirText : styles.fileText}>
-                                                {label}
-                                            </Text>
+                                            <TextRenderer 
+                                                key={i} 
+                                                content={label}
+                                                type={item.type === 'dir' ? 'primary' : 'secondary'}
+                                                style={{ fontWeight: item.type === 'dir' ? 'bold' : 'normal' }}
+                                            />
                                         );
                                     }
 
@@ -427,7 +427,7 @@ export const OutputContainer: React.FC<OutputContainerProps> = ({
                                     );
                                 })}
                                 {items.length === 0 && (
-                                    <Text style={styles.outputText}>[ NO_DATA_DETECTED ]</Text>
+                                    <TextRenderer content="[ NO_DATA_DETECTED ]" type="dim" />
                                 )}
                             </View>
                         </View>
@@ -444,9 +444,12 @@ export const OutputContainer: React.FC<OutputContainerProps> = ({
             // -- Standard Output Rendering --
             if (isTyped) {
                 return (
-                    <Text key={index} style={line.type === 'system' ? styles.systemText : styles.outputText}>
-                        {line.text || ' '}
-                    </Text>
+                    <TextRenderer 
+                        key={index} 
+                        type={line.type === 'system' ? 'primary' : 'primary'}
+                        style={line.type === 'system' ? styles.systemText : styles.outputText}
+                        content={line.text || ' '}
+                    />
                 );
             }
 

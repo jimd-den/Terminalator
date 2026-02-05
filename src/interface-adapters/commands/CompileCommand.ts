@@ -8,8 +8,8 @@
  */
 
 import { ICommand } from '../../domain/commands/ICommand';
-import { ProcessContext } from '../../../domain/entities/ProcessContext';
-import { FileSystemService } from '../../../domain/services/FileSystemService';
+import { ProcessContext } from '../../domain/entities/ProcessContext';
+import { FileSystemService } from '../../domain/services/FileSystemService';
 import { TerminalState } from '../../domain/entities/TerminalState';
 import { CommandResponse } from '../../domain/usecases/ExecuteCommand';
 import { CodeCompiler } from '../../domain/usecases/CodeCompiler';

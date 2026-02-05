@@ -17,6 +17,8 @@ import { mergeState, fail } from '../utils/TerminalStateUtils';
 import { NetworkMap } from '../services/NetworkMap';
 import { IWorldManager } from '../interfaces/IWorldManager';
 
+export { CommandResponse };
+
 /**
  * ExecuteCommand (Refactored Facade)
  * 

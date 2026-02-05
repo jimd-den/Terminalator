@@ -3,6 +3,7 @@ import * as fsNode from 'fs';
 import { FileSystem } from '../src/domain/entities/FileSystem';
 import { ExecuteCommand } from '../src/domain/usecases/ExecuteCommand';
 import { createInitialTerminalState, TerminalState } from '../src/domain/entities/TerminalState';
+import { FileSystemService } from '../src/domain/services/FileSystemService';
 
 // Colors for console output
 const GREEN = '\x1b[32m';
@@ -16,7 +17,7 @@ const REPORT_FILE = 'compliance_report.txt';
 interface TestCase {
     name: string;
     posixRef: string; // e.g. "IEEE Std 1003.1-2024, Vol 3, Shell & Utilities, ls"
-    setup?: (fs: FileSystem) => void;
+    setup?: (fs: FileSystemService) => void;
     command: string;
     expectedOutput?: RegExp | string;
     expectedExitCode?: number;
@@ -202,7 +203,7 @@ const SUITES: Record<string, TestCase[]> = {
             posixRef: 'Vol 3, Utils, mkdir',
             command: 'mkdir /new_dir',
             expectedExitCode: 0,
-            setup: (fs) => { if (fs.resolveNode('/new_dir')) throw new Error('Setup dirty'); }
+            setup: (fs) => { if (fs.resolve('/new_dir')) throw new Error('Setup dirty'); }
         },
         {
             name: 'mkdir fails if exists',
@@ -232,7 +233,7 @@ const SUITES: Record<string, TestCase[]> = {
             posixRef: 'Vol 3, Utils, touch',
             command: 'touch /newfile.txt',
             expectedExitCode: 0,
-            setup: (fs) => { if (fs.resolveNode('/newfile.txt')) throw new Error('Setup dirty'); }
+            setup: (fs) => { if (fs.resolve('/newfile.txt')) throw new Error('Setup dirty'); }
         },
         {
             name: 'touch updates existing file (no error)',
@@ -253,7 +254,7 @@ const SUITES: Record<string, TestCase[]> = {
         {
             name: 'rm removes a file',
             posixRef: 'Vol 3, Utils, rm',
-            setup: (fs) => { if (!fs.resolveNode('/deleteme.txt')) fs.writeFile('/deleteme.txt', 'bye', 'w'); },
+            setup: (fs) => { if ( !fs.resolve('/deleteme.txt')) fs.writeFile('/deleteme.txt', 'bye', 'w'); },
             command: 'rm /deleteme.txt',
             expectedExitCode: 0
         },
@@ -328,7 +329,7 @@ const SUITES: Record<string, TestCase[]> = {
         {
             name: 'mv renames a file',
             posixRef: 'Vol 3, Utils, mv',
-            setup: (fs) => { if (!fs.resolveNode('/oldname.txt')) fs.writeFile('/oldname.txt', 'data', 'w'); },
+            setup: (fs) => { if (!fs.resolve('/oldname.txt')) fs.writeFile('/oldname.txt', 'data', 'w'); },
             command: 'mv /oldname.txt /newname.txt',
             expectedExitCode: 0
         },
@@ -696,7 +697,8 @@ async function runComplianceCheck() {
     console.log(`${CYAN}Starting POSIX Compliance Check...${RESET}\n`);
 
     const fs = new FileSystem();
-    const executor = new ExecuteCommand(fs);
+    const service = new FileSystemService(fs);
+    const executor = new ExecuteCommand(service);
     let state = createInitialTerminalState();
 
     let passed = 0;
@@ -713,7 +715,7 @@ async function runComplianceCheck() {
         for (const test of tests) {
             if (test.setup) {
                 try {
-                    test.setup(fs);
+                    test.setup(service);
                 } catch (e) {
                     const msg = `SETUP FAIL: ${test.name} - ${e}`;
                     console.log(msg);
@@ -751,14 +753,14 @@ async function runComplianceCheck() {
 
             // CWD Check
             if (test.expectedCwd !== undefined) {
-                if (response.newState.currentDirectory !== test.expectedCwd) {
+                if (response.newState?.currentDirectory !== test.expectedCwd) {
                     testPassed = false;
-                    errors.push(`CWD Mismatch: Expected ${test.expectedCwd}, got ${response.newState.currentDirectory}`);
+                    errors.push(`CWD Mismatch: Expected ${test.expectedCwd}, got ${response.newState?.currentDirectory}`);
                 }
             }
 
             // Persistence
-            if (response.newState) state = response.newState;
+            if (response.newState) state = response.newState as TerminalState;
 
             if (testPassed) {
                 console.log(`${GREEN}[PASS]${RESET} ${test.name}`);

@@ -28,7 +28,7 @@ export class UnameCommand implements ICommand {
         if (args.includes('-a')) all = true;
 
         const sysname = 'Terminalator';
-        const nodename = state.hostname;
+        const nodename = state.environment.HOSTNAME || 'terminalator';
         const release = '1.0.0';
         const version = 'POSIX-ISH';
         const machine = 'x86_64-sim';

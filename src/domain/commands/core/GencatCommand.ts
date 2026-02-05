@@ -51,7 +51,7 @@ export class GencatCommand implements ICommand {
         }
 
         // Write output
-        this.fs.writeFile(catFile, catalogContent, state.currentDirectory);
+        this.fs.writeFile(catFile, catalogContent, 'w', 1000, 1000, state.currentDirectory);
 
         return { output: '', newState: state, exitCode: 0 };
     }

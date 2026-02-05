@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Text, StyleSheet, TextStyle } from 'react-native';
+import { TextStyle } from 'react-native';
 import { THEME } from './Theme';
 
 interface GhostWriterProps {
@@ -26,26 +26,12 @@ export const GhostWriter: React.FC<GhostWriterProps> = ({
     isActive = true, // Default to true if not controlled
     onComplete
 }) => {
-    const { theme, settings } = useTheme();
+    const { theme, settings, components } = useTheme();
+    const { TextRenderer } = components;
     const colors = theme.colors;
     const [displayedText, setDisplayedText] = useState('');
     const [isComplete, setIsComplete] = useState(false);
     const hasStartedRef = useRef(false);
-
-    const dynamicStyles = StyleSheet.create({
-        text: {
-            color: colors.primary,
-            fontFamily: settings.fontFamily,
-            fontSize: THEME.typography.fontSize.md,
-        },
-        cursor: {
-            color: colors.primary,
-            backgroundColor: colors.primary, // Block cursor
-            opacity: 0.9,
-            width: 10,
-            height: 16,
-        },
-    });
 
     useEffect(() => {
         if (!isActive) return;
@@ -91,9 +77,9 @@ export const GhostWriter: React.FC<GhostWriterProps> = ({
     if (!isActive && !hasStartedRef.current) return null;
 
     return (
-        <Text style={[dynamicStyles.text, style]}>
-            {displayedText}
-            {/* Removed the sliding block cursor as requested for a cleaner 'materializing' look */}
-        </Text>
+        <TextRenderer 
+            style={style}
+            content={displayedText}
+        />
     );
 };

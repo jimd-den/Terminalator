@@ -58,7 +58,7 @@ export class CxrefCommand implements ICommand {
 
         // 3. Output
         if (outputFile) {
-            this.fs.writeFile(outputFile, result, state.currentDirectory);
+            this.fs.writeFile(outputFile, result, 'w', 1000, 1000, state.currentDirectory);
             return { output: '', newState: state, exitCode: 0 };
         }
 

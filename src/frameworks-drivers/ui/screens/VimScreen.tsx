@@ -9,8 +9,8 @@
  */
 
 import React from 'react';
-import { ConsoleLayout } from '../components/ConsoleLayout';
 import { useVimEditor } from '../components/vim/VimEditor';
+import { useTheme } from '../context/ThemeContext';
 
 export interface VimScreenProps {
     filename: string;
@@ -18,13 +18,16 @@ export interface VimScreenProps {
 }
 
 export const VimScreen: React.FC<VimScreenProps> = ({ filename, onExit }) => {
+    const { components } = useTheme();
+    const Layout = components.Layout;
+    
     // -- Vim Logic --
     // The `useVimEditor` hook encapsulates the complex editor state,
     // input handling, and syntax highlighting.
     const vim = useVimEditor(filename, onExit);
 
     return (
-        <ConsoleLayout
+        <Layout
             status={`EDITING: ${filename}`}
             topContent={vim.topContent}
             middleContent={vim.middleContent}

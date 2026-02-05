@@ -7,7 +7,7 @@
  * - VmBinaryRunner (simulates execution within the app VM)
  */
 
-import { CommandResponse } from '../usecases/ExecuteCommand';
+import { CommandResponse } from '../entities/Command';
 import { IStream } from '../entities/Stream';
 import { FileSystemService } from '../services/FileSystemService';
 

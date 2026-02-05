@@ -11,7 +11,6 @@
 import React, { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { THEME } from '../Theme';
-import { ConsoleLayout } from '../components/ConsoleLayout';
 import { CommsPane } from '../components/CommsPane';
 import { StatusBar } from '../components/StatusBar';
 import { useShellView } from '../components/ShellView';
@@ -54,7 +53,8 @@ export interface ShellScreenProps {
 }
 
 export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
-    const { theme } = useTheme();
+    const { theme, components } = useTheme();
+    const Layout = components.Layout;
     const { setOnInput, setOnKeyPress, refocus } = useInput();
 
     // -- Input Handling --
@@ -141,7 +141,7 @@ export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
     );
 
     return (
-        <ConsoleLayout
+        <Layout
             headerComponent={statusBar}
             status={statusText}
             topContent={mainLayout}

@@ -8,9 +8,9 @@
  * Pillar: The Balanced Scale (Separation of Concerns)
  */
 
-import { Mission } from '../../entities/Mission';
-import { IWorldManager } from '../../interfaces/IWorldManager';
-import { FileSystemService } from '../../services/FileSystemService';
+import { Mission } from '../entities/Mission';
+import { IWorldManager } from '../interfaces/IWorldManager';
+import { FileSystemService } from './FileSystemService';
 
 export class MissionPopulator {
     constructor(private worldManager: IWorldManager) {}

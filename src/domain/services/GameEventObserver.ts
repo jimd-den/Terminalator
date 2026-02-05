@@ -23,7 +23,9 @@ export class GameEventObserver {
         // Logic: Every 4th line after the initial boot (5 lines), spawn an NPC event.
         if (outputLineCount > 5 && outputLineCount % 4 === 0) {
             const mail = this.gameManager.spawnNPCEvent();
-            return `[ NEW TRANSMISSION: ID ${mail.id} FROM ${mail.from} ]`;
+            if (mail) {
+                return `[ NEW TRANSMISSION: ID ${mail.id} FROM ${mail.assignerName} ]`;
+            }
         }
         return null;
     }

@@ -31,9 +31,10 @@ export const StatusBar: React.FC<StatusBarProps> = ({
             flexDirection: 'row',
             justifyContent: 'center', // [MOBILE-CENTRIC] Aligned to center for focal point
             alignItems: 'center',
+            flexWrap: 'wrap', // Allow wrapping if fonts are very large
             backgroundColor: colors.primary,
             paddingHorizontal: THEME.spacing.md,
-            paddingVertical: 6,
+            paddingVertical: THEME.spacing.sm,
             borderBottomWidth: 1,
             borderBottomColor: colors.primary,
             gap: 16, // Spacing between groups

@@ -15,7 +15,6 @@
 
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { ConsoleLayout } from '../components/ConsoleLayout';
 import { FKeyBar } from '../components/FKeyBar';
 import { useGame } from '../context/GameContext';
 import { useTerminalViewModel } from '../../../interface-adapters/viewmodels/TerminalViewModel';
@@ -38,7 +37,8 @@ const styles = StyleSheet.create({
 
 export const TerminalScreen: React.FC = () => {
     const { fs, gameManager, commandExecutor } = useGame();
-    const { theme } = useTheme();
+    const { theme, components } = useTheme();
+    const Layout = components.Layout;
     const colors = theme.colors;
 
     const viewModel = useTerminalViewModel(fs, commandExecutor, gameManager);
@@ -59,7 +59,7 @@ export const TerminalScreen: React.FC = () => {
     );
 
     const renderComms = () => (
-        <ConsoleLayout
+        <Layout
             headerComponent={
                 <StatusBar
                     status="COMMS LINK"
@@ -87,7 +87,7 @@ export const TerminalScreen: React.FC = () => {
     );
 
     const renderBuffers = () => (
-        <ConsoleLayout
+        <Layout
             headerComponent={
                 <StatusBar
                     status="ARCHIVE"

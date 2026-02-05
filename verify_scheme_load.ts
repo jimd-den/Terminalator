@@ -4,6 +4,7 @@ import { FileSystemService } from './src/domain/services/FileSystemService';
 import { SchemeCommand } from './src/interface-adapters/commands/game/SchemeCommand';
 import { TerminalState } from './src/domain/entities/TerminalState';
 import { ProcessContext } from './src/domain/entities/ProcessContext';
+import { StringStream } from './src/domain/entities/Stream';
 
 async function verifyLoad() {
     console.log('--- Verifying Scheme LOAD ---');
@@ -15,10 +16,12 @@ async function verifyLoad() {
         currentDirectory: '/',
         history: [],
         environment: {},
+        aliases: {},
         lastExitCode: 0,
-        fs: service,
-        user: { name: 'operator', groups: [] },
-        inputBuffer: ''
+        user: { uid: 1000, gid: 1000, groups: [] },
+        functions: new Map(),
+        traps: new Map(),
+        callStackDepth: 0
     };
 
     const ctx: ProcessContext = {
@@ -26,8 +29,10 @@ async function verifyLoad() {
         fileSystemService: service,
         env: {},
         cwd: '/',
-        user: { name: 'operator', groups: [] },
-        stdin: '',
+        user: { uid: 1000, gid: 1000, groups: [] },
+        stdin: new StringStream(''),
+        stdout: new StringStream(''),
+        stderr: new StringStream(''),
         executor: {} as any // Mock
     };
 

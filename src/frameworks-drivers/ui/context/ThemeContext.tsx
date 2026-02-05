@@ -12,9 +12,13 @@ import { THEMES, ThemeDefinition, ThemeColors } from '../../../domain/entities/T
 import { UserSettings, DEFAULT_SETTINGS } from '../../../domain/entities/Settings';
 import { useGame } from './GameContext';
 import { DiskSettingsRepository } from '../../../interface-adapters/DiskSettingsRepository';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
+import { ThemeComponentMap } from '../../../domain/entities/ThemeComponents';
+import { getComponentsForTheme } from '../themes/ThemeRegistry';
 
 interface ThemeContextType {
     theme: ThemeDefinition;
+    components: ThemeComponentMap;
     settings: UserSettings;
     setTheme: (id: string) => void;
     setFont: (font: string) => void;
@@ -24,7 +28,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { fs } = useGame();
-    const settingsRepo = useMemo(() => new DiskSettingsRepository(fs), [fs]);
+    const settingsRepo = useMemo(() => new DiskSettingsRepository(new FileSystemService(fs)), [fs]);
 
     const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
 
@@ -34,6 +38,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }, [settingsRepo]);
 
     const theme = useMemo(() => THEMES[settings.themeId] || THEMES.matrix, [settings.themeId]);
+    const components = useMemo(() => getComponentsForTheme(theme.id), [theme.id]);
 
     const setTheme = async (id: string) => {
         if (THEMES[id]) {
@@ -50,7 +55,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     };
 
     return (
-        <ThemeContext.Provider value={{ theme, settings, setTheme, setFont }}>
+        <ThemeContext.Provider value={{ theme, components, settings, setTheme, setFont }}>
             {children}
         </ThemeContext.Provider>
     );

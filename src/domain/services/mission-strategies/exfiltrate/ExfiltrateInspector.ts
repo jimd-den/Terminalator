@@ -9,7 +9,7 @@ export const ExfiltrateInspector: MissionInspector = (mission, state, lastRespon
             return state.fsContext === mission.targetSystem;
         
         case MissionStep.CONNECTED:
-            const isSearchCmd = lastResponse.command?.includes('ls') || lastResponse.command?.includes('find');
+            const isSearchCmd = !!(lastResponse.command?.includes('ls') || lastResponse.command?.includes('find'));
             return isSearchCmd && lastResponse.output.includes(mission.objectiveTarget);
             
         case MissionStep.LOCATED:

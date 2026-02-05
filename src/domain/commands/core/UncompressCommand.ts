@@ -34,7 +34,7 @@ export class UncompressCommand implements ICommand {
         }
 
         const newPath = path.replace('.Z', '');
-        fs.writeFile(newPath, decompressed, 'w', state.currentDirectory);
+        fs.writeFile(newPath, decompressed, 'w', 1000, 1000, state.currentDirectory);
         fs.deleteNode(path, state.currentDirectory);
 
         return { output: '', newState: state, exitCode: 0 };

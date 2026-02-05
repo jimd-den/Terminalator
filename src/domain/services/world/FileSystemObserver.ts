@@ -18,7 +18,7 @@ export class FileSystemObserver {
      * Attaches the observer to a FileSystemService instance.
      */
     public observe(hostname: string, service: FileSystemService): void {
-        service.onWrite((path, content, actingUser) => {
+        service.onWrite((path: string, content: string | Uint8Array, actingUser?: { uid: number, gid: number, groups: number[] }) => {
             // Ignore System/Root writes to prevent feedback loops
             if (actingUser?.uid === 0) return;
 

@@ -23,6 +23,7 @@ import { CommandResponse } from '../../entities/Command';
 
 import { FileSystemService } from '../../services/FileSystemService';
 import { S_IFDIR } from '../../entities/FileSystem';
+import { DirectoryNode } from '../../entities/filesystem/DirectoryNode';
 
 /**
  * Pure function to resolve an absolute path from a relative path and CWD.
@@ -144,7 +145,8 @@ export class RmdirCommand implements ICommand {
             throw new Error('Not a directory');
         }
 
-        if (node.children.size > 0) {
+        const dirNode = node as DirectoryNode;
+        if (dirNode.children.size > 0) {
             throw new Error('Directory not empty');
         }
 

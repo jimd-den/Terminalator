@@ -21,10 +21,13 @@ export interface ThemeColors {
     border: string;
 }
 
+import { ThemeComponentMap } from './ThemeComponents';
+
 export interface ThemeDefinition {
     id: string;
     name: string;
     colors: ThemeColors;
+    components?: ThemeComponentMap;
 }
 
 export const THEMES: Record<string, ThemeDefinition> = {
