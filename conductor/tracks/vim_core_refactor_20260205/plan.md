@@ -1,14 +1,14 @@
 # Implementation Plan - Clean Architecture Vim Refactor
 
 ## Phase 1: The Command Pattern (Persistence & Undo)
-- [~] Task: Define `IVimCommand` Entity and `CommandHistory` Use Case.
-    - [ ] TDD: Write tests for a mock command being executed and undone.
-- [ ] Task: Implement `InsertCharCommand` and `DeleteCharCommand`.
-    - [ ] TDD: Verify buffer state after undoing an insertion.
-- [ ] Task: Implement `VimCommandManager` to handle the Undo/Redo stack.
+- [x] Task: Define `IVimCommand` Entity and `CommandHistory` Use Case. 1fb0c81
+    - [x] TDD: Write tests for a mock command being executed and undone. 1fb0c81
+- [x] Task: Implement `InsertCharCommand` and `DeleteCharCommand`. 1fb0c81
+    - [x] TDD: Verify buffer state after undoing an insertion. 1fb0c81
+- [x] Task: Implement `VimCommandManager` to handle the Undo/Redo stack. 1fb0c81
 
 ## Phase 2: The State Pattern (Modes & OCP)
-- [ ] Task: Define `IVimMode` Interface (Use Case Layer).
+- [~] Task: Define `IVimMode` Interface (Use Case Layer).
 - [ ] Task: Implement `NormalMode` Strategy.
     - [ ] Move `hjkl` and mode transitions (`i`, `a`, `:`) into this class.
     - [ ] TDD: Verify mode transition logic in isolation.
