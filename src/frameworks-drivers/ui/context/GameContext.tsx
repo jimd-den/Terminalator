@@ -40,7 +40,12 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [tutorMessaging] = useState(() => new TutorMessagingService());
     
     // Reactive state for UI
-    const [activeTutorMessage, setActiveTutorMessage] = useState<TutorMessage | null>(null);
+    const [activeTutorMessage, setActiveTutorMessage] = useState<TutorMessage | null>(() => ({
+        text: "Uplink established. Welcome to the Grid. (◕‿◕✿)",
+        type: 'hint',
+        sender: 'TUTOR',
+        timestamp: Date.now()
+    }));
 
     // Create service for adapters that need it (GameManager, Executor)
     const [fsService] = useState(() => new FileSystemService(fs));
@@ -49,9 +54,11 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [commandExecutor] = useState(() => new GameCommandExecutor(fsService, gameManager, networkMap, telemetry));
 
     const sendTutorMessage = async (text: string, type: TutorMessage['type'] = 'info', sender: string = 'TUTOR') => {
+        console.log(`[TutorService] Sending message: "${text}" (${type}) from ${sender}`);
         await tutorMessaging.sendMessage(text, type, sender);
         const messages = await tutorMessaging.getAllMessages();
-        setActiveTutorMessage(messages[messages.length - 1]);
+        const lastMsg = messages[messages.length - 1];
+        setActiveTutorMessage(lastMsg);
     };
 
     return (

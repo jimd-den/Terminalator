@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { THEME } from '../../Theme';
 import { useTheme } from '../../context/ThemeContext';
 import { LayoutProps } from '../../../../domain/entities/ThemeComponents';
+import { GlobalTutorBar } from '../../components/GlobalTutorBar';
 
 /**
  * StandardLayout - The default "Console" layout for Terminalator.
@@ -59,7 +60,7 @@ export const StandardLayout: React.FC<LayoutProps> = ({
             fontSize: THEME.typography.fontSize.sm,
         },
         topBox: {
-            flex: 2,
+            flex: 1, // Changed from 2 to 1 to give more space to other components
             paddingHorizontal: THEME.spacing.xl,
             paddingTop: THEME.spacing.xl,
             backgroundColor: 'transparent',
@@ -68,6 +69,7 @@ export const StandardLayout: React.FC<LayoutProps> = ({
             paddingHorizontal: THEME.spacing.xl,
             paddingBottom: THEME.spacing.xl,
             backgroundColor: 'transparent',
+            minHeight: 100, // Explicit minHeight
             justifyContent: 'center',
         },
     });
@@ -90,9 +92,14 @@ export const StandardLayout: React.FC<LayoutProps> = ({
                 )}
 
                 <View style={dynamicStyles.mainRow}>
-                    <View style={dynamicStyles.leftColumn}>
+                        {/* TOP BOX: Output/Environment/Buffer */}
                         <View style={dynamicStyles.topBox}>
                             {topContent}
+                        </View>
+
+                        {/* TUTOR BAR AREA */}
+                        <View style={{ zIndex: 10 }}>
+                            <GlobalTutorBar />
                         </View>
 
                         {middleContent}
