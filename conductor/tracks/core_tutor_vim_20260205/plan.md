@@ -1,15 +1,11 @@
 # Implementation Plan - Core Tutor-Integrated Vim Interface & IRC-Style Interaction
 
-## Phase 1: Architecture & Vim Engine Refactor
+## Phase 1: Architecture & Vim Engine Refactor [checkpoint: c99a9bf]
 - [x] Task: Create specific Clean Architecture directory structure for Vim Engine if not present (Entities, Use Cases, Interface Adapters). e300d79
 - [x] Task: Define `IVimState` and `IVimBuffer` interfaces (Entities). e300d79
-    - [ ] Write Tests: Ensure interfaces allow for text manipulation and mode switching.
-    - [ ] Implement: Create core `VimState` entity.
 - [x] Task: Implement `VimInputHandler` Use Case (The "IRC Tab" Logic). 2e92622
-    - [ ] Write Tests: Test key press handling, mode transitions (Normal -> Insert), and command parsing.
-    - [ ] Implement: Logic to handle stream of characters and update `VimState`.
 - [x] Task: Refactor existing `VimEngine` to use the new `VimInputHandler` and `VimState`. 10d877f
-- [ ] Task: Conductor - User Manual Verification 'Architecture & Vim Engine Refactor' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Architecture & Vim Engine Refactor' (Protocol in workflow.md)
 
 ## Phase 2: Persistent Tutor Bar (UI & Logic)
 - [ ] Task: Create `TutorMessage` Entity and `ITutorService` Interface.
@@ -25,9 +21,9 @@
 - [ ] Task: Implement `MissionManager` Use Case for "Start" and "Exit" flows.
     - [ ] Write Tests: State transitions between "In Mission" and "Dashboard".
     - [ ] Implement: Logic to unload mission resources and save progress.
-- [ ] Task: Add "Exit Mission" UI Control.
-    - [ ] Write Tests: Button press triggers `MissionManager.exitMission()`.
-    - [ ] Implement: UI button (styled discreetly but accessible) overlaying the mission view.
+- [ ] Task: Add Integrated Command Mode Actions (e.g., :exit, :mission).
+    - [ ] Write Tests: `VimSimulator` or `MissionManager` handles custom editor commands for mission control.
+    - [ ] Implement: Logic in `executeCommand` to handle mission-specific signals.
 - [ ] Task: Conductor - User Manual Verification 'Mission Control & Navigation' (Protocol in workflow.md)
 
 ## Phase 4: Integration & "Subliminal Mastery" Connection
