@@ -54,6 +54,7 @@ export interface ShellScreenProps {
 
 export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
     const { theme, components } = useTheme();
+    const { isInputLocked } = useGame();
     const Layout = components.Layout;
     const { setOnInput, setOnKeyPress, refocus } = useInput();
 
@@ -61,11 +62,13 @@ export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
     // Wire up the global InputContext to this screen's handler
     useEffect(() => {
         setOnInput((text) => {
+            if (isInputLocked) return;
             for (const char of text) {
                 props.handleKeyPress(char);
             }
         });
         setOnKeyPress((key) => {
+            if (isInputLocked) return;
             props.handleKeyPress(key);
         });
         // Ensure focus when mounting/switching back to shell

@@ -30,7 +30,7 @@ interface VimEditorProps {
 }
 
 export const useVimEditor = (filename: string, onExit: () => void) => {
-    const { fs, gameManager } = useGame();
+    const { fs, gameManager, isInputLocked } = useGame();
     const { theme, settings, components } = useTheme();
     const { TextRenderer, Cursor } = components;
     const colors = theme.colors;
@@ -53,12 +53,14 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
 
     React.useEffect(() => {
         setOnInput((text) => {
+            if (isInputLocked) return;
             for (const char of text) {
                 if (char === '\n') headless.handleVirtualKey('ENTER');
                 else headless.handleVirtualKey(char);
             }
         });
         setOnKeyPress((key) => {
+            if (isInputLocked) return;
             headless.handleVirtualKey(key);
         });
     }, [headless.handleVirtualKey, setOnInput, setOnKeyPress]);

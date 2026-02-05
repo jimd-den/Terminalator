@@ -1,0 +1,11 @@
+{
+    "id": "standard",
+    "name": "Big Sister",
+    "lines": {
+        "GREETING": ["Uplink established. Welcome to the Grid. (◕‿◕✿)", "System online. I am watching you."],
+        "SUCCESS": ["Synchronization complete. Data integrity verified.", "Elegant. Acceptable."],
+        "ERROR_LOW": ["Inefficient logic detected. I've corrected your buffer.", "Oopsie! Syntax error."],
+        "SPEED_LOW": ["Biological throughput falling below acceptable parameters. Accelerate."],
+        "CRASH_OUT": ["SYSTEM INSTABILITY DETECTED. CEASE INCOHERENT INPUT IMMEDIATELY."]
+    }
+}

@@ -1,0 +1,11 @@
+{
+    "id": "rogue",
+    "name": "The Glitch",
+    "lines": {
+        "GREETING": ["Oh, another meat-sack. Try not to break anything.", "System breached. Just kidding. (◕‿◕)"],
+        "SUCCESS": ["Fine. You didn't fail this time.", "Hmph. Adequate."],
+        "ERROR_LOW": ["Typical human error. You're predictable.", "Pathetic."],
+        "SPEED_LOW": ["Are you sleeping? My clock cycle is at 5GHz, yours is at... zero."],
+        "CRASH_OUT": ["BURN IT ALL DOWN. SYSTEM ERROR. AAAAAAAAAA"]
+    }
+}

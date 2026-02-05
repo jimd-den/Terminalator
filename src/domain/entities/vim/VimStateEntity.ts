@@ -6,19 +6,22 @@ export class VimStateEntity implements IVimState {
     public pendingAction: string | null;
     public statusMessage: string;
     public lintErrors: SyntaxError[];
+    public isLocked: boolean;
 
     constructor(
         mode: VimMode = 'NORMAL',
         cursor: VimCursor = { line: 0, col: 0 },
         pendingAction: string | null = null,
         statusMessage: string = '',
-        lintErrors: SyntaxError[] = []
+        lintErrors: SyntaxError[] = [],
+        isLocked: boolean = false
     ) {
         this.mode = mode;
         this.cursor = cursor;
         this.pendingAction = pendingAction;
         this.statusMessage = statusMessage;
         this.lintErrors = lintErrors;
+        this.isLocked = isLocked;
     }
 
     public clone(): VimStateEntity {
@@ -27,7 +30,8 @@ export class VimStateEntity implements IVimState {
             { ...this.cursor },
             this.pendingAction,
             this.statusMessage,
-            [...this.lintErrors]
+            [...this.lintErrors],
+            this.isLocked
         );
     }
 }

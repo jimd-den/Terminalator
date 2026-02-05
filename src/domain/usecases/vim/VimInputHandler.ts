@@ -7,7 +7,13 @@ export class VimInputHandler {
         // We expect state to be a VimStateEntity or at least have a clone method
         const nextState = (state as VimStateEntity).clone 
             ? (state as VimStateEntity).clone() 
-            : new VimStateEntity(state.mode, { ...state.cursor }, state.pendingAction, state.statusMessage, [...state.lintErrors]);
+            : new VimStateEntity(state.mode, { ...state.cursor }, state.pendingAction, state.statusMessage, [...state.lintErrors], state.isLocked || false);
+
+        if (nextState.isLocked) {
+            // Only allow ESC to unlock if we want that, but normally Tutor controls it.
+            // For now, if locked, we do nothing.
+            return nextState;
+        }
 
         if (key === 'ESC') {
             nextState.mode = 'NORMAL';

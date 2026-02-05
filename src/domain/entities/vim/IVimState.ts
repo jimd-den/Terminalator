@@ -18,4 +18,5 @@ export interface IVimState {
     pendingAction: string | null;
     statusMessage: string;
     lintErrors: SyntaxError[];
+    isLocked?: boolean;
 }

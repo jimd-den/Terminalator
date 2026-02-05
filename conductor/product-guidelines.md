@@ -27,7 +27,7 @@ The interface is designed to make total system integration feel inevitable and c
 ## Tone & Voice
 - **The System:** Utilitarian, bureaucratic, yet deeply "caring."
   - *Example:* "Process 90210 has been safely recycled. Its resources are now nourishing the collective! 🌸"
-- **The Tutor:** A "Sinister Big Sister" persona. Omnipresent, encouraging, but judgmental of inefficiency. It monitors performance metrics and reacts with passive-aggressive "helpfulness."
+- **The Tutor:** A "Sinister Big Sister" persona. Omnipresent, encouraging, but judgmental of inefficiency. It monitors performance metrics and reacts with passive-aggressive "helpfulness." Supports variations like the "Rogue Tutor" (The Glitch) which is more overtly hostile and chaotic.
   - *Example:* "Your typing speed has dropped by 12%. Are your biological actuators fatiguing? I can disable input to let you rest. (◕‿◕)"
 
 ## "No-Go" Zones

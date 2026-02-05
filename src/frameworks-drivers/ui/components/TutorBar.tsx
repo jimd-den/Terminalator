@@ -4,6 +4,8 @@ import { useTheme } from '../context/ThemeContext';
 import { THEME } from '../Theme';
 import { TutorMessage } from '../../../domain/entities/tutor/TutorMessage';
 import { useTutorAnimation } from '../hooks/useTutorAnimation';
+import { TypingIndicator } from './TypingIndicator';
+import { useGame } from '../context/GameContext';
 
 interface TutorBarProps {
     message: TutorMessage | null;
@@ -20,16 +22,17 @@ interface TutorBarProps {
  */
 export const TutorBar: React.FC<TutorBarProps> = ({ message }) => {
     const { theme } = useTheme();
+    const { isTutorTyping } = useGame();
     const colors = theme.colors;
     const { transform, opacity } = useTutorAnimation(message);
 
-    if (!message) return null;
+    if (!message && !isTutorTyping) return null;
 
     const hintColor = theme.id === 'matrix' ? '#FFB7C5' : colors.secondary;
 
-    const typeStyle = message.type === 'hint' ? { color: hintColor } : 
-                      message.type === 'warn' ? { color: colors.secondary } :
-                      message.type === 'critical' ? { color: colors.error, fontWeight: 'bold' as const } : 
+    const typeStyle = message?.type === 'hint' ? { color: hintColor } : 
+                      message?.type === 'warn' ? { color: colors.secondary } :
+                      message?.type === 'critical' ? { color: colors.error, fontWeight: 'bold' as const } : 
                       { color: colors.text.primary };
 
     const dynamicStyles = StyleSheet.create({
@@ -68,14 +71,19 @@ export const TutorBar: React.FC<TutorBarProps> = ({ message }) => {
     return (
         <Animated.View style={[dynamicStyles.container, { transform, opacity }]}>
             <View style={dynamicStyles.header}>
-                <Text style={dynamicStyles.sender}>[{message.sender || 'SYSTEM'}]</Text>
-                <Text style={dynamicStyles.timestamp}>
-                    {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </Text>
+                <Text style={dynamicStyles.sender}>[TUTOR]</Text>
+                {isTutorTyping && <TypingIndicator />}
+                {message && !isTutorTyping && (
+                    <Text style={dynamicStyles.timestamp}>
+                        {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </Text>
+                )}
             </View>
-            <Text style={[dynamicStyles.text, typeStyle]}>
-                {message.text} {message.type === 'hint' ? '(◕‿◕✿)' : ''}
-            </Text>
+            {!isTutorTyping && message && (
+                <Text style={[dynamicStyles.text, typeStyle]}>
+                    {message.text} {message.type === 'hint' ? '(◕‿◕✿)' : ''}
+                </Text>
+            )}
         </Animated.View>
     );
 };

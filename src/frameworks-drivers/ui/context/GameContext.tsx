@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { FileSystem } from '../../../domain/entities/FileSystem';
 import { GameManager } from '../../../interface-adapters/GameManager';
 import { GameCommandExecutor } from '../../../interface-adapters/GameCommandExecutor';
@@ -9,6 +9,11 @@ import { DependencyContainer } from '../../../infrastructure/di/DependencyContai
 import { TutorMessagingService } from '../../../domain/services/tutor/TutorMessagingService';
 import { TutorMessage } from '../../../domain/entities/tutor/TutorMessage';
 import { CreditService } from '../../../domain/services/gamification/CreditService';
+import { TutorBrain } from '../../../domain/entities/tutor/TutorBrain';
+import { MasteryTracker } from '../../../domain/services/tutor/MasteryTracker';
+import { PersonaLoader } from '../../../domain/services/tutor/PersonaLoader';
+import standardPersona from '../../../domain/data/tutors/Standard.json';
+import roguePersona from '../../../domain/data/tutors/Rogue.json';
 
 /**
  * GameContext - Presentation Layer
@@ -31,6 +36,11 @@ interface GameContextType {
     creditService: CreditService;
     credits: number;
     refreshCredits: () => Promise<void>;
+    isInputLocked: boolean;
+    setInputLocked: (locked: boolean) => void;
+    isTutorTyping: boolean;
+    tutorBrain: TutorBrain;
+    masteryTracker: MasteryTracker;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -43,6 +53,12 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [networkMap] = useState(() => new NetworkMap()); // [NEW] Singleton
     const [tutorMessaging] = useState(() => new TutorMessagingService());
     const [creditService] = useState(() => new CreditService());
+    const [tutorBrain] = useState(() => {
+        const brain = new TutorBrain();
+        brain.setPersona(new PersonaLoader(standardPersona as any));
+        return brain;
+    });
+    const [masteryTracker] = useState(() => new MasteryTracker());
     
     // Reactive state for UI
     const [activeTutorMessage, setActiveTutorMessage] = useState<TutorMessage | null>(() => ({
@@ -52,6 +68,8 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         timestamp: Date.now()
     }));
     const [credits, setCredits] = useState(0);
+    const [isInputLocked, setInputLocked] = useState(false);
+    const [isTutorTyping, setIsTutorTyping] = useState(false);
 
     // Create service for adapters that need it (GameManager, Executor)
     const [fsService] = useState(() => new FileSystemService(fs));
@@ -60,7 +78,14 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [commandExecutor] = useState(() => new GameCommandExecutor(fsService, gameManager, networkMap, telemetry));
 
     const sendTutorMessage = async (text: string, type: TutorMessage['type'] = 'info', sender: string = 'TUTOR') => {
-        console.log(`[TutorService] Sending message: "${text}" (${type}) from ${sender}`);
+        console.log(`[TutorService] Preparing message: "${text}"`);
+        setIsTutorTyping(true);
+        
+        // Dynamic delay based on text length (simulating typing speed)
+        const delay = Math.min(2000, 500 + text.length * 20);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        
+        setIsTutorTyping(false);
         await tutorMessaging.sendMessage(text, type, sender);
         const messages = await tutorMessaging.getAllMessages();
         const lastMsg = messages[messages.length - 1];
@@ -69,6 +94,12 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const refreshCredits = async () => {
         setCredits(await creditService.getBalance());
+    };
+
+    const switchPersona = (id: 'standard' | 'rogue') => {
+        const data = id === 'rogue' ? roguePersona : standardPersona;
+        tutorBrain.setPersona(new PersonaLoader(data as any));
+        sendTutorMessage(tutorBrain.process('GREETING'), 'info', tutorBrain.activePersona.name.toUpperCase());
     };
 
     useEffect(() => { refreshCredits(); }, []);
@@ -84,7 +115,13 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             sendTutorMessage,
             creditService,
             credits,
-            refreshCredits
+            refreshCredits,
+            isInputLocked,
+            setInputLocked,
+            isTutorTyping,
+            tutorBrain,
+            masteryTracker,
+            switchPersona
         }}>
             {children}
         </GameContext.Provider>

@@ -6,16 +6,18 @@
 - **Execution Environments:** Android, iOS, Web (via `react-native-web`)
 
 ## Domain-Specific Engines
-- **Terminal Simulation:** 
-  - `VimEngine`: High-fidelity Vim modal editing simulation.
-  - `TutorEngine`: Interactive pedagogical system for guided learning.
-  - `TutorSpy`: Performance analysis engine (WPM, Accuracy, Stalls).
-- **System Simulation:** 
-  - `FileSystem`: A custom, in-memory/persistent POSIX-compliant file system abstraction.
-  - `ProcessManager`: Simulation of process life cycles, signals, and job control.
-  - `CommandRegistry`: Extensible architecture for implementing POSIX and custom commands.
-  - `LanguageExecutionService`: Mock execution environment for Scheme and Assembly.
-- **World Generation:** 
+  - **Terminal Simulation:** 
+    - `VimEngine`: High-fidelity Vim modal editing simulation.
+    - `TutorEngine`: Interactive pedagogical system for guided learning.
+    - `TutorBrain`: Persona orchestration engine.
+    - `TutorSpy`: Performance analysis engine (WPM, Accuracy, Stalls).
+    - `MasteryTracker`: Command-level skill tracking algorithm.
+  - **System Simulation:** 
+    - `FileSystem`: A custom, in-memory/persistent POSIX-compliant file system abstraction.
+    - `ProcessManager`: Simulation of process life cycles, signals, and job control.
+    - `CommandRegistry`: Extensible architecture for implementing POSIX and custom commands.
+    - `CreditService`: Global state management for user rewards.
+    - `LanguageExecutionService`: Mock execution environment for Scheme and Assembly.- **World Generation:** 
   - `WorldManager`: Procedural generator for "The Grid" (Locations, Devices, Connections).
 
 ## Architectural Patterns
