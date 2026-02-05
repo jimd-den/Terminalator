@@ -11,7 +11,7 @@
 - [x] Task: Conductor - User Manual Verification 'Logic Migration' (Protocol in workflow.md) 5af9404
 
 ## Phase 2: Persistence Layer
-- [ ] Task: Define `ICreditRepository` and `IMasteryRepository`.
+- [~] Task: Define `ICreditRepository` and `IMasteryRepository`.
 - [ ] Task: Implement `DiskCreditRepository` and `DiskMasteryRepository`.
     - [ ] Write Tests: Saving/Loading from `FileSystem`.
     - [ ] Implement: JSON serialization to hidden file paths.

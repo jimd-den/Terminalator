@@ -53,7 +53,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [telemetry] = useState(() => new ConsoleTelemetryAdapter());
     const [networkMap] = useState(() => new NetworkMap()); // [NEW] Singleton
     const [tutorMessaging] = useState(() => new TutorMessagingService());
-    const [creditService] = useState(() => new CreditService());
+    const [creditService] = useState(() => DependencyContainer.createCreditService(fs));
     const [tutorBrain] = useState(() => {
         const brain = new TutorBrain();
         if (standardPersona) {
@@ -63,7 +63,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
         return brain;
     });
-    const [masteryTracker] = useState(() => new MasteryTracker());
+    const [masteryTracker] = useState(() => DependencyContainer.createMasteryTracker(fs));
     
     // Reactive state for UI
     const [activeTutorMessage, setActiveTutorMessage] = useState<TutorMessage | null>(() => ({

@@ -22,6 +22,11 @@ import { LessonService } from '../../domain/services/LessonService';
 import { LessonCoordinator } from '../../interface-adapters/LessonCoordinator';
 import { GameManager } from '../../interface-adapters/GameManager';
 
+import { CreditService } from '../../domain/services/gamification/CreditService';
+import { DiskCreditRepository } from '../../interface-adapters/DiskCreditRepository';
+import { MasteryTracker } from '../../domain/services/tutor/MasteryTracker';
+import { DiskMasteryRepository } from '../../interface-adapters/DiskMasteryRepository';
+
 /**
  * DependencyContainer - Infrastructure Layer
  * 
@@ -32,6 +37,18 @@ import { GameManager } from '../../interface-adapters/GameManager';
  * Pillar: Dependency Inversion (SOLID)
  */
 export class DependencyContainer {
+
+    public static createCreditService(fs: FileSystem): CreditService {
+        const fsService = new FileSystemService(fs);
+        const repository = new DiskCreditRepository(fsService);
+        return new CreditService(repository);
+    }
+
+    public static createMasteryTracker(fs: FileSystem): MasteryTracker {
+        const fsService = new FileSystemService(fs);
+        const repository = new DiskMasteryRepository(fsService);
+        return new MasteryTracker(repository);
+    }
     
     public static createGameManager(
         fs: FileSystem, 
