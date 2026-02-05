@@ -22,8 +22,8 @@ function testNormalModeNavigation() {
 function testNormalModeTransitions() {
     console.log("Testing NormalMode transitions...");
     const mode = new NormalMode();
-    const state = new VimStateEntity('NORMAL');
-    const buffer = new EditorBuffer("t.txt", "");
+    const state = new VimStateEntity('NORMAL', { line: 0, col: 0 });
+    const buffer = new EditorBuffer("t.txt", "abc");
     const cmdMgr = new VimCommandManager(buffer);
 
     const next1 = mode.handleKey('i', state, buffer, cmdMgr);
@@ -31,6 +31,10 @@ function testNormalModeTransitions() {
 
     const next2 = mode.handleKey(':', state, buffer, cmdMgr);
     if (next2 !== 'COMMAND') throw new Error("Transition to COMMAND failed");
+
+    const next3 = mode.handleKey('a', state, buffer, cmdMgr);
+    if (next3 !== 'INSERT') throw new Error("Transition to INSERT via 'a' failed");
+    if (state.cursor.col !== 1) throw new Error(`Cursor should move right on 'a'. Got: ${state.cursor.col}`);
 
     console.log("PASS");
 }
