@@ -1,6 +1,8 @@
 import { VimStateEntity } from '../src/domain/entities/vim/VimStateEntity';
 import { VimInputHandler } from '../src/domain/usecases/vim/VimInputHandler';
 import { IVimBuffer } from '../src/domain/entities/vim/IVimBuffer';
+import { VimEngine } from '../src/domain/entities/VimEngine';
+import { EditorBuffer } from '../src/domain/entities/EditorBuffer';
 
 class MockBuffer implements IVimBuffer {
     public lines: string[];
@@ -78,11 +80,26 @@ function testVimInputHandlerInsertion() {
     console.log("PASS");
 }
 
+function testVimEngineDelegation() {
+    console.log("Testing VimEngine delegation...");
+    const buffer = new EditorBuffer('test.txt', 'hello');
+    const engine = new VimEngine(buffer);
+    
+    engine.handleInput('i');
+    if (engine.getState().mode !== 'INSERT') throw new Error("VimEngine should delegate mode switch");
+    
+    engine.handleInput('!');
+    if (buffer.getLine(0) !== '!hello') throw new Error(`VimEngine should delegate insertion. Got: ${buffer.getLine(0)}`);
+    
+    console.log("PASS");
+}
+
 try {
     testVimStateInitialization();
     testVimStateCloning();
     testVimInputHandlerModeSwitch();
     testVimInputHandlerInsertion();
+    testVimEngineDelegation();
     console.log("\nALL VIM UNIT TESTS PASSED");
 } catch (e) {
     console.error(`\nTEST FAILED: ${e}`);
