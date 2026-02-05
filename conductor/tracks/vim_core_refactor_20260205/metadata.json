@@ -1,7 +1,0 @@
-{
-  "id": "vim_core_refactor_20260205",
-  "name": "Clean Architecture Vim Refactor",
-  "description": "Refactor the Vim simulation to use State and Command patterns for extensibility and Undo support.",
-  "status": "In Progress",
-  "created_at": "2026-02-05T18:45:00Z"
-}
