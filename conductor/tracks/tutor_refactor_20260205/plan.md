@@ -19,10 +19,10 @@
     - [x] Implement: Load on init, save on change. c40cf7d
 - [x] Task: Conductor - User Manual Verification 'Persistence Layer' (Protocol in workflow.md) c40cf7d
 
-## Phase 3: Concurrency & Queue Consumption
-- [~] Task: Implement `TutorMessageQueue` Logic in Domain.
-    - [ ] Ensure `TutorMessagingService` is the single source of truth.
-- [ ] Task: Implement `useTutorQueue` Hook.
-    - [ ] Implement: A hook that polls the service, handles the typing delay state locally, and ensures serial playback.
-- [ ] Task: Refactor `GameContext` to delegate to `useTutorQueue`.
-- [ ] Task: Conductor - User Manual Verification 'Concurrency & Queue Consumption' (Protocol in workflow.md)
+## Phase 3: Concurrency & Queue Consumption [checkpoint: 4f681ab]
+- [x] Task: Implement `TutorMessageQueue` Logic in Domain. 4f681ab
+    - [x] Ensure `TutorMessagingService` is the single source of truth. 4f681ab
+- [x] Task: Implement `useTutorQueue` Hook. 4f681ab
+    - [x] Implement: A hook that polls the service, handles the typing delay state locally, and ensures serial playback. 4f681ab
+- [x] Task: Refactor `GameContext` to delegate to `useTutorQueue`. 4f681ab
+- [x] Task: Conductor - User Manual Verification 'Concurrency & Queue Consumption' (Protocol in workflow.md) 4f681ab
