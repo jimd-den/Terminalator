@@ -10,14 +10,14 @@
     - [x] Implement: Remove all logic; it just connects the pipe. da1b545
 - [x] Task: Conductor - User Manual Verification 'Logic Migration' (Protocol in workflow.md) 5af9404
 
-## Phase 2: Persistence Layer
-- [~] Task: Define `ICreditRepository` and `IMasteryRepository`.
-- [ ] Task: Implement `DiskCreditRepository` and `DiskMasteryRepository`.
-    - [ ] Write Tests: Saving/Loading from `FileSystem`.
-    - [ ] Implement: JSON serialization to hidden file paths.
-- [ ] Task: Update `CreditService` and `MasteryTracker` to use Repositories.
-    - [ ] Implement: Load on init, save on change.
-- [ ] Task: Conductor - User Manual Verification 'Persistence Layer' (Protocol in workflow.md)
+## Phase 2: Persistence Layer [checkpoint: c40cf7d]
+- [x] Task: Define `ICreditRepository` and `IMasteryRepository`. c40cf7d
+- [x] Task: Implement `DiskCreditRepository` and `DiskMasteryRepository`. c40cf7d
+    - [x] Write Tests: Saving/Loading from `FileSystem`. c40cf7d
+    - [x] Implement: JSON serialization to hidden file paths. c40cf7d
+- [x] Task: Update `CreditService` and `MasteryTracker` to use Repositories. c40cf7d
+    - [x] Implement: Load on init, save on change. c40cf7d
+- [x] Task: Conductor - User Manual Verification 'Persistence Layer' (Protocol in workflow.md) c40cf7d
 
 ## Phase 3: Concurrency & Queue Consumption
 - [ ] Task: Implement `TutorMessageQueue` Logic in Domain.
