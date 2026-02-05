@@ -17,7 +17,7 @@
 - [x] Task: Refactor `VimEngine` to delegate to the active `IVimMode`. 9a6b9d1
 
 ## Phase 3: Advanced Motions (Strategy Pattern)
-- [ ] Task: Implement `MotionStrategy` utilities.
+- [x] Task: Implement `MotionStrategy` utilities. 9f0c15f
     - [ ] TDD: Test `findNextWordStart` and `findEndOfLine` logic.
 - [ ] Task: Implement word-wise movement (`w`, `b`, `e`) in `NormalMode`.
 - [ ] Task: Implement `DeleteMotionCommand` (e.g., `dw`, `d$`).
