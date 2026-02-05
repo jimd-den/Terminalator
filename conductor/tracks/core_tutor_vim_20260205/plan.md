@@ -28,7 +28,7 @@
 - [~] Task: Implement Scheme - [ ] Task: Implement Scheme & Assembly Assembly Language Support.
     - [ ] Write Tests: Syntax highlighter recognizes `.scm` and `.asm` tokens.
     - [ ] Implement: `LanguageService` with basic linting/parsing for Scheme and ASM.
-- [ ] Task: Create `CompilerService` / `InterpreterService`.
+- [x] Task: Create `CompilerService` / `InterpreterService`.
     - [ ] Write Tests: "Run" a basic Scheme/ASM program and capture output.
     - [ ] Implement: Mock execution environment that simulates program behavior (exit codes, stdout).
 - [ ] Task: Conductor - User Manual Verification 'Sinister Tutor & High-Fidelity Languages' (Protocol in workflow.md)
