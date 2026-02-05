@@ -1,22 +1,10 @@
 import { TutorMessage } from '../src/domain/entities/tutor/TutorMessage';
 import { ITutorService } from '../src/domain/services/tutor/ITutorService';
-
-class MockTutorService implements ITutorService {
-    private queue: TutorMessage[] = [];
-    async sendMessage(text: string, type: 'info' | 'warn' | 'hint' = 'info'): Promise<void> {
-        this.queue.push({ text, type, timestamp: Date.now() });
-    }
-    async getNextMessage(): Promise<TutorMessage | null> {
-        return this.queue.shift() || null;
-    }
-    async getAllMessages(): Promise<TutorMessage[]> {
-        return [...this.queue];
-    }
-}
+import { TutorService } from '../src/domain/services/tutor/TutorService';
 
 async function testTutorServiceQueue() {
-    console.log("Testing ITutorService message queue...");
-    const service = new MockTutorService();
+    console.log("Testing TutorService message queue...");
+    const service: ITutorService = new TutorService();
     await service.sendMessage("Welcome to the Grid.", "info");
     await service.sendMessage("Stay sharp.", "warn");
 
