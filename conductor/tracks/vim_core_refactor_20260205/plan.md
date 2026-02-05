@@ -7,13 +7,13 @@
     - [x] TDD: Verify buffer state after undoing an insertion. 1fb0c81
 - [x] Task: Implement `VimCommandManager` to handle the Undo/Redo stack. 1fb0c81
 
-## Phase 2: The State Pattern (Modes & OCP)
+## Phase 2: The State Pattern (Modes & OCP) [checkpoint: 42555b8]
 - [x] Task: Define `IVimMode` Interface (Use Case Layer). 4d5b958
 - [x] Task: Implement `NormalMode` Strategy. 4d5b958
-    - [ ] Move `hjkl` and mode transitions (`i`, `a`, `:`) into this class.
-    - [ ] TDD: Verify mode transition logic in isolation.
+    - [x] Move `hjkl` and mode transitions (`i`, `a`, `:`) into this class.
+    - [x] TDD: Verify mode transition logic in isolation.
 - [x] Task: Implement `InsertMode` Strategy. 1478630
-    - [ ] Handle `BACKSPACE`, `ENTER`, and character delegation to `InsertCharCommand`.
+    - [x] Handle `BACKSPACE`, `ENTER`, and character delegation to `InsertCharCommand`.
 - [x] Task: Refactor `VimEngine` to delegate to the active `IVimMode`. 9a6b9d1
 
 ## Phase 3: Advanced Motions (Strategy Pattern)
