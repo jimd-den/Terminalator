@@ -14,7 +14,7 @@
 - [x] Task: Create `TutorBar` Component (Frameworks/Drivers).
     - [ ] Write Tests: Component renders messages from the service.
     - [ ] Implement: React Native component positioned above keyboard area. Styling: "Cold Kawaii".
-- [ ] Task: Integrate `TutorService` with Global State/Context.
+- [x] Task: Integrate `TutorMessagingService` with Global State/Context.
 - [ ] Task: Conductor - User Manual Verification 'Persistent Tutor Bar' (Protocol in workflow.md)
 
 ## Phase 3: Mission Control & Navigation
