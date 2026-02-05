@@ -23,6 +23,8 @@ function testCombinatorialGeneration() {
         targetSystem: 'alpha-01'
     });
 
+    console.log("GENERATED MISSION:\n", JSON.stringify(mission, null, 2));
+
     if (!mission.id.startsWith('M-COR')) throw new Error(`ID should start with M-COR. Got: ${mission.id}`);
     if (mission.metadata.utility !== 'grep') throw new Error("Expected utility 'grep'");
     if (mission.targetSystem !== 'alpha-01') throw new Error("Expected system 'alpha-01'");
