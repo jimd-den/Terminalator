@@ -21,10 +21,8 @@ function testAnimationLogic() {
 
 try {
     testAnimationLogic();
-    console.log("
-ALL ANIMATION LOGIC TESTS PASSED");
+    console.log("\\nALL ANIMATION LOGIC TESTS PASSED");
 } catch (e) {
-    console.error(`
-TEST FAILED: ${e}`);
+    console.error(`\\nTEST FAILED: ${e}`);
     process.exit(1);
 }

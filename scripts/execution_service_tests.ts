@@ -21,8 +21,8 @@ async function testExecution() {
 }
 
 testExecution()
-    .then(() => console.log("\nALL EXECUTION TESTS PASSED"))
+    .then(() => console.log("\\nALL EXECUTION TESTS PASSED"))
     .catch((e) => {
-        console.error(`\nTEST FAILED: ${e}`);
+        console.error(`\\nTEST FAILED: ${e}`);
         process.exit(1);
     });
