@@ -8,7 +8,7 @@
 - [x] Task: Implement `VimInputHandler` Use Case (The "IRC Tab" Logic). 2e92622
     - [ ] Write Tests: Test key press handling, mode transitions (Normal -> Insert), and command parsing.
     - [ ] Implement: Logic to handle stream of characters and update `VimState`.
-- [ ] Task: Refactor existing `VimEngine` to use the new `VimInputHandler` and `VimState`.
+- [x] Task: Refactor existing `VimEngine` to use the new `VimInputHandler` and `VimState`. 10d877f
 - [ ] Task: Conductor - User Manual Verification 'Architecture & Vim Engine Refactor' (Protocol in workflow.md)
 
 ## Phase 2: Persistent Tutor Bar (UI & Logic)
