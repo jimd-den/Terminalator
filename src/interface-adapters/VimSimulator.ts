@@ -67,13 +67,13 @@ export class VimSimulator {
         if (command === ':w') {
             this.save();
             return { exit: false, message: `"${this.filename}" written` };
-        } else if (command === ':q') {
-            return { exit: true, message: '' };
+        } else if (command === ':q' || command === ':quit' || command === ':exit') {
+            return { exit: true, message: 'UPLINK TERMINATED.' };
         } else if (command === ':wq') {
             this.save();
-            return { exit: true, message: '' };
+            return { exit: true, message: 'UPLINK TERMINATED.' };
         } else if (command === ':q!') {
-            return { exit: true, message: '' };
+            return { exit: true, message: 'UPLINK TERMINATED.' };
         }
 
         return { exit: false, message: `E492: Not an editor command: ${command}` };

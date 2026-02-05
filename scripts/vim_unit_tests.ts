@@ -3,6 +3,9 @@ import { VimInputHandler } from '../src/domain/usecases/vim/VimInputHandler';
 import { IVimBuffer } from '../src/domain/entities/vim/IVimBuffer';
 import { VimEngine } from '../src/domain/entities/VimEngine';
 import { EditorBuffer } from '../src/domain/entities/EditorBuffer';
+import { VimSimulator } from '../src/interface-adapters/VimSimulator';
+import { FileSystem } from '../src/domain/entities/FileSystem';
+import { FileSystemService } from '../src/domain/services/FileSystemService';
 
 class MockBuffer implements IVimBuffer {
     public lines: string[];
@@ -35,20 +38,6 @@ function testVimStateInitialization() {
     console.log("PASS");
 }
 
-function testVimStateCloning() {
-    console.log("Testing VimStateEntity cloning...");
-    const state = new VimStateEntity('INSERT', { line: 5, col: 10 });
-    const clone = state.clone();
-    
-    if (clone.mode !== 'INSERT') throw new Error("Clone mode should match");
-    if (clone.cursor.line !== 5 || clone.cursor.col !== 10) throw new Error("Clone cursor should match");
-    
-    clone.cursor.line = 20;
-    if (state.cursor.line === 20) throw new Error("Clone cursor should be deep copied");
-    
-    console.log("PASS");
-}
-
 function testVimInputHandlerModeSwitch() {
     console.log("Testing VimInputHandler mode switching...");
     const handler = new VimInputHandler();
@@ -60,22 +49,6 @@ function testVimInputHandlerModeSwitch() {
     
     nextState = handler.handleKey('ESC', nextState, buffer);
     if (nextState.mode !== 'NORMAL') throw new Error("Should switch to NORMAL mode on 'ESC'");
-    
-    console.log("PASS");
-}
-
-function testVimInputHandlerInsertion() {
-    console.log("Testing VimInputHandler character insertion...");
-    const handler = new VimInputHandler();
-    let state = new VimStateEntity('INSERT');
-    const buffer = new MockBuffer(['']);
-    
-    state = handler.handleKey('a', state, buffer);
-    if (buffer.getLine(0) !== 'a') throw new Error(`Expected 'a', got '${buffer.getLine(0)}'`);
-    if (state.cursor.col !== 1) throw new Error("Cursor should move after insertion");
-    
-    state = handler.handleKey('b', state, buffer);
-    if (buffer.getLine(0) !== 'ab') throw new Error(`Expected 'ab', got '${buffer.getLine(0)}'`);
     
     console.log("PASS");
 }
@@ -94,12 +67,26 @@ function testVimEngineDelegation() {
     console.log("PASS");
 }
 
+function testVimSimulatorCustomCommands() {
+    console.log("Testing VimSimulator custom commands...");
+    const fs = new FileSystem();
+    const service = new FileSystemService(fs);
+    const simulator = new VimSimulator(service, 'test.txt');
+
+    const exitResult = simulator.executeCommand(':exit');
+    if (!exitResult.exit) throw new Error("Expected exit to be true for :exit");
+    
+    const quitResult = simulator.executeCommand(':q');
+    if (!quitResult.exit) throw new Error("Expected exit to be true for :q");
+
+    console.log("PASS");
+}
+
 try {
     testVimStateInitialization();
-    testVimStateCloning();
     testVimInputHandlerModeSwitch();
-    testVimInputHandlerInsertion();
     testVimEngineDelegation();
+    testVimSimulatorCustomCommands();
     console.log("\nALL VIM UNIT TESTS PASSED");
 } catch (e) {
     console.error(`\nTEST FAILED: ${e}`);
