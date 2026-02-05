@@ -17,7 +17,7 @@
 - [x] Task: Implement `MissionManager` Use Case for "Start" and "Exit" flows.
     - [ ] Write Tests: State transitions between "In Mission" and "Dashboard".
     - [ ] Implement: Logic to unload mission resources and save progress.
-- [ ] Task: Add Integrated Command Mode Actions (e.g., :exit, :mission).
+- [x] Task: Add Integrated Command Mode Actions (e.g., :exit, :mission).
     - [ ] Write Tests: `VimSimulator` handles custom editor commands for mission control.
     - [ ] Implement: Logic in `executeCommand` to handle mission-specific signals.
 - [ ] Task: Conductor - User Manual Verification 'Mission Control & Navigation' (Protocol in workflow.md)
