@@ -9,53 +9,55 @@ import { getStdinAsString } from '../../entities/ProcessContext';
  *
  * Intent:
  * Calls fs.mkfifo to create a special file type.
+ * Refactored to implement IStructuredCommand for combinatorial scaling.
  */
 
-import { ICommand } from '../ICommand';
+import { CommandBase } from '../CommandBase';
+import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
 
-import { FileSystem } from '../../entities/FileSystem';
+export class MkfifoCommand extends CommandBase {
+    public readonly capabilities = [CommandCapability.MODIFY];
+    public readonly utility = 'mkfifo';
 
-export class MkfifoCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+    constructor(private fs: FileSystemService) { 
+        super();
+    }
 
-    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = getStdinAsString(context);
+    protected override parseArgs(args: string[]) {
+        super.parseArgs(args, ['m']);
+    }
+
+    protected async executeInternal(
+        rawArgs: string[],
+        flags: Set<string>,
+        operands: string[],
+        context: ProcessContext,
+        state: TerminalState
+    ): Promise<CommandResponse> {
         let mode = 0o644;
-        const targets: string[] = [];
+        const modeStr = this.options.get('m');
 
-        // Parse args
-        for (let i = 0; i < args.length; i++) {
-            if (args[i] === '-m') {
-                if (i + 1 >= args.length) {
-                    return { output: 'mkfifo: option requires an argument -- m', newState: state, exitCode: 1 };
-                }
-                const modeStr = args[i + 1];
-                try {
-                    mode = parseInt(modeStr, 8);
-                    if (isNaN(mode)) throw new Error('Invalid octal');
-                } catch (e) {
-                    return { output: `mkfifo: invalid mode: '${modeStr}'`, newState: state, exitCode: 1 };
-                }
-                i++;
-            } else if (args[i].startsWith('-')) {
-                return { output: `mkfifo: invalid option -- '${args[i]}'`, newState: state, exitCode: 1 };
-            } else {
-                targets.push(args[i]);
+        if (modeStr) {
+            try {
+                mode = parseInt(modeStr, 8);
+                if (isNaN(mode)) throw new Error('Invalid octal');
+            } catch (e) {
+                return { output: `mkfifo: invalid mode: '${modeStr}'`, newState: state, exitCode: 1 };
             }
         }
 
-        if (targets.length === 0) {
+        if (operands.length === 0) {
             return { output: 'mkfifo: missing operand', newState: state, exitCode: 1 };
         }
 
         let output = '';
         let finalExitCode = 0;
 
-        for (const target of targets) {
+        for (const target of operands) {
             try {
                 this.fs.mkfifo(target, mode, 1000, 1000, state.currentDirectory);
             } catch (error: any) {

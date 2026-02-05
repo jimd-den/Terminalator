@@ -8,7 +8,7 @@
  * The chown utility shall change the user ID and/or group ID of the specified files.
  * 
  * THE EIGHT PILLARS OF THE CRAFT:
- * 1. Strict Architecture: Implements ICommand, uses IdentityService and FileSystemService.
+ * 1. Strict Architecture: Implements IStructuredCommand.
  * 2. Literate Documentation: Handles owner:group resolution and POSIX semantics.
  * 3. Dependency Minimalism: Standard domain services only.
  * 4. Telemetry: Ownership changes logged.
@@ -19,22 +19,33 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 
-import { ICommand, CommandResponse } from '../ICommand';
+import { CommandResponse } from '../ICommand';
+import { CommandBase } from '../CommandBase';
+import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { FileSystemService } from '../../services/FileSystemService';
 import { IdentityService } from '../../services/IdentityService';
 
-export class ChownCommand implements ICommand {
+export class ChownCommand extends CommandBase {
+    public readonly capabilities = [CommandCapability.MODIFY];
+    public readonly utility = 'chown';
+
     constructor(
         private fs: FileSystemService,
         private identityService: IdentityService
-    ) { }
+    ) { 
+        super();
+    }
 
-    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const flags = args.filter(a => a.startsWith('-'));
-        const operands = args.filter(a => !a.startsWith('-'));
-        const recursive = flags.includes('-R');
+    protected async executeInternal(
+        rawArgs: string[],
+        flags: Set<string>,
+        operands: string[],
+        context: ProcessContext,
+        state: TerminalState
+    ): Promise<CommandResponse> {
+        const recursive = flags.has('R');
 
         if (operands.length < 2) {
             return { output: 'chown: missing operand', newState: state, exitCode: 1 };
@@ -46,7 +57,6 @@ export class ChownCommand implements ICommand {
         let uid = -1;
         let gid = -1;
 
-        // Parse owner[:group] or owner[.group]
         const separator = ownerGroupSpec.includes(':') ? ':' : (ownerGroupSpec.includes('.') ? '.' : null);
 
         if (separator) {

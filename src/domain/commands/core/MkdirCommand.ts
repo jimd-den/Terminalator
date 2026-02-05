@@ -10,9 +10,11 @@ import { getStdinAsString } from '../../entities/ProcessContext';
  *
  * Intent:
  * Allows the operator to expand the file system hierarchy.
+ * Refactored to implement IStructuredCommand for combinatorial scaling.
  */
 
-import { ICommand } from '../ICommand';
+import { CommandBase } from '../CommandBase';
+import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
@@ -20,24 +22,27 @@ import { CommandResponse } from '../../entities/Command';
 import { FileSystemService } from '../../services/FileSystemService';
 import { ModeParser } from '../../services/ModeParser';
 
-export class MkdirCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+export class MkdirCommand extends CommandBase {
+    public readonly capabilities = [CommandCapability.MODIFY];
+    public readonly utility = 'mkdir';
 
-    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+    constructor(private fs: FileSystemService) {
+        super();
+    }
+
+    protected async executeInternal(
+        rawArgs: string[],
+        flags: Set<string>,
+        operands: string[],
+        context: ProcessContext,
+        state: TerminalState
+    ): Promise<CommandResponse> {
         const fsService = context.fileSystemService || this.fs;
-        const input = getStdinAsString(context);
-        this.logExecution('MkdirCommand.execute', { args, state });
+        
+        const parents = flags.has('p');
+        const modeStr = this.options.get('m');
 
-        const options = this.parseOptions(args);
-        if (options.error) {
-            return {
-                output: `mkdir: ${options.error}`,
-                newState: state,
-                exitCode: 1
-            };
-        }
-
-        if (options.targets.length === 0) {
+        if (operands.length === 0) {
             return {
                 output: 'mkdir: missing operand',
                 newState: state,
@@ -48,8 +53,8 @@ export class MkdirCommand implements ICommand {
         let exitCode = 0;
         let outputString = '';
 
-        for (const target of options.targets) {
-            const result = this.createPath(target, options, state, fsService);
+        for (const target of operands) {
+            const result = this.createPath(target, parents, modeStr, state, fsService);
             if (result.error) {
                 outputString += `mkdir: ${result.error}\n`;
                 exitCode = 1;
@@ -65,56 +70,14 @@ export class MkdirCommand implements ICommand {
         };
     }
 
-    private parseOptions(args: string[]): { parents: boolean, modeStr?: string, targets: string[], error?: string } {
-        let parents = false;
-        let modeStr: string | undefined;
-        let targets: string[] = [];
-        let i = 0;
-
-        while (i < args.length) {
-            const arg = args[i];
-            if (arg === '--') {
-                targets.push(...args.slice(i + 1));
-                break;
-            }
-            if (arg.startsWith('-') && arg.length > 1) {
-                const flagPart = arg.slice(1);
-                if (flagPart.startsWith('-')) { // Long options (not required by POSIX but good practice)
-                    // No long options for mkdir in POSIX
-                    return { parents: false, targets: [], error: `invalid option -- '${arg}'` };
-                }
-
-                let stop = false;
-                for (let j = 0; j < flagPart.length; j++) {
-                    const char = flagPart[j];
-                    if (char === 'p') {
-                        parents = true;
-                    } else if (char === 'm') {
-                        // Mode can be in next arg or rest of this arg
-                        if (j + 1 < flagPart.length) {
-                            modeStr = flagPart.slice(j + 1);
-                            stop = true;
-                        } else if (i + 1 < args.length) {
-                            modeStr = args[++i];
-                            stop = true;
-                        } else {
-                            return { parents: false, targets: [], error: "option requires an argument -- 'm'" };
-                        }
-                    } else {
-                        return { parents: false, targets: [], error: `invalid option -- '${char}'` };
-                    }
-                    if (stop) break;
-                }
-            } else {
-                targets.push(arg);
-            }
-            i++;
-        }
-
-        return { parents, modeStr, targets };
+    /**
+     * Override parseArgs to support -m value.
+     */
+    protected override parseArgs(args: string[]) {
+        super.parseArgs(args, ['m']);
     }
 
-    private createPath(target: string, options: any, state: TerminalState, fsService: FileSystemService): { error?: string } {
+    private createPath(target: string, parents: boolean, modeStr: string | undefined, state: TerminalState, fsService: FileSystemService): { error?: string } {
         const fullPath = this.resolvePath(target, state);
         const components = this.getPathComponents(fullPath);
 
@@ -129,17 +92,16 @@ export class MkdirCommand implements ICommand {
 
             current += (current === '/' ? '' : '/') + components[i];
 
-            // If component exists and is not a directory, that's an error for mkdir -p too if it's intermediate
             const existingNode = fsService.resolve(current);
             if (existingNode && !fsService.isDirectory(existingNode)) {
                 return { error: `cannot create directory '${target}': File exists` };
             }
         }
 
-        if (options.parents) {
-            return this.createPathWithParents(components, options.modeStr, state.user, fsService);
+        if (parents) {
+            return this.createPathWithParents(components, modeStr, state.user, fsService);
         } else {
-            return this.createSinglePath(fullPath, options.modeStr, state.user, fsService);
+            return this.createSinglePath(fullPath, modeStr, state.user, fsService);
         }
     }
 
@@ -156,8 +118,6 @@ export class MkdirCommand implements ICommand {
         }
 
         try {
-            // Default POSIX mode for mkdir is a=rwx (0777) modified by umask.
-            // Our sim uses 0755 as default.
             const mode = modeStr ? ModeParser.parse(modeStr, 0o777) : 0o755;
             fsService.mkdir(path, mode);
             return {};
@@ -176,12 +136,10 @@ export class MkdirCommand implements ICommand {
 
             if (!node) {
                 try {
-                    // POSIX: intermediate dirs created with mode 0 modified by u+wx
-                    // Final dir created with specified mode (or default)
                     const isLast = (i === len - 1);
                     const mode = isLast
                         ? (modeStr ? ModeParser.parse(modeStr, 0o777) : 0o755)
-                        : 0o755; // Intermediate default
+                        : 0o755;
 
                     fsService.mkdir(currentPath, mode);
                 } catch (e: any) {
@@ -199,7 +157,6 @@ export class MkdirCommand implements ICommand {
         const inode = fsService.getInode(dentry.inodeId);
         if (!inode) return false;
 
-        // Simplified permission check
         const mode = inode.mode;
         return (mode & 0o001) !== 0 || (typeof user === 'string' && user === 'operator' && (mode & 0o100) !== 0);
     }
@@ -231,10 +188,5 @@ export class MkdirCommand implements ICommand {
         const parts = path.split('/').filter(p => p.length > 0);
         if (parts.length <= 1) return '/';
         return '/' + parts.slice(0, -1).join('/');
-    }
-
-    private logExecution(fn: string, data: any) {
-        const timestamp = new Date().toISOString();
-        console.log(`[${timestamp}] ${fn} input:`, JSON.stringify(data));
     }
 }

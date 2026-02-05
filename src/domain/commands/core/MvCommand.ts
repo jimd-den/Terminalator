@@ -10,21 +10,24 @@ import { getStdinAsString } from '../../entities/ProcessContext';
  *
  * Intent:
  * Allows the operator to relocate nodes in the file system.
+ * Refactored to implement IStructuredCommand for combinatorial scaling.
  */
 
 import { CommandBase } from '../CommandBase';
+import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
 import { FileSystemService } from '../../services/FileSystemService';
 
 export class MvCommand extends CommandBase {
+    public readonly capabilities = [CommandCapability.MODIFY];
+    public readonly utility = 'mv';
+
     constructor(private fsService: FileSystemService) { super(); }
 
     executeInternal(args: string[], flags: Set<string>, operands: string[], context: ProcessContext, state: TerminalState): CommandResponse {
         const fsService = context.fileSystemService || this.fsService;
-        const input = getStdinAsString(context);
-        // Flags handled by base class (though Mv ignores most)
 
         if (operands.length < 2) {
             return {
@@ -37,12 +40,10 @@ export class MvCommand extends CommandBase {
         const sources = operands.slice(0, operands.length - 1);
         const destination = operands[operands.length - 1];
 
-        // Process destination
         const destPath = fsService.resolveAbsolutePath(destination, state.currentDirectory);
         const destNode = fsService.resolve(destPath);
         const destIsDir = destNode ? fsService.isDirectory(destNode) : destination.endsWith('/');
 
-        // If multiple sources, dest MUST be a directory
         if (sources.length > 1 && destNode && !destIsDir) {
             return {
                 output: `mv: target '${destination}' is not a directory`,
@@ -63,7 +64,6 @@ export class MvCommand extends CommandBase {
                 };
             }
 
-            // Check if source is directory and dest is file (FAIL)
             if (fsService.isDirectory(srcNode) && destNode && !fsService.isDirectory(destNode)) {
                 return {
                     output: `mv: cannot overwrite non-directory '${destination}' with directory '${source}'`,
@@ -78,9 +78,8 @@ export class MvCommand extends CommandBase {
                     finalDest = destPath === '/' ? `/${srcNode.name}` : `${destPath}/${srcNode.name}`;
                 }
 
-                // If finalDest is same as srcPath, do nothing and return 0
                 if (srcPath === finalDest) {
-                    continue; // No-op, exit code 0 implied for this item
+                    continue;
                 }
 
                 fsService.rename(srcPath, finalDest);

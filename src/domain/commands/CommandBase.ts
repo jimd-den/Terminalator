@@ -3,16 +3,24 @@
  *
  * Abstract base class for all Commands.
  * Provides DRY argument parsing and path resolution.
+ * Implements IStructuredCommand to support combinatorial generation.
  *
  * Pillar: The Four-Fold Shield (Strict Architecture)
  * Pillar: The DRY Principle (Shared Logic)
  */
 
-import { ICommand, CommandResponse } from './ICommand';
+import { CommandResponse } from './ICommand';
+import { IStructuredCommand, CommandCapability } from './IStructuredCommand';
 import { ProcessContext } from '../entities/ProcessContext';
 import { TerminalState } from '../entities/TerminalState';
 
-export abstract class CommandBase implements ICommand {
+export abstract class CommandBase implements IStructuredCommand {
+    /**
+     * Protocol Requirements
+     */
+    public abstract readonly capabilities: CommandCapability[];
+    public abstract readonly utility: string;
+
     /**
      * Parsing result structure
      */
@@ -40,10 +48,18 @@ export abstract class CommandBase implements ICommand {
     ): Promise<CommandResponse> | CommandResponse;
 
     /**
+     * Protocol: Build arguments programmatically.
+     * Default implementation handles basic flags and a single path.
+     */
+    public buildArgs(requirements: Record<string, any>): string[] {
+        const args: string[] = [];
+        if (requirements.flags) args.push(...requirements.flags);
+        if (requirements.path) args.push(requirements.path);
+        return args;
+    }
+
+    /**
      * Parses flags (starting with -) and operands.
-     * Supports:
-     * - Bundled flags: -rvf
-     * - Options with values: -m name (if defined in optionDefinitions)
      */
     protected parseArgs(args: string[], optionDefinitions: string[] = []) {
         this.flags = new Set();
@@ -61,7 +77,6 @@ export abstract class CommandBase implements ICommand {
             if (arg.startsWith('-') && arg !== '-') {
                 const flagStr = arg.substring(1);
 
-                // Check if it's a known option that takes a value
                 let handled = false;
                 for (const def of optionDefinitions) {
                     if (flagStr === def) {
@@ -71,7 +86,6 @@ export abstract class CommandBase implements ICommand {
                             break;
                         }
                     } else if (flagStr.startsWith(def)) {
-                        // Handle attached value: -mValue
                         this.options.set(def, flagStr.substring(def.length));
                         handled = true;
                         break;
@@ -79,7 +93,6 @@ export abstract class CommandBase implements ICommand {
                 }
 
                 if (!handled) {
-                    // Treat as flags (potentially bundled)
                     for (const char of flagStr) {
                         this.flags.add(char);
                     }
@@ -90,14 +103,7 @@ export abstract class CommandBase implements ICommand {
         }
     }
 
-    /**
-     * Helper to check for a specific flag char within any flag argument.
-     * e.g. hasFlag('r') checks for '-r', '-rf', '-fr', etc.
-     */
     protected hasFlag(char: string): boolean {
-        for (const flag of this.flags) {
-            if (flag.includes(char)) return true;
-        }
-        return false;
+        return this.flags.has(char);
     }
 }

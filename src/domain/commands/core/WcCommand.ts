@@ -4,43 +4,45 @@ import { getStdinAsString } from '../../entities/ProcessContext';
  *
  * Word, line, character, and byte count.
  *
- * Pillar: The Four-Fold Shield (Strict Architecture)
- * Pillar: The Swift Stream (Performance)
- * Pillar: The Storyteller’s Code (Literate Documentation)
+ * Pillar: THE FOUR-FOLD SHIELD (Strict Architecture)
+ * Pillar: THE Swift Stream (Performance)
+ * Pillar: THE Storyteller’s Code (Literate Documentation)
  *
  * Intent:
  * Allows the operator to count text metrics.
+ * Refactored to implement IStructuredCommand for combinatorial scaling.
  */
 
-import { ICommand } from '../ICommand';
+import { CommandBase } from '../CommandBase';
+import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
 
 import { FileSystemService } from '../../services/FileSystemService';
 
-export class WcCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+export class WcCommand extends CommandBase {
+    public readonly capabilities = [CommandCapability.READ, CommandCapability.FILTER];
+    public readonly utility = 'wc';
 
-    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+    constructor(private fs: FileSystemService) {
+        super();
+    }
+
+    protected async executeInternal(
+        rawArgs: string[],
+        flags: Set<string>,
+        operands: string[],
+        context: ProcessContext,
+        state: TerminalState
+    ): Promise<CommandResponse> {
         const input = getStdinAsString(context);
-        let countLines = false;
-        let countWords = false;
-        let countBytes = false;
-        let countChars = false;
+        const fsService = context.fileSystemService || this.fs;
 
-        const files: string[] = [];
-
-        for (const arg of args) {
-            if (arg.startsWith('-') && arg !== '-') {
-                if (arg.includes('l')) countLines = true;
-                if (arg.includes('w')) countWords = true;
-                if (arg.includes('c')) countBytes = true;
-                if (arg.includes('m')) countChars = true;
-            } else {
-                files.push(arg);
-            }
-        }
+        let countLines = flags.has('l');
+        let countWords = flags.has('w');
+        let countBytes = flags.has('c');
+        let countChars = flags.has('m');
 
         if (!countLines && !countWords && !countBytes && !countChars) {
             countLines = true;
@@ -49,7 +51,6 @@ export class WcCommand implements ICommand {
         }
 
         let output = '';
-
         let totalLines = 0;
         let totalWords = 0;
         let totalBytes = 0;
@@ -84,7 +85,7 @@ export class WcCommand implements ICommand {
             return part.trimStart();
         };
 
-        if (files.length === 0) {
+        if (operands.length === 0) {
             if (input !== undefined) {
                 output = processContent(input);
             } else {
@@ -92,13 +93,9 @@ export class WcCommand implements ICommand {
             }
         } else {
             let exitCode = 0;
-            for (const filename of files) {
+            for (const filename of operands) {
                 if (filename === '-') {
-                    if (input !== undefined) {
-                        output += processContent(input, '-') + '\n';
-                    } else {
-                        output += processContent('', '-') + '\n';
-                    }
+                    output += processContent(input || '', '-') + '\n';
                     continue;
                 }
 
@@ -109,7 +106,7 @@ export class WcCommand implements ICommand {
                         : `${state.currentDirectory}/${filename}`;
                 }
 
-                const node = this.fs.resolve(path);
+                const node = fsService.resolve(path);
 
                 if (!node) {
                     output += `wc: ${filename}: No such file or directory\n`;
@@ -117,7 +114,7 @@ export class WcCommand implements ICommand {
                     continue;
                 }
 
-                if (this.fs.isDirectory(node)) {
+                if (fsService.isDirectory(node)) {
                     output += `wc: ${filename}: Is a directory\n`;
                     output += ` 0 0 0 ${filename}\n`;
                     exitCode = 1;
@@ -125,8 +122,7 @@ export class WcCommand implements ICommand {
                 }
 
                 try {
-                    const raw = this.fs.readFileBuffer(path);
-                    const content = typeof raw === 'string' ? raw : new TextDecoder().decode(raw);
+                    const content = fsService.readFile(path);
                     output += processContent(content, filename) + '\n';
                 } catch (e: any) {
                     output += `wc: ${filename}: ${e.message}\n`;
@@ -134,7 +130,7 @@ export class WcCommand implements ICommand {
                 }
             }
 
-            if (files.length > 1) {
+            if (operands.length > 1) {
                 let totalPart = '';
                 if (countLines) totalPart += ` ${totalLines}`;
                 if (countWords) totalPart += ` ${totalWords}`;

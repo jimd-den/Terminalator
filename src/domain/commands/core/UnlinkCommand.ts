@@ -9,27 +9,36 @@ import { getStdinAsString } from '../../entities/ProcessContext';
  *
  * Intent:
  * Remove a directory entry.
+ * Refactored to implement IStructuredCommand for combinatorial scaling.
  */
 
-import { ICommand } from '../ICommand';
+import { CommandBase } from '../CommandBase';
+import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
 
-import { FileSystem } from '../../entities/FileSystem';
+export class UnlinkCommand extends CommandBase {
+    public readonly capabilities = [CommandCapability.MODIFY];
+    public readonly utility = 'unlink';
 
-export class UnlinkCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+    constructor(private fs: FileSystemService) { 
+        super();
+    }
 
-    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = getStdinAsString(context);
-        const files = args.filter(a => !a.startsWith('-'));
-        if (files.length === 0) {
+    protected async executeInternal(
+        rawArgs: string[],
+        flags: Set<string>,
+        operands: string[],
+        context: ProcessContext,
+        state: TerminalState
+    ): Promise<CommandResponse> {
+        if (operands.length === 0) {
             return { output: 'unlink: missing operand', newState: state, exitCode: 1 };
         }
 
-        const file = files[0]; // unlink takes exactly one argument usually? POSIX says "file". Singular.
+        const file = operands[0];
 
         try {
             const path = this.resolvePath(file, state);
@@ -38,7 +47,6 @@ export class UnlinkCommand implements ICommand {
                 return { output: `unlink: cannot unlink '${file}': No such file or directory`, newState: state, exitCode: 1 };
             }
 
-            // Check if directory
             const inode = this.fs.getInode(node.inodeId);
             if (inode!.mode & 0o040000) {
                 return { output: `unlink: cannot unlink '${file}': Is a directory`, newState: state, exitCode: 1 };

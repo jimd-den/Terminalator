@@ -10,9 +10,11 @@ import { getStdinAsString } from '../../entities/ProcessContext';
  *
  * Intent:
  * Allows the operator to duplicate data.
+ * Refactored to implement IStructuredCommand for combinatorial scaling.
  */
 
 import { CommandBase } from '../CommandBase';
+import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
@@ -20,11 +22,14 @@ import { FileSystemService } from '../../services/FileSystemService';
 import { DirectoryNode } from '../../entities/filesystem/DirectoryNode';
 
 export class CpCommand extends CommandBase {
+    public readonly capabilities = [CommandCapability.MODIFY];
+    public readonly utility = 'cp';
+
     constructor(private fsService: FileSystemService) { super(); }
 
     executeInternal(args: string[], flags: Set<string>, operands: string[], context: ProcessContext, state: TerminalState): CommandResponse {
         const fsService = context.fileSystemService || this.fsService;
-        const recursive = this.hasFlag('r') || this.hasFlag('R');
+        const recursive = flags.has('r') || flags.has('R');
 
         if (operands.length < 2) {
             return {
@@ -37,12 +42,10 @@ export class CpCommand extends CommandBase {
         const sources = operands.slice(0, operands.length - 1);
         const destination = operands[operands.length - 1];
 
-        // Process destination
         const destPath = fsService.resolveAbsolutePath(destination, state.currentDirectory);
         const destNode = fsService.resolve(destPath);
         const destIsDir = destNode ? fsService.isDirectory(destNode) : destination.endsWith('/');
 
-        // If multiple sources, dest MUST be a directory
         if (sources.length > 1 && destNode && !destIsDir) {
             return {
                 output: `cp: target '${destination}' is not a directory`,
@@ -74,7 +77,6 @@ export class CpCommand extends CommandBase {
                     };
                 }
 
-                // Recursive copy logic
                 try {
                     let finalDest = destPath;
                     if (destIsDir) {
@@ -91,7 +93,6 @@ export class CpCommand extends CommandBase {
                 }
 
             } else {
-                // File copy
                 try {
                     let finalDest = destPath;
                     if (destIsDir) {
@@ -118,7 +119,6 @@ export class CpCommand extends CommandBase {
     }
 
     private copyRecursive(srcPath: string, destPath: string, fsService: FileSystemService) {
-        // Create destination directory
         if (!fsService.resolve(destPath)) {
             fsService.mkdir(destPath, 0o755);
         }

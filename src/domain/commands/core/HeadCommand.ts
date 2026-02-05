@@ -10,41 +10,43 @@ import { getStdinAsString } from '../../entities/ProcessContext';
  *
  * Intent:
  * Allows the operator to view the beginning of files.
+ * Refactored to implement IStructuredCommand for combinatorial scaling.
  */
 
-import { ICommand } from '../ICommand';
+import { CommandBase } from '../CommandBase';
+import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
 
 import { FileSystemService } from '../../services/FileSystemService';
 
-export class HeadCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+export class HeadCommand extends CommandBase {
+    public readonly capabilities = [CommandCapability.READ, CommandCapability.FILTER];
+    public readonly utility = 'head';
 
-    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+    constructor(private fs: FileSystemService) {
+        super();
+    }
+
+    protected override parseArgs(args: string[]) {
+        super.parseArgs(args, ['n']);
+    }
+
+    protected async executeInternal(
+        rawArgs: string[],
+        flags: Set<string>,
+        operands: string[],
+        context: ProcessContext,
+        state: TerminalState
+    ): Promise<CommandResponse> {
         const input = getStdinAsString(context);
+        const fsService = context.fileSystemService || this.fs;
+        
         let linesToPrint = 10;
-        const operands = [];
-
-        let skipNext = false;
-
-        for (let i = 0; i < args.length; i++) {
-            if (skipNext) {
-                skipNext = false;
-                continue;
-            }
-
-            if (args[i] === '-n') {
-                if (i + 1 < args.length) {
-                    linesToPrint = parseInt(args[i + 1]);
-                    skipNext = true;
-                }
-            } else if (args[i].startsWith('-') && args[i] !== '-') {
-                // Ignore
-            } else {
-                operands.push(args[i]);
-            }
+        const nOption = this.options.get('n');
+        if (nOption) {
+            linesToPrint = parseInt(nOption);
         }
 
         const getHead = (content: string): string => {
@@ -78,7 +80,7 @@ export class HeadCommand implements ICommand {
             }
 
             try {
-                const content = this.fs.readFile(path);
+                const content = fsService.readFile(path);
                 output += getHead(content);
             } catch (error: any) {
                 output += `head: cannot open '${filename}' for reading: No such file or directory`;
