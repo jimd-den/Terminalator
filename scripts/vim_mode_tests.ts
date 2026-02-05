@@ -68,11 +68,34 @@ function testNormalModeWordMovement() {
     console.log("PASS");
 }
 
+function testNormalModeDeleteMotion() {
+    console.log("Testing NormalMode delete motion (dw, d$)...");
+    const mode = new NormalMode();
+    const buffer = new EditorBuffer("test.txt", "hello world");
+    const cmdMgr = new VimCommandManager(buffer);
+    const state = new VimStateEntity('NORMAL', { line: 0, col: 0 });
+
+    // dw
+    mode.handleKey('d', state, buffer, cmdMgr);
+    if (state.pendingAction !== 'DELETE') throw new Error("Should set pendingAction to DELETE");
+    mode.handleKey('w', state, buffer, cmdMgr);
+    if (buffer.getLine(0) !== "world") throw new Error(`dw failed. Got: ${buffer.getLine(0)}`);
+
+    // d$
+    state.cursor.col = 1; // at 'o' in 'world'
+    mode.handleKey('d', state, buffer, cmdMgr);
+    mode.handleKey('$', state, buffer, cmdMgr);
+    if (buffer.getLine(0) !== "w") throw new Error(`d$ failed. Got: ${buffer.getLine(0)}`);
+
+    console.log("PASS");
+}
+
 try {
     testNormalModeNavigation();
     testNormalModeTransitions();
     testNormalModeDeletion();
     testNormalModeWordMovement();
+    testNormalModeDeleteMotion();
     console.log("\nPHASE 2 TASK 2 PASSED");
 } catch (e) {
     console.error(`\nTEST FAILED: ${e}`);

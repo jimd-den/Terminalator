@@ -3,6 +3,7 @@ import { IVimCommand } from '../../entities/vim/IVimCommand';
 import { CommandHistory } from './CommandHistory';
 import { InsertCharCommand } from '../../entities/vim/commands/InsertCharCommand';
 import { DeleteCharCommand } from '../../entities/vim/commands/DeleteCharCommand';
+import { DeleteRangeCommand } from '../../entities/vim/commands/DeleteRangeCommand';
 
 /**
  * VimCommandManager - Domain Layer Use Case
@@ -29,6 +30,11 @@ export class VimCommandManager {
 
     public deleteChar(line: number, col: number): void {
         const cmd = new DeleteCharCommand(this.buffer, line, col);
+        this.execute(cmd);
+    }
+
+    public deleteRange(line: number, startCol: number, endCol: number): void {
+        const cmd = new DeleteRangeCommand(this.buffer, line, startCol, endCol);
         this.execute(cmd);
     }
 

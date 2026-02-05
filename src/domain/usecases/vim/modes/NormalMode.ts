@@ -20,6 +20,11 @@ export class NormalMode implements IVimMode {
         buffer: IVimBuffer,
         commands: VimCommandManager
     ): string | null {
+        // Handle pending actions (e.g., 'd' was pressed)
+        if (state.pendingAction === 'DELETE') {
+            return this.handleDeleteAction(key, state, buffer, commands);
+        }
+
         switch (key) {
             case 'h': this.moveCursor(state, 0, -1); break;
             case 'j': this.moveCursor(state, 1, 0); break;
@@ -35,6 +40,10 @@ export class NormalMode implements IVimMode {
             case '$':
                 const eolPos = MotionStrategy.findEndOfLine(buffer, state.cursor.line);
                 state.cursor.col = eolPos.col;
+                break;
+
+            case 'd':
+                state.pendingAction = 'DELETE';
                 break;
 
             case 'i': 
@@ -55,12 +64,40 @@ export class NormalMode implements IVimMode {
                 commands.undo();
                 break;
             
-            case 'CTRL_R': // Simplified for now
+            case 'CTRL_R':
                 commands.redo();
                 break;
         }
 
         return null; // Stay in Normal
+    }
+
+    private handleDeleteAction(key: string, state: IVimState, buffer: IVimBuffer, commands: VimCommandManager): string | null {
+        state.pendingAction = null; 
+
+        switch (key) {
+            case 'w':
+                const nextPos = MotionStrategy.findNextWordStart(buffer, state.cursor.line, state.cursor.col);
+                // 'dw' deletes from cursor to before next word start
+                if (nextPos.col > state.cursor.col) {
+                    commands.deleteRange(state.cursor.line, state.cursor.col, nextPos.col - 1);
+                } else {
+                    // If we are at the end of line, 'dw' might delete current char or nothing
+                    commands.deleteChar(state.cursor.line, state.cursor.col);
+                }
+                break;
+            case '$':
+                const eolPos = MotionStrategy.findEndOfLine(buffer, state.cursor.line);
+                commands.deleteRange(state.cursor.line, state.cursor.col, eolPos.col);
+                break;
+            case 'd': // 'dd'
+                const fullLine = MotionStrategy.findEndOfLine(buffer, state.cursor.line);
+                commands.deleteRange(state.cursor.line, 0, fullLine.col);
+                break;
+            case 'ESC':
+                break;
+        }
+        return null;
     }
 
     private moveCursor(state: IVimState, dLine: number, dCol: number): void {
