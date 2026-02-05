@@ -14,7 +14,7 @@
 - [x] Task: Conductor - User Manual Verification 'Persistent Tutor Bar' (Protocol in workflow.md)
 
 ## Phase 3: Mission Control & Navigation
-- [ ] Task: Implement `MissionManager` Use Case for "Start" and "Exit" flows.
+- [x] Task: Implement `MissionManager` Use Case for "Start" and "Exit" flows.
     - [ ] Write Tests: State transitions between "In Mission" and "Dashboard".
     - [ ] Implement: Logic to unload mission resources and save progress.
 - [ ] Task: Add Integrated Command Mode Actions (e.g., :exit, :mission).
