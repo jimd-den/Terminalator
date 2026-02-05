@@ -1,7 +1,7 @@
 # Implementation Plan - Refactor Tutor Architecture for Persistence and Concurrency
 
 ## Phase 1: Logic Migration (Humble Object)
-- [ ] Task: Extend `TutorBrain` to handle `GameManager` events.
+- [~] Task: Extend `TutorBrain` to handle `GameManager` events.
     - [ ] Write Tests: Brain receives 'COMMAND_EXECUTED' and decides whether to speak.
     - [ ] Implement: `TutorBrain.observe(gameManager)`.
 - [ ] Task: Move "Random Comment" logic to `TutorBrain`.
