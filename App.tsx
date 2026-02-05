@@ -6,8 +6,6 @@
 
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { TerminalScreen } from './src/frameworks-drivers/ui/screens/TerminalScreen';
-
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts, SpaceMono_400Regular, SpaceMono_700Bold } from '@expo-google-fonts/space-mono';
 import { RobotoMono_400Regular } from '@expo-google-fonts/roboto-mono';
@@ -19,9 +17,21 @@ import { GameProvider } from './src/frameworks-drivers/ui/context/GameContext';
 import { ThemeProvider } from './src/frameworks-drivers/ui/context/ThemeContext';
 import { InputProvider } from './src/frameworks-drivers/ui/context/InputContext';
 import { AppNavigator } from './src/frameworks-drivers/ui/navigation/AppNavigator';
-import { GlobalTutorBar } from './src/frameworks-drivers/ui/components/GlobalTutorBar';
 import { AppInitializer } from './src/frameworks-drivers/ui/components/AppInitializer';
-import { View, StyleSheet } from 'react-native';
+import { useTutorMessagingController } from './src/frameworks-drivers/ui/hooks/useTutorMessagingController';
+
+/**
+ * AppContent - Component to safely use hooks that require GameProvider/ThemeProvider
+ */
+function AppContent() {
+  useTutorMessagingController();
+  
+  return (
+    <NavigationContainer>
+      <AppNavigator />
+    </NavigationContainer>
+  );
+}
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -43,9 +53,7 @@ export default function App() {
         <ThemeProvider>
           <InputProvider>
             <AppInitializer />
-            <NavigationContainer>
-              <AppNavigator />
-            </NavigationContainer>
+            <AppContent />
           </InputProvider>
         </ThemeProvider>
       </GameProvider>
