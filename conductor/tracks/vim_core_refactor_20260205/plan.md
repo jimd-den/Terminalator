@@ -19,7 +19,7 @@
 ## Phase 3: Advanced Motions (Strategy Pattern)
 - [x] Task: Implement `MotionStrategy` utilities. 9f0c15f
     - [ ] TDD: Test `findNextWordStart` and `findEndOfLine` logic.
-- [ ] Task: Implement word-wise movement (`w`, `b`, `e`) in `NormalMode`.
+- [x] Task: Implement word-wise movement (`w`, `b`, `e`) in `NormalMode`. 3124729
 - [ ] Task: Implement `DeleteMotionCommand` (e.g., `dw`, `d$`).
 
 ## Phase 4: Command Mode & I/O
