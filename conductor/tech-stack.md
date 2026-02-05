@@ -12,6 +12,7 @@
     - `TutorBrain`: Persona orchestration engine.
     - `TutorSpy`: Performance analysis engine (WPM, Accuracy, Stalls).
     - `MasteryTracker`: Command-level skill tracking algorithm.
+    - `TutorMessagingService`: Serialized message delivery system with UI synchronization.
   - **System Simulation:** 
     - `FileSystem`: A custom, in-memory/persistent POSIX-compliant file system abstraction.
     - `ProcessManager`: Simulation of process life cycles, signals, and job control.
@@ -26,6 +27,8 @@
   - **Entities:** Pure business logic (e.g., `Command.ts`, `FileSystem.ts`).
   - **Use Cases:** Application-specific business rules.
   - **Interface Adapters:** Mappers and controllers (e.g., `GameManager`, `WorldManager`).
+    - `DiskCreditRepository`, `DiskMasteryRepository`: Port implementations for simulated persistence.
+    - `useTutorMessagingController`: Humble Object wiring domain logic to UI.
   - **Frameworks & Drivers:** UI components and external service integrations.
 
 ## Infrastructure & Tools
