@@ -1,8 +1,8 @@
 # Implementation Plan - Core Tutor-Integrated Vim Interface & IRC-Style Interaction
 
 ## Phase 1: Architecture & Vim Engine Refactor
-- [ ] Task: Create specific Clean Architecture directory structure for Vim Engine if not present (Entities, Use Cases, Interface Adapters).
-- [ ] Task: Define `IVimState` and `IVimBuffer` interfaces (Entities).
+- [x] Task: Create specific Clean Architecture directory structure for Vim Engine if not present (Entities, Use Cases, Interface Adapters). e300d79
+- [x] Task: Define `IVimState` and `IVimBuffer` interfaces (Entities). e300d79
     - [ ] Write Tests: Ensure interfaces allow for text manipulation and mode switching.
     - [ ] Implement: Create core `VimState` entity.
 - [ ] Task: Implement `VimInputHandler` Use Case (The "IRC Tab" Logic).
