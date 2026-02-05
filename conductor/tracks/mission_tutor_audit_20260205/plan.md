@@ -13,10 +13,10 @@ This plan outlines the steps to audit the Mission Generator's combinatorial capa
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Tutor Contextual Logic' (Protocol in workflow.md)
 
 ## Phase 3: Pattern Identification & Roadmap
-- [ ] Task: Identify opportunities for the **Combinatorial Factory** pattern to scale mission variety to 10,000+ permutations.
-- [ ] Task: Design the architecture for a **Dynamic Response Interpreter** (Visitor/Interpreter pattern) to replace hardcoded hand-holding.
-- [ ] Task: Document the "Mastery-to-Mission" binding logic to ensure incremental UNIX pedagogy is preserved at scale.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Pattern Identification' (Protocol in workflow.md)
+- [x] Task: Identify opportunities for the **Combinatorial Factory** pattern to scale mission variety to 10,000+ permutations.
+- [x] Task: Design the architecture for a **Dynamic Response Interpreter** (Visitor/Interpreter pattern) to replace hardcoded hand-holding.
+- [x] Task: Document the "Mastery-to-Mission" binding logic to ensure incremental UNIX pedagogy is preserved at scale.
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Pattern Identification' (Protocol in workflow.md)
 
 ## Phase 4: Final Reporting
 - [ ] Task: Compile all findings into `MISSION_PERMUTATION_AUDIT_REPORT.md`, including the POSIX Coverage Map and architectural roadmap.
