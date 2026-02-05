@@ -25,7 +25,7 @@
 - [x] Task: Synchronize Crash Effects with Tutor State.
     - [ ] Write Tests: Ensure "shake" triggers only on specific Tutor states (CRITICAL/WARN).
     - [ ] Implement: `useTutorAnimation` hook that binds UI effects to `activeTutorMessage.type`.
-- [ ] Task: Implement Scheme & Assembly Language Support.
+- [~] Task: Implement Scheme - [ ] Task: Implement Scheme & Assembly Assembly Language Support.
     - [ ] Write Tests: Syntax highlighter recognizes `.scm` and `.asm` tokens.
     - [ ] Implement: `LanguageService` with basic linting/parsing for Scheme and ASM.
 - [ ] Task: Create `CompilerService` / `InterpreterService`.
