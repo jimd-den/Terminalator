@@ -60,7 +60,7 @@ export const StandardLayout: React.FC<LayoutProps> = ({
             fontSize: THEME.typography.fontSize.sm,
         },
         topBox: {
-            flex: 1, // Changed from 2 to 1 to give more space to other components
+            flex: 1,
             paddingHorizontal: THEME.spacing.xl,
             paddingTop: THEME.spacing.xl,
             backgroundColor: 'transparent',
@@ -69,7 +69,7 @@ export const StandardLayout: React.FC<LayoutProps> = ({
             paddingHorizontal: THEME.spacing.xl,
             paddingBottom: THEME.spacing.xl,
             backgroundColor: 'transparent',
-            minHeight: 100, // Explicit minHeight
+            minHeight: 100,
             justifyContent: 'center',
         },
     });
@@ -92,7 +92,7 @@ export const StandardLayout: React.FC<LayoutProps> = ({
                 )}
 
                 <View style={dynamicStyles.mainRow}>
-                        {/* TOP BOX: Output/Environment/Buffer */}
+                    <View style={dynamicStyles.leftColumn}>
                         <View style={dynamicStyles.topBox}>
                             {topContent}
                         </View>
