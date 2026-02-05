@@ -20,7 +20,7 @@
 - [x] Task: Implement `MotionStrategy` utilities. 9f0c15f
     - [ ] TDD: Test `findNextWordStart` and `findEndOfLine` logic.
 - [x] Task: Implement word-wise movement (`w`, `b`, `e`) in `NormalMode`. 3124729
-- [ ] Task: Implement `DeleteMotionCommand` (e.g., `dw`, `d$`).
+- [x] Task: Implement `DeleteMotionCommand` (e.g., `dw`, `d$`). ef889fd
 
 ## Phase 4: Command Mode & I/O
 - [ ] Task: Extract Command Mode (`:`) logic into a Use Case.
