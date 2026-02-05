@@ -14,7 +14,7 @@
     - [ ] TDD: Verify mode transition logic in isolation.
 - [x] Task: Implement `InsertMode` Strategy. 1478630
     - [ ] Handle `BACKSPACE`, `ENTER`, and character delegation to `InsertCharCommand`.
-- [ ] Task: Refactor `VimEngine` to delegate to the active `IVimMode`.
+- [x] Task: Refactor `VimEngine` to delegate to the active `IVimMode`. 9a6b9d1
 
 ## Phase 3: Advanced Motions (Strategy Pattern)
 - [ ] Task: Implement `MotionStrategy` utilities.
