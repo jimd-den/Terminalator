@@ -76,6 +76,45 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [isInputLocked, setInputLocked] = useState(false);
     const [isTutorTyping, setIsTutorTyping] = useState(false);
 
+    // Queue Consumer Logic
+    useEffect(() => {
+        let isMounted = true;
+        let isProcessing = false;
+
+        const processQueue = async () => {
+            if (isProcessing) return;
+            isProcessing = true;
+
+            let msg = await tutorMessaging.getNextMessage();
+            while (msg && isMounted) {
+                setIsTutorTyping(true);
+                const delay = Math.min(2000, 500 + msg.text.length * 20);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                
+                if (!isMounted) break;
+                setIsTutorTyping(false);
+                setActiveTutorMessage(msg);
+
+                // Reading delay
+                const next = await tutorMessaging.getAllMessages();
+                if (next.length > 0) {
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                }
+                msg = await tutorMessaging.getNextMessage();
+            }
+            isProcessing = false;
+        };
+
+        const unsubscribe = tutorMessaging.subscribe(() => {
+            processQueue();
+        });
+
+        return () => {
+            isMounted = false;
+            unsubscribe();
+        };
+    }, [tutorMessaging]);
+
     // Create service for adapters that need it (GameManager, Executor)
     const [fsService] = useState(() => new FileSystemService(fs));
 
@@ -83,17 +122,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [commandExecutor] = useState(() => new GameCommandExecutor(fsService, gameManager, networkMap, telemetry));
 
     const sendTutorMessage = useCallback(async (text: string, type: TutorMessage['type'] = 'info', sender: string = 'TUTOR') => {
-        console.log(`[TutorService] Preparing message: "${text}"`);
-        setIsTutorTyping(true);
-        
-        const delay = Math.min(2000, 500 + text.length * 20);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        
-        setIsTutorTyping(false);
         await tutorMessaging.sendMessage(text, type, sender);
-        const messages = await tutorMessaging.getAllMessages();
-        const lastMsg = messages[messages.length - 1];
-        setActiveTutorMessage(lastMsg);
     }, [tutorMessaging]);
 
     const refreshCredits = useCallback(async () => {

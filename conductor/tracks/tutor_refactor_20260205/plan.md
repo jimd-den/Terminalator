@@ -20,7 +20,7 @@
 - [x] Task: Conductor - User Manual Verification 'Persistence Layer' (Protocol in workflow.md) c40cf7d
 
 ## Phase 3: Concurrency & Queue Consumption
-- [ ] Task: Implement `TutorMessageQueue` Logic in Domain.
+- [~] Task: Implement `TutorMessageQueue` Logic in Domain.
     - [ ] Ensure `TutorMessagingService` is the single source of truth.
 - [ ] Task: Implement `useTutorQueue` Hook.
     - [ ] Implement: A hook that polls the service, handles the typing delay state locally, and ensures serial playback.
