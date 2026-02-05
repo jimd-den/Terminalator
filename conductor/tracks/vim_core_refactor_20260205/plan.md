@@ -22,6 +22,6 @@
 - [x] Task: Implement word-wise movement (`w`, `b`, `e`) in `NormalMode`. 3124729
 - [x] Task: Implement `DeleteMotionCommand` (e.g., `dw`, `d$`). ef889fd
 
-## Phase 4: Command Mode & I/O [checkpoint: 4703cba]
+## Phase 4: Command Mode & I/O [checkpoint: 03fc228]
 - [x] Task: Extract Command Mode (`:`) logic into a Use Case. 4703cba
 - [x] Task: Decouple `VimSimulator` from direct `:w` implementation via a `SaveBuffer` Use Case. 4703cba
