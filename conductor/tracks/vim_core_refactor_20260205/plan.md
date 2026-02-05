@@ -16,7 +16,7 @@
     - [x] Handle `BACKSPACE`, `ENTER`, and character delegation to `InsertCharCommand`.
 - [x] Task: Refactor `VimEngine` to delegate to the active `IVimMode`. 9a6b9d1
 
-## Phase 3: Advanced Motions (Strategy Pattern)
+## Phase 3: Advanced Motions (Strategy Pattern) [checkpoint: c9fb06e]
 - [x] Task: Implement `MotionStrategy` utilities. 9f0c15f
     - [ ] TDD: Test `findNextWordStart` and `findEndOfLine` logic.
 - [x] Task: Implement word-wise movement (`w`, `b`, `e`) in `NormalMode`. 3124729
