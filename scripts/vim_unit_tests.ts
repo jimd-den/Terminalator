@@ -1,5 +1,6 @@
 import { VimStateEntity } from '../src/domain/entities/vim/VimStateEntity';
 import { VimInputHandler } from '../src/domain/usecases/vim/VimInputHandler';
+import { VimCommandManager } from '../src/domain/usecases/vim/VimCommandManager';
 import { IVimBuffer } from '../src/domain/entities/vim/IVimBuffer';
 import { VimEngine } from '../src/domain/entities/VimEngine';
 import { EditorBuffer } from '../src/domain/entities/EditorBuffer';
@@ -43,11 +44,12 @@ function testVimInputHandlerModeSwitch() {
     const handler = new VimInputHandler();
     const state = new VimStateEntity('NORMAL');
     const buffer = new MockBuffer(['hello']);
+    const commands = new VimCommandManager(buffer);
     
-    let nextState = handler.handleKey('i', state, buffer);
+    let nextState = handler.handleKey('i', state, buffer, commands);
     if (nextState.mode !== 'INSERT') throw new Error("Should switch to INSERT mode on 'i'");
     
-    nextState = handler.handleKey('ESC', nextState, buffer);
+    nextState = handler.handleKey('ESC', nextState, buffer, commands);
     if (nextState.mode !== 'NORMAL') throw new Error("Should switch to NORMAL mode on 'ESC'");
     
     console.log("PASS");

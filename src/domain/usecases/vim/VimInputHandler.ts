@@ -1,20 +1,38 @@
 import { IVimState } from '../../entities/vim/IVimState';
 import { IVimBuffer } from '../../entities/vim/IVimBuffer';
 import { VimStateEntity } from '../../entities/vim/VimStateEntity';
+import { IVimMode } from './IVimMode';
+import { NormalMode } from './modes/NormalMode';
+import { InsertMode } from './modes/InsertMode';
+import { CommandMode } from './modes/CommandMode';
+import { VimCommandManager } from './VimCommandManager';
 
+/**
+ * VimInputHandler - Domain Layer Use Case (State Pattern Context)
+ * 
+ * Orchestrates the delegation of key inputs to the active mode strategy.
+ * 
+ * Pillar: THE MASTER’S TOOL (State Pattern)
+ */
 export class VimInputHandler {
-    public handleKey(key: string, state: IVimState, buffer: IVimBuffer): IVimState {
-        // We expect state to be a VimStateEntity or at least have a clone method
+    private modes: Map<string, IVimMode> = new Map();
+
+    constructor() {
+        this.modes.set('NORMAL', new NormalMode());
+        this.modes.set('INSERT', new InsertMode());
+        this.modes.set('COMMAND', new CommandMode());
+    }
+
+    public handleKey(key: string, state: IVimState, buffer: IVimBuffer, commands: VimCommandManager): IVimState {
+        // 1. Create a working copy of the state (Immutability where possible)
         const nextState = (state as VimStateEntity).clone 
             ? (state as VimStateEntity).clone() 
             : new VimStateEntity(state.mode, { ...state.cursor }, state.pendingAction, state.statusMessage, [...state.lintErrors], state.isLocked || false);
 
-        if (nextState.isLocked) {
-            // Only allow ESC to unlock if we want that, but normally Tutor controls it.
-            // For now, if locked, we do nothing.
-            return nextState;
-        }
+        // 2. Guards
+        if (nextState.isLocked) return nextState;
 
+        // 3. Global Keys (like ESC)
         if (key === 'ESC') {
             nextState.mode = 'NORMAL';
             nextState.pendingAction = null;
@@ -23,91 +41,36 @@ export class VimInputHandler {
             return nextState;
         }
 
-        switch (nextState.mode) {
-            case 'NORMAL':
-                this.handleNormalMode(key, nextState, buffer);
-                break;
-            case 'INSERT':
-                this.handleInsertMode(key, nextState, buffer);
-                break;
-            case 'COMMAND':
-                this.handleCommandMode(key, nextState, buffer);
-                break;
+        // 4. Delegate to Strategy (State Pattern)
+        const modeStrategy = this.modes.get(nextState.mode);
+        if (modeStrategy) {
+            const result = modeStrategy.handleKey(key, nextState, buffer, commands);
+            
+            // Handle Mode Transition
+            if (result && result !== nextState.mode) {
+                nextState.mode = result as any;
+                this.updateStatusForMode(nextState);
+            }
         }
 
+        // 5. Post-process (Invariant enforcement)
         this.clampCursor(nextState, buffer);
+        
         return nextState;
     }
 
-    private handleNormalMode(key: string, state: IVimState, buffer: IVimBuffer): void {
-        switch (key) {
-            case 'h': this.moveCursor(state, 0, -1); break;
-            case 'j': this.moveCursor(state, 1, 0); break;
-            case 'k': this.moveCursor(state, -1, 0); break;
-            case 'l': this.moveCursor(state, 0, 1); break;
-            case 'i': state.mode = 'INSERT'; state.statusMessage = '-- INSERT --'; break;
-            case 'a':
-                this.moveCursor(state, 0, 1);
-                state.mode = 'INSERT';
+    private updateStatusForMode(state: IVimState): void {
+        switch (state.mode) {
+            case 'NORMAL':
+                state.statusMessage = '';
+                break;
+            case 'INSERT':
                 state.statusMessage = '-- INSERT --';
                 break;
-            case ':': state.mode = 'COMMAND'; state.statusMessage = ':'; break;
-            case 'x':
-                this.deleteCharAtCursor(state, buffer);
+            case 'COMMAND':
+                state.statusMessage = ':';
                 break;
         }
-    }
-
-    private handleInsertMode(key: string, state: IVimState, buffer: IVimBuffer): void {
-        if (key === 'BACKSPACE') {
-            this.handleBackspace(state, buffer);
-        } else if (key === 'ENTER' || key === '\\n') {
-            buffer.splitLine(state.cursor.line, state.cursor.col);
-            state.cursor.line++;
-            state.cursor.col = 0;
-        } else if (key.length === 1) {
-            const line = buffer.getLine(state.cursor.line);
-            const newLine = line.slice(0, state.cursor.col) + key + line.slice(state.cursor.col);
-            buffer.updateLine(state.cursor.line, newLine);
-            state.cursor.col++;
-        }
-    }
-
-    private handleCommandMode(key: string, state: IVimState, buffer: IVimBuffer): void {
-        if (key === 'ENTER' || key === '\\n') {
-            state.mode = 'NORMAL';
-            state.statusMessage = '';
-        } else {
-            state.statusMessage += key;
-        }
-    }
-
-    private handleBackspace(state: IVimState, buffer: IVimBuffer): void {
-        if (state.cursor.col > 0) {
-            const line = buffer.getLine(state.cursor.line);
-            const newLine = line.slice(0, state.cursor.col - 1) + line.slice(state.cursor.col);
-            buffer.updateLine(state.cursor.line, newLine);
-            state.cursor.col--;
-        } else if (state.cursor.line > 0) {
-            const prevLineIdx = state.cursor.line - 1;
-            const prevLineLen = buffer.getLine(prevLineIdx).length;
-            buffer.joinLines(prevLineIdx);
-            state.cursor.line = prevLineIdx;
-            state.cursor.col = prevLineLen;
-        }
-    }
-
-    private deleteCharAtCursor(state: IVimState, buffer: IVimBuffer): void {
-        const line = buffer.getLine(state.cursor.line);
-        if (line.length > 0) {
-            const newLine = line.slice(0, state.cursor.col) + line.slice(state.cursor.col + 1);
-            buffer.updateLine(state.cursor.line, newLine);
-        }
-    }
-
-    private moveCursor(state: IVimState, dLine: number, dCol: number): void {
-        state.cursor.line += dLine;
-        state.cursor.col += dCol;
     }
 
     private clampCursor(state: IVimState, buffer: IVimBuffer): void {
