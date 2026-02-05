@@ -72,10 +72,25 @@ export class GameManager implements IGameManager {
         return this.worldManager;
     }
 
+    private listeners: ((event: string, payload?: any) => void)[] = [];
+
+    public subscribeToEvents(listener: (event: string, payload?: any) => void) {
+        this.listeners.push(listener);
+        return () => {
+            this.listeners = this.listeners.filter(l => l !== listener);
+        };
+    }
+
+    private emitEvent(event: string, payload?: any) {
+        this.listeners.forEach(l => l(event, payload));
+    }
+
     /**
      * Called after every command execution to update game state and trigger updates.
      */
     public onCommandExecuted(state: TerminalState, response: CommandResponse, _prevFsContext?: string) {
+        this.emitEvent('COMMAND_EXECUTED', { command: response.output }); // Simplified payload for now
+
         // Delegate mission logic to MissionService
         const { hints, progression } = this.missionService.updateMissions(state, response);
 

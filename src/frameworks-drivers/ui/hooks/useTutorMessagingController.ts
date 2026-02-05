@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useGame } from '../context/GameContext';
 import { TutorEvent } from '../../../domain/entities/TutorEngine';
+import { TutorPersonalityService } from '../../../domain/services/tutor/TutorPersonalityService';
 
 /**
  * useTutorMessagingController - Interface Adapter Layer
@@ -14,37 +15,55 @@ import { TutorEvent } from '../../../domain/entities/TutorEngine';
 export const useTutorMessagingController = () => {
     const { gameManager, sendTutorMessage } = useGame();
     const tutorEngine = gameManager.tutorEngine;
+    const personality = useMemo(() => new TutorPersonalityService(), []);
 
     useEffect(() => {
-        const unsubscribe = tutorEngine.subscribe((event: TutorEvent) => {
+        // Listen to Game Manager events (e.g. Commands)
+        const unsubscribeGame = gameManager.subscribeToEvents((event) => {
+            if (event === 'COMMAND_EXECUTED') {
+                // 30% chance to comment on a random command if Tutor is otherwise idle
+                if (Math.random() < 0.3 && !tutorEngine.isActive()) {
+                    sendTutorMessage(
+                        personality.getLine('COMMAND_GENERIC'),
+                        'info'
+                    );
+                }
+            }
+        });
+
+        const unsubscribeTutor = tutorEngine.subscribe((event: TutorEvent) => {
             switch (event.type) {
                 case 'START':
                     sendTutorMessage(
                         `MISSION DATA UPLOADED: ${event.payload?.instructions || 'Awaiting synchronization.'}`,
                         'info'
                     );
+                    sendTutorMessage(
+                        personality.getLine('MISSION_START'),
+                        'hint'
+                    );
                     break;
                 case 'COMPLETE':
                     sendTutorMessage(
-                        "Synchronization complete. Data integrity verified. Good work, operator.",
+                        personality.getLine('SUCCESS'),
                         'hint'
                     );
                     break;
                 case 'MISTAKE':
                     sendTutorMessage(
-                        "Inefficient logic detected. I've corrected your buffer. Do not repeat the error.",
+                        personality.getLine('ERROR_LOW'),
                         'warn'
                     );
                     break;
                 case 'SPEED_WARNING':
                     if (event.payload === 'TOO SLOW') {
                         sendTutorMessage(
-                            "Biological throughput falling below acceptable parameters. Accelerate.",
+                            personality.getLine('SPEED_LOW'),
                             'warn'
                         );
                     } else if (event.payload === 'TOO FAST') {
                         sendTutorMessage(
-                            "Input frequency exceeding buffer capacity. Precision is required.",
+                            personality.getLine('SPEED_HIGH'),
                             'info'
                         );
                     }
@@ -52,12 +71,12 @@ export const useTutorMessagingController = () => {
                 case 'EMOTION_CHANGE':
                     if (event.payload === 'CRASH_OUT') {
                         sendTutorMessage(
-                            "SYSTEM INSTABILITY DETECTED. CEASE INCOHERENT INPUT IMMEDIATELY.",
+                            personality.getLine('CRASH_OUT'),
                             'critical'
                         );
                     } else if (event.payload === 'MAD') {
                         sendTutorMessage(
-                            "Your lack of precision is becoming... problematic.",
+                            personality.getLine('ERROR_HIGH'),
                             'warn'
                         );
                     }
@@ -65,6 +84,9 @@ export const useTutorMessagingController = () => {
             }
         });
 
-        return unsubscribe;
-    }, [tutorEngine, sendTutorMessage]);
+        return () => {
+            unsubscribeGame();
+            unsubscribeTutor();
+        };
+    }, [gameManager, tutorEngine, sendTutorMessage, personality]);
 };

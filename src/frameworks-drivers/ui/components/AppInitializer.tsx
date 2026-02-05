@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useGame } from '../context/GameContext';
+import { TutorPersonalityService } from '../../../domain/services/tutor/TutorPersonalityService';
 
 /**
  * AppInitializer - Presentation Layer
@@ -8,11 +9,12 @@ import { useGame } from '../context/GameContext';
  */
 export const AppInitializer = () => {
     const { sendTutorMessage } = useGame();
+    const personality = useMemo(() => new TutorPersonalityService(), []);
 
     useEffect(() => {
         // Send initial welcome message on boot
         sendTutorMessage(
-            "Uplink established. Welcome back to the Grid, operator. (◕‿◕✿)",
+            personality.getLine('GREETING'),
             "hint",
             "TUTOR"
         );
