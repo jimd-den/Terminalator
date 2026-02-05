@@ -55,10 +55,24 @@ function testNormalModeDeletion() {
     console.log("PASS");
 }
 
+function testNormalModeWordMovement() {
+    console.log("Testing NormalMode word movement (w)...");
+    const mode = new NormalMode();
+    const state = new VimStateEntity('NORMAL', { line: 0, col: 0 });
+    const buffer = new EditorBuffer("test.txt", "hello world");
+    const cmdMgr = new VimCommandManager(buffer);
+
+    mode.handleKey('w', state, buffer, cmdMgr);
+    if (state.cursor.col !== 6) throw new Error(`Expected col 6 after 'w'. Got: ${state.cursor.col}`);
+    
+    console.log("PASS");
+}
+
 try {
     testNormalModeNavigation();
     testNormalModeTransitions();
     testNormalModeDeletion();
+    testNormalModeWordMovement();
     console.log("\nPHASE 2 TASK 2 PASSED");
 } catch (e) {
     console.error(`\nTEST FAILED: ${e}`);

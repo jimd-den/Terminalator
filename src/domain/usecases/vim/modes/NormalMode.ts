@@ -2,6 +2,7 @@ import { IVimMode } from '../IVimMode';
 import { IVimState } from '../../../entities/vim/IVimState';
 import { IVimBuffer } from '../../../entities/vim/IVimBuffer';
 import { VimCommandManager } from '../VimCommandManager';
+import { MotionStrategy } from '../MotionStrategy';
 
 /**
  * NormalMode - Domain Layer Use Case (State Strategy)
@@ -25,6 +26,17 @@ export class NormalMode implements IVimMode {
             case 'k': this.moveCursor(state, -1, 0); break;
             case 'l': this.moveCursor(state, 0, 1); break;
             
+            case 'w':
+                const nextPos = MotionStrategy.findNextWordStart(buffer, state.cursor.line, state.cursor.col);
+                state.cursor.line = nextPos.line;
+                state.cursor.col = nextPos.col;
+                break;
+
+            case '$':
+                const eolPos = MotionStrategy.findEndOfLine(buffer, state.cursor.line);
+                state.cursor.col = eolPos.col;
+                break;
+
             case 'i': 
                 return 'INSERT';
             
