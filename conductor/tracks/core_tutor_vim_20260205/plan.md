@@ -22,7 +22,7 @@
 - [x] Task: Implement `TutorSpy` Analysis Engine.
     - [ ] Write Tests: Calculate WPM, accuracy, and identify "stalls".
     - [ ] Implement: Data-driven comment generation (JSON templates) based on metrics.
-- [ ] Task: Synchronize Crash Effects with Tutor State.
+- [x] Task: Synchronize Crash Effects with Tutor State.
     - [ ] Write Tests: Ensure "shake" triggers only on specific Tutor states (CRITICAL/WARN).
     - [ ] Implement: `useTutorAnimation` hook that binds UI effects to `activeTutorMessage.type`.
 - [ ] Task: Implement Scheme & Assembly Language Support.
