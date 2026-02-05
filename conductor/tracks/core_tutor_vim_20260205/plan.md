@@ -8,7 +8,7 @@
 - [x] Task: Conductor - User Manual Verification 'Architecture & Vim Engine Refactor' (Protocol in workflow.md)
 
 ## Phase 2: Persistent Tutor Bar (UI & Logic)
-- [ ] Task: Create `TutorMessage` Entity and `ITutorService` Interface.
+- [x] Task: Create `TutorMessage` Entity 35baf75 and `ITutorService` Interface.
     - [ ] Write Tests: Service can queue and retrieve messages.
     - [ ] Implement: Basic in-memory message queue.
 - [ ] Task: Create `TutorBar` Component (Frameworks/Drivers).
