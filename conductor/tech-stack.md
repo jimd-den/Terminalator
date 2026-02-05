@@ -7,7 +7,7 @@
 
 ## Domain-Specific Engines
   - **Terminal Simulation:** 
-    - `VimEngine`: High-fidelity Vim modal editing simulation.
+    - `VimEngine`: State-pattern based Vim engine with persistent Undo/Redo capability.
     - `TutorEngine`: Interactive pedagogical system for guided learning.
     - `TutorBrain`: Persona orchestration engine.
     - `TutorSpy`: Performance analysis engine (WPM, Accuracy, Stalls).
@@ -19,16 +19,19 @@
     - `CommandRegistry`: Extensible architecture for implementing POSIX and custom commands.
     - `CreditService`: Global state management for user rewards.
     - `LanguageExecutionService`: Mock execution environment for Scheme and Assembly.- **World Generation:** 
+    - `IVimCommand`, `CommandHistory`: Entity and Use Case for undoable editor operations.
+    - `IVimMode`: Strategy-based interface for Vim modes (Normal, Insert, Command).
   - `WorldManager`: Procedural generator for "The Grid" (Locations, Devices, Connections).
 
 ## Architectural Patterns
 - **Paradigm:** Clean Architecture
 - **Layers:**
-  - **Entities:** Pure business logic (e.g., `Command.ts`, `FileSystem.ts`).
+  - **Entities:** Pure business logic (e.g., `Command.ts`, `FileSystem.ts`, `IVimCommand.ts`).
   - **Use Cases:** Application-specific business rules.
-  - **Interface Adapters:** Mappers and controllers (e.g., `GameManager`, `WorldManager`).
+  - **Interface Adapters:** Mappers and controllers (e.g., `GameManager`, `WorldManager`, `VimSimulator`).
     - `DiskCreditRepository`, `DiskMasteryRepository`: Port implementations for simulated persistence.
     - `useTutorMessagingController`: Humble Object wiring domain logic to UI.
+    - `VimSimulator`: Orchestrator implementing `BufferPersistencePort`.
   - **Frameworks & Drivers:** UI components and external service integrations.
 
 ## Infrastructure & Tools
