@@ -11,23 +11,26 @@
  * Intent:
  * Acts as the authoritative controller for a file being edited.
  * Handles I/O operations (Load/Save) and delegates key processing to the engine.
+ * Implements BufferPersistencePort to satisfy Domain requirements.
  */
 
-import { FileSystem } from '../domain/entities/FileSystem';
 import { FileSystemService } from '../domain/services/FileSystemService';
 import { EditorBuffer } from '../domain/entities/EditorBuffer';
 import { VimEngine, VimState } from '../domain/entities/VimEngine';
 import { CheckerRegistry } from './vim/CheckerRegistry';
+import { BufferPersistencePort } from '../domain/ports/BufferPersistencePort';
+import { SaveBuffer } from '../domain/usecases/vim/SaveBuffer';
+import { ProcessVimCommand, CommandResult } from '../domain/usecases/vim/ProcessVimCommand';
 
-export class VimSimulator {
+export class VimSimulator implements BufferPersistencePort {
     private engine: VimEngine;
     private buffer: EditorBuffer;
     private fsService: FileSystemService;
     private filename: string;
     private checkerRegistry = new CheckerRegistry();
+    private processVimCommand: ProcessVimCommand;
 
     constructor(fs: FileSystemService, filename: string) {
-        // fs is already a FileSystemService, use it directly
         this.fsService = fs;
         this.filename = filename;
 
@@ -45,8 +48,20 @@ export class VimSimulator {
         this.buffer = new EditorBuffer(filename, content);
         this.engine = new VimEngine(this.buffer);
 
+        // Initialize Use Cases
+        const saveBufferUseCase = new SaveBuffer(this);
+        this.processVimCommand = new ProcessVimCommand(saveBufferUseCase);
+
         // Initial lint
         this.lint();
+    }
+
+    /**
+     * Implementation of BufferPersistencePort
+     */
+    save(path: string, content: string): void {
+        const fullPath = path.startsWith('/') ? path : `/home/operator/${path}`;
+        this.fsService.writeFile(fullPath, content, 'w');
     }
 
     /**
@@ -61,22 +76,8 @@ export class VimSimulator {
     /**
      * Executes a command-line mode command (e.g., :w, :q).
      */
-    executeCommand(cmd: string): { exit: boolean; message: string } {
-        const command = cmd.trim();
-
-        if (command === ':w') {
-            this.save();
-            return { exit: false, message: `"${this.filename}" written` };
-        } else if (command === ':q' || command === ':quit' || command === ':exit') {
-            return { exit: true, message: 'UPLINK TERMINATED.' };
-        } else if (command === ':wq') {
-            this.save();
-            return { exit: true, message: 'UPLINK TERMINATED.' };
-        } else if (command === ':q!') {
-            return { exit: true, message: 'UPLINK TERMINATED.' };
-        }
-
-        return { exit: false, message: `E492: Not an editor command: ${command}` };
+    executeCommand(cmd: string): CommandResult {
+        return this.processVimCommand.execute(cmd, this.buffer, this.filename);
     }
 
     private lint(): void {
@@ -88,12 +89,6 @@ export class VimSimulator {
         } else {
             this.engine.setLintErrors([]);
         }
-    }
-
-    private save(): void {
-        const path = this.filename.startsWith('/') ? this.filename : `/home/operator/${this.filename}`;
-        const content = this.buffer.toString();
-        this.fsService.writeFile(path, content, 'w');
     }
 
     /**
