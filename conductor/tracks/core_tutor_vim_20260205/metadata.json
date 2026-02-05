@@ -1,8 +1,0 @@
-{
-  "track_id": "core_tutor_vim_20260205",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-02-05T00:00:00Z",
-  "updated_at": "2026-02-05T00:00:00Z",
-  "description": "Implement Core Tutor-Integrated Vim Interface & IRC-Style Interaction"
-}

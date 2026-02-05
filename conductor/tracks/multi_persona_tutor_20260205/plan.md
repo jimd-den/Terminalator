@@ -1,7 +1,7 @@
 # Implementation Plan - Robust Multi-Persona Tutor System & Gamification Core
 
 ## Phase 1: Core Architecture & Credit System
-- [ ] Task: Create `CreditSystem` Entity and `ICreditService` Interface.
+- [x] Task: Create `CreditSystem` Entity and `ICreditService` Interface.
     - [ ] Write Tests: Earning credits, spending credits, persistence.
     - [ ] Implement: Basic credit tracking logic.
 - [ ] Task: Implement `CreditDisplay` Component (UI).
