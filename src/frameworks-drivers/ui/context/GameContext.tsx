@@ -41,6 +41,7 @@ interface GameContextType {
     isTutorTyping: boolean;
     tutorBrain: TutorBrain;
     masteryTracker: MasteryTracker;
+    switchPersona: (id: 'standard' | 'rogue') => void;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -55,7 +56,11 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [creditService] = useState(() => new CreditService());
     const [tutorBrain] = useState(() => {
         const brain = new TutorBrain();
-        brain.setPersona(new PersonaLoader(standardPersona as any));
+        if (standardPersona) {
+            brain.setPersona(new PersonaLoader(standardPersona as any));
+        } else {
+            console.warn("[GameContext] standardPersona JSON not found or failed to load.");
+        }
         return brain;
     });
     const [masteryTracker] = useState(() => new MasteryTracker());
@@ -77,11 +82,10 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [gameManager] = useState(() => DependencyContainer.createGameManager(fs, networkMap, telemetry));
     const [commandExecutor] = useState(() => new GameCommandExecutor(fsService, gameManager, networkMap, telemetry));
 
-    const sendTutorMessage = async (text: string, type: TutorMessage['type'] = 'info', sender: string = 'TUTOR') => {
+    const sendTutorMessage = useCallback(async (text: string, type: TutorMessage['type'] = 'info', sender: string = 'TUTOR') => {
         console.log(`[TutorService] Preparing message: "${text}"`);
         setIsTutorTyping(true);
         
-        // Dynamic delay based on text length (simulating typing speed)
         const delay = Math.min(2000, 500 + text.length * 20);
         await new Promise(resolve => setTimeout(resolve, delay));
         
@@ -90,17 +94,17 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const messages = await tutorMessaging.getAllMessages();
         const lastMsg = messages[messages.length - 1];
         setActiveTutorMessage(lastMsg);
-    };
+    }, [tutorMessaging]);
 
-    const refreshCredits = async () => {
+    const refreshCredits = useCallback(async () => {
         setCredits(await creditService.getBalance());
-    };
+    }, [creditService]);
 
-    const switchPersona = (id: 'standard' | 'rogue') => {
+    const switchPersona = useCallback((id: 'standard' | 'rogue') => {
         const data = id === 'rogue' ? roguePersona : standardPersona;
         tutorBrain.setPersona(new PersonaLoader(data as any));
         sendTutorMessage(tutorBrain.process('GREETING'), 'info', tutorBrain.activePersona.name.toUpperCase());
-    };
+    }, [tutorBrain, sendTutorMessage]);
 
     useEffect(() => { refreshCredits(); }, []);
 

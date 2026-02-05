@@ -16,6 +16,7 @@ import { StatusBar } from '../components/StatusBar';
 import { useShellView } from '../components/ShellView';
 import { useInput } from '../context/InputContext';
 import { useTheme } from '../context/ThemeContext';
+import { useGame } from '../context/GameContext';
 import { TerminalStateDTO } from '../../../domain/dtos/TerminalStateDTO';
 import { MissionDTO } from '../../../domain/dtos/MissionDTO';
 import { BufferScreen } from './BufferScreen';

@@ -51,6 +51,15 @@ export const StatusBar: React.FC<StatusBarProps> = ({
             fontFamily: settings.fontFamily,
             fontSize: 10, // Slightly smaller for dense technical look
             fontWeight: 'bold',
+        },
+        creditLabel: {
+            color: colors.background,
+            backgroundColor: colors.secondary,
+            fontFamily: settings.fontFamily,
+            fontSize: 10,
+            fontWeight: 'bold',
+            paddingHorizontal: 6,
+            paddingVertical: 1,
         }
     });
 
@@ -76,7 +85,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
             </View>
 
             <View style={styles.section}>
-                <Text style={[styles.label, { color: colors.secondary, backgroundColor: colors.background, paddingHorizontal: 4 }]}>
+                <Text style={styles.creditLabel}>
                     {formatValue('CR', credits.toString())}
                 </Text>
             </View>

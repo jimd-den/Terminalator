@@ -6,6 +6,7 @@ import { TutorMessage } from '../../../domain/entities/tutor/TutorMessage';
 import { useTutorAnimation } from '../hooks/useTutorAnimation';
 import { TypingIndicator } from './TypingIndicator';
 import { useGame } from '../context/GameContext';
+import { GhostWriter } from '../GhostWriter';
 
 interface TutorBarProps {
     message: TutorMessage | null;
@@ -68,6 +69,8 @@ export const TutorBar: React.FC<TutorBarProps> = ({ message }) => {
         },
     });
 
+    const fullText = message ? `${message.text}${message.type === 'hint' ? ' (◕‿◕✿)' : ''}` : '';
+
     return (
         <Animated.View style={[dynamicStyles.container, { transform, opacity }]}>
             <View style={dynamicStyles.header}>
@@ -80,9 +83,11 @@ export const TutorBar: React.FC<TutorBarProps> = ({ message }) => {
                 )}
             </View>
             {!isTutorTyping && message && (
-                <Text style={[dynamicStyles.text, typeStyle]}>
-                    {message.text} {message.type === 'hint' ? '(◕‿◕✿)' : ''}
-                </Text>
+                <GhostWriter 
+                    text={fullText}
+                    speed={25}
+                    style={[dynamicStyles.text, typeStyle]}
+                />
             )}
         </Animated.View>
     );

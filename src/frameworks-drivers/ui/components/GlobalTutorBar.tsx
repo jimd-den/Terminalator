@@ -6,8 +6,14 @@ import { TutorBar } from './TutorBar';
  * GlobalTutorBar - Presentation Layer
  * 
  * A wrapper component that connects the TutorBar to the global GameContext.
+ * Includes safety checks to prevent layout crashes.
  */
 export const GlobalTutorBar = () => {
-    const { activeTutorMessage } = useGame();
-    return <TutorBar message={activeTutorMessage} />;
+    try {
+        const { activeTutorMessage } = useGame();
+        return <TutorBar message={activeTutorMessage} />;
+    } catch (err) {
+        console.error("[GlobalTutorBar] Error accessing game context:", err);
+        return null;
+    }
 };

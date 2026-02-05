@@ -89,7 +89,7 @@ export class GameManager implements IGameManager {
      * Called after every command execution to update game state and trigger updates.
      */
     public onCommandExecuted(state: TerminalState, response: CommandResponse, _prevFsContext?: string) {
-        this.emitEvent('COMMAND_EXECUTED', { command: response.output }); // Simplified payload for now
+        this.emitEvent('COMMAND_EXECUTED', { output: response.output, exitCode: response.exitCode });
 
         // Delegate mission logic to MissionService
         const { hints, progression } = this.missionService.updateMissions(state, response);

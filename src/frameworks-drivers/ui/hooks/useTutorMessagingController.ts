@@ -19,14 +19,16 @@ export const useTutorMessagingController = () => {
 
     useEffect(() => {
         // Listen to Game Manager events (e.g. Commands)
-        const unsubscribeGame = gameManager.subscribeToEvents((event) => {
+        const unsubscribeGame = gameManager.subscribeToEvents((event, payload) => {
             if (event === 'COMMAND_EXECUTED') {
-                // 30% chance to comment on a random command if Tutor is otherwise idle
-                if (Math.random() < 0.3 && !tutorEngine.isActive()) {
-                    sendTutorMessage(
-                        personality.getLine('COMMAND_GENERIC'),
-                        'info'
-                    );
+                if (!tutorEngine.isActive()) {
+                    if (payload && payload.exitCode !== 0) {
+                        // High chance to comment on mistakes
+                        sendTutorMessage(personality.getLine('ERROR_LOW'), 'warn');
+                    } else if (Math.random() < 0.3) {
+                        // Low chance to comment on successes
+                        sendTutorMessage(personality.getLine('COMMAND_GENERIC'), 'info');
+                    }
                 }
             }
         });
