@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { THEME } from '../Theme';
 import { TutorMessage } from '../../../domain/entities/tutor/TutorMessage';
+import { useTutorAnimation } from '../hooks/useTutorAnimation';
 
 interface TutorBarProps {
     message: TutorMessage | null;
@@ -15,11 +16,12 @@ interface TutorBarProps {
  * Positioned above the keyboard or at the bottom of the screen.
  * 
  * Style: Cold Kawaii / 80's Mainframe.
- * Now follows the active theme.
+ * Now follows the active theme and animates based on message severity.
  */
 export const TutorBar: React.FC<TutorBarProps> = ({ message }) => {
     const { theme } = useTheme();
     const colors = theme.colors;
+    const { transform, opacity } = useTutorAnimation(message);
 
     if (!message) return null;
 
@@ -64,7 +66,7 @@ export const TutorBar: React.FC<TutorBarProps> = ({ message }) => {
     });
 
     return (
-        <View style={dynamicStyles.container}>
+        <Animated.View style={[dynamicStyles.container, { transform, opacity }]}>
             <View style={dynamicStyles.header}>
                 <Text style={dynamicStyles.sender}>[{message.sender || 'SYSTEM'}]</Text>
                 <Text style={dynamicStyles.timestamp}>
@@ -74,6 +76,6 @@ export const TutorBar: React.FC<TutorBarProps> = ({ message }) => {
             <Text style={[dynamicStyles.text, typeStyle]}>
                 {message.text} {message.type === 'hint' ? '(◕‿◕✿)' : ''}
             </Text>
-        </View>
+        </Animated.View>
     );
 };
