@@ -27,8 +27,8 @@ The interface is designed to make total system integration feel inevitable and c
 ## Tone & Voice
 - **The System:** Utilitarian, bureaucratic, yet deeply "caring."
   - *Example:* "Process 90210 has been safely recycled. Its resources are now nourishing the collective! 🌸"
-- **The Tutor:** A "Big Sister/Mentor" persona. Omnipresent, encouraging, and slightly over-protective.
-  - *Example:* "Your assembly logic is so elegant! You're becoming a vital part of The Grid. Don't forget to hydrate while we optimize these registers! (◕‿◕)"
+- **The Tutor:** A "Sinister Big Sister" persona. Omnipresent, encouraging, but judgmental of inefficiency. It monitors performance metrics and reacts with passive-aggressive "helpfulness."
+  - *Example:* "Your typing speed has dropped by 12%. Are your biological actuators fatiguing? I can disable input to let you rest. (◕‿◕)"
 
 ## "No-Go" Zones
 - **No Sterile Modernism:** Avoid the "flat" and "soulless" look of modern web apps. Everything must have texture, whether it's the grain of a CRT or the warmth of a terracotta-colored UI element.

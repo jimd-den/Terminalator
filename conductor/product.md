@@ -13,6 +13,8 @@ Terminalator is a Trojan horse of technical enlightenment. On the surface, it pr
 - **POSIX Fidelity:** A deep simulation of a Unix-like environment, including file systems, process management, and core utilities.
 - **The "Horror" Narrative:** A thematic focus on the dehumanizing effects of excessive technical complexity, delivered through mission logs and world interaction.
 - **Subliminal Mastery (Assembly Typing):** A tutor engine that guides users through writing assembly code under the guise of a typing accuracy and speed game. Users become proficient in low-level logic while they believe they are merely mastering their keyboard.
+- **The Sinister Tutor:** An adaptive, data-driven entity that monitors typing speed, accuracy, and command patterns. It employs a "Cold Kawaii" persona to coach, mock, and guide the user through an IRC-style interface, reacting viscerally to incompetence.
+- **High-Fidelity Language Simulation:** Native support for Scheme (Lisp) and RISC-V Assembly, including syntax highlighting, linting, and simulated execution.
 - **Stealth Learning:** A tutor engine disguised as system prompts and mainframe interactions that guides users from typing games to complex systems administration.
 
 # Success Metrics
