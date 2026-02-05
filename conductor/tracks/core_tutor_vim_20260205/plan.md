@@ -5,7 +5,7 @@
 - [x] Task: Define `IVimState` and `IVimBuffer` interfaces (Entities). e300d79
     - [ ] Write Tests: Ensure interfaces allow for text manipulation and mode switching.
     - [ ] Implement: Create core `VimState` entity.
-- [ ] Task: Implement `VimInputHandler` Use Case (The "IRC Tab" Logic).
+- [x] Task: Implement `VimInputHandler` Use Case (The "IRC Tab" Logic). 2e92622
     - [ ] Write Tests: Test key press handling, mode transitions (Normal -> Insert), and command parsing.
     - [ ] Implement: Logic to handle stream of characters and update `VimState`.
 - [ ] Task: Refactor existing `VimEngine` to use the new `VimInputHandler` and `VimState`.
