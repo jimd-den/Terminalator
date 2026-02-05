@@ -25,6 +25,16 @@ export class NormalMode implements IVimMode {
             return this.handleDeleteAction(key, state, buffer, commands);
         }
 
+        // Handle 'g' prefix for 'gg'
+        if (state.pendingAction === 'G_PREFIX') {
+            if (key === 'g') {
+                state.cursor.line = 0;
+                state.cursor.col = 0;
+            }
+            state.pendingAction = null;
+            return null;
+        }
+
         switch (key) {
             case 'h': this.moveCursor(state, 0, -1); break;
             case 'j': this.moveCursor(state, 1, 0); break;
@@ -42,8 +52,27 @@ export class NormalMode implements IVimMode {
                 state.cursor.col = eolPos.col;
                 break;
 
+            case '0':
+            case '^':
+                state.cursor.col = 0;
+                break;
+
+            case 'G':
+                state.cursor.line = Math.max(0, buffer.length - 1);
+                state.cursor.col = 0;
+                break;
+
+            case 'g':
+                state.pendingAction = 'G_PREFIX';
+                break;
+
             case 'd':
                 state.pendingAction = 'DELETE';
+                break;
+
+            case 'D':
+                const eol = MotionStrategy.findEndOfLine(buffer, state.cursor.line);
+                commands.deleteRange(state.cursor.line, state.cursor.col, eol.col);
                 break;
 
             case 'i': 
