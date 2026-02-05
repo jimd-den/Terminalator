@@ -8,6 +8,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
+import { useGame } from '../context/GameContext';
 import { THEME } from '../Theme';
 
 interface StatusBarProps {
@@ -24,6 +25,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
     activeMissionName
 }) => {
     const { theme, settings } = useTheme();
+    const { credits } = useGame();
     const colors = theme.colors;
 
     const styles = StyleSheet.create({
@@ -71,6 +73,12 @@ export const StatusBar: React.FC<StatusBarProps> = ({
 
             <View style={styles.section}>
                 <Text style={styles.label}>{formatValue('USR', user)}</Text>
+            </View>
+
+            <View style={styles.section}>
+                <Text style={[styles.label, { color: colors.secondary, backgroundColor: colors.background, paddingHorizontal: 4 }]}>
+                    {formatValue('CR', credits.toString())}
+                </Text>
             </View>
         </View>
     );

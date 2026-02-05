@@ -8,6 +8,7 @@ import { ConsoleTelemetryAdapter } from '../../../infrastructure/telemetry/Conso
 import { DependencyContainer } from '../../../infrastructure/di/DependencyContainer';
 import { TutorMessagingService } from '../../../domain/services/tutor/TutorMessagingService';
 import { TutorMessage } from '../../../domain/entities/tutor/TutorMessage';
+import { CreditService } from '../../../domain/services/gamification/CreditService';
 
 /**
  * GameContext - Presentation Layer
@@ -27,6 +28,9 @@ interface GameContextType {
     tutorMessaging: TutorMessagingService;
     activeTutorMessage: TutorMessage | null;
     sendTutorMessage: (text: string, type?: TutorMessage['type'], sender?: string) => Promise<void>;
+    creditService: CreditService;
+    credits: number;
+    refreshCredits: () => Promise<void>;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -38,6 +42,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [telemetry] = useState(() => new ConsoleTelemetryAdapter());
     const [networkMap] = useState(() => new NetworkMap()); // [NEW] Singleton
     const [tutorMessaging] = useState(() => new TutorMessagingService());
+    const [creditService] = useState(() => new CreditService());
     
     // Reactive state for UI
     const [activeTutorMessage, setActiveTutorMessage] = useState<TutorMessage | null>(() => ({
@@ -46,6 +51,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         sender: 'TUTOR',
         timestamp: Date.now()
     }));
+    const [credits, setCredits] = useState(0);
 
     // Create service for adapters that need it (GameManager, Executor)
     const [fsService] = useState(() => new FileSystemService(fs));
@@ -61,6 +67,12 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setActiveTutorMessage(lastMsg);
     };
 
+    const refreshCredits = async () => {
+        setCredits(await creditService.getBalance());
+    };
+
+    useEffect(() => { refreshCredits(); }, []);
+
     return (
         <GameContext.Provider value={{ 
             fs, 
@@ -69,7 +81,10 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             telemetry, 
             tutorMessaging,
             activeTutorMessage,
-            sendTutorMessage
+            sendTutorMessage,
+            creditService,
+            credits,
+            refreshCredits
         }}>
             {children}
         </GameContext.Provider>

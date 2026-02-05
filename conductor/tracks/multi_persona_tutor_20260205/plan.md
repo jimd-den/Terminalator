@@ -4,9 +4,9 @@
 - [x] Task: Create `CreditSystem` Entity and `ICreditService` Interface.
     - [ ] Write Tests: Earning credits, spending credits, persistence.
     - [ ] Implement: Basic credit tracking logic.
-- [ ] Task: Implement `CreditDisplay` Component (UI).
+- [~] Task: Implement `CreditDisplay` Component (UI).
     - [ ] Implement: A simple, retro-styled credit counter on the main screen.
-- [ ] Task: Define `ITutorPersona` Interface and `TutorBrain` Entity.
+- [x] Task: Define `ITutorPersona` Interface and `TutorBrain` Entity.
     - [ ] Write Tests: Switching personas changes the reaction logic.
     - [ ] Implement: The core state machine for the Tutor.
 - [ ] Task: Conductor - User Manual Verification 'Core Architecture & Credit System' (Protocol in workflow.md)
