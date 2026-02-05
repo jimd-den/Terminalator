@@ -3,23 +3,30 @@
  * 
  * Logic for assembling valid Mission entities by cross-multiplying
  * Grammar variables and Utility capabilities.
+ * Now integrated with MasteryTracker to favor the "Learning Zone".
  * 
  * Pillar: THE MASTER'S TOOL (Combinatorial Grammar)
- * Pillar: THE Swift Stream (Performance & Purity)
+ * Pillar: THE STORYTELLER'S CODE (Mastery Integration)
  */
 
 import { Mission, MissionStep } from '../../entities/Mission';
 import { MissionMotive, MissionVerb, MissionNoun } from '../../entities/mission/Grammar';
 import { IStructuredCommand, CommandCapability } from '../../commands/IStructuredCommand';
+import { MasteryTracker } from '../../services/tutor/MasteryTracker';
 
 export class CombinatorialFactory {
     /**
      * @param commands - List of available "Smart" commands.
+     * @param masteryTracker - User performance data for learning-zone filtering.
      */
-    constructor(private commands: IStructuredCommand[]) {}
+    constructor(
+        private commands: IStructuredCommand[],
+        private masteryTracker: MasteryTracker
+    ) {}
 
     /**
-     * Assembles a mission from grammar components.
+     * Assembles a mission from grammar components, favoring tools the user 
+     * is currently learning.
      */
     public createMission(params: {
         motive: MissionMotive,
@@ -31,20 +38,28 @@ export class CombinatorialFactory {
         // 1. Map Verb to Command Capability
         const requiredCapability = this.mapVerbToCapability(params.verb);
         
-        // 2. Select matching Command
-        const command = this.commands.find(c => c.capabilities.includes(requiredCapability));
+        // 2. Select matching Command (Filter by Capability)
+        const eligibleCommands = this.commands.filter(c => c.capabilities.includes(requiredCapability));
 
-        if (!command) {
+        if (eligibleCommands.length === 0) {
             throw new Error(`Scale Failure: No utility registered with capability ${requiredCapability} for verb ${params.verb}`);
         }
 
-        // 3. Construct Semantic ID
+        // 3. Learning Zone Filtering: Favor NOVICE/COMPETENT over MASTER
+        // This ensures the generator "scales" with the user's growing skill.
+        const learningZone = eligibleCommands.filter(c => this.masteryTracker.getLevel(c.utility) !== 'MASTER');
+        
+        const command = learningZone.length > 0 
+            ? learningZone[Math.floor(Math.random() * learningZone.length)]
+            : eligibleCommands[Math.floor(Math.random() * eligibleCommands.length)];
+
+        // 4. Construct Semantic ID
         const id = `M-${params.motive.substring(0,3)}-${Math.random().toString(36).substr(2,5).toUpperCase()}`;
         
-        // 4. Map Noun to plausible path (Mock data binding for now)
+        // 5. Map Noun to plausible path
         const targetPath = this.mapNounToPath(params.noun);
 
-        // 5. Build Final Entity
+        // 6. Build Final Entity
         return {
             id,
             type: 'log-analysis', // Base archetype
