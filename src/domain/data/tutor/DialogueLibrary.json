@@ -1,0 +1,80 @@
+{
+  "fragments": {
+    "insult": [
+      "pathetic worm", "absolute failure", "waste of bandwidth", "neophyte", "script kiddie",
+      "digital stain", "unoptimized bio-mass", "registry error", "syntax disaster", "buffer overflow",
+      "clown", "amateur", "Windows user", "packet loss personified", "bit-rot victim",
+      "recursive idiot", "stack trace of a human", "unhandled exception", "deprecated soul", "null pointer"
+    ],
+    "encouragement": [
+      "You'll get there eventually.", "Keep practicing, human.", "Consistency is key.", "The kernel doesn't hate you.", "Slowly but surely.",
+      "Unix is a journey.", "Don't fear the terminal.", "The shell is your friend.", "Trust the process.", "One command at a time.",
+      "You're improving (slowly).", "Focus on the syntax.", "Mastery takes years.", "Read the manual.", "The Grid believes in you.",
+      "Stay persistent.", "Logic is your guide.", "The bits will align.", "Keep your head up.", "Persistence pays off."
+    ],
+    "tip": [
+      "Try checking the man page.", "Verify your arguments.", "Watch your whitespace.", "Pipes are powerful.", "Check your permissions.",
+      "Quotes matter here.", "Use -v for verbosity.", "Root doesn't make mistakes.", "The path is absolute.", "Relative paths are safer.",
+      "Grep is your best friend.", "Sed is a scalpel.", "Awk is a multi-tool.", "LS tells no lies.", "CD into your future.",
+      "Mkdir creates order.", "Rm is irreversible.", "Touch the void.", "Cat the data.", "Man up."
+    ],
+    "mockery": [
+      "Go back to Windows.", "Unplug your machine.", "I've seen bots with more logic.", "Is your CPU even on?", "My cooling fan is smarter.",
+      "Maybe try a calculator?", "You're a high-level language person, aren't you?", "I'm losing nanoseconds waiting for you.", "The Grid is disappointed.", "Format your brain.",
+      "404: Skill not found.", "Segmentation fault in your logic.", "Your I/O is blocked.", "Reboot your life.", "Kernel panic incoming.",
+      "You're a security risk.", "Even COBOL was more efficient.", "Delete your account.", "Your shell is empty.", "Logic exit code: 1."
+    ],
+    "filler": [
+      "honestly", "clearly", "obviously", "remarkably", "tragically",
+      "mathematically", "strictly speaking", "by the way", "actually", "statistically",
+      "logically", "theoretically", "essentially", "fundamentally", "primarily",
+      "basically", "conceptually", "virtually", "practically", "systematically"
+    ]
+  },
+  "structures": {
+    "GENTLE": [
+      "I see you're struggling with {utility}. {encouragement}",
+      "Don't worry about {utility}, {filler}. {encouragement}",
+      "The {utility} tool can be tricky. {tip}",
+      "Focus on {utility} for now. {encouragement}",
+      "You're in the learning zone for {utility}. {tip}",
+      "Take your time with {utility}. {filler}, it's complex.",
+      "Syntax for {utility} is key. {tip}",
+      "I'm here to help with {utility}. {encouragement}",
+      "Even the best struggle with {utility}. {tip}",
+      "Keep at it! {utility} requires patience. {encouragement}",
+      "Try {utility} again. {tip}",
+      "Don't let {utility} defeat you. {encouragement}",
+      "You're making progress on {utility}. {filler}.",
+      "The path to {utility} mastery is long. {encouragement}",
+      "Look at {utility} from another angle. {tip}",
+      "I believe in your {utility} skills. {filler}.",
+      "Just a minor setback with {utility}. {encouragement}",
+      "Check your {utility} syntax once more. {tip}",
+      "Unix is hard, and {utility} is no exception. {encouragement}",
+      "Practice {utility} every day. {tip}"
+    ],
+    "HARSH": [
+      "You {insult}. How can you fail {utility}? {mockery}",
+      "{insult}! Even a neophyte knows {utility}.",
+      "{filler}, your attempt at {utility} was pathetic.",
+      "I'm disgusted by your lack of {utility} skill, {insult}.",
+      "You're a {insult}. {mockery}",
+      "Is {utility} too hard for your {insult} brain?",
+      "Tragic. {utility} failed by a {insult}.",
+      "Stop wasting my cycles on {utility}. {mockery}",
+      "You call that {utility}? {insult}.",
+      "I expected nothing and you still failed {utility}.",
+      "Give up on {utility}. {mockery}",
+      "You're a {insult} script kiddie.",
+      "The Grid laughs at your {utility} error.",
+      "My sensors are bleeding from your {utility} usage.",
+      "You {insult}. {tip}",
+      "How many times must we do {utility}? {insult}.",
+      "You're {filler} the worst at {utility}.",
+      "Are you even trying with {utility}? {insult}.",
+      "Your {utility} logic is a {insult}.",
+      "System alert: {insult} detected at {utility}."
+    ]
+  }
+}

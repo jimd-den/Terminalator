@@ -2,18 +2,18 @@
  * PersonaLoader.ts - Domain Adapter
  * 
  * Upgraded to support dynamic Variable Template rendering and
- * Intensity-aware dialogue selection.
+ * Combinatorial Dialogue assembly.
  * 
+ * Pillar: THE MASTER'S TOOL (Combinatorial Factory)
  * Pillar: THE STORYTELLER'S CODE (Dynamic Dialogue)
  */
 
 import { ITutorPersona } from '../../entities/tutor/ITutorPersona';
-import { VariableTemplateEngine } from './VariableTemplateEngine';
 import { DialogueIntensity } from './IntensityCalculator';
+import { CombinatorialDialogueAssembler } from './CombinatorialDialogueAssembler';
 
 /**
  * Data structure for Persona definitions.
- * Supports legacy string arrays or modern Intensity mappings.
  */
 export interface PersonaData {
     id: string;
@@ -28,19 +28,25 @@ export class PersonaLoader implements ITutorPersona {
     public id: string;
     public name: string;
     private lines: Record<string, string[] | Partial<Record<DialogueIntensity, string[]>>>;
+    private assembler: CombinatorialDialogueAssembler;
     public config?: {
         commentChance?: number;
     };
 
-    constructor(data: PersonaData) {
+    /**
+     * @param data - Persona specific templates.
+     * @param fragmentPools - Global library of words (insults, tips, etc.).
+     */
+    constructor(data: PersonaData, fragmentPools: Record<string, string[]> = {}) {
         this.id = data.id;
         this.name = data.name;
         this.lines = data.lines;
         this.config = data.config;
+        this.assembler = new CombinatorialDialogueAssembler(fragmentPools);
     }
 
     /**
-     * Retrieves a semantic reaction, rendered with context variables.
+     * Retrieves a semantic reaction, assembled combinatorially.
      */
     getReaction(event: string, context?: { intensity?: DialogueIntensity, variables?: Record<string, string> }): string {
         const entry = this.lines[event];
@@ -58,10 +64,10 @@ export class PersonaLoader implements ITutorPersona {
 
         if (!pool || pool.length === 0) return "...";
 
-        // 2. Select Template
+        // 2. Select Structure Template
         const template = pool[Math.floor(Math.random() * pool.length)];
 
-        // 3. Render with Variables
-        return VariableTemplateEngine.render(template, context?.variables || {});
+        // 3. Assemble combinatorially (resolves {insult}, {tip}, etc. from pools)
+        return this.assembler.assemble(template, context?.variables || {});
     }
 }
