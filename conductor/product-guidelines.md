@@ -31,6 +31,7 @@ The interface is designed to make total system integration feel inevitable and c
   - *Example:* "Your typing speed has dropped by 12%. Are your biological actuators fatiguing? I can disable input to let you rest. (◕‿◕)"
 
 ## "No-Go" Zones
+- **No Architectural Decay:** The internal elegance of the code must match the visual identity. Never expose framework internals (React, Expo) to the Domain layer.
 - **No Sterile Modernism:** Avoid the "flat" and "soulless" look of modern web apps. Everything must have texture, whether it's the grain of a CRT or the warmth of a terracotta-colored UI element.
 - **No Hostile Error Messages:** "Permission Denied" should be "This area is currently resting" or "Let's build up your friendship level first!"
 - **No Disconnect:** The game and the system are one. There should be no jarring transition between "playing" and "operating."

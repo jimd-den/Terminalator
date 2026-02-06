@@ -27,8 +27,10 @@
 - **Paradigm:** Clean Architecture
 - **Layers:**
   - **Entities:** Pure business logic (e.g., `Command.ts`, `FileSystem.ts`, `IVimCommand.ts`).
+    - *Constraint:* MUST NOT depend on Use Cases or outer layers.
   - **Use Cases:** Application-specific business rules.
   - **Interface Adapters:** Mappers and controllers (e.g., `GameManager`, `WorldManager`, `VimSimulator`).
+    - *Constraint:* Ideally framework-agnostic. Move pure logic out of React Hooks where possible.
     - `DiskCreditRepository`, `DiskMasteryRepository`: Port implementations for simulated persistence.
     - `useTutorMessagingController`: Humble Object wiring domain logic to UI.
     - `VimSimulator`: Orchestrator implementing `BufferPersistencePort`.
