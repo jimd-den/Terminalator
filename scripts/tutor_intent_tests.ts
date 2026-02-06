@@ -2,6 +2,7 @@ import { CombinatorialFactory } from '../src/domain/usecases/mission/Combinatori
 import { MissionIntentInterpreter } from '../src/domain/interpreters/MissionIntentInterpreter';
 import { MissionMotive, MissionVerb, MissionNoun } from '../src/domain/entities/mission/Grammar';
 import { IStructuredCommand, CommandCapability } from '../src/domain/commands/IStructuredCommand';
+import { MasteryTracker } from '../src/domain/services/tutor/MasteryTracker';
 
 // 1. Setup Mock Grammar components
 class MockGrepCommand {
@@ -14,7 +15,8 @@ class MockGrepCommand {
 function testTutorIntentReading() {
     console.log("Testing Tutor Intent Reading...");
 
-    const factory = new CombinatorialFactory([new MockGrepCommand() as any]);
+    const masteryTracker = new MasteryTracker();
+    const factory = new CombinatorialFactory([new MockGrepCommand() as any], masteryTracker);
     const interpreter = new MissionIntentInterpreter();
 
     // 2. Generate a combinatorial mission

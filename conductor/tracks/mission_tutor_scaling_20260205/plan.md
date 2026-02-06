@@ -12,9 +12,9 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: POSIX Smart Migration' (Protocol in workflow.md)
 
 ## Phase 3: Tutor Intent & Mastery Integration
-- [ ] Task: Implement the `MissionVisitor` and `IntentInterpreter` to allow the Tutor to "read" missions.
-- [ ] Task: Connect `MasteryTracker` to the `CombinatorialFactory` for learning-zone filtering.
-- [ ] Task: Implement the "Tutor-Led Progression" logic (forcing missions based on errors).
+- [x] Task: Implement the `MissionVisitor` and `IntentInterpreter` to allow the Tutor to "read" missions. 3e54eb6
+- [x] Task: Connect `MasteryTracker` to the `CombinatorialFactory` for learning-zone filtering. 9c3fa11
+- [x] Task: Implement the "Tutor-Led Progression" logic (forcing missions based on errors). 0a35f64
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Tutor Intent & Mastery' (Protocol in workflow.md)
 
 ## Phase 4: Dynamic Intensity & Persona Logic
