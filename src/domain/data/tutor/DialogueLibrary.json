@@ -68,11 +68,17 @@
     ]
   },
   "structures": {
-    "GENTLE": [
-      "{gentle_opening} {gentle_bridge} {gentle_closing}"
-    ],
-    "HARSH": [
-      "{harsh_opening} {harsh_middle} {harsh_closing}"
-    ]
+    "fail": {
+      "GENTLE": ["{gentle_opening} {gentle_bridge} {gentle_closing}"],
+      "HARSH": ["{harsh_opening} {harsh_middle} {harsh_closing}"]
+    },
+    "success": {
+      "GENTLE": ["{gentle_opening} {gentle_bridge} {gentle_closing}"],
+      "HARSH": ["{harsh_opening} {harsh_middle} {harsh_closing}"]
+    },
+    "MISSION_START": {
+      "GENTLE": ["{gentle_opening} {gentle_bridge} {gentle_closing}"],
+      "HARSH": ["{harsh_opening} {harsh_middle} {harsh_closing}"]
+    }
   }
 }

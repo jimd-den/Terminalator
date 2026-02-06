@@ -1,4 +1,16 @@
+/**
+ * TutorBrain - Domain Entity / Bridge
+ * 
+ * Orchestrates persona reactions and pedagogical intensity.
+ * Bridges low-level terminal events to high-level NPC dialogue.
+ * 
+ * Pillar: THE STORYTELLER'S CODE (Persona Orchestration)
+ * Pillar: THE MASTER'S TOOL (Interpreter & Intensity)
+ */
+
 import { ITutorPersona } from './ITutorPersona';
+import { IntensityCalculator, DialogueIntensity } from '../../services/tutor/IntensityCalculator';
+import { MissionIntentInterpreter } from '../../interpreters/MissionIntentInterpreter';
 
 export interface IObservableGame {
     subscribeToEvents(listener: (event: string, payload?: any) => void): () => void;
@@ -17,8 +29,10 @@ export class TutorBrain {
     private unsubscribeGame?: () => void;
     private unsubscribeTutor?: () => void;
 
-    constructor() {
-        // Default persona placeholder
+    constructor(
+        private intensityCalculator: IntensityCalculator,
+        private intentInterpreter: MissionIntentInterpreter
+    ) {
         this.activePersona = {
             id: 'default',
             name: 'Default',
@@ -45,66 +59,62 @@ export class TutorBrain {
     private handleGameEvent(event: string, payload?: any) {
         if (event === 'COMMAND_EXECUTED') {
             const exitCode = payload?.exitCode ?? 0;
-            const chance = exitCode !== 0 ? 0.8 : (this.activePersona.config?.commentChance ?? 0.3);
+            const utility = payload?.utility || 'system';
+            
+            // Increased probability for testing variety
+            const chance = exitCode !== 0 ? 0.9 : (this.activePersona.config?.commentChance ?? 0.5);
             
             if (Math.random() < chance) {
-                const reactionKey = exitCode !== 0 ? 'ERROR_LOW' : 'COMMAND_GENERIC';
-                const reaction = this.activePersona.getReaction(reactionKey, payload);
+                const reactionKey = exitCode !== 0 ? 'fail' : 'success';
+                const intensity = this.intensityCalculator.calculate(utility);
+
+                const reaction = this.activePersona.getReaction(reactionKey, {
+                    intensity,
+                    variables: { utility }
+                });
+
                 if (reaction && reaction !== '...') {
                     this.emitReaction(reaction, exitCode !== 0 ? 'warn' : 'info');
                 }
-            }
-        } else {
-            const reaction = this.activePersona.getReaction(event, payload);
-            if (reaction && reaction !== '...') {
-                this.emitReaction(reaction, 'info');
             }
         }
     }
 
     private handleTutorEvent(event: any) {
-        // Map TutorEngine events to Persona reactions
-        // and handle specific logic like MISSION_START instructions
-        
         if (event.type === 'START') {
             const instructions = event.payload?.instructions || 'Awaiting synchronization.';
+            const utility = event.payload?.text?.split(' ')[0] || 'unknown';
+            
             this.emitReaction(`MISSION DATA UPLOADED: ${instructions}`, 'info');
-            this.emitReaction(this.activePersona.getReaction('MISSION_START'), 'hint');
+            
+            // Trigger Combinatorial Mission Start reaction
+            const reaction = this.activePersona.getReaction('MISSION_START', {
+                intensity: this.intensityCalculator.calculate(utility),
+                variables: { utility }
+            });
+            
+            if (reaction && reaction !== '...') {
+                this.emitReaction(reaction, 'hint');
+            }
             return;
         }
 
         const typeMap: Record<string, string> = {
-            'COMPLETE': 'SUCCESS',
-            'MISTAKE': 'ERROR_LOW'
+            'COMPLETE': 'success',
+            'MISTAKE': 'fail'
         };
 
         const reactionKey = typeMap[event.type] || event.type;
-        const reaction = this.activePersona.getReaction(reactionKey, event.payload);
+        const intensity = DialogueIntensity.STANDARD;
+
+        const reaction = this.activePersona.getReaction(reactionKey, { intensity });
         
         if (reaction && reaction !== '...') {
             let reactionType = 'info';
             if (event.type === 'MISTAKE') reactionType = 'warn';
             if (event.type === 'COMPLETE') reactionType = 'hint';
             
-            // Handle Speed Warnings
-            if (event.type === 'SPEED_WARNING') {
-                reactionType = event.payload === 'TOO SLOW' ? 'warn' : 'info';
-            }
-
-            // Handle Emotions
-            if (event.type === 'EMOTION_CHANGE') {
-                if (event.payload === 'CRASH_OUT') reactionType = 'critical';
-                else if (event.payload === 'MAD') reactionType = 'warn';
-            }
-
             this.emitReaction(reaction, reactionType);
-        }
-    }
-
-    public onTutorEvent(event: string, payload?: any) {
-        const reaction = this.activePersona.getReaction(event, payload);
-        if (reaction && reaction !== '...') {
-            this.emitReaction(reaction, 'info');
         }
     }
 
@@ -117,9 +127,5 @@ export class TutorBrain {
         return () => {
             this.reactionListeners = this.reactionListeners.filter(l => l !== listener);
         };
-    }
-
-    process(event: string, context?: any): string {
-        return this.activePersona.getReaction(event, context);
     }
 }
