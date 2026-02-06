@@ -3,7 +3,7 @@
 This plan outlines the steps for a comprehensive architectural audit of the Terminalator codebase, adhering to Clean Architecture and OOAD principles.
 
 ## Phase 1: Preparation & Discovery
-- [ ] Task: Map the current physical file structure and identify discrepancies with the "Screaming Architecture" ideal.
+- [x] Task: Map the current physical file structure and identify discrepancies with the "Screaming Architecture" ideal. a628ee9
 - [ ] Task: Inventory all "macro-like" constructs and global utilities.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Preparation & Discovery' (Protocol in workflow.md)
 
