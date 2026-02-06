@@ -15,10 +15,10 @@ This plan outlines the steps for a comprehensive architectural audit of the Term
 ## Phase 3: Layered Audit - Interface Adapters & Infrastructure
 - [x] Task: Audit `src/interface-adapters` (Controllers, Presenters, Gateways) for proper mapping and decoupling. 09c1f35
 - [x] Task: Audit `src/infrastructure` and `src/frameworks-drivers` for framework-specific implementations and boundaries. 09c1f35
-- [~] Task: Conductor - User Manual Verification 'Phase 3: Layered Audit - Interface Adapters & Infrastructure' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Layered Audit - Interface Adapters & Infrastructure' (Protocol in workflow.md) 2d8e7ee
 
 ## Phase 4: Systemic & Structural Audit
-- [ ] Task: Perform a systemic SOLID principle check across a representative sample of complex modules.
+- [~] Task: Perform a systemic SOLID principle check across a representative sample of complex modules.
 - [ ] Task: Evaluate the high-level project root organization (non-`src` files) and its impact on architectural clarity.
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: Systemic & Structural Audit' (Protocol in workflow.md)
 
