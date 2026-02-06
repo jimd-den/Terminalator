@@ -5,10 +5,10 @@ This plan outlines the steps for a comprehensive architectural audit of the Term
 ## Phase 1: Preparation & Discovery
 - [x] Task: Map the current physical file structure and identify discrepancies with the "Screaming Architecture" ideal. a628ee9
 - [x] Task: Inventory all "macro-like" constructs and global utilities. b15a789
-- [~] Task: Conductor - User Manual Verification 'Phase 1: Preparation & Discovery' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Preparation & Discovery' (Protocol in workflow.md) cafb0cb
 
 ## Phase 2: Layered Audit - Domain & Application Logic
-- [ ] Task: Audit `src/domain/entities` for enterprise business rules purity (no framework leakage).
+- [~] Task: Audit `src/domain/entities` for enterprise business rules purity (no framework leakage).
 - [ ] Task: Audit `src/domain/usecases` for application logic and dependency rule compliance.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Layered Audit - Domain & Application Logic' (Protocol in workflow.md)
 
