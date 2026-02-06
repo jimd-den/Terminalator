@@ -18,9 +18,9 @@ This plan outlines the steps for a comprehensive architectural audit of the Term
 - [x] Task: Conductor - User Manual Verification 'Phase 3: Layered Audit - Interface Adapters & Infrastructure' (Protocol in workflow.md) 2d8e7ee
 
 ## Phase 4: Systemic & Structural Audit
-- [~] Task: Perform a systemic SOLID principle check across a representative sample of complex modules.
-- [ ] Task: Evaluate the high-level project root organization (non-`src` files) and its impact on architectural clarity.
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Systemic & Structural Audit' (Protocol in workflow.md)
+- [x] Task: Perform a systemic SOLID principle check across a representative sample of complex modules. 23a5503
+- [x] Task: Evaluate the high-level project root organization (non-`src` files) and its impact on architectural clarity. 23a5503
+- [~] Task: Conductor - User Manual Verification 'Phase 4: Systemic & Structural Audit' (Protocol in workflow.md)
 
 ## Phase 5: Report Finalization
 - [ ] Task: Compile all findings into a literate, stakeholder-focused `COMPREHENSIVE_COMPLIANCE_REPORT.md`.
