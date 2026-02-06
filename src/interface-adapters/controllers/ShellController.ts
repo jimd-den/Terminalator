@@ -133,7 +133,7 @@ export class ShellController {
         gameManager.onCommandExecuted(stateRef.current, response, prevFsContext);
 
         // Check for Procedural Events (Random NPC Messages)
-        const eventMsg = gameEventObserver.checkProceduralEvents(outputController.getLineCount());
+        const eventMsg = await gameEventObserver.checkProceduralEvents(outputController.getLineCount());
         if (eventMsg) {
             outputController.appendLine(
                 ShellPresenter.presentSystemMessage(eventMsg)

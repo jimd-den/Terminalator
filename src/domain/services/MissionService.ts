@@ -3,10 +3,11 @@
  * 
  * Manages the lifecycle and state transitions of game missions.
  * Responsible for tracking active missions and delegating progression analysis.
+ * Upgraded to support Combinatorial Scaling.
  *
  * Pillar: The Four-Fold Shield (Strict Architecture)
  * Pillar: The Storyteller’s Code (Literate Documentation)
- * Pillar: The Balanced Scale (SOLID) - Decouples mission state from UI logic.
+ * Pillar: THE MASTER'S TOOL (Combinatorial Factory)
  */
 
 import { Mission, MissionStep } from '../entities/Mission';
@@ -25,6 +26,9 @@ import { KnuthianMissionFactory } from '../factories/KnuthianMissionFactory';
 import { Organization } from '../entities/world/Organization';
 import { MissionPopulator } from './MissionPopulator';
 
+// Scaling Engine
+import { TutorLedProgression } from '../usecases/tutor/TutorLedProgression';
+
 export class MissionService {
     private activeMissions: Mission[] = [];
     private organizationGenerator = new OrganizationGenerator();
@@ -36,18 +40,19 @@ export class MissionService {
         private proceduralFactory?: ProceduralMissionFactory,
         private constraintValidator?: ConstraintValidator,
         private knuthianFactory?: KnuthianMissionFactory,
-        private missionPopulator?: MissionPopulator
+        private missionPopulator?: MissionPopulator,
+        private tutorProgression?: TutorLedProgression // [NEW]
     ) { }
 
     /**
      * Creates a new mission assigned by the given NPC.
      * @param npc - The NPC assigning the mission.
      */
-    public createMission(npc: NPC): Mission {
+    public async createMission(npc: NPC): Promise<Mission> {
         const rng = Math.random();
         
-        // 0. The Knuthian Path: Algorithms (30% chance if factory exists)
-        if (this.knuthianFactory && rng < 0.3) {
+        // 0. The Knuthian Path: Algorithms (20% chance)
+        if (this.knuthianFactory && rng < 0.2) {
             const seed = Date.now().toString();
             const employer = this.organizationGenerator.generateFaction(seed + '_A');
             const target = this.organizationGenerator.generateFaction(seed + '_B');
@@ -69,8 +74,8 @@ export class MissionService {
             return mission;
         }
 
-        // 1. Try Procedural Generation based on World State (30% chance if available)
-        if (this.worldState && this.proceduralFactory && rng < 0.6) {
+        // 1. Procedural Generation based on World State (20% chance)
+        if (this.worldState && this.proceduralFactory && rng < 0.4) {
             const devices = this.worldState.getAllDevices();
             const candidates = devices.filter(d => d.type !== 'UPLINK'); 
             
@@ -87,7 +92,21 @@ export class MissionService {
             }
         }
 
-        // 2. Fallback to Template Generation (Default)
+        // 2. The Scaling Path: Combinatorial Missions (Primary Path)
+        if (this.tutorProgression) {
+            const targetSystem = generateHostname(npc.faction || 'corporate');
+            const mission = await this.tutorProgression.generateNextMission(targetSystem);
+            
+            // Enrich with NPC specific metadata
+            mission.assignedBy = npc.id;
+            mission.assignerName = npc.name;
+            
+            this.setupMissionChat(mission, npc);
+            this.activeMissions.push(mission);
+            return mission;
+        }
+
+        // 3. Fallback to Template Generation (Legacy)
         const targetSystem = generateHostname(npc.faction || 'corporate');
         const objectiveTarget = generateObjectiveFilename();
 
@@ -120,7 +139,6 @@ export class MissionService {
 
     /**
      * Updates mission state based on command execution results.
-     * Returns hints or progression triggers.
      */
     public updateMissions(state: TerminalState, response: CommandResponse): { hints: { missionId: string, sender: string, message: string, type: string }[], progression: { result: TutorProgressionResult | null, missionId: string } | null } {
         const hints: { missionId: string, sender: string, message: string, type: string }[] = [];
@@ -149,29 +167,18 @@ export class MissionService {
             }
         }
 
-        // Apply progression state changes if any
         if (progression && progression.result && progression.result.nextStep) {
             const mission = this.activeMissions.find(m => m.id === progression.missionId);
             if (mission) {
-                // Check Constraints (Knuthian Physics)
                 if (this.constraintValidator && response.executionStats && mission.constraints) {
                     const validation = this.constraintValidator.validate(mission, response.executionStats);
                     if (!validation.valid) {
                         const rejectionMsg = `CONSTRAINT VIOLATION: ${validation.reason}`;
-                        
-                        mission.chatHistory.push({
-                            sender: 'SYSTEM',
-                            message: rejectionMsg,
-                            timestamp: Date.now()
-                        });
-                        
+                        mission.chatHistory.push({ sender: 'SYSTEM', message: rejectionMsg, timestamp: Date.now() });
                         hints.push({ missionId: mission.id, sender: 'SYSTEM', message: rejectionMsg, type: 'WARNING' });
-                        
-                        // Abort progression
                         return { hints, progression: null };
                     }
                 }
-
                 mission.currentStep = progression.result.nextStep;
             }
         }

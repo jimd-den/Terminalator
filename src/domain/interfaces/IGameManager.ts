@@ -4,7 +4,6 @@
  * Domain Interface for Game Management.
  * Allows Domain Services to trigger game events without depending on the Interface Adapter layer.
  */
-import { MailMessage } from '../usecases/MailSystem';
 import { Mission } from '../entities/Mission';
 import { TerminalState } from '../entities/TerminalState';
 import { CommandResponse } from '../entities/Command';
@@ -13,7 +12,7 @@ import { NPC } from '../entities/NPC';
 
 export interface IGameManager {
     tutorEngine: TutorEngine;
-    spawnNPCEvent(): Mission | null;
+    spawnNPCEvent(): Promise<Mission | null> | Mission | null;
     getActiveMissions(): Mission[];
     getActiveNPCs(): NPC[];
     startMission(id: string, currentState?: TerminalState): void;

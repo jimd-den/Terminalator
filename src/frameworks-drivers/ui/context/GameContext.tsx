@@ -12,14 +12,12 @@ import { CreditService } from '../../../domain/services/gamification/CreditServi
 import { TutorBrain } from '../../../domain/entities/tutor/TutorBrain';
 import { MasteryTracker } from '../../../domain/services/tutor/MasteryTracker';
 import { PersonaLoader } from '../../../domain/services/tutor/PersonaLoader';
-import standardPersona from '../../../domain/data/tutors/Standard.json';
-import roguePersona from '../../../domain/data/tutors/Rogue.json';
 
 /**
  * GameContext - Presentation Layer
  *
  * Provides global access to the core game systems (FileSystem, GameManager, etc.).
- * Adheres to "Dependency Minimalism" by exposing singletons.
+ * Upgraded to wire up the Mission & Tutor Scaling engines to the UI.
  *
  * Pillar: The Four-Fold Shield (Strict Architecture)
  * Pillar: The Balanced Scale (KISS)
@@ -47,25 +45,21 @@ interface GameContextType {
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
 export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    // Initialize singletons once
-    // Using lazy initialization to ensure purity and performance
     const [fs] = useState(() => new FileSystem());
     const [telemetry] = useState(() => new ConsoleTelemetryAdapter());
-    const [networkMap] = useState(() => new NetworkMap()); // [NEW] Singleton
+    const [networkMap] = useState(() => new NetworkMap());
     const [tutorMessaging] = useState(() => new TutorMessagingService());
     const [creditService] = useState(() => DependencyContainer.createCreditService(fs));
-    const [tutorBrain] = useState(() => {
-        const brain = new TutorBrain();
-        if (standardPersona) {
-            brain.setPersona(new PersonaLoader(standardPersona as any));
-        } else {
-            console.warn("[GameContext] standardPersona JSON not found or failed to load.");
-        }
-        return brain;
-    });
     const [masteryTracker] = useState(() => DependencyContainer.createMasteryTracker(fs));
     
-    // Reactive state for UI
+    // Scale Engine Wiring: Use DI container to create properly injected Brain
+    const [tutorBrain] = useState(() => {
+        const brain = DependencyContainer.createTutorBrain(fs);
+        // Initialize with modern Combinatorial Persona
+        brain.setPersona(DependencyContainer.createPersona('standard', 'TUTOR'));
+        return brain;
+    });
+    
     const [activeTutorMessage, setActiveTutorMessage] = useState<TutorMessage | null>(() => ({
         text: "Uplink established. Welcome to the Grid. (◕‿◕✿)",
         type: 'hint',
@@ -76,7 +70,6 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [isInputLocked, setInputLocked] = useState(false);
     const [isTutorTyping, setIsTutorTyping] = useState(false);
 
-    // Queue Consumer Logic
     useEffect(() => {
         let isMounted = true;
         let isProcessing = false;
@@ -95,7 +88,6 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 setIsTutorTyping(false);
                 setActiveTutorMessage(msg);
 
-                // Reading delay
                 const next = await tutorMessaging.getAllMessages();
                 if (next.length > 0) {
                     await new Promise(resolve => setTimeout(resolve, 1500));
@@ -115,9 +107,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         };
     }, [tutorMessaging]);
 
-    // Create service for adapters that need it (GameManager, Executor)
     const [fsService] = useState(() => new FileSystemService(fs));
-
     const [gameManager] = useState(() => DependencyContainer.createGameManager(fs, networkMap, telemetry));
     const [commandExecutor] = useState(() => new GameCommandExecutor(fsService, gameManager, networkMap, telemetry));
 
@@ -130,9 +120,12 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }, [creditService]);
 
     const switchPersona = useCallback((id: 'standard' | 'rogue') => {
-        const data = id === 'rogue' ? roguePersona : standardPersona;
-        tutorBrain.setPersona(new PersonaLoader(data as any));
-        sendTutorMessage(tutorBrain.process('GREETING'), 'info', tutorBrain.activePersona.name.toUpperCase());
+        // Updated to use combinatorial persona creation
+        const name = id === 'rogue' ? 'GLITCH' : 'TUTOR';
+        tutorBrain.setPersona(DependencyContainer.createPersona(id, name));
+        
+        // Use generic message instead of legacy process('GREETING') if not in library
+        sendTutorMessage(`PERSONAL PROTOCOL ${name} INITIALIZED.`, 'info', name);
     }, [tutorBrain, sendTutorMessage]);
 
     useEffect(() => { refreshCredits(); }, []);

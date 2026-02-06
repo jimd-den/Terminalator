@@ -19,10 +19,10 @@ export class GameEventObserver {
      * @param outputLineCount - The number of lines currently in the terminal output.
      * @returns A formatted message string if an event occurs, or null.
      */
-    public checkProceduralEvents(outputLineCount: number): string | null {
+    public async checkProceduralEvents(outputLineCount: number): Promise<string | null> {
         // Logic: Every 4th line after the initial boot (5 lines), spawn an NPC event.
         if (outputLineCount > 5 && outputLineCount % 4 === 0) {
-            const mail = this.gameManager.spawnNPCEvent();
+            const mail = await this.gameManager.spawnNPCEvent();
             if (mail) {
                 return `[ NEW TRANSMISSION: ID ${mail.id} FROM ${mail.assignerName} ]`;
             }

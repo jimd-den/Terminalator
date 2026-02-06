@@ -1,10 +1,10 @@
-
+import { getStdinAsString } from '../domain/entities/ProcessContext';
 import { IGameManager } from '../domain/interfaces/IGameManager';
 import { NetworkMap } from '../domain/services/NetworkMap';
 import { TerminalState } from '../domain/entities/TerminalState';
 import { CommandResponse } from '../domain/entities/Command';
 import { NPC } from '../domain/entities/NPC';
-import { Mission } from '../domain/entities/Mission';
+import { Mission, MissionStep } from '../domain/entities/Mission';
 import { MailSystem } from '../domain/usecases/MailSystem';
 import { FileSystem } from '../domain/entities/FileSystem';
 import { TelemetryPort } from '../domain/ports/TelemetryPort';
@@ -12,7 +12,6 @@ import { TutorEngine, Lesson } from '../domain/entities/TutorEngine';
 import { LessonService } from '../domain/services/LessonService';
 import { LessonType } from '../domain/services/LessonGenerator';
 
-// New Domain Services
 import { MissionService } from '../domain/services/MissionService';
 import { NPCService } from '../domain/services/NPCService';
 import { SystemPreparationService } from '../domain/services/SystemPreparationService';
@@ -24,11 +23,10 @@ import { IWorldStateProvider } from '../domain/interfaces/IWorldStateProvider';
  * GameManager - Interface Adapter layer
  * 
  * Acts as a Facade/Coordinator for the game's various subsystems.
- * It delegatest heavy lifting to specialized Domain Services while
- * providing a unified interface for the UI and other adapters.
+ * Upgraded to support Scaling Engines.
  *
  * Pillar: The Four-Fold Shield (Strict Architecture)
- * Pillar: The Balanced Scale (SOLID / KISS) - SRP: This class is now a coordinator.
+ * Pillar: The Balanced Scale (SOLID / KISS)
  */
 export class GameManager implements IGameManager {
     private missionService: MissionService;
@@ -86,15 +84,18 @@ export class GameManager implements IGameManager {
     }
 
     /**
-     * Called after every command execution to update game state and trigger updates.
+     * Called after every command execution to update game state.
      */
     public onCommandExecuted(state: TerminalState, response: CommandResponse, _prevFsContext?: string) {
-        this.emitEvent('COMMAND_EXECUTED', { output: response.output, exitCode: response.exitCode });
+        // Emit for TutorBrain observation (includes exitCode and utility)
+        this.emitEvent('COMMAND_EXECUTED', { 
+            output: response.output, 
+            exitCode: response.exitCode,
+            utility: response.metadata?.utility || 'unknown'
+        });
 
-        // Delegate mission logic to MissionService
         const { hints, progression } = this.missionService.updateMissions(state, response);
 
-        // Handle Payment Lore if a mission was completed
         hints.filter(h => h.type === 'CONGRATS').forEach(h => {
             const mission = this.missionService.getMissionById(h.missionId);
             if (mission) {
@@ -106,7 +107,6 @@ export class GameManager implements IGameManager {
             }
         });
 
-        // Trigger Lessons based on progression
         if (progression && progression.result && progression.result.type === 'START_LESSON') {
             const result = progression.result;
             const lessonId = result.lessonId;
@@ -116,7 +116,7 @@ export class GameManager implements IGameManager {
                 const lesson: Lesson = {
                     id: lessonId,
                     type: 'SHELL',
-                    text: result.text || 'ls -la', // Dynamic command from strategy
+                    text: result.text || 'ls -la',
                     instructions: result.instructions || `CONNECTION ESTABLISHED. SCAN SYSTEM FOR ${objective}`,
                     isMission: result.isMission || true
                 };
@@ -128,17 +128,15 @@ export class GameManager implements IGameManager {
     /**
      * Triggers a new transmission from a random NPC and generates a mission.
      */
-    public spawnNPCEvent(): Mission | null {
-        const spawnLogic = () => {
+    public async spawnNPCEvent(): Promise<Mission | null> {
+        const spawnLogic = async () => {
             if (this.missionService.getActiveMissions().length >= 4) {
                 return null;
             }
 
             const npc = this.npcService.spawnNPC();
-            const mission = this.missionService.createMission(npc);
+            const mission = await this.missionService.createMission(npc);
 
-            // Ensure target system exists and is prepared
-            // this.networkMap.getSystem(mission.targetSystem); // DEPRECATED
             this.systemPreparationService.prepareSystemForMissions(mission.targetSystem, [mission]);
 
             return mission;
@@ -173,7 +171,6 @@ export class GameManager implements IGameManager {
                 timestamp: Date.now()
             });
 
-            // If already connected, skip the SSH lesson and trigger next step analysis
             if (currentState && currentState.fsContext === mission.targetSystem) {
                 mission.chatHistory.push({
                     sender: 'TutorBot',
@@ -181,7 +178,6 @@ export class GameManager implements IGameManager {
                     timestamp: Date.now() + 100
                 });
 
-                // Manually trigger one update to get the next lesson
                 this.onCommandExecuted(currentState, { output: 'SYSTEM RECOVERY INITIALIZED', exitCode: 0, newState: currentState } as any);
                 return;
             }
@@ -192,7 +188,6 @@ export class GameManager implements IGameManager {
                 timestamp: Date.now() + 100
             });
 
-            // Auto-start Tutor Lesson for this mission
             const sshCommand = `ssh admin@${mission.targetSystem}`;
             const lesson: Lesson = {
                 id: `MISSION_${mission.id}`,
@@ -210,17 +205,10 @@ export class GameManager implements IGameManager {
         this.missionService.abandonMission(missionId);
     }
 
-    /**
-     * Ensures a system has all necessary files for active missions.
-     * Delegated to SystemPreparationService.
-     */
     public ensureSystemPrepared(hostname: string) {
         this.systemPreparationService.prepareSystemForMissions(hostname, this.missionService.getActiveMissions());
     }
 
-    /**
-     * Debug/admin method to start a specific lesson.
-     */
     public startTutor(lessonId: string) {
         const lesson = this.lessonService.getLesson(lessonId);
         if (lesson) {
@@ -229,9 +217,6 @@ export class GameManager implements IGameManager {
         }
     }
 
-    /**
-     * Starts a dynamic, procedurally generated lesson.
-     */
     public startRandomLesson(): Lesson {
         const types: LessonType[] = ['LOG_ANALYSIS', 'BULK_ORG', 'SCAFFOLDING', 'CLEANUP'];
         const randomType = types[Math.floor(Math.random() * types.length)];
