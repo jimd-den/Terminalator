@@ -4,7 +4,7 @@ import { PersonaLoader, PersonaData } from '../src/domain/services/tutor/Persona
 import * as dialogueLibrary from '../src/domain/data/tutor/DialogueLibrary.json';
 
 function testCombinatorialVariety() {
-    console.log("Testing Combinatorial Dialogue Variety...");
+    console.log("Testing Multi-Segment Combinatorial Dialogue Variety...");
 
     const data: PersonaData = {
         id: 'rogue',
@@ -19,7 +19,7 @@ function testCombinatorialVariety() {
 
     const loader = new PersonaLoader(data, (dialogueLibrary as any).fragments);
 
-    console.log("\nGENTLE SAMPLES (utility: grep):");
+    console.log("\nGENTLE SAMPLES (Segmented Chain):");
     for (let i = 0; i < 5; i++) {
         const msg = loader.getReaction('fail', { 
             intensity: DialogueIntensity.GENTLE, 
@@ -28,7 +28,7 @@ function testCombinatorialVariety() {
         console.log(` - ${msg}`);
     }
 
-    console.log("\nHARSH SAMPLES (utility: ls):");
+    console.log("\nHARSH SAMPLES (Segmented Chain):");
     for (let i = 0; i < 5; i++) {
         const msg = loader.getReaction('fail', { 
             intensity: DialogueIntensity.HARSH, 
@@ -37,7 +37,7 @@ function testCombinatorialVariety() {
         console.log(` - ${msg}`);
     }
 
-    console.log("\nPASS: Combinatorial dialogue assembled with variety.");
+    console.log("\nPASS: Multi-segment dialogue assembled with massive variety.");
 }
 
 async function run() {

@@ -1,11 +1,11 @@
 /**
  * CombinatorialDialogueAssembler.ts - Domain Service
  * 
- * Generates unique statements by cross-multiplying sentence structures
- * with fragment pools (e.g., insults, tips, fillers).
+ * Generates unique statements by recursively cross-multiplying
+ * sentence segments and fragment pools.
  * 
- * Pillar: THE MASTER'S TOOL (Combinatorial Grammar)
- * Pillar: THE STORYTELLER'S CODE (Dynamic Dialogue)
+ * Pillar: THE MASTER'S TOOL (Recursive Combinatorial Grammar)
+ * Pillar: THE STORYTELLER'S CODE (Massive Variety)
  */
 
 import { VariableTemplateEngine } from './VariableTemplateEngine';
@@ -13,32 +13,39 @@ import { VariableTemplateEngine } from './VariableTemplateEngine';
 export class CombinatorialDialogueAssembler {
     /**
      * @param fragmentPools - Map of tag keys to arrays of possible values.
-     * e.g. { insult: ["worm", "failure"], tip: ["Check man.", "Check syntax."] }
      */
     constructor(private fragmentPools: Record<string, string[]>) {}
 
     /**
      * Assembles a final sentence from a template.
-     * 1. Detects fragment tags (e.g., {insult}).
-     * 2. Picks random values for tags not provided in variables.
-     * 3. Renders the final string.
+     * Supports multiple passes to allow segments to contain tags.
      */
     public assemble(template: string, variables: Record<string, string> = {}): string {
-        const combinedContext = { ...variables };
-        
-        // Find all tags in the template
-        const tags = template.match(/\{(\w+)\}/g) || [];
-        
-        for (const tag of tags) {
-            const key = tag.slice(1, -1);
+        let result = template;
+        let iteration = 0;
+        const MAX_ITERATIONS = 5; // Prevent infinite recursion
+
+        // Multi-pass resolution: resolve tags until none remain or limit reached.
+        while (result.includes('{') && iteration < MAX_ITERATIONS) {
+            const context: Record<string, string> = { ...variables };
+            const tags = result.match(/\{(\w+)\}/g) || [];
             
-            // If the tag corresponds to a fragment pool and wasn't provided as a variable
-            if (this.fragmentPools[key] && !combinedContext[key]) {
-                const pool = this.fragmentPools[key];
-                combinedContext[key] = pool[Math.floor(Math.random() * pool.length)];
+            for (const tag of tags) {
+                const key = tag.slice(1, -1);
+                
+                // Only pick a random fragment if the variable wasn't explicitly provided
+                if (this.fragmentPools[key] && !context[key]) {
+                    const pool = this.fragmentPools[key];
+                    context[key] = pool[Math.floor(Math.random() * pool.length)];
+                }
             }
+
+            const next = VariableTemplateEngine.render(result, context);
+            if (next === result) break; // No more resolvable tags
+            result = next;
+            iteration++;
         }
 
-        return VariableTemplateEngine.render(template, combinedContext);
+        return result;
     }
 }
