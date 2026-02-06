@@ -10,10 +10,10 @@ This plan outlines the steps for a comprehensive architectural audit of the Term
 ## Phase 2: Layered Audit - Domain & Application Logic
 - [x] Task: Audit `src/domain/entities` for enterprise business rules purity (no framework leakage). 8868389
 - [x] Task: Audit `src/domain/usecases` for application logic and dependency rule compliance. ae9289c
-- [~] Task: Conductor - User Manual Verification 'Phase 2: Layered Audit - Domain & Application Logic' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Layered Audit - Domain & Application Logic' (Protocol in workflow.md) 3306d94
 
 ## Phase 3: Layered Audit - Interface Adapters & Infrastructure
-- [ ] Task: Audit `src/interface-adapters` (Controllers, Presenters, Gateways) for proper mapping and decoupling.
+- [~] Task: Audit `src/interface-adapters` (Controllers, Presenters, Gateways) for proper mapping and decoupling.
 - [ ] Task: Audit `src/infrastructure` and `src/frameworks-drivers` for framework-specific implementations and boundaries.
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Layered Audit - Interface Adapters & Infrastructure' (Protocol in workflow.md)
 
