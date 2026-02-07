@@ -12,6 +12,7 @@ import { ExfiltrateStrategy } from './ExfiltrateStrategy';
 import { ModifyStrategy } from './ModifyStrategy';
 import { LogAnalysisStrategy } from './LogAnalysisStrategy';
 import { DispatcherStrategy } from './DispatcherStrategy';
+import { GenericMissionStrategy } from './GenericMissionStrategy';
 
 export class StrategyRegistry {
     private strategies = new Map<string, IMissionStrategy>();
@@ -25,6 +26,7 @@ export class StrategyRegistry {
         this.register('modify', new ModifyStrategy());
         this.register('log-analysis', new LogAnalysisStrategy());
         this.register('dispatcher', new DispatcherStrategy());
+        this.register('generative', new GenericMissionStrategy());
     }
 
     /**

@@ -10,7 +10,7 @@
 
 import React from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
-import { useTheme } from '../context/ThemeContext';
+import { useTheme, useThemeComponents } from '../context/ThemeContext';
 import { THEME } from '../Theme';
 import { TutorEmotion } from '../../../domain/entities/TutorEngine';
 import { PopChar } from './PopChar';
@@ -34,7 +34,8 @@ export const InputBar: React.FC<InputBarProps> = ({
     crashingIndices,
     onRefocus
 }) => {
-    const { theme, settings, components } = useTheme();
+    const { theme, settings } = useTheme();
+    const components = useThemeComponents();
     const { TextRenderer, Cursor } = components;
     const colors = theme.colors;
 
@@ -68,7 +69,8 @@ export const InputBar: React.FC<InputBarProps> = ({
             fontSize: THEME.typography.fontSize.lg,
         },
         ghostTextStyle: {
-            opacity: 0.5,
+            color: '#00FFFF', // Cyan
+            opacity: 0.3,
         },
     });
 

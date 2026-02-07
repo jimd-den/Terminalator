@@ -8,15 +8,9 @@
  */
 
 import { ICommand } from './ICommand';
+import { CommandCapability } from '../entities/knowledge/UnixCommandDefinition';
 
-export enum CommandCapability {
-    FILTER = 'FILTER',
-    MODIFY = 'MODIFY',
-    READ = 'READ',
-    LIST = 'LIST',
-    TRANSFORM = 'TRANSFORM',
-    NAVIGATE = 'NAVIGATE'
-}
+export { CommandCapability };
 
 export interface IStructuredCommand extends ICommand {
     readonly capabilities: CommandCapability[];

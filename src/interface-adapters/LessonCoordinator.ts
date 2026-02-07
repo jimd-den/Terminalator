@@ -13,12 +13,14 @@ import { TutorEngine, TutorEvent, Lesson } from '../domain/entities/TutorEngine'
 import { MailSystem } from '../domain/usecases/MailSystem';
 import { NPC, NPCGenerator } from '../domain/entities/NPC';
 import { MissionService } from '../domain/services/MissionService';
+import { EconomyService } from '../domain/services/EconomyService';
 
 export class LessonCoordinator {
     constructor(
         private tutorEngine: TutorEngine,
         private mailSystem: MailSystem,
-        private missionService: MissionService
+        private missionService: MissionService,
+        private economyService: EconomyService
     ) {
         // Wire up Tutor Events
         this.tutorEngine.subscribe(this.handleTutorEvent);
@@ -42,6 +44,10 @@ export class LessonCoordinator {
         };
 
         switch (event.type) {
+            case 'START':
+                this.economyService.startSession();
+                break;
+
             case 'SPEED_WARNING':
                 // We keep this minimal to avoid spamming the user
                 if (event.payload === 'TOO FAST') {

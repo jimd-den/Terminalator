@@ -15,6 +15,7 @@
 
 import { CpuState } from '../../entities/asm/CpuState';
 import { Instruction, Opcode, Funct3 } from '../../entities/asm/Instruction';
+import { SimulationBus, GameEventType, RegisterModifiedPayload } from '../../services/SimulationBus';
 
 export interface InterpreterOutput {
     stdout: string;
@@ -25,6 +26,8 @@ export interface InterpreterOutput {
 export class RISCVInterpreter {
     private stdout: string[] = [];
     private instructionCount: number = 0;
+
+    constructor(private bus?: SimulationBus) {}
 
     /**
      * Executes a program from start to finish.
@@ -81,6 +84,7 @@ export class RISCVInterpreter {
 
     private execute(instr: Instruction, state: CpuState, labels: Map<string, number>): void {
         let nextPc = state.pc + 4;
+        const mnemonic = instr.mnemonic || 'unknown';
 
         switch (instr.opcode) {
             case Opcode.OP_IMM: {
@@ -88,11 +92,11 @@ export class RISCVInterpreter {
                 const imm = instr.imm!;
 
                 if (instr.funct3 === Funct3.ADD_SUB) {
-                    state.setRegister(instr.rd!, rs1Val + imm);
+                    this.setRegister(state, instr.rd!, rs1Val + imm, mnemonic);
                 } else if (instr.funct3 === Funct3.AND) {
-                    state.setRegister(instr.rd!, rs1Val & imm);
+                    this.setRegister(state, instr.rd!, rs1Val & imm, mnemonic);
                 } else if (instr.funct3 === Funct3.OR) {
-                    state.setRegister(instr.rd!, rs1Val | imm);
+                    this.setRegister(state, instr.rd!, rs1Val | imm, mnemonic);
                 }
                 break;
             }
@@ -103,9 +107,9 @@ export class RISCVInterpreter {
 
                 if (instr.funct3 === Funct3.ADD_SUB) {
                     if (instr.funct7 === 0x00) {
-                        state.setRegister(instr.rd!, rs1Val + rs2Val);
+                        this.setRegister(state, instr.rd!, rs1Val + rs2Val, mnemonic);
                     } else if (instr.funct7 === 0x20) {
-                        state.setRegister(instr.rd!, rs1Val - rs2Val);
+                        this.setRegister(state, instr.rd!, rs1Val - rs2Val, mnemonic);
                     }
                 }
                 break;
@@ -129,7 +133,7 @@ export class RISCVInterpreter {
             }
 
             case Opcode.JAL: {
-                state.setRegister(instr.rd!, state.pc + 4);
+                this.setRegister(state, instr.rd!, state.pc + 4, mnemonic);
                 if (instr.label) {
                     const target = labels.get(instr.label);
                     if (target !== undefined) {
@@ -143,7 +147,7 @@ export class RISCVInterpreter {
                 const base = state.getRegister(instr.rs1!);
                 const addr = base + instr.imm!;
                 if (instr.funct3 === Funct3.W) {
-                    state.setRegister(instr.rd!, state.readWord(addr));
+                    this.setRegister(state, instr.rd!, state.readWord(addr), mnemonic);
                 }
                 break;
             }
@@ -169,6 +173,21 @@ export class RISCVInterpreter {
         }
 
         state.pc = nextPc;
+    }
+
+    private setRegister(state: CpuState, rd: number, value: number, instruction?: string): void {
+        const oldValue = state.getRegister(rd);
+        state.setRegister(rd, value);
+
+        if (this.bus) {
+            const payload: RegisterModifiedPayload = {
+                register: `x${rd}`,
+                oldValue,
+                newValue: value,
+                instruction
+            };
+            this.bus.emit(GameEventType.REGISTER_MODIFIED, payload);
+        }
     }
 
     private handleSyscall(state: CpuState): void {

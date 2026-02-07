@@ -128,4 +128,46 @@ export class PathResolver {
         if (user.gid === inode.gid || user.groups.includes(inode.gid)) return (inode.mode & 0o010) !== 0;
         return (inode.mode & 0o001) !== 0;
     }
+
+    /**
+     * Static helper to resolve a path string to an absolute path string (normalization only).
+     * Replaces duplicated logic in commands and services.
+     */
+    public static resolveString(path: string, cwd: string, home: string = '/home/operator'): string {
+        let absolutePath = path;
+
+        // 1. Handle Home Shortcut
+        if (path === '~') {
+            return home;
+        }
+        if (path.startsWith('~/')) {
+            absolutePath = home + path.substring(1);
+        }
+
+        // 2. Relative to Absolute
+        if (!absolutePath.startsWith('/')) {
+            absolutePath = cwd === '/' ? `/${absolutePath}` : `${cwd}/${absolutePath}`;
+        }
+
+        // 3. Normalization
+        return this.normalize(absolutePath);
+    }
+
+    /**
+     * Normalizes a path by resolving . and .. segments.
+     */
+    public static normalize(path: string): string {
+        const parts = path.split('/').filter(p => p.length > 0 && p !== '.');
+        const stack: string[] = [];
+
+        for (const part of parts) {
+            if (part === '..') {
+                if (stack.length > 0) stack.pop();
+                continue;
+            }
+            stack.push(part);
+        }
+
+        return '/' + stack.join('/');
+    }
 }

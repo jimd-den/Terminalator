@@ -33,6 +33,10 @@ export class TutorService {
      */
     public analyzeGameState(mission: Mission, state: TerminalState, lastResponse: CommandResponse): TutorAction | null {
         if (!mission || mission.status !== 'active') return null;
+        
+        // Unify: Generative missions use TutorBrain for dialogue via Bus.
+        if (mission.type === 'generative') return null;
+
         const strategy = this.getStrategy(mission.type);
         const result = strategy.evaluate(mission, state, lastResponse, this.missionRepository, this.lessonRegistry);
         return result.hint;

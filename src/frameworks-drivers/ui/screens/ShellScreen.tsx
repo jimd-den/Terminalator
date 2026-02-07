@@ -14,14 +14,17 @@ import { THEME } from '../Theme';
 import { CommsPane } from '../components/CommsPane';
 import { StatusBar } from '../components/StatusBar';
 import { useShellView } from '../components/ShellView';
+import { GlobalTutorBar } from '../components/GlobalTutorBar';
 import { useInput } from '../context/InputContext';
-import { useTheme } from '../context/ThemeContext';
+import { useTheme, useThemeComponents } from '../context/ThemeContext';
 import { useGame } from '../context/GameContext';
 import { TerminalStateDTO } from '../../../domain/dtos/TerminalStateDTO';
 import { MissionDTO } from '../../../domain/dtos/MissionDTO';
 import { BufferScreen } from './BufferScreen';
 import { BufferDTO } from '../../../domain/dtos/BufferDTO';
 import { FKeyBar, FKeyDef } from '../components/FKeyBar';
+import { MainframeOverlay } from '../components/MainframeOverlay';
+import { EconomyBar } from '../components/EconomyBar';
 
 export interface ShellScreenProps {
     // State
@@ -54,7 +57,8 @@ export interface ShellScreenProps {
 }
 
 export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
-    const { theme, components } = useTheme();
+    const { theme } = useTheme();
+    const components = useThemeComponents();
     const { isInputLocked } = useGame();
     const Layout = components.Layout;
     const { setOnInput, setOnKeyPress, refocus } = useInput();
@@ -132,6 +136,7 @@ export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
     const mainLayout = (
         <View style={{ flex: 1 }}>
             {shellView.topContent}
+            <MainframeOverlay />
         </View>
     );
 
@@ -151,6 +156,8 @@ export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
             topContent={mainLayout}
             middleContent={<FKeyBar keys={keys} />}
             bottomContent={shellView.bottomContent}
+            tutorBarComponent={<GlobalTutorBar />}
+            economyBarComponent={<EconomyBar />}
         />
     );
 };

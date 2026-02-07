@@ -1,4 +1,4 @@
-import { ASTNode } from '../ShellParser';
+import { ASTNode } from '../../interfaces/ShellAST';
 import { IShellParserFacade } from './IShellParserFacade';
 
 /**

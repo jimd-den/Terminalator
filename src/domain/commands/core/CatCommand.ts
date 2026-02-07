@@ -20,6 +20,7 @@ import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
 
 import { FileSystemService } from '../../services/FileSystemService';
+import { PathResolver } from '../../services/filesystem/PathResolver';
 
 export class CatCommand extends CommandBase {
     public readonly capabilities = [CommandCapability.READ];
@@ -54,12 +55,7 @@ export class CatCommand extends CommandBase {
                     continue;
                 }
 
-                let path = filename;
-                if (!path.startsWith('/')) {
-                    path = state.currentDirectory === '/'
-                        ? `/${filename}`
-                        : `${state.currentDirectory}/${filename}`;
-                }
+                const path = PathResolver.resolveString(filename, state.currentDirectory, state.environment.HOME);
 
                 try {
                     const node = fsService.resolve(path);

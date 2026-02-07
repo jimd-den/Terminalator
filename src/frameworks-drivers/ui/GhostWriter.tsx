@@ -17,7 +17,7 @@ interface GhostWriterProps {
     onComplete?: () => void;
 }
 
-import { useTheme } from './context/ThemeContext';
+import { useTheme, useThemeComponents } from './context/ThemeContext';
 
 export const GhostWriter: React.FC<GhostWriterProps> = ({
     text,
@@ -26,7 +26,8 @@ export const GhostWriter: React.FC<GhostWriterProps> = ({
     isActive = true, // Default to true if not controlled
     onComplete
 }) => {
-    const { theme, settings, components } = useTheme();
+    const { theme, settings } = useTheme();
+    const components = useThemeComponents();
     const { TextRenderer } = components;
     const colors = theme.colors;
     const [displayedText, setDisplayedText] = useState('');

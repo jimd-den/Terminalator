@@ -81,22 +81,7 @@ export class FileSystemService {
     }
 
     resolveAbsolutePath(path: string, cwd: string): string {
-        // Logic duplicated in PathResolver? No, resolveAbsolutePath in PathResolver is about Dentry->String.
-        // This is String->String (normalization). 
-        // We should move this to PathResolver too for DRY, but for now strict Facade.
-
-        let absolutePath = path.startsWith('/') ? path : (cwd === '/' ? `/${path}` : `${cwd}/${path}`);
-        const parts = absolutePath.split('/').filter(p => p.length > 0 && p !== '.');
-        const stack: string[] = [];
-
-        for (const part of parts) {
-            if (part === '..') {
-                stack.pop();
-            } else {
-                stack.push(part);
-            }
-        }
-        return '/' + stack.join('/');
+        return PathResolver.resolveString(path, cwd);
     }
 
     getAbsolutePath(dentry: Dentry): string {

@@ -50,7 +50,7 @@ export class WorldManager implements IWorldStateProvider, IWorldManager {
      * Retrieves the FileSystem service for a given hostname.
      * Auto-provisions the host if it doesn't exist (Lazy Generation).
      */
-    public getHostFileSystem(hostname: string): FileSystemService | undefined {
+    public getHostFileSystem(hostname: string): FileSystemService | null {
         if (!this.hostFileSystems.has(hostname)) {
             // Lazy Provisioning for Mission Targets
             const fs = new FileSystem();
@@ -65,7 +65,7 @@ export class WorldManager implements IWorldStateProvider, IWorldManager {
 
             this.registerHost(hostname, service);
         }
-        return this.hostFileSystems.get(hostname);
+        return this.hostFileSystems.get(hostname) || null;
     }
 
     public getAllHosts(): string[] {

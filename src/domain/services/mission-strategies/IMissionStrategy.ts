@@ -4,6 +4,7 @@ import { CommandResponse } from '../../entities/Command';
 import { TutorAction, TutorProgressionResult } from '../../interfaces/ITutorService';
 import { MissionRepository } from '../MissionRepository';
 import { LessonRegistry } from '../LessonRegistry';
+import { SystemPreparationSpec } from '../../entities/world/SystemPreparationSpec';
 
 export interface IMissionStrategy {
     evaluate(
@@ -16,4 +17,6 @@ export interface IMissionStrategy {
         hint: TutorAction | null;
         progression: TutorProgressionResult | null;
     };
+
+    getPreparationSpec(mission: Mission): SystemPreparationSpec | null;
 }

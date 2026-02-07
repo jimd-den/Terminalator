@@ -21,6 +21,7 @@ import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
 
 import { FileSystemService } from '../../services/FileSystemService';
+import { PathResolver } from '../../services/filesystem/PathResolver';
 
 export class CdCommand extends CommandBase {
     public readonly capabilities = [CommandCapability.NAVIGATE];
@@ -44,12 +45,8 @@ export class CdCommand extends CommandBase {
         const target = operands.length > 0 ? operands[0] : '~';
         let newPath = target;
 
-        // Handle '~' (Home Directory)
-        if (target === '~') {
-            newPath = state.environment.HOME || '/home/operator';
-        }
         // Handle '-' (Previous Directory)
-        else if (target === '-') {
+        if (target === '-') {
             if (state.environment.OLDPWD) {
                 newPath = state.environment.OLDPWD;
             } else {
@@ -61,11 +58,11 @@ export class CdCommand extends CommandBase {
             }
         }
 
-        const node = fsService.resolve(newPath, state.currentDirectory);
+        const absolutePath = PathResolver.resolveString(newPath, state.currentDirectory, state.environment.HOME);
+        const node = fsService.resolve(absolutePath, '/');
 
         if (node) {
             if (fsService.isDirectory(node)) {
-                const absolutePath = fsService.getAbsolutePath(node);
                 return {
                     output: target === '-' ? absolutePath : '',
                     newState: {
@@ -76,7 +73,10 @@ export class CdCommand extends CommandBase {
                             OLDPWD: state.currentDirectory
                         }
                     },
-                    exitCode: 0
+                    exitCode: 0,
+                    metadata: {
+                        data: { targetDir: absolutePath }
+                    }
                 };
             } else {
                 return {

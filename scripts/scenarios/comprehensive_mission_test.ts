@@ -33,11 +33,11 @@ async function runScenarioForType(type: MissionType) {
     const engine = gameManager.tutorEngine;
 
     // Trigger specific mission type
-    let mission = gameManager.spawnNPCEvent();
+    let mission = await gameManager.spawnNPCEvent();
     let attempts = 0;
     while (mission?.type !== type && attempts < 100) {
         if (mission) gameManager.abandonMission(mission.id);
-        mission = gameManager.spawnNPCEvent();
+        mission = await gameManager.spawnNPCEvent();
         attempts++;
     }
 

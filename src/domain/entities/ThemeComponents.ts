@@ -16,6 +16,8 @@ export interface LayoutProps {
     middleContent?: React.ReactNode;
     bottomContent: React.ReactNode;
     sideContent?: React.ReactNode;
+    tutorBarComponent?: React.ReactNode;
+    economyBarComponent?: React.ReactNode;
     style?: any;
     children?: React.ReactNode;
 }

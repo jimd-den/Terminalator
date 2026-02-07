@@ -14,6 +14,7 @@ import { CommandBase } from '../CommandBase';
 import { CommandResponse } from '../ICommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
+import { CommandCapability } from '../IStructuredCommand';
 
 /**
  * POSIX exit code bits for val.
@@ -41,6 +42,9 @@ interface ValOptions {
 }
 
 export class ValCommand extends CommandBase {
+     public readonly capabilities: CommandCapability[] = [CommandCapability.READ];
+     public readonly utility: string = 'val';
+
      protected async executeInternal(
           args: string[],
           flags: Set<string>,
@@ -85,6 +89,8 @@ export class ValCommand extends CommandBase {
       */
      private parseArgsInner(args: string[]): { opts: ValOptions, files: string[] } {
           const parser = new (class extends CommandBase {
+               public readonly capabilities: CommandCapability[] = [];
+               public readonly utility: string = 'val-parser';
                public parse(a: string[]) { this.parseArgs(a, ['m', 'r', 'y']); }
                public get() {
                     return {

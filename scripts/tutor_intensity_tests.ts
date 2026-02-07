@@ -9,9 +9,10 @@ async function testTutorBrainReactions() {
     console.log("Testing TutorBrain Combinatorial Reactions...");
 
     const masteryTracker = new MasteryTracker();
+    const mockBus = { subscribe: () => {}, emit: () => {} } as any;
     const intensityCalculator = new IntensityCalculator(masteryTracker);
     const intentInterpreter = new MissionIntentInterpreter();
-    const brain = new TutorBrain(intensityCalculator, intentInterpreter);
+    const brain = new TutorBrain(intensityCalculator, intentInterpreter, mockBus);
 
     const personaData: PersonaData = {
         id: 'rogue',

@@ -1,10 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
-import { useTheme } from '../context/ThemeContext';
 
 export const TypingIndicator = () => {
-    const { theme } = useTheme();
-    const colors = theme.colors;
+    const dotColor = '#00FF41'; // Theme-agnostic default or pass via props
     const dot1 = useRef(new Animated.Value(0)).current;
     const dot2 = useRef(new Animated.Value(0)).current;
     const dot3 = useRef(new Animated.Value(0)).current;
@@ -29,7 +27,7 @@ export const TypingIndicator = () => {
 
     const dotStyle = (val: Animated.Value) => ({
         opacity: val,
-        backgroundColor: colors.primary,
+        backgroundColor: dotColor,
         width: 4,
         height: 4,
         borderRadius: 2,

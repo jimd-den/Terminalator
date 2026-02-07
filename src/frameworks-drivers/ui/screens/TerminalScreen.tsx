@@ -16,11 +16,14 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { FKeyBar } from '../components/FKeyBar';
+import { GlobalTutorBar } from '../components/GlobalTutorBar';
 import { useGame } from '../context/GameContext';
 import { useTerminalViewModel } from '../../../interface-adapters/viewmodels/TerminalViewModel';
-import { useTheme } from '../context/ThemeContext';
+import { useTheme, useThemeComponents } from '../context/ThemeContext';
 import { CommsPane } from '../components/CommsPane';
 import { StatusBar } from '../components/StatusBar';
+import { MainframeOverlay } from '../components/MainframeOverlay';
+import { EconomyBar } from '../components/EconomyBar';
 
 import { ShellScreen } from './ShellScreen';
 import { VimScreen } from './VimScreen';
@@ -36,12 +39,13 @@ const styles = StyleSheet.create({
 });
 
 export const TerminalScreen: React.FC = () => {
-    const { fs, gameManager, commandExecutor } = useGame();
-    const { theme, components } = useTheme();
+    const { fs, gameManager, commandExecutor, tutorShadow } = useGame();
+    const { theme } = useTheme();
+    const components = useThemeComponents();
     const Layout = components.Layout;
     const colors = theme.colors;
 
-    const viewModel = useTerminalViewModel(fs, commandExecutor, gameManager);
+    const viewModel = useTerminalViewModel(fs, commandExecutor, gameManager, tutorShadow);
 
     const crtStyle = {
         ...StyleSheet.absoluteFillObject,
@@ -70,19 +74,24 @@ export const TerminalScreen: React.FC = () => {
             }
             status="ENCRYPTED TRANSMISSION"
             topContent={
-                <CommsPane
-                    missions={viewModel.missions}
-                    activeMissionId={viewModel.ircMissionId}
-                    onMissionSelect={viewModel.setIrcMissionId}
-                    onStartMission={viewModel.handleStartMission}
-                    onAbandonMission={viewModel.handleAbandonMission}
-                />
+                <View style={{ flex: 1 }}>
+                    <CommsPane
+                        missions={viewModel.missions}
+                        activeMissionId={viewModel.ircMissionId}
+                        onMissionSelect={viewModel.setIrcMissionId}
+                        onStartMission={viewModel.handleStartMission}
+                        onAbandonMission={viewModel.handleAbandonMission}
+                    />
+                    <MainframeOverlay />
+                </View>
             }
             middleContent={<FKeyBar keys={[
                 { key: 'F2', label: 'CLOSE', action: viewModel.toggleCommsView },
                 { key: 'ESC', label: 'BACK', action: viewModel.toggleCommsView }
             ]} />}
             bottomContent={<View style={styles.footerPlaceholder} />}
+            tutorBarComponent={<GlobalTutorBar />}
+            economyBarComponent={<EconomyBar />}
         />
     );
 
@@ -98,16 +107,21 @@ export const TerminalScreen: React.FC = () => {
             }
             status="RECOVERED DATA BANKS"
             topContent={
-                <BufferScreen
-                    buffers={viewModel.buffers}
-                    onClose={viewModel.toggleBufferView}
-                />
+                <View style={{ flex: 1 }}>
+                    <BufferScreen
+                        buffers={viewModel.buffers}
+                        onClose={viewModel.toggleBufferView}
+                    />
+                    <MainframeOverlay />
+                </View>
             }
             middleContent={<FKeyBar keys={[
                 { key: 'F3', label: 'CLOSE', action: viewModel.toggleBufferView },
                 { key: 'ESC', label: 'BACK', action: viewModel.toggleBufferView }
             ]} />}
             bottomContent={<View style={styles.footerPlaceholder} />}
+            tutorBarComponent={<GlobalTutorBar />}
+            economyBarComponent={<EconomyBar />}
         />
     );
 

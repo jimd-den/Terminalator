@@ -66,7 +66,8 @@ function testNormalModeWordMovement() {
     if (state.cursor.col !== 6) throw new Error(`Expected col 6 after 'w'. Got: ${state.cursor.col}`);
     
     mode.handleKey('$', state, buffer, cmdMgr);
-    if (state.cursor.col !== 10) throw new Error(`Expected col 10 after '$'. Got: ${state.cursor.col}`);
+    const expectedCol = buffer.getLine(0).length - 1;
+    if (state.cursor.col !== expectedCol) throw new Error(`Expected col ${expectedCol} after '$'. Got: ${state.cursor.col}`);
 
     console.log("PASS");
 }

@@ -16,6 +16,8 @@ import { RedirectionService } from '../services/RedirectionService';
 import { mergeState, fail } from '../utils/TerminalStateUtils';
 import { NetworkMap } from '../services/NetworkMap';
 import { IWorldManager } from '../interfaces/IWorldManager';
+import { RISCVInterpreter } from './asm/RISCVInterpreter';
+import { CpuState } from '../entities/asm/CpuState';
 
 export { CommandResponse };
 
@@ -39,6 +41,7 @@ export class ExecuteCommand implements IShellExecutor {
     private redirectionService: RedirectionService;
     protected networkMap: NetworkMap;
     private worldManager?: IWorldManager;
+    private riscv: RISCVInterpreter;
 
     constructor(
         fsOrService: FileSystem | FileSystemService,
@@ -58,6 +61,7 @@ export class ExecuteCommand implements IShellExecutor {
 
         this.worldManager = worldManager;
         this.networkMap = networkMap || new NetworkMap();
+        this.riscv = new RISCVInterpreter();
         
         // Register local host
         if (this.worldManager) {
@@ -144,6 +148,36 @@ export class ExecuteCommand implements IShellExecutor {
     async execute(input: string, state: TerminalState): Promise<CommandResponse> {
         const executeLogic = async (): Promise<CommandResponse> => {
             if (!input.trim()) return { output: '', exitCode: 0, newState: state, command: input };
+
+            // 1. Artifact Detection (Phase 1: Glass Box)
+            const parts = input.trim().split(/\s+/);
+            const cmd = parts[0];
+            if (cmd.startsWith('./') || cmd.startsWith('/')) {
+                const node = this.service.resolve(cmd, state.currentDirectory);
+                if (node) {
+                    const inode = this.service.getInode(node.inodeId);
+                    if (inode && typeof inode.content === 'string' && inode.content.includes('"type": "RISCV_EXECUTABLE"')) {
+                        try {
+                            const artifact = JSON.parse(inode.content);
+                            const cpu = new CpuState();
+                            const res = this.riscv.run(
+                                artifact.program,
+                                new Uint8Array(artifact.memory),
+                                cpu,
+                                new Map(Object.entries(artifact.labels))
+                            );
+                            return {
+                                output: res.stdout,
+                                exitCode: res.exitCode,
+                                newState: state,
+                                command: input
+                            };
+                        } catch (e: any) {
+                            return { output: `Runtime Error: ${e.message}`, exitCode: 1, newState: state, command: input };
+                        }
+                    }
+                }
+            }
 
             try {
                 const ast = this.parser.parse(input);

@@ -1,22 +1,18 @@
-import { CombinatorialFactory } from '../src/domain/usecases/mission/CombinatorialFactory';
+import { ConstraintMissionFactory } from '../src/domain/usecases/mission/ConstraintMissionFactory';
 import { TutorLedProgression } from '../src/domain/usecases/tutor/TutorLedProgression';
 import { MasteryTracker } from '../src/domain/services/tutor/MasteryTracker';
 import { MissionVerb } from '../src/domain/entities/mission/Grammar';
 import { IStructuredCommand, CommandCapability } from '../src/domain/commands/IStructuredCommand';
+import { UnixKnowledgeBase } from '../src/domain/services/knowledge/UnixKnowledgeBase';
 
-// 1. Setup Mock Grammar components
-class MockGrepCommand {
-    utility = 'grep';
-    capabilities = [CommandCapability.READ];
-    buildArgs() { return []; }
-    execute() { return {} as any; }
-}
+const mockWorldPatchService = { patch: () => {} } as any;
 
 async function testTutorForcedProgression() {
     console.log("Testing Tutor-Led Forced Progression...");
 
     const masteryTracker = new MasteryTracker();
-    const factory = new CombinatorialFactory([new MockGrepCommand() as any], masteryTracker);
+    const kb = new UnixKnowledgeBase();
+    const factory = new ConstraintMissionFactory(kb, mockWorldPatchService);
     const progression = new TutorLedProgression(factory, masteryTracker);
 
     // 2. Simulate user failing 'grep' 5 times
@@ -27,10 +23,12 @@ async function testTutorForcedProgression() {
     // 3. Request next mission
     const mission = await progression.generateNextMission('gamma-09');
 
-    console.log("GENERATED MISSION UTILITY:", mission.metadata.utility);
+    // NOTE: Constraint-based missions might not have same metadata as old factory!
+    // We check grammar for the tool instead.
+    const tool = mission.grammar?.steps[2].commandMatcher.target;
+    console.log("GENERATED MISSION TOOL:", tool);
 
-    if (mission.metadata.utility !== 'grep') throw new Error("Should have forced 'grep' mission");
-    if (mission.metadata.logic.verb !== MissionVerb.EXTRACT) throw new Error("Incorrect verb mapping");
+    if (tool !== 'grep') throw new Error("Should have forced 'grep' mission");
 
     console.log("PASS: Tutor successfully forced mission focus.");
 }

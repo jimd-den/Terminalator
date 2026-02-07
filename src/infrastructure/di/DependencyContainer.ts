@@ -25,27 +25,32 @@ import { ConstraintValidator } from '../../domain/services/constraints/Constrain
 import { MissionPopulator } from '../../domain/services/MissionPopulator';
 import { MissionService } from '../../domain/services/MissionService';
 import { NPCService } from '../../domain/services/NPCService';
-import { SystemPreparationService } from '../../domain/services/SystemPreparationService';
+import { WorldPatchService } from '../../domain/services/world/WorldPatchService';
+import { PresentationDirector } from '../../domain/services/PresentationDirector';
 import { MailSystem } from '../../domain/usecases/MailSystem';
+import { SimulationBus } from '../../domain/services/SimulationBus';
 import { TutorEngine } from '../../domain/entities/TutorEngine';
 import { LessonService } from '../../domain/services/LessonService';
 import { LessonCoordinator } from '../../interface-adapters/LessonCoordinator';
 import { GameManager } from '../../interface-adapters/GameManager';
 
 import { CreditService } from '../../domain/services/gamification/CreditService';
+import { EconomyService } from '../../domain/services/EconomyService';
 import { DiskCreditRepository } from '../../interface-adapters/DiskCreditRepository';
 import { MasteryTracker } from '../../domain/services/tutor/MasteryTracker';
 import { DiskMasteryRepository } from '../../interface-adapters/DiskMasteryRepository';
 import { IdentityService } from '../../domain/services/IdentityService';
 
 // Scaling Engine Imports
-import { CombinatorialFactory } from '../../domain/usecases/mission/CombinatorialFactory';
+import { ConstraintMissionFactory } from '../../domain/usecases/mission/ConstraintMissionFactory';
 import { TutorLedProgression } from '../../domain/usecases/tutor/TutorLedProgression';
+import { UnixKnowledgeBase } from '../../domain/services/knowledge/UnixKnowledgeBase';
 import { IntensityCalculator } from '../../domain/services/tutor/IntensityCalculator';
 import { MissionIntentInterpreter } from '../../domain/interpreters/MissionIntentInterpreter';
 import { PersonaLoader } from '../../domain/services/tutor/PersonaLoader';
 import * as dialogueLibrary from '../../domain/data/tutor/DialogueLibrary.json';
 import { TutorBrain } from '../../domain/entities/tutor/TutorBrain';
+import { TutorShadow } from '../../domain/services/tutor/TutorShadow';
 import { IStructuredCommand } from '../../domain/commands/IStructuredCommand';
 
 // Structured Commands
@@ -72,10 +77,9 @@ import { RmdirCommand } from '../../domain/commands/core/RmdirCommand';
 
 export class DependencyContainer {
 
-    public static createCreditService(fs: FileSystem): CreditService {
+    public static createEconomyService(fs: FileSystem, bus?: SimulationBus): EconomyService {
         const fsService = new FileSystemService(fs);
-        const repository = new DiskCreditRepository(fsService);
-        return new CreditService(repository);
+        return new EconomyService(fsService, bus);
     }
 
     public static createMasteryTracker(fs: FileSystem): MasteryTracker {
@@ -92,17 +96,27 @@ export class DependencyContainer {
         }, (dialogueLibrary as any).fragments);
     }
 
-    public static createTutorBrain(fs: FileSystem): TutorBrain {
+    public static createTutorBrain(fs: FileSystem, bus: SimulationBus): TutorBrain {
         const masteryTracker = this.createMasteryTracker(fs);
         const intensityCalculator = new IntensityCalculator(masteryTracker);
         const intentInterpreter = new MissionIntentInterpreter();
-        return new TutorBrain(intensityCalculator, intentInterpreter);
+        return new TutorBrain(intensityCalculator, intentInterpreter, bus);
+    }
+
+    public static createTutorShadow(
+        engine: TutorEngine, 
+        economy: EconomyService, 
+        bus: SimulationBus,
+        director: PresentationDirector
+    ): TutorShadow {
+        return new TutorShadow(engine, economy, bus, director);
     }
 
     public static createGameManager(
         fs: FileSystem, 
         networkMap: NetworkMap, 
-        telemetry: TelemetryPort
+        telemetry: TelemetryPort,
+        bus: SimulationBus
     ): GameManager {
         const fsService = new FileSystemService(fs);
         const identityService = new IdentityService();
@@ -111,6 +125,7 @@ export class DependencyContainer {
         const strategyRegistry = new StrategyRegistry();
         const tutorService = new TutorService(missionRepository, lessonRegistry, strategyRegistry);
         const masteryTracker = this.createMasteryTracker(fs);
+        const economyService = this.createEconomyService(fs, bus);
         
         const worldManager = new WorldManager();
         worldManager.registerHost('terminalator', fsService);
@@ -139,15 +154,18 @@ export class DependencyContainer {
             new RmdirCommand(fsService)
         ];
 
-        const combinatorialFactory = new CombinatorialFactory(structuredCommands, masteryTracker);
-        const tutorProgression = new TutorLedProgression(combinatorialFactory, masteryTracker);
-        // -----------------------------
+        const missionPopulator = new MissionPopulator(worldManager);
 
-        const proceduralFactory = new ProceduralMissionFactory();
+        const npcService = new NPCService();
+        const worldPatchService = new WorldPatchService(worldManager);
+
+        const combinatorialFactory = new ConstraintMissionFactory(new UnixKnowledgeBase(), worldPatchService);
+        const tutorProgression = new TutorLedProgression(combinatorialFactory as any, masteryTracker);
+
+        const proceduralFactory = new ProceduralMissionFactory(worldManager);
         const knuthianFactory = new KnuthianMissionFactory();
         const complexityEstimator = new ComplexityEstimator();
         const constraintValidator = new ConstraintValidator(complexityEstimator);
-        const missionPopulator = new MissionPopulator(worldManager);
 
         const missionService = new MissionService(
             missionRepository, 
@@ -159,28 +177,28 @@ export class DependencyContainer {
             missionPopulator,
             tutorProgression
         );
-        const npcService = new NPCService();
-        const systemPreparationService = new SystemPreparationService(worldManager);
 
         const mailSystem = new MailSystem(fsService, telemetry);
-        const tutorEngine = new TutorEngine();
+        const presentationDirector = new PresentationDirector(bus);
+        const tutorEngine = new TutorEngine(bus);
         const lessonService = new LessonService();
 
-        const lessonCoordinator = new LessonCoordinator(tutorEngine, mailSystem, missionService);
+        const lessonCoordinator = new LessonCoordinator(tutorEngine, mailSystem, missionService, economyService);
 
-        systemPreparationService.initializeRootFileSystem(fs);
+        worldPatchService.initializeRootFileSystem(fs);
 
         return new GameManager(
             fs,
             networkMap,
             missionService,
             npcService,
-            systemPreparationService,
+            worldPatchService,
             lessonCoordinator,
             mailSystem,
             lessonService,
             worldManager,
             tutorEngine,
+            presentationDirector,
             telemetry
         );
     }

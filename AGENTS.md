@@ -101,6 +101,12 @@ The codebase follows a strict **Clean Architecture** implementation, ensuring se
 *   **Data Provider:** `IMissionDataProvider` decouples mission loading (JSON/Procedural).
 *   **Tutor:** `TutorService` orchestrates evaluations to provide real-time hints and progression triggers.
 
+### Glass Box & Economy (The ZINC Protocol)
+*   **Observable Execution:** Removal of opaque WASM binaries in favor of RISC-V ASM simulation.
+*   **Proof of Rhythm:** `MiningSession` calculates ZINC (Ƶ) rewards based on keystroke precision relative to the mainframe clock (120 BPM).
+*   **Shadow Architecture:** `TutorShadow` acts as an input proxy, physically gating keystrokes to enforce "Golden Path" sequences.
+*   **Theatrical HUD:** `MainframeOverlay` projects high-contrast glyphs and theatrical "Verbs" over the terminal output.
+
 ### Shell & Command Architecture
 *   **Parser:** Recursive descent with `IStatementParser` strategies (If, For, While).
 *   **Executor:** `ShellInterpreter` (Visitor Pattern) walks the AST.
@@ -112,9 +118,12 @@ The codebase follows a strict **Clean Architecture** implementation, ensuring se
 
 ## 3. Development Roadmap: "Unix Edge Lord"
 
-**Current Phase:** Procedural Generation & World Simulation.
+**Current Phase:** Generative Narratives & Semantic Modeling.
 
 ### Completed Refactoring
+*   ✅ **Glass Box:** Full implementation of rhythmic mining and observable execution.
+*   ✅ **Economy:** ZINC (Ƶ) economy with wallet persistence.
+*   ✅ **Architecture Cleanup:** Resolved deep circular dependencies between ThemeContext, Registry, and Layout.
 *   ✅ **OCP (Strategies):** `StrategyRegistry` implemented.
 *   ✅ **DIP (Mission Data):** `IMissionDataProvider` and `JsonMissionDataProvider` implemented.
 *   ✅ **SRP (FileSystem):** `FileSystemService` refactored into specialized sub-services.
@@ -148,6 +157,12 @@ The codebase follows a strict **Clean Architecture** implementation, ensuring se
 ---
 
 ## 5. Engineering Log
+
+### 2026-02-07: Glass Box & Architecture Cleanup
+*   **Glass Box:** Implemented rhythmic mining (ZINC), input gating (TutorShadow), and theatrical HUD (MainframeOverlay).
+*   **Decoupling:** Resolved major require cycles by refactoring `StandardLayout` to accept components via props.
+*   **Feedback:** Implemented event-driven "Perfect" hit indicators and multiplier pulses in the central overlay.
+*   **Observability:** Enabled `ECONOMY_UPDATE` events for real-time ZINC balance synchronization.
 
 ### 2026-02-02: "Unix Edge Lord" Refactoring (Phase 1)
 *   **Data Layer:** Implemented `IMissionDataProvider` to decouple `MissionRepository`.

@@ -16,6 +16,7 @@ import { useState, useCallback } from 'react';
 import { VimSimulator } from '../VimSimulator';
 import { VimState, VimMode } from '../../domain/entities/VimEngine';
 import { TutorEngine } from '../../domain/entities/TutorEngine';
+import { TutorShadow } from '../../domain/services/tutor/TutorShadow';
 
 export interface VimInputControllerState {
     state: VimState & { lines: string[] };
@@ -40,7 +41,8 @@ export interface VimInputControllerActions {
 export const useVimInputController = (
     simulator: VimSimulator,
     onExit: () => void,
-    tutorEngine: TutorEngine
+    tutorEngine: TutorEngine,
+    tutorShadow: TutorShadow
 ): VimInputControllerState & VimInputControllerActions => {
     const [state, setState] = useState(simulator.getSnapshot());
     const [commandInput, setCommandInput] = useState('');
@@ -74,15 +76,9 @@ export const useVimInputController = (
      * Main key handler - routes keys based on mode.
      */
     const handleVirtualKey = useCallback((key: string) => {
-        // -- TUTOR INTERCEPTION --
-        if (tutorEngine.isActive()) {
-            const lesson = tutorEngine.getCurrentLesson();
-            if (lesson && (lesson.type === 'VIM_INSERT' || lesson.type === 'VIM_COMMAND' || lesson.type === 'SHELL')) {
-                // Pass to tutor for scoring
-                tutorEngine.handleInput(key);
-                // Continue to process in simulator for visual feedback
-            }
-        }
+        // -- TUTOR SHADOW INTERCEPTION (GATING) --
+        const allowed = tutorShadow.intercept(key, 'VIM');
+        if (!allowed) return;
 
         // -- BACKSPACE HANDLING --
         if (key === 'BACKSPACE') {

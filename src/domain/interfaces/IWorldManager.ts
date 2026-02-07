@@ -18,5 +18,5 @@ export interface IWorldManager {
     /**
      * Retrieves the FileSystem service for a given hostname.
      */
-    getHostFileSystem(hostname: string): FileSystemService | undefined;
+    getHostFileSystem(hostname: string): FileSystemService | null;
 }

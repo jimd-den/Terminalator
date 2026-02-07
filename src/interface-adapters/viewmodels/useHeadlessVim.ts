@@ -14,6 +14,7 @@ import { HighlighterRegistry } from '../../interface-adapters/vim/HighlighterReg
 import { useVimInputController } from '../../interface-adapters/controllers/VimInputController';
 import { useVimTutorController } from '../../interface-adapters/controllers/VimTutorController';
 import { TutorEngine } from '../../domain/entities/TutorEngine';
+import { TutorShadow } from '../../domain/services/tutor/TutorShadow';
 import { SyntaxHighlighter } from '../../domain/ports/SyntaxHighlighter';
 import { VimState } from '../../domain/entities/VimEngine';
 import { FileSystemService } from '../../domain/services/FileSystemService';
@@ -49,6 +50,7 @@ export const useHeadlessVim = (
     filename: string,
     fsService: FileSystemService,
     tutorEngine: TutorEngine,
+    tutorShadow: TutorShadow,
     onExit: () => void
 ): HeadlessVimState => {
     
@@ -57,7 +59,7 @@ export const useHeadlessVim = (
     const highlighter = useMemo(() => highlighterRegistry.getHighlighterForFile(filename), [filename]);
 
     // -- Controllers --
-    const inputController = useVimInputController(simulator, onExit, tutorEngine);
+    const inputController = useVimInputController(simulator, onExit, tutorEngine, tutorShadow);
     const tutorState = useVimTutorController(tutorEngine);
 
     // -- Map Internal State to Public Interface --

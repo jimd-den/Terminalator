@@ -1,7 +1,7 @@
 /**
  * MissionIntentInterpreter.ts - Domain Interpreter
  * 
- * Translates procedural mission metadata into semantic "Intents"
+ * Translates procedural mission grammar into semantic "Intents"
  * that the Tutor system can use for context-aware guidance.
  * 
  * Pillar: THE MASTER'S TOOL (Interpreter Pattern)
@@ -16,9 +16,9 @@ import { MissionMotive, MissionVerb, MissionNoun } from '../entities/mission/Gra
  * Semantic breakdown of what the user is trying to accomplish.
  */
 export interface MissionIntent {
-    motive: MissionMotive;
-    verb: MissionVerb;
-    noun: MissionNoun;
+    motive: string;
+    verb: string;
+    noun: string;
     primaryUtility: string;
     targetPath: string;
 }
@@ -28,19 +28,37 @@ export class MissionIntentInterpreter implements IMissionVisitor<MissionIntent> 
      * Reads the "gbòǹgbò" (root) logic of a mission.
      */
     public visit(mission: Mission): MissionIntent {
-        const metadata = mission.metadata;
-        
-        // Ensure we are dealing with a procedural mission
-        if (!metadata || !metadata.logic) {
-            // Fallback for legacy archetypes if necessary, or throw
-            throw new Error("Interpretation Failure: Mission lacks combinatorial logic metadata.");
+        // 1. Unified Grammar Path
+        if (mission.grammar) {
+            const lastStep = mission.grammar.steps[mission.grammar.steps.length - 1];
+            
+            return {
+                motive: mission.grammar.archetype,
+                verb: mission.metadata?.logic?.verb || 'PROCESS',
+                noun: mission.metadata?.logic?.noun || 'DATA',
+                primaryUtility: lastStep.commandMatcher.target || 'unknown',
+                targetPath: mission.objectiveTarget
+            };
         }
 
+        // 2. Legacy Fallback (Metadata path)
+        const metadata = mission.metadata;
+        if (metadata && metadata.logic) {
+            return {
+                motive: metadata.logic.motive,
+                verb: metadata.logic.verb,
+                noun: metadata.logic.noun,
+                primaryUtility: metadata.utility,
+                targetPath: mission.objectiveTarget
+            };
+        }
+
+        // 3. Absolute Fallback
         return {
-            motive: metadata.logic.motive,
-            verb: metadata.logic.verb,
-            noun: metadata.logic.noun,
-            primaryUtility: metadata.utility,
+            motive: 'UNKNOWN',
+            verb: 'ACCESS',
+            noun: 'SYSTEM',
+            primaryUtility: 'shell',
             targetPath: mission.objectiveTarget
         };
     }

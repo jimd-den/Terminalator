@@ -8,12 +8,14 @@ export const ModifyNarrative: MissionNarrator = (mission, state, isStepComplete)
         case MissionStep.PENDING:
             if (isStepComplete) {
                 return {
+                    missionId: mission.id,
                     message: `Connection established. Target: ${mission.objectiveTarget}. Begin search.`,
                     type: 'HINT',
                     confidence: 1.0
                 };
             }
             return {
+                missionId: mission.id,
                 message: `Connect to target system: 'ssh admin@${mission.targetSystem}'.`,
                 type: 'HINT',
                 confidence: 0.5
@@ -22,12 +24,14 @@ export const ModifyNarrative: MissionNarrator = (mission, state, isStepComplete)
         case MissionStep.CONNECTED:
             if (isStepComplete) {
                 return {
+                    missionId: mission.id,
                     message: `Target found. Apply the designated changes to ${mission.objectiveTarget}.`,
                     type: 'HINT',
                     confidence: 1.0
                 };
             }
             return {
+                missionId: mission.id,
                 message: `Locate the target file '${mission.objectiveTarget}'.`,
                 type: 'HINT',
                 confidence: 0.7
@@ -36,12 +40,14 @@ export const ModifyNarrative: MissionNarrator = (mission, state, isStepComplete)
         case MissionStep.LOCATED:
             if (isStepComplete) {
                 return {
+                    missionId: mission.id,
                     message: `Modifications detected. Mission Accomplished.`,
                     type: 'CONGRATS',
                     confidence: 1.0
                 };
             }
             return {
+                missionId: mission.id,
                 message: `Modify the target file '${mission.objectiveTarget}'.`,
                 type: 'HINT',
                 confidence: 0.8

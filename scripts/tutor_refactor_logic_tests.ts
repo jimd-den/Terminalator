@@ -37,7 +37,10 @@ class MockGameManager {
 
 function testBrainObservation() {
     console.log("Testing TutorBrain observation of GameManager...");
-    const brain = new TutorBrain();
+    const mockBus = { subscribe: () => {}, emit: () => {} } as any;
+    const mockIntensityCalculator = { calculate: () => 'GENTLE' } as any;
+    const mockIntentInterpreter = {} as any;
+    const brain = new TutorBrain(mockIntensityCalculator, mockIntentInterpreter, mockBus);
     const persona = new MockPersona();
     const gm = new MockGameManager();
     
@@ -71,7 +74,10 @@ function testBrainObservation() {
 
 function testBrainRandomChance() {
     console.log("Testing TutorBrain 30% random chance...");
-    const brain = new TutorBrain();
+    const mockBus = { subscribe: () => {}, emit: () => {} } as any;
+    const mockIntensityCalculator = { calculate: () => 'GENTLE' } as any;
+    const mockIntentInterpreter = {} as any;
+    const brain = new TutorBrain(mockIntensityCalculator, mockIntentInterpreter, mockBus);
     const persona = new MockPersona();
     const gm = new MockGameManager();
     
@@ -105,7 +111,10 @@ function testBrainRandomChance() {
 
 function testBrainTutorEngineEvents() {
     console.log("Testing TutorBrain observation of TutorEngine...");
-    const brain = new TutorBrain();
+    const mockBus = { subscribe: () => {}, emit: () => {} } as any;
+    const mockIntensityCalculator = { calculate: () => 'GENTLE' } as any;
+    const mockIntentInterpreter = {} as any;
+    const brain = new TutorBrain(mockIntensityCalculator, mockIntentInterpreter, mockBus);
     const persona = new MockPersona();
     const gm = new MockGameManager();
     

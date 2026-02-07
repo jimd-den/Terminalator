@@ -16,11 +16,22 @@ export const useTutorMessagingController = () => {
     useEffect(() => {
         if (!gameManager || !tutorBrain) return;
 
+        // Sync active mission
+        const syncMission = () => {
+            const active = gameManager.getActiveMissions().find(m => m.status === 'active');
+            tutorBrain.setActiveMission(active || null);
+        };
+
+        // Initial sync
+        syncMission();
+
         // Initialize Brain observation
         tutorBrain.observe(gameManager);
 
         // Subscribe to Brain's reactions and forward to Messaging Service
-        const unsubscribeBrain = tutorBrain.subscribe((text, type) => {
+        const unsubscribeBrain = tutorBrain.subscribe((text: string, type: string) => {
+            // Re-sync before generating if needed, or rely on interval/event
+            syncMission();
             // Forward reaction to UI message queue
             sendTutorMessage(text, type as any, tutorBrain.activePersona.name.toUpperCase());
         });

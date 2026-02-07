@@ -38,7 +38,10 @@ async function verifyLogicMigration() {
 
     const gm = new MockGameManager();
     
-    const brain = new TutorBrain();
+    const mockBus = { subscribe: () => {}, emit: () => {} } as any;
+    const mockIntensityCalculator = { calculate: () => 1 } as any;
+    const mockIntentInterpreter = {} as any;
+    const brain = new TutorBrain(mockIntensityCalculator, mockIntentInterpreter, mockBus);
     brain.setPersona(new PersonaLoader(mockPersona as any));
     
     const messagingService = new TutorMessagingService();

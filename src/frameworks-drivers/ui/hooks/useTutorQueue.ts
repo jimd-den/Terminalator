@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useGame } from '../context/GameContext';
-import { TutorMessage } from '../../../../domain/entities/tutor/TutorMessage';
+import { TutorMessage } from '../../../domain/entities/tutor/TutorMessage';
 
 /**
  * useTutorQueue - Presentation Layer Hook

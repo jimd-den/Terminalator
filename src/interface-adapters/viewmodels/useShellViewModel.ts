@@ -26,6 +26,7 @@ import { useOutputController, TerminalOutputLine } from '../controllers/OutputCo
 import { useTutorController, TutorControllerCallbacks } from '../controllers/TutorController';
 import { ShellController } from '../controllers/ShellController';
 import { Lesson } from '../../domain/entities/TutorEngine';
+import { TutorShadow } from '../../domain/services/tutor/TutorShadow';
 
 export type ActiveApp = { type: 'SHELL' } | { type: 'VIM', filename: string };
 
@@ -33,6 +34,7 @@ export const useShellViewModel = (
     fs: FileSystem,
     commandExecutor: ExecuteCommand,
     gameManager: IGameManager,
+    tutorShadow: TutorShadow,
     setMissions: (missions: any[]) => void // Hook to update mission state from shell
 ) => {
     const navigation = useNavigation();
@@ -155,26 +157,28 @@ export const useShellViewModel = (
     // Ideally this logic should exist in InputController or ShellController, 
     // but React event handling makes it cleaner to keep as a callback hook here.
     const handleKeyPress = useCallback((key: string) => {
-        // 1. TUTOR INTERCEPTION
+        // 1. TUTOR SHADOW INTERCEPTION (GATING)
+        const allowed = tutorShadow.intercept(key, 'SHELL');
+        if (!allowed) return;
+
+        // [FIX] Double Input: If tutor is active and accepted the key, 
+        // the TutorCallbacks (onProgress) will update the input state.
+        // We must NOT update it locally again.
         if (gameManager.tutorEngine.isActive()) {
             const lesson = gameManager.tutorEngine.getCurrentLesson();
-            if (lesson && lesson.type === 'SHELL') {
-                if (key.length === 1) {
-                    gameManager.tutorEngine.handleInput(key);
-                    return;
-                }
-                if (key === 'ENTER') {
-                    return;
-                }
+            // Only skip local update if it's a character input that the tutor consumes
+            if (lesson && lesson.type === 'SHELL' && key.length === 1) {
+                return; 
             }
         }
+
         // 2. STANDARD SHELL LOGIC
         if (key === 'TAB') inputController.acceptAutocomplete();
         else if (key === 'ESC') inputController.clearInput();
         else if (key === 'BACKSPACE') inputController.deleteChar();
         else if (key === 'ENTER') handleCommand();
         else if (key.length === 1) inputController.appendChar(key);
-    }, [inputController, handleCommand, gameManager]);
+    }, [inputController, handleCommand, tutorShadow, gameManager]);
 
     const handleVimExit = useCallback(() => {
         setIsTransitioning(true);

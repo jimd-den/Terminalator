@@ -4,6 +4,7 @@ import { NetworkMap } from '../src/domain/services/NetworkMap';
 import { FileSystemService } from '../src/domain/services/FileSystemService';
 import { DependencyContainer } from '../src/infrastructure/di/DependencyContainer';
 import { ConsoleTelemetryAdapter } from '../src/infrastructure/telemetry/ConsoleTelemetryAdapter';
+import { SimulationBus } from '../src/domain/services/SimulationBus';
 
 async function testWorldSimulation() {
     console.log("--- WORLD SIMULATION TEST STARTING ---");
@@ -11,9 +12,10 @@ async function testWorldSimulation() {
     const fs = new FileSystem();
     const networkMap = new NetworkMap();
     const telemetry = new ConsoleTelemetryAdapter();
+    const bus = new SimulationBus(telemetry);
     
     // Use the DI container to create the GameManager
-    const gameManager = DependencyContainer.createGameManager(fs, networkMap, telemetry);
+    const gameManager = DependencyContainer.createGameManager(fs, networkMap, telemetry, bus);
     
     // The WorldManager is initialized in GameManager constructor.
     // It should have registered 'terminalator' (localhost) and projected /dev/airlock.

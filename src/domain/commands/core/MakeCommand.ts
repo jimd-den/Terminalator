@@ -20,8 +20,12 @@ import { TerminalState } from '../../entities/TerminalState';
 import { Dentry } from '../../entities/FileSystem';
 import { MakefileParser } from '../../services/make/MakefileParser';
 import { MakeExecutor, MakeOptions } from '../../services/make/MakeExecutor';
+import { CommandCapability } from '../IStructuredCommand';
 
 export class MakeCommand extends CommandBase {
+    public readonly capabilities: CommandCapability[] = [CommandCapability.MODIFY];
+    public readonly utility: string = 'make';
+
     protected async executeInternal(
         args: string[],
         flags: Set<string>,

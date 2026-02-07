@@ -8,14 +8,15 @@
  * Pillar: THE STORYTELLER'S CODE (Pedagogical Intent)
  */
 
-import { CombinatorialFactory } from '../mission/CombinatorialFactory';
+import { ConstraintMissionFactory, ProblemDefinition } from '../mission/ConstraintMissionFactory';
 import { MasteryTracker } from '../../services/tutor/MasteryTracker';
-import { MissionMotive, MissionVerb, MissionNoun } from '../../entities/mission/Grammar';
+import { CommandCapability } from '../../entities/knowledge/UnixCommandDefinition';
 import { Mission } from '../../entities/Mission';
+import { SystemPreparationSpec } from '../../entities/world/SystemPreparationSpec';
 
 export class TutorLedProgression {
     constructor(
-        private factory: CombinatorialFactory,
+        private factory: ConstraintMissionFactory,
         private masteryTracker: MasteryTracker
     ) {}
 
@@ -48,36 +49,46 @@ export class TutorLedProgression {
     }
 
     private generateForcedMission(utility: string, targetSystem: string): Mission {
-        // Map problematic utility back to a suitable verb
-        const verbMap: Record<string, MissionVerb> = {
-            'grep': MissionVerb.EXTRACT,
-            'sed': MissionVerb.SORT, // Simplified
-            'awk': MissionVerb.COUNT,
-            'ls': MissionVerb.VERIFY,
-            'mkdir': MissionVerb.APPEND
+        // Map problematic utility to semantic capabilities
+        const capMap: Record<string, CommandCapability[]> = {
+            'grep': [CommandCapability.SEARCH],
+            'sed': [CommandCapability.TRANSFORM],
+            'awk': [CommandCapability.FILTER, CommandCapability.TRANSFORM],
+            'ls': [CommandCapability.LIST],
+            'mkdir': [CommandCapability.MODIFY]
         };
 
-        const forcedVerb = verbMap[utility] || MissionVerb.EXTRACT;
+        const capabilities = capMap[utility] || [CommandCapability.READ];
+        const constraints = Math.random() > 0.5 ? ['RECURSIVE'] : [];
 
-        return this.factory.createMission({
-            motive: MissionMotive.EMERGENCY_RECOVERY, // Semantic choice for "forced"
-            verb: forcedVerb,
-            noun: this.randomEnum(MissionNoun),
+        const problem: ProblemDefinition = {
+            objective: `Solve system anomaly using ${utility.toUpperCase()}`,
+            capabilities,
+            constraints,
             targetSystem
-        });
+        };
+
+        return this.factory.createMission(problem);
     }
 
     private generateRandomMission(targetSystem: string): Mission {
-        return this.factory.createMission({
-            motive: this.randomEnum(MissionMotive),
-            verb: this.randomEnum(MissionVerb),
-            noun: this.randomEnum(MissionNoun),
-            targetSystem
-        });
-    }
+        const capabilitiesPool = [
+            [CommandCapability.SEARCH],
+            [CommandCapability.LIST],
+            [CommandCapability.MODIFY],
+            [CommandCapability.TRANSFORM],
+            [CommandCapability.READ]
+        ];
 
-    private randomEnum<T>(anEnum: T): T[keyof T] {
-        const values = Object.values(anEnum as any) as unknown as T[keyof T][];
-        return values[Math.floor(Math.random() * values.length)];
+        const constraintsPool = ['RECURSIVE', 'DETAILS', 'SHOW_HIDDEN', 'FORCE'];
+
+        const problem: ProblemDefinition = {
+            objective: "Perform randomized tactical data maneuver",
+            capabilities: capabilitiesPool[Math.floor(Math.random() * capabilitiesPool.length)],
+            constraints: [constraintsPool[Math.floor(Math.random() * constraintsPool.length)]],
+            targetSystem
+        };
+
+        return this.factory.createMission(problem);
     }
 }

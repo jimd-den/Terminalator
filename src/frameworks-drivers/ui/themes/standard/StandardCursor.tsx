@@ -2,6 +2,8 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet } from 'react-native';
 import { CursorProps } from '../../../../domain/entities/ThemeComponents';
 import { TutorEmotion } from '../../../../domain/entities/TutorEngine';
+import { useGame } from '../../context/GameContext';
+import { GameEventType } from '../../../../domain/services/SimulationBus';
 
 /**
  * StandardCursor - Default animated cursor with emotional awareness.
@@ -14,10 +16,23 @@ export const StandardCursor: React.FC<CursorProps> = ({
     type = 'block',
     metadata
 }) => {
+    const { bus } = useGame();
     const emotion = metadata?.emotion || TutorEmotion.NORMAL;
     
     const opacityAnim = useRef(new Animated.Value(1)).current;
     const shakeAnim = useRef(new Animated.Value(0)).current;
+    const scaleAnim = useRef(new Animated.Value(1)).current;
+
+    // Keystroke Pulse
+    useEffect(() => {
+        const unsubscribe = bus.subscribe(GameEventType.KEYSTROKE_ACCEPTED, () => {
+            Animated.sequence([
+                Animated.timing(scaleAnim, { toValue: 1.3, duration: 50, useNativeDriver: true }),
+                Animated.timing(scaleAnim, { toValue: 1.0, duration: 100, useNativeDriver: true }),
+            ]).start();
+        });
+        return unsubscribe;
+    }, [bus]);
 
     // Idle Square-Wave Blink
     useEffect(() => {
@@ -73,7 +88,7 @@ export const StandardCursor: React.FC<CursorProps> = ({
                 {
                     backgroundColor: finalColor,
                     opacity: opacityAnim,
-                    transform: [{ translateX: shakeAnim }]
+                    transform: [{ translateX: shakeAnim }, { scale: scaleAnim }]
                 },
                 getCursorStyle(),
             ]}

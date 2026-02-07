@@ -1,71 +1,49 @@
-import { CombinatorialFactory } from '../src/domain/usecases/mission/CombinatorialFactory';
+import { ConstraintMissionFactory } from '../src/domain/usecases/mission/ConstraintMissionFactory';
 import { MissionMotive, MissionVerb, MissionNoun } from '../src/domain/entities/mission/Grammar';
 import { IStructuredCommand, CommandCapability } from '../src/domain/commands/IStructuredCommand';
 import { MasteryTracker } from '../src/domain/services/tutor/MasteryTracker';
+import { UnixKnowledgeBase } from '../src/domain/services/knowledge/UnixKnowledgeBase';
 
-// 1. Mock Smart Commands
-class MockGrepCommand {
-    utility = 'grep';
-    capabilities = [CommandCapability.READ];
-    buildArgs(req: any) { return ['-e', 'target', req.path]; }
-    execute() { return {} as any; }
-}
-
-class MockAwkCommand {
-    utility = 'awk';
-    capabilities = [CommandCapability.READ];
-    buildArgs(req: any) { return ['{print $1}', req.path]; }
-    execute() { return {} as any; }
-}
+// 1. Mock WorldPatchService
+const mockWorldPatchService = { patch: () => {} } as any;
 
 async function testCombinatorialGeneration() {
-    console.log("Testing CombinatorialFactory with Mastery...");
+    console.log("Testing ConstraintMissionFactory...");
     
     const masteryTracker = new MasteryTracker();
-    const factory = new CombinatorialFactory([new MockGrepCommand() as any], masteryTracker);
+    const kb = new UnixKnowledgeBase();
+    const factory = new ConstraintMissionFactory(kb, mockWorldPatchService);
 
     const mission = factory.createMission({
-        motive: MissionMotive.CORPORATE_SABOTAGE,
-        verb: MissionVerb.EXTRACT,
-        noun: MissionNoun.SERVER_LOGS,
+        objective: "Extract logs",
+        capabilities: [CommandCapability.SEARCH],
+        constraints: ['RECURSIVE'],
         targetSystem: 'alpha-01'
     });
 
     console.log("GENERATED MISSION:\n", JSON.stringify(mission, null, 2));
 
-    if (!mission.id.startsWith('M-COR')) throw new Error(`ID should start with M-COR. Got: ${mission.id}`);
-    if (mission.metadata.utility !== 'grep') throw new Error("Expected utility 'grep'");
+    if (!mission.id.startsWith('M-GEN')) throw new Error(`ID should start with M-GEN. Got: ${mission.id}`);
 }
 
 async function testMasteryFiltering() {
-    console.log("Testing Mastery Filtering...");
+    console.log("Testing Constraint-based tool selection...");
     
-    const masteryTracker = new MasteryTracker();
-    
-    // Simulate Grep as Mastered
-    for (let i = 0; i < 20; i++) {
-        await masteryTracker.recordSuccess('grep');
-    }
+    const kb = new UnixKnowledgeBase();
+    const factory = new ConstraintMissionFactory(kb, mockWorldPatchService);
 
-    // Awk is Novice by default
-    const factory = new CombinatorialFactory([
-        new MockGrepCommand() as any, 
-        new MockAwkCommand() as any
-    ], masteryTracker);
-
-    // Verb.EXTRACT needs Capability.READ. Both Grep and Awk have it.
-    // It should favor Awk because Grep is MASTER.
+    // Should pick 'grep' for SEARCH
     const mission = factory.createMission({
-        motive: MissionMotive.CORPORATE_SABOTAGE,
-        verb: MissionVerb.EXTRACT,
-        noun: MissionNoun.SERVER_LOGS,
+        objective: "Search files",
+        capabilities: [CommandCapability.SEARCH],
+        constraints: [],
         targetSystem: 'alpha'
     });
 
-    console.log("CHOSEN UTILITY (Expect awk):", mission.metadata.utility);
-    if (mission.metadata.utility !== 'awk') throw new Error("Should have favored novice tool 'awk'");
+    console.log("CHOSEN TOOL (Expect grep):", mission.grammar?.steps[2].commandMatcher.target);
+    if (mission.grammar?.steps[2].commandMatcher.target !== 'grep') throw new Error("Should have selected 'grep'");
 
-    console.log("PASS: Factory correctly favors learning zone.");
+    console.log("PASS: Factory correctly solves constraints.");
 }
 
 async function runTests() {

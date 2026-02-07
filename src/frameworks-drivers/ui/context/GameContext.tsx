@@ -8,10 +8,12 @@ import { ConsoleTelemetryAdapter } from '../../../infrastructure/telemetry/Conso
 import { DependencyContainer } from '../../../infrastructure/di/DependencyContainer';
 import { TutorMessagingService } from '../../../domain/services/tutor/TutorMessagingService';
 import { TutorMessage } from '../../../domain/entities/tutor/TutorMessage';
-import { CreditService } from '../../../domain/services/gamification/CreditService';
+import { EconomyService } from '../../../domain/services/EconomyService';
+import { TutorShadow } from '../../../domain/services/tutor/TutorShadow';
 import { TutorBrain } from '../../../domain/entities/tutor/TutorBrain';
 import { MasteryTracker } from '../../../domain/services/tutor/MasteryTracker';
 import { PersonaLoader } from '../../../domain/services/tutor/PersonaLoader';
+import { SimulationBus, GameEventType } from '../../../domain/services/SimulationBus';
 
 /**
  * GameContext - Presentation Layer
@@ -28,16 +30,18 @@ interface GameContextType {
     gameManager: GameManager;
     commandExecutor: GameCommandExecutor;
     telemetry: ConsoleTelemetryAdapter;
+    bus: SimulationBus;
     tutorMessaging: TutorMessagingService;
     activeTutorMessage: TutorMessage | null;
     sendTutorMessage: (text: string, type?: TutorMessage['type'], sender?: string) => Promise<void>;
-    creditService: CreditService;
-    credits: number;
-    refreshCredits: () => Promise<void>;
+    economyService: EconomyService;
+    zincBalance: number;
+    syncWallet: () => Promise<void>;
     isInputLocked: boolean;
     setInputLocked: (locked: boolean) => void;
     isTutorTyping: boolean;
     tutorBrain: TutorBrain;
+    tutorShadow: TutorShadow;
     masteryTracker: MasteryTracker;
     switchPersona: (id: 'standard' | 'rogue') => void;
 }
@@ -45,30 +49,45 @@ interface GameContextType {
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
 export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+    // 1. Base Infrastructure (Independent)
     const [fs] = useState(() => new FileSystem());
     const [telemetry] = useState(() => new ConsoleTelemetryAdapter());
     const [networkMap] = useState(() => new NetworkMap());
+    const [bus] = useState(() => new SimulationBus(telemetry));
     const [tutorMessaging] = useState(() => new TutorMessagingService());
-    const [creditService] = useState(() => DependencyContainer.createCreditService(fs));
-    const [masteryTracker] = useState(() => DependencyContainer.createMasteryTracker(fs));
-    
-    // Scale Engine Wiring: Use DI container to create properly injected Brain
-    const [tutorBrain] = useState(() => {
-        const brain = DependencyContainer.createTutorBrain(fs);
-        // Initialize with modern Combinatorial Persona
-        brain.setPersona(DependencyContainer.createPersona('standard', 'TUTOR'));
-        return brain;
-    });
-    
-    const [activeTutorMessage, setActiveTutorMessage] = useState<TutorMessage | null>(() => ({
-        text: "Uplink established. Welcome to the Grid. (◕‿◕✿)",
-        type: 'hint',
-        sender: 'TUTOR',
-        timestamp: Date.now()
-    }));
-    const [credits, setCredits] = useState(0);
+
+    // 2. State-driven UI state
+    const [activeTutorMessage, setActiveTutorMessage] = useState<TutorMessage | null>(null);
+    const [zincBalance, setZincBalance] = useState(0);
     const [isInputLocked, setInputLocked] = useState(false);
     const [isTutorTyping, setIsTutorTyping] = useState(false);
+
+    // 3. Consolidated System Initialization (Dependent Services)
+    // Ensures singletons and correct injection order.
+    const [core] = useState(() => {
+        const fsService = new FileSystemService(fs);
+        const economyService = DependencyContainer.createEconomyService(fs, bus);
+        const masteryTracker = DependencyContainer.createMasteryTracker(fs);
+        const tutorBrain = DependencyContainer.createTutorBrain(fs, bus);
+        
+        // Initialize with modern Combinatorial Persona
+        tutorBrain.setPersona(DependencyContainer.createPersona('standard', 'TUTOR'));
+
+        const gameManager = DependencyContainer.createGameManager(fs, networkMap, telemetry, bus);
+        const commandExecutor = new GameCommandExecutor(fsService, gameManager, networkMap, telemetry);
+        const tutorShadow = DependencyContainer.createTutorShadow(gameManager.tutorEngine, economyService, bus, gameManager.getPresentationDirector());
+        
+        return { fsService, economyService, masteryTracker, tutorBrain, gameManager, commandExecutor, tutorShadow };
+    });
+
+    const { 
+        economyService, 
+        masteryTracker, 
+        tutorBrain, 
+        gameManager, 
+        commandExecutor, 
+        tutorShadow 
+    } = core;
 
     useEffect(() => {
         let isMounted = true;
@@ -107,28 +126,34 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         };
     }, [tutorMessaging]);
 
-    const [fsService] = useState(() => new FileSystemService(fs));
-    const [gameManager] = useState(() => DependencyContainer.createGameManager(fs, networkMap, telemetry));
-    const [commandExecutor] = useState(() => new GameCommandExecutor(fsService, gameManager, networkMap, telemetry));
+    useEffect(() => {
+        const unsubscribe = bus.subscribe(GameEventType.ECONOMY_UPDATE, (event) => {
+            setZincBalance(event.payload.balance);
+        });
+        return unsubscribe;
+    }, [bus]);
+
+    // Trigger initial generative welcome
+    useEffect(() => {
+        bus.emit('TUTOR_EVENT' as any, { type: 'SYSTEM_BOOT', payload: {} });
+    }, [bus]);
 
     const sendTutorMessage = useCallback(async (text: string, type: TutorMessage['type'] = 'info', sender: string = 'TUTOR') => {
         await tutorMessaging.sendMessage(text, type, sender);
     }, [tutorMessaging]);
 
-    const refreshCredits = useCallback(async () => {
-        setCredits(await creditService.getBalance());
-    }, [creditService]);
+    const syncWallet = useCallback(async () => {
+        economyService.syncWallet();
+        setZincBalance(economyService.getBalance());
+    }, [economyService]);
 
     const switchPersona = useCallback((id: 'standard' | 'rogue') => {
-        // Updated to use combinatorial persona creation
         const name = id === 'rogue' ? 'GLITCH' : 'TUTOR';
         tutorBrain.setPersona(DependencyContainer.createPersona(id, name));
-        
-        // Use generic message instead of legacy process('GREETING') if not in library
         sendTutorMessage(`PERSONAL PROTOCOL ${name} INITIALIZED.`, 'info', name);
     }, [tutorBrain, sendTutorMessage]);
 
-    useEffect(() => { refreshCredits(); }, []);
+    useEffect(() => { syncWallet(); }, [syncWallet]);
 
     return (
         <GameContext.Provider value={{ 
@@ -136,16 +161,18 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             gameManager, 
             commandExecutor, 
             telemetry, 
+            bus,
             tutorMessaging,
             activeTutorMessage,
             sendTutorMessage,
-            creditService,
-            credits,
-            refreshCredits,
+            economyService,
+            zincBalance,
+            syncWallet,
             isInputLocked,
             setInputLocked,
             isTutorTyping,
             tutorBrain,
+            tutorShadow,
             masteryTracker,
             switchPersona
         }}>

@@ -6,6 +6,7 @@ import { TutorAction, TutorProgressionResult } from '../../interfaces/ITutorServ
 import { MissionRepository } from '../MissionRepository';
 import { LessonRegistry } from '../LessonRegistry';
 import { MissionInspector, MissionNarrator, MissionProgressor } from './ComposableTypes';
+import { SystemPreparationSpec } from '../../entities/world/SystemPreparationSpec';
 
 /**
  * ComposableMissionStrategy - Domain Service
@@ -21,6 +22,10 @@ export class ComposableMissionStrategy implements IMissionStrategy {
         private narrator: MissionNarrator,
         private progressor: MissionProgressor
     ) {}
+
+    public getPreparationSpec(mission: Mission): SystemPreparationSpec | null {
+        return mission.metadata?.prepSpec || null;
+    }
 
     evaluate(
         mission: Mission,

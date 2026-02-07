@@ -18,7 +18,7 @@ async function runScenario() {
     // 1. Trigger Mission
     console.log("\n[STORY] Incoming transmission...");
     const gameManager = user.getGameManager();
-    const mission = gameManager.spawnNPCEvent();
+    const mission = await gameManager.spawnNPCEvent();
     
     if (!mission) {
         throw new Error("Failed to spawn mission");

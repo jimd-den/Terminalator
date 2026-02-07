@@ -10,7 +10,7 @@
 
 import React from 'react';
 import { ScrollView, Text, StyleSheet, View, Pressable } from 'react-native';
-import { useTheme } from '../context/ThemeContext';
+import { useTheme, useThemeComponents } from '../context/ThemeContext';
 import { THEME } from '../Theme';
 import { GhostWriter } from '../GhostWriter';
 import { TerminalOutputLine } from '../../../interface-adapters/controllers/OutputController';
@@ -44,7 +44,7 @@ const StatusIndicator = ({
     onDelete: () => void,
     isMinimized?: boolean
 }) => {
-    const { components } = useTheme();
+    const components = useThemeComponents();
     const { TextRenderer } = components;
     const [blinkCount, setBlinkCount] = React.useState(0);
     const [isSettled, setIsSettled] = React.useState(false);
@@ -182,7 +182,7 @@ const SequentialCommandEcho = ({
     isActive: boolean,
     isTyped: boolean
 }) => {
-    const { components } = useTheme();
+    const components = useThemeComponents();
     const { TextRenderer } = components;
     const [stage, setStage] = React.useState<'text' | 'dots' | 'final'>(isTyped ? 'final' : 'text');
     const cleanText = line.text.replace(/^>\s*/, '');
@@ -271,7 +271,8 @@ export const OutputContainer: React.FC<OutputContainerProps> = ({
     onMinimize,
     onDelete
 }) => {
-    const { theme, settings, components } = useTheme();
+    const { theme, settings } = useTheme();
+    const components = useThemeComponents();
     const { TextRenderer } = components;
     const colors = theme.colors;
     const scrollViewRef = React.useRef<ScrollView>(null);

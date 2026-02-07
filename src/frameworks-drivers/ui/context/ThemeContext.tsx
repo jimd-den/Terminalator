@@ -18,7 +18,6 @@ import { getComponentsForTheme } from '../themes/ThemeRegistry';
 
 interface ThemeContextType {
     theme: ThemeDefinition;
-    components: ThemeComponentMap;
     settings: UserSettings;
     setTheme: (id: string) => void;
     setFont: (font: string) => void;
@@ -38,7 +37,6 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }, [settingsRepo]);
 
     const theme = useMemo(() => THEMES[settings.themeId] || THEMES.matrix, [settings.themeId]);
-    const components = useMemo(() => getComponentsForTheme(theme.id), [theme.id]);
 
     const setTheme = async (id: string) => {
         if (THEMES[id]) {
@@ -55,7 +53,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     };
 
     return (
-        <ThemeContext.Provider value={{ theme, components, settings, setTheme, setFont }}>
+        <ThemeContext.Provider value={{ theme, settings, setTheme, setFont }}>
             {children}
         </ThemeContext.Provider>
     );
@@ -67,4 +65,9 @@ export const useTheme = () => {
         throw new Error('useTheme must be used within a ThemeProvider');
     }
     return context;
+};
+
+export const useThemeComponents = (): ThemeComponentMap => {
+    const { theme } = useTheme();
+    return useMemo(() => getComponentsForTheme(theme.id), [theme.id]);
 };

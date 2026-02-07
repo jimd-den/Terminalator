@@ -8,7 +8,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
-import { useGame } from '../context/GameContext';
 import { THEME } from '../Theme';
 
 interface StatusBarProps {
@@ -25,21 +24,18 @@ export const StatusBar: React.FC<StatusBarProps> = ({
     activeMissionName
 }) => {
     const { theme, settings } = useTheme();
-    const { credits } = useGame();
     const colors = theme.colors;
 
     const styles = StyleSheet.create({
         container: {
             flexDirection: 'row',
-            justifyContent: 'center', // [MOBILE-CENTRIC] Aligned to center for focal point
+            justifyContent: 'center',
             alignItems: 'center',
-            flexWrap: 'wrap', // Allow wrapping if fonts are very large
             backgroundColor: colors.primary,
-            paddingHorizontal: THEME.spacing.md,
             paddingVertical: THEME.spacing.sm,
             borderBottomWidth: 1,
             borderBottomColor: colors.primary,
-            gap: 16, // Spacing between groups
+            gap: 16,
         },
         section: {
             flexDirection: 'row',
@@ -49,17 +45,8 @@ export const StatusBar: React.FC<StatusBarProps> = ({
         label: {
             color: colors.background,
             fontFamily: settings.fontFamily,
-            fontSize: 10, // Slightly smaller for dense technical look
-            fontWeight: 'bold',
-        },
-        creditLabel: {
-            color: colors.background,
-            backgroundColor: colors.secondary,
-            fontFamily: settings.fontFamily,
             fontSize: 10,
             fontWeight: 'bold',
-            paddingHorizontal: 6,
-            paddingVertical: 1,
         }
     });
 
@@ -82,12 +69,6 @@ export const StatusBar: React.FC<StatusBarProps> = ({
 
             <View style={styles.section}>
                 <Text style={styles.label}>{formatValue('USR', user)}</Text>
-            </View>
-
-            <View style={styles.section}>
-                <Text style={styles.creditLabel}>
-                    {formatValue('CR', credits.toString())}
-                </Text>
             </View>
         </View>
     );

@@ -4,9 +4,9 @@ import { StandardTextRenderer } from './standard/StandardTextRenderer';
 import { StandardCursor } from './standard/StandardCursor';
 
 export const STANDARD_COMPONENTS: ThemeComponentMap = {
-    Layout: StandardLayout,
-    TextRenderer: StandardTextRenderer,
-    Cursor: StandardCursor,
+    Layout: StandardLayout as any,
+    TextRenderer: StandardTextRenderer as any,
+    Cursor: StandardCursor as any,
 };
 
 /**

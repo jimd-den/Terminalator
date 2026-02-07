@@ -86,7 +86,7 @@ export const TutorBar: React.FC<TutorBarProps> = ({ message }) => {
                 <GhostWriter 
                     text={fullText}
                     speed={25}
-                    style={[dynamicStyles.text, typeStyle]}
+                    style={StyleSheet.flatten([dynamicStyles.text, typeStyle])}
                 />
             )}
         </Animated.View>

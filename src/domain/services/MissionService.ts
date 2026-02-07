@@ -28,10 +28,15 @@ import { MissionPopulator } from './MissionPopulator';
 
 // Scaling Engine
 import { TutorLedProgression } from '../usecases/tutor/TutorLedProgression';
+import { AdaptiveTutorEngine } from './tutor/AdaptiveTutorEngine';
+import { TutorIntent } from '../entities/tutor/TutorIntent';
+import { TutorToneProfile } from '../entities/tutor/TutorToneProfile';
+import { UnixKnowledgeBase } from './knowledge/UnixKnowledgeBase';
 
 export class MissionService {
     private activeMissions: Mission[] = [];
     private organizationGenerator = new OrganizationGenerator();
+    private adaptiveEngine: AdaptiveTutorEngine;
 
     constructor(
         private missionRepository: MissionRepository,
@@ -42,97 +47,42 @@ export class MissionService {
         private knuthianFactory?: KnuthianMissionFactory,
         private missionPopulator?: MissionPopulator,
         private tutorProgression?: TutorLedProgression // [NEW]
-    ) { }
+    ) { 
+        this.adaptiveEngine = new AdaptiveTutorEngine(new UnixKnowledgeBase());
+    }
 
     /**
      * Creates a new mission assigned by the given NPC.
      * @param npc - The NPC assigning the mission.
      */
     public async createMission(npc: NPC): Promise<Mission> {
-        const rng = Math.random();
-        
-        // 0. The Knuthian Path: Algorithms (20% chance)
-        if (this.knuthianFactory && rng < 0.2) {
-            const seed = Date.now().toString();
-            const employer = this.organizationGenerator.generateFaction(seed + '_A');
-            const target = this.organizationGenerator.generateFaction(seed + '_B');
-
-            let mission: Mission;
-            if (Math.random() > 0.5) {
-                mission = this.knuthianFactory.createSortingMission(npc, employer, target);
-            } else {
-                mission = this.knuthianFactory.createSearchMission(npc, employer, target);
-            }
-
-            this.setupMissionChat(mission, npc);
-            this.activeMissions.push(mission);
-            
-            if (this.missionPopulator) {
-                this.missionPopulator.populateMissionObjectives(mission);
-            }
-
-            return mission;
-        }
-
-        // 1. Procedural Generation based on World State (20% chance)
-        if (this.worldState && this.proceduralFactory && rng < 0.4) {
-            const devices = this.worldState.getAllDevices();
-            const candidates = devices.filter(d => d.type !== 'UPLINK'); 
-            
-            if (candidates.length > 0) {
-                const targetDevice = candidates[Math.floor(Math.random() * candidates.length)];
-                const location = this.worldState.getLocationById(targetDevice.locationId);
-                
-                if (location) {
-                    const mission = this.proceduralFactory.createRepairMission(npc, location, targetDevice);
-                    this.setupMissionChat(mission, npc);
-                    this.activeMissions.push(mission);
-                    return mission;
-                }
-            }
-        }
-
-        // 2. The Scaling Path: Combinatorial Missions (Primary Path)
-        if (this.tutorProgression) {
-            const targetSystem = generateHostname(npc.faction || 'corporate');
-            const mission = await this.tutorProgression.generateNextMission(targetSystem);
-            
-            // Enrich with NPC specific metadata
-            mission.assignedBy = npc.id;
-            mission.assignerName = npc.name;
-            
-            this.setupMissionChat(mission, npc);
-            this.activeMissions.push(mission);
-            return mission;
-        }
-
-        // 3. Fallback to Template Generation (Legacy)
+        // Unify: All missions are now generative.
+        // Single Source of Truth: TutorLedProgression -> CombinatorialFactory -> MissionGrammar
         const targetSystem = generateHostname(npc.faction || 'corporate');
-        const objectiveTarget = generateObjectiveFilename();
-
-        const variables = {
-            targetSystem,
-            objectiveTarget,
-            unitId: `UNIT-${Math.floor(Math.random() * 900 + 100)}`,
-            incidentId: `INC-${Math.floor(Math.random() * 9000 + 1000)}`,
-            faultType: this.missionRepository.getPool('faultType')[Math.floor(Math.random() * this.missionRepository.getPool('faultType').length)] || 'System Fault'
-        };
-
-        const archetypes = this.missionRepository.getArchetypeKeys();
-        const type = archetypes[Math.floor(Math.random() * archetypes.length)];
-
-        const mission = this.missionRepository.createMissionFromTemplate(type, npc, variables);
+        const mission = await this.tutorProgression!.generateNextMission(targetSystem);
+        
+        // Enrich with NPC specific metadata
+        mission.assignedBy = npc.id;
+        mission.assignerName = npc.name;
+        
         this.setupMissionChat(mission, npc);
-
         this.activeMissions.push(mission);
         return mission;
     }
 
     private setupMissionChat(mission: Mission, npc: NPC) {
+        // Determine Tone based on NPC faction/role (Simplistic mapping for now)
+        const tone = npc.faction === 'resistance' ? TutorToneProfile.RESISTANCE_LEADER : TutorToneProfile.CORPORATE_DRONE;
+
+        const briefing = this.adaptiveEngine.generateAdvice(
+            TutorIntent.MISSION_BRIEFING,
+            tone,
+            mission
+        );
+
         mission.chatHistory = [
             { sender: 'SYSTEM', message: `CONNECTING TO SECURE CHANNEL ${mission.id}...`, timestamp: Date.now() },
-            { sender: npc.name, message: `Operator, I require assistance with a ${mission.type} operation.`, timestamp: Date.now() },
-            { sender: npc.name, message: mission.description, timestamp: Date.now() },
+            { sender: npc.name, message: briefing.message, timestamp: Date.now() },
             { sender: 'SYSTEM', message: `REWARD ESCROW: ${mission.reward}`, timestamp: Date.now() },
         ];
     }

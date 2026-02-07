@@ -21,6 +21,7 @@ export interface CommandResponse {
     };
     controlFlow?: 'RETURN' | 'BREAK' | 'CONTINUE' | 'EXIT';
     command?: string; // [NEW] Context: The command that produced this response
+    utility?: string; // [NEW] Context: The semantic utility name (e.g., 'grep')
     metadata?: {
         renderType?: 'ls-pretty' | 'system-alert' | 'fish-style';
         data?: any;

@@ -18,7 +18,7 @@ import { useInput } from '../../context/InputContext';
 import { THEME } from '../../Theme';
 import { useGame } from '../../context/GameContext';
 import { VirtualKeyboard } from '../VirtualKeyboard';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme, useThemeComponents } from '../../context/ThemeContext';
 import { FileSystemService } from '../../../../domain/services/FileSystemService';
 
 // Import Headless ViewModel
@@ -30,8 +30,9 @@ interface VimEditorProps {
 }
 
 export const useVimEditor = (filename: string, onExit: () => void) => {
-    const { fs, gameManager, isInputLocked } = useGame();
-    const { theme, settings, components } = useTheme();
+    const { fs, gameManager, isInputLocked, tutorShadow } = useGame();
+    const { theme, settings } = useTheme();
+    const components = useThemeComponents();
     const { TextRenderer, Cursor } = components;
     const colors = theme.colors;
 
@@ -43,7 +44,7 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
     // -- Headless Logic --
     // All editor state and logic is now managed by this hook.
     // This component is merely a renderer.
-    const headless = useHeadlessVim(filename, fsService, gameManager.tutorEngine, onExit);
+    const headless = useHeadlessVim(filename, fsService, gameManager.tutorEngine, tutorShadow, onExit);
 
     // -- Mount State (Visual Only) --
     const [isMounting, setIsMounting] = React.useState(true);

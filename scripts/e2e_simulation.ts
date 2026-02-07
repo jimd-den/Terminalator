@@ -5,6 +5,7 @@ import { GameCommandExecutor } from '../src/interface-adapters/GameCommandExecut
 import { DependencyContainer } from '../src/infrastructure/di/DependencyContainer';
 import { ConsoleTelemetryAdapter } from '../src/infrastructure/telemetry/ConsoleTelemetryAdapter';
 import { NetworkMap } from '../src/domain/services/NetworkMap';
+import { SimulationBus } from '../src/domain/services/SimulationBus';
 
 // Polyfill for React Native/Expo globals
 (global as any).__DEV__ = true;
@@ -31,7 +32,8 @@ async function runSimulation() {
     const fs = new FileSystem();
     const networkMap = new NetworkMap();
     const telemetry = new ConsoleTelemetryAdapter();
-    const gameManager = DependencyContainer.createGameManager(fs, networkMap, telemetry);
+    const bus = new SimulationBus(telemetry);
+    const gameManager = DependencyContainer.createGameManager(fs, networkMap, telemetry, bus);
     const fsService = new FileSystemService(fs);
     
     const executor = new GameCommandExecutor(fsService, gameManager, networkMap, telemetry);
@@ -52,7 +54,7 @@ async function runSimulation() {
 
     // 3. Trigger Mission (Simulate NPC Event)
     console.log("\n[2] Triggering NPC Event...");
-    const mission = gameManager.spawnNPCEvent();
+    const mission = await gameManager.spawnNPCEvent();
     if (!mission) {
         console.error("FAILED: No mission generated.");
         process.exit(1);

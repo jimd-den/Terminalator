@@ -37,7 +37,8 @@ export class ConsoleTelemetryAdapter implements TelemetryPort {
     }
 
     debug(message: string, context?: any): void {
-        if (__DEV__) {
+        const isDev = typeof (global as any).__DEV__ !== 'undefined' ? (global as any).__DEV__ : true;
+        if (isDev) {
             console.debug(this.formatMessage(LogLevel.DEBUG, message, context));
         }
     }

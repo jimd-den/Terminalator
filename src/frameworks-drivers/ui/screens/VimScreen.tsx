@@ -9,8 +9,12 @@
  */
 
 import React from 'react';
+import { View } from 'react-native';
 import { useVimEditor } from '../components/vim/VimEditor';
-import { useTheme } from '../context/ThemeContext';
+import { GlobalTutorBar } from '../components/GlobalTutorBar';
+import { EconomyBar } from '../components/EconomyBar';
+import { useTheme, useThemeComponents } from '../context/ThemeContext';
+import { MainframeOverlay } from '../components/MainframeOverlay';
 
 export interface VimScreenProps {
     filename: string;
@@ -18,7 +22,7 @@ export interface VimScreenProps {
 }
 
 export const VimScreen: React.FC<VimScreenProps> = ({ filename, onExit }) => {
-    const { components } = useTheme();
+    const components = useThemeComponents();
     const Layout = components.Layout;
     
     // -- Vim Logic --
@@ -26,12 +30,21 @@ export const VimScreen: React.FC<VimScreenProps> = ({ filename, onExit }) => {
     // input handling, and syntax highlighting.
     const vim = useVimEditor(filename, onExit);
 
+    const topContent = (
+        <View style={{ flex: 1 }}>
+            {vim.topContent}
+            <MainframeOverlay />
+        </View>
+    );
+
     return (
         <Layout
             status={`EDITING: ${filename}`}
-            topContent={vim.topContent}
+            topContent={topContent}
             middleContent={vim.middleContent}
             bottomContent={vim.bottomContent}
+            tutorBarComponent={<GlobalTutorBar />}
+            economyBarComponent={<EconomyBar />}
         />
     );
 };

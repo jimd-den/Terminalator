@@ -14,8 +14,9 @@
 
 import { NPC } from './NPC';
 import { JobConstraints } from './world/JobTemplate';
+import { MissionGrammar } from './mission/MissionGrammar';
 
-export type MissionType = 'hack' | 'exfiltrate' | 'modify' | 'decrypt' | 'log-analysis' | 'dispatcher';
+export type MissionType = 'hack' | 'exfiltrate' | 'modify' | 'decrypt' | 'log-analysis' | 'dispatcher' | 'generative';
 
 export interface ChatMessage {
     sender: string;
@@ -40,7 +41,9 @@ export interface Mission {
     description: string;
     reward: string;
     status: 'pending' | 'active' | 'completed' | 'failed';
-    currentStep: MissionStep; // [NEW] Track granular progress
+    currentStep: MissionStep; // [LEGACY] Track granular progress
+    currentStepId?: string;    // [NEW] ID for current StepRule in MissionGrammar
+    grammar?: MissionGrammar;  // [NEW] Data-driven mission definition
     assignedBy: string; // NPC ID
     assignerName: string; // NPC Name
     chatHistory: ChatMessage[];
