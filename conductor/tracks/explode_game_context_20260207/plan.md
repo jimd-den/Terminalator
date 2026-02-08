@@ -1,6 +1,6 @@
 # Implementation Plan: Explode GameContext
 
-## Phase 1: Core Engine Bootstrapping
+## Phase 1: Core Engine Bootstrapping [checkpoint: d154617]
 *This phase focuses on creating the framework-agnostic `CoreEngine` that will hold all service instances.*
 
 - [x] Task: Create `CoreEngine` Singleton / Service Locator
