@@ -30,41 +30,39 @@ export class SimulationMediator {
             return { output: '', exitCode: 0, newState: state, command: input };
         }
 
-        // 1. Lock Input (Signal Start)
-        // We use a custom event or reuse PRESENTATION_START context
-        // But the plan says: "Emit THEATRE_ACTIVE"
-        // Let's assume THEATRE_ACTIVE is mapped to PRESENTATION_START in the listener for now,
-        // or we define a new event. The Spec said "Broadcast THEATRE_ACTIVE".
-        // However, useTheatricalInputLock currently listens to PRESENTATION_START.
-        // I will stick to PRESENTATION_START for compatibility or update the hook later.
-        // For now, let's trigger the Director, which emits PRESENTATION_START.
-        
         const parts = input.trim().split(/\s+/);
         const verb = parts[0];
         const args = parts.slice(1);
 
-        // 2. Trigger Presentation
-        // The Director will emit PRESENTATION_START (locking input)
-        // AND we await the ANIMATION_COMPLETE event.
-        
-        // We need to ensure the Director doesn't just fire-and-forget if we want to await here.
-        // But the plan says "Call PresentationDirector.present()" then "Await ANIMATION_COMPLETE".
-        // The Director currently emits PRESENTATION_END after a timeout.
-        // We will refactor that in Phase 2.
-        // For now, we follow the sequence.
+        // 1. Signal Theatre Start (Lock Input)
+        this.bus.emit(GameEventType.TUTOR_EVENT, { type: 'THEATRE_ACTIVE' as any, payload: { command: verb } });
 
-        // Trigger presentation
+        // 2. Trigger Presentation
+        // Director emits PRESENTATION_START for UI components
         await this.director.presentCommand(verb, args);
 
-        // 3. Wait for Animation (Phase 2 refactor will enforce this via event)
-        // For now, presentCommand includes the delay. 
-        // In Phase 2, we will change presentCommand to NOT delay, and wait for event.
-        
+        // 3. Await Animation Completion from UI
+        console.log("[SimulationMediator] Waiting for ANIMATION_COMPLETE...");
+        try {
+            // await this.bus.waitFor(GameEventType.TUTOR_EVENT, 5000); 
+            await new Promise<void>((resolve) => {
+                const unsub = this.bus.subscribe(GameEventType.TUTOR_EVENT, (event) => {
+                    if (event.payload.type === 'ANIMATION_COMPLETE') {
+                        console.log("[SimulationMediator] Received ANIMATION_COMPLETE. Proceeding.");
+                        unsub();
+                        resolve();
+                    }
+                });
+            });
+        } catch (e) {
+            console.warn("[SimulationMediator] Animation wait timeout or error. Proceeding with execution.");
+        }
+
         // 4. Execute Domain Command
         const response = await this.executor.execute(input, state);
 
-        // 5. Unlock Input (Signal End)
-        // Director emits PRESENTATION_END.
+        // 5. Signal Theatre End (Unlock Input)
+        this.bus.emit(GameEventType.TUTOR_EVENT, { type: 'THEATRE_COMPLETE' as any, payload: { command: verb } });
         
         return response;
     }

@@ -17,18 +17,19 @@ export const useTheatricalInputLock = () => {
     const { setInputLocked } = useInput();
 
     useEffect(() => {
-        const unsubStart = bus.subscribe(GameEventType.TUTOR_EVENT, (event) => {
-            if (event.payload.type === 'PRESENTATION_START') {
+        const unsub = bus.subscribe(GameEventType.TUTOR_EVENT, (event) => {
+            const type = event.payload.type;
+            if (type === 'THEATRE_ACTIVE') {
                 console.log("[useTheatricalInputLock] Seizing input control.");
                 setInputLocked(true);
-            } else if (event.payload.type === 'PRESENTATION_END') {
+            } else if (type === 'THEATRE_COMPLETE') {
                 console.log("[useTheatricalInputLock] Releasing input control.");
                 setInputLocked(false);
             }
         });
 
         return () => {
-            unsubStart();
+            unsub();
         };
     }, [bus, setInputLocked]);
 };

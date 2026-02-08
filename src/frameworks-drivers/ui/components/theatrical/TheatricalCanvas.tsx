@@ -27,7 +27,14 @@ export const TheatricalCanvas: React.FC = () => {
             const { type, payload } = tutorEvent;
             const typeStr = type as string;
             
-            if (typeStr === 'MISTAKE' && payload.type === 'SHADOW_BLOCK') {
+            if (typeStr === 'PRESENTATION_START') {
+                // Simulate animation duration
+                // In a real WebGL canvas, this would be the actual finish trigger
+                const duration = 1500 + (Math.random() * 1000);
+                setTimeout(() => {
+                    bus.emit(GameEventType.TUTOR_EVENT, { type: 'ANIMATION_COMPLETE', payload: { command: payload.command } });
+                }, duration);
+            } else if (typeStr === 'MISTAKE' && payload.type === 'SHADOW_BLOCK') {
                 setIsCriticalError(true);
                 Animated.sequence([
                     Animated.timing(shakeAnim, { toValue: 20, duration: 50, useNativeDriver }),

@@ -43,19 +43,10 @@ export class PresentationDirector {
         const verb = this.VERB_MAP[command] || TheatricalVerb.EXTRACT;
         
         // 1. Emit Start Event
+        // The SimulationMediator will await ANIMATION_COMPLETE
         this.bus.emit(GameEventType.TUTOR_EVENT, {
             type: 'PRESENTATION_START' as any,
             payload: { verb, command, args }
-        });
-
-        // 2. Simulate duration (rhythmic pause)
-        const duration = 1500 + (Math.random() * 1000);
-        await new Promise(resolve => setTimeout(resolve, duration));
-
-        // 3. Emit End Event
-        this.bus.emit(GameEventType.TUTOR_EVENT, {
-            type: 'PRESENTATION_END' as any,
-            payload: { verb, command }
         });
     }
 
