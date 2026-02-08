@@ -9,13 +9,15 @@
 
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { useGame } from '../context/GameContext';
+import { useEconomy } from '../context/EconomyProvider';
+import { useProcess } from '../context/ProcessProvider';
 import { THEME } from '../Theme';
 import { useTheme } from '../context/ThemeContext';
 import { GameEventType } from '../../../domain/services/SimulationBus';
 
 export const HashRateMonitor: React.FC = () => {
-    const { economyService, bus } = useGame();
+    const { economyService } = useEconomy();
+    const { bus } = useProcess();
     const { theme } = useTheme();
     const colors = theme.colors;
 

@@ -8,13 +8,13 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
-import { useGame } from '../context/GameContext';
+import { useEconomy } from '../context/EconomyProvider';
 import { THEME } from '../Theme';
 import { HashRateMonitor } from './HashRateMonitor';
 
 export const EconomyBar: React.FC = () => {
     const { theme, settings } = useTheme();
-    const { zincBalance } = useGame();
+    const { zincBalance } = useEconomy();
     const colors = theme.colors;
 
     const styles = StyleSheet.create({

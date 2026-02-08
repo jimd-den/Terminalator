@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet } from 'react-native';
 import { CursorProps } from '../../../../domain/entities/ThemeComponents';
 import { TutorEmotion } from '../../../../domain/entities/TutorEngine';
-import { useGame } from '../../context/GameContext';
+import { useProcess } from '../../context/ProcessProvider';
 import { GameEventType } from '../../../../domain/services/SimulationBus';
 
 /**
@@ -16,7 +16,7 @@ export const StandardCursor: React.FC<CursorProps> = ({
     type = 'block',
     metadata
 }) => {
-    const { bus } = useGame();
+    const { bus } = useProcess();
     const emotion = metadata?.emotion || TutorEmotion.NORMAL;
     
     const opacityAnim = useRef(new Animated.Value(1)).current;

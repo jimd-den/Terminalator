@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
-import { useGame } from '../context/GameContext';
+import { useProcess } from '../context/ProcessProvider';
+import { useTutorMessaging } from '../context/TutorMessagingProvider';
+import { useTutorPersona } from '../context/TutorPersonaProvider';
 
 /**
  * useTutorMessagingController - Interface Adapter Layer
@@ -11,7 +13,9 @@ import { useGame } from '../context/GameContext';
  * Pillar: The Master’s Tool (Observer/Bridge Pattern)
  */
 export const useTutorMessagingController = () => {
-    const { gameManager, sendTutorMessage, tutorBrain } = useGame();
+    const { gameManager } = useProcess();
+    const { sendTutorMessage } = useTutorMessaging();
+    const { tutorBrain } = useTutorPersona();
 
     useEffect(() => {
         if (!gameManager || !tutorBrain) return;
@@ -39,7 +43,7 @@ export const useTutorMessagingController = () => {
         return () => {
             unsubscribeBrain();
             // Note: We don't necessarily want to stop observing the game if the hook unmounts,
-            // but in React context, this hook usually lives with the GameProvider.
+            // but in React context, this hook usually lives with the App tree.
         };
     }, [gameManager, tutorBrain, sendTutorMessage]);
 };

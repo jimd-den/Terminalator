@@ -17,7 +17,9 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { FKeyBar } from '../components/FKeyBar';
 import { GlobalTutorBar } from '../components/GlobalTutorBar';
-import { useGame } from '../context/GameContext';
+import { useFileSystem } from '../context/FileSystemProvider';
+import { useProcess } from '../context/ProcessProvider';
+import { useTutorPersona } from '../context/TutorPersonaProvider';
 import { useTerminalViewModel } from '../../../interface-adapters/viewmodels/TerminalViewModel';
 import { useTheme, useThemeComponents } from '../context/ThemeContext';
 import { CommsPane } from '../components/CommsPane';
@@ -39,7 +41,9 @@ const styles = StyleSheet.create({
 });
 
 export const TerminalScreen: React.FC = () => {
-    const { fs, gameManager, commandExecutor, tutorShadow } = useGame();
+    const { fs } = useFileSystem();
+    const { gameManager, commandExecutor } = useProcess();
+    const { tutorShadow } = useTutorPersona();
     const { theme } = useTheme();
     const components = useThemeComponents();
     const Layout = components.Layout;

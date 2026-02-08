@@ -12,6 +12,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [ ] **Track: Generative Narrative** (ACTIVE)
 - [ ] **Track: Generative Mission Arch** (ACTIVE)
 - [ ] **Track: Dispositional Tutor** (ACTIVE)
+- [~] **Track: Explode GameContext (Humble Delivery Refactor)** (NEW)
 
 ---
 
@@ -23,3 +24,4 @@ This file tracks all major tracks for the project. Each track has its own detail
 *Link (Active): [./tracks/generative_narrative_20260206/](./tracks/generative_narrative_20260206/)*
 *Link (Active): [./tracks/generative_mission_arch_20260206/](./tracks/generative_mission_arch_20260206/)*
 *Link (Active): [./tracks/dispositional_tutor_20260206/](./tracks/dispositional_tutor_20260206/)*
+*Link (Active): [./tracks/explode_game_context_20260207/](./tracks/explode_game_context_20260207/)*

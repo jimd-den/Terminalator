@@ -17,7 +17,7 @@ import { useShellView } from '../components/ShellView';
 import { GlobalTutorBar } from '../components/GlobalTutorBar';
 import { useInput } from '../context/InputContext';
 import { useTheme, useThemeComponents } from '../context/ThemeContext';
-import { useGame } from '../context/GameContext';
+import { useSystemState } from '../context/SystemStateProvider';
 import { TerminalStateDTO } from '../../../domain/dtos/TerminalStateDTO';
 import { MissionDTO } from '../../../domain/dtos/MissionDTO';
 import { BufferScreen } from './BufferScreen';
@@ -59,7 +59,7 @@ export interface ShellScreenProps {
 export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
     const { theme } = useTheme();
     const components = useThemeComponents();
-    const { isInputLocked } = useGame();
+    const { isInputLocked } = useSystemState();
     const Layout = components.Layout;
     const { setOnInput, setOnKeyPress, refocus } = useInput();
 

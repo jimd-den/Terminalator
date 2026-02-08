@@ -16,7 +16,10 @@ import React, { useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { useInput } from '../../context/InputContext';
 import { THEME } from '../../Theme';
-import { useGame } from '../../context/GameContext';
+import { useFileSystem } from '../../context/FileSystemProvider';
+import { useProcess } from '../../context/ProcessProvider';
+import { useSystemState } from '../../context/SystemStateProvider';
+import { useTutorPersona } from '../../context/TutorPersonaProvider';
 import { VirtualKeyboard } from '../VirtualKeyboard';
 import { useTheme, useThemeComponents } from '../../context/ThemeContext';
 import { FileSystemService } from '../../../../domain/services/FileSystemService';
@@ -30,7 +33,10 @@ interface VimEditorProps {
 }
 
 export const useVimEditor = (filename: string, onExit: () => void) => {
-    const { fs, gameManager, isInputLocked, tutorShadow } = useGame();
+    const { fs } = useFileSystem();
+    const { gameManager } = useProcess();
+    const { isInputLocked } = useSystemState();
+    const { tutorShadow } = useTutorPersona();
     const { theme, settings } = useTheme();
     const components = useThemeComponents();
     const { TextRenderer, Cursor } = components;

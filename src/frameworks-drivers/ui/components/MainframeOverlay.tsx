@@ -10,13 +10,13 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, Platform } from 'react-native';
-import { useGame } from '../context/GameContext';
+import { useProcess } from '../context/ProcessProvider';
 import { useTheme } from '../context/ThemeContext';
 import { THEME } from '../Theme';
 import { GameEventType } from '../../../domain/services/SimulationBus';
 
 export const MainframeOverlay: React.FC = () => {
-    const { gameManager, bus } = useGame();
+    const { gameManager, bus } = useProcess();
     const { theme } = useTheme();
     const colors = theme.colors;
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { useGame } from '../context/GameContext';
+import { useTutorMessaging } from '../context/TutorMessagingProvider';
 import { TutorPersonalityService } from '../../../domain/services/tutor/TutorPersonalityService';
 
 /**
@@ -8,7 +8,7 @@ import { TutorPersonalityService } from '../../../domain/services/tutor/TutorPer
  * Handles initial system boot logic, such as sending the first Tutor message.
  */
 export const AppInitializer = () => {
-    const { sendTutorMessage } = useGame();
+    const { sendTutorMessage } = useTutorMessaging();
     const personality = useMemo(() => new TutorPersonalityService(), []);
 
     useEffect(() => {

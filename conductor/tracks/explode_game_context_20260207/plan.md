@@ -39,17 +39,17 @@
 ## Phase 3: Migration & Integration
 *This phase involves updating the application to use the new providers and removing the old `GameContext`.*
 
-- [ ] Task: Integrate Providers in `App.tsx`
-    - [ ] Wrap the application with the new Providers.
-    - [ ] Ensure `CoreEngine.initialize()` is called before the app mounts.
-- [ ] Task: Refactor UI Components to use granular hooks
-    - [ ] Update `ShellScreen.tsx`, `TerminalScreen.tsx`, `VimEditor.tsx`, `EconomyBar.tsx`, `TutorBar.tsx`, etc.
-    - [ ] Replace `useGame()` with specific hooks (`useFileSystem()`, `useEconomy()`, etc.).
-- [ ] Task: Refactor Custom Hooks to use granular hooks
-    - [ ] Update `useTutorQueue.ts`, `useTutorMessagingController.ts`, etc.
-- [ ] Task: Deprecate `GameContext`
-    - [ ] Remove `src/frameworks-drivers/ui/context/GameContext.tsx`.
-- [ ] Task: Conductor - User Manual Verification 'Migration & Integration' (Protocol in workflow.md)
+- [x] Task: Integrate Providers in `App.tsx`
+    - [x] Wrap the application with the new Providers.
+    - [x] Ensure `CoreEngine.initialize()` is called before the app mounts.
+- [x] Task: Refactor UI Components to use granular hooks
+    - [x] Update `ShellScreen.tsx`, `TerminalScreen.tsx`, `VimEditor.tsx`, `EconomyBar.tsx`, `TutorBar.tsx`, etc.
+    - [x] Replace `useGame()` with specific hooks (`useFileSystem()`, `useEconomy()`, etc.).
+- [x] Task: Refactor Custom Hooks to use granular hooks
+    - [x] Update `useTutorQueue.ts`, `useTutorMessagingController.ts`, etc.
+- [x] Task: Deprecate `GameContext`
+    - [x] Remove `src/frameworks-drivers/ui/context/GameContext.tsx`.
+- [x] Task: Conductor - User Manual Verification 'Migration & Integration' (Protocol in workflow.md)
 
 ## Phase 4: Final Verification
 *This phase confirms that the architecture is robust and performance is improved.*

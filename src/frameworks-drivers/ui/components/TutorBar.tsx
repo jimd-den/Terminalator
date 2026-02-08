@@ -5,7 +5,7 @@ import { THEME } from '../Theme';
 import { TutorMessage } from '../../../domain/entities/tutor/TutorMessage';
 import { useTutorAnimation } from '../hooks/useTutorAnimation';
 import { TypingIndicator } from './TypingIndicator';
-import { useGame } from '../context/GameContext';
+import { useTutorMessaging } from '../context/TutorMessagingProvider';
 import { GhostWriter } from '../GhostWriter';
 
 interface TutorBarProps {
@@ -23,7 +23,7 @@ interface TutorBarProps {
  */
 export const TutorBar: React.FC<TutorBarProps> = ({ message }) => {
     const { theme } = useTheme();
-    const { isTutorTyping } = useGame();
+    const { isTutorTyping } = useTutorMessaging();
     const colors = theme.colors;
     const { transform, opacity } = useTutorAnimation(message);
 
