@@ -26,7 +26,7 @@
     - [x] Ensure it correctly triggers the Canvas via the bus.
 - [x] Task: Conductor - User Manual Verification 'Awaitable Animation' (Protocol in workflow.md)
 
-## Phase 3: Theatrical Input Proxy (Humble Gating) [checkpoint: 73e5aff]
+## Phase 3: Theatrical Input Proxy (Humble Gating) [checkpoint: 1ec61ee]
 *Goal: Implement the lock using event observation.*
 
 - [x] Task: Update `useTheatricalInputLock`
