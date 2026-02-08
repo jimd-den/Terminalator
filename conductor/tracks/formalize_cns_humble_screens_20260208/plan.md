@@ -1,6 +1,6 @@
 # Implementation Plan: Formalize Central Nervous System & Humble Screens
 
-## Phase 1: Simulation Mediator & Bus Events
+## Phase 1: Simulation Mediator & Bus Events [checkpoint: b899d43]
 *Goal: Establish the central authority and the event-based communication protocol.*
 
 - [x] Task: Update `SimulationBus` Interface
