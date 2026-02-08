@@ -34,34 +34,43 @@ export class SimulationMediator {
         const verb = parts[0];
         const args = parts.slice(1);
 
-        // 1. Signal Theatre Start (Lock Input)
+        console.log(`[SimulationMediator] Orchestrating execution for: ${verb}`);
+
+        // 1. Prepare for Animation Completion (Subscribe BEFORE triggering)
+        const animationPromise = new Promise<void>((resolve) => {
+            const unsub = this.bus.subscribe(GameEventType.TUTOR_EVENT, (event) => {
+                if (event.payload.type === 'ANIMATION_COMPLETE') {
+                    console.log("[SimulationMediator] Received ANIMATION_COMPLETE. Proceeding.");
+                    unsub();
+                    resolve();
+                }
+            });
+            // Safety timeout to prevent permanent hang
+            setTimeout(() => {
+                console.warn("[SimulationMediator] Animation timed out. Forcing continuation.");
+                unsub();
+                resolve();
+            }, 2000);
+        });
+
+        // 2. Signal Theatre Start (Lock Input)
+        console.log("[SimulationMediator] Emitting THEATRE_ACTIVE.");
         this.bus.emit(GameEventType.TUTOR_EVENT, { type: 'THEATRE_ACTIVE' as any, payload: { command: verb } });
 
-        // 2. Trigger Presentation
-        // Director emits PRESENTATION_START for UI components
+        // 3. Trigger Presentation
+        console.log("[SimulationMediator] Triggering PresentationDirector.");
         await this.director.presentCommand(verb, args);
 
-        // 3. Await Animation Completion from UI
-        console.log("[SimulationMediator] Waiting for ANIMATION_COMPLETE...");
-        try {
-            // await this.bus.waitFor(GameEventType.TUTOR_EVENT, 5000); 
-            await new Promise<void>((resolve) => {
-                const unsub = this.bus.subscribe(GameEventType.TUTOR_EVENT, (event) => {
-                    if (event.payload.type === 'ANIMATION_COMPLETE') {
-                        console.log("[SimulationMediator] Received ANIMATION_COMPLETE. Proceeding.");
-                        unsub();
-                        resolve();
-                    }
-                });
-            });
-        } catch (e) {
-            console.warn("[SimulationMediator] Animation wait timeout or error. Proceeding with execution.");
-        }
+        // 4. Await Animation Completion from UI
+        console.log("[SimulationMediator] Awaiting animation completion...");
+        await animationPromise;
 
-        // 4. Execute Domain Command
+        // 5. Execute Domain Command
+        console.log("[SimulationMediator] Executing domain command.");
         const response = await this.executor.execute(input, state);
 
-        // 5. Signal Theatre End (Unlock Input)
+        // 6. Signal Theatre End (Unlock Input)
+        console.log("[SimulationMediator] Emitting THEATRE_COMPLETE.");
         this.bus.emit(GameEventType.TUTOR_EVENT, { type: 'THEATRE_COMPLETE' as any, payload: { command: verb } });
         
         return response;

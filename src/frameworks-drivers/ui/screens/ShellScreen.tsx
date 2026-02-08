@@ -45,6 +45,8 @@ export interface ShellScreenProps {
     ircMissionId: string | null;
 
     // Actions
+    fKeys: FKeyDef[];
+    handleAction: (action: string) => void;
     markLineComplete: () => void;
     handleKeyPress: (key: string) => void;
     toggleCommsView: () => void;
@@ -81,32 +83,7 @@ export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
         // Timeout to allow layout to settle if transitioning
         const timer = setTimeout(refocus, 50);
         return () => clearTimeout(timer);
-    }, [props.handleKeyPress, setOnInput, setOnKeyPress, refocus]);
-
-    // -- F-Key Routing --
-    const handleFKeyAction = (action: string) => {
-        if (action === 'HELP') {
-            // Macro: "help\n"
-            // We dispatch individually to simulate typing or just call handler?
-            // The old code simulated typing. Let's stick to that for pure simulation.
-            ['h', 'e', 'l', 'p', 'ENTER'].forEach(k => props.handleKeyPress(k));
-        } else if (action === 'IRC') {
-            props.toggleCommsView();
-        } else if (action === 'BUFFERS') {
-            props.toggleBufferView();
-        }
-    };
-
-    // -- Derived View Content --
-    const keys: FKeyDef[] = [
-        { key: 'F1', label: 'HELP', action: () => handleFKeyAction('HELP') },
-        { key: 'F2', label: 'COMMS', action: () => handleFKeyAction('IRC') },
-        { key: 'F3', label: 'ARCHIVE', action: () => handleFKeyAction('BUFFERS') },
-        { key: 'TAB', label: 'AUTO', action: () => props.handleKeyPress('TAB') },
-        { key: '▲', label: 'UP', action: () => props.handleKeyPress('UP') },
-        { key: '▼', label: 'DOWN', action: () => props.handleKeyPress('DOWN') },
-        { key: 'ENT', label: 'EXEC', action: () => props.handleKeyPress('ENTER') },
-    ];
+    }, [props.handleKeyPress, setOnInput, setOnKeyPress, refocus, isInputLocked]);
 
     // -- View Composition --
     const shellView = useShellView({
@@ -122,7 +99,7 @@ export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
         contextualHint: props.contextualHint,
         onRefocus: refocus,
         onKeyPress: props.handleKeyPress,
-        onFKeyAction: handleFKeyAction,
+        onFKeyAction: props.handleAction,
         onSave: props.saveToArchive,
         onMinimize: props.toggleMinimize,
         onDelete: props.deleteGroup
@@ -156,7 +133,7 @@ export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
             headerComponent={statusBar}
             status={statusText}
             topContent={mainLayout}
-            middleContent={<FKeyBar keys={keys} />}
+            middleContent={<FKeyBar keys={props.fKeys} />}
             bottomContent={shellView.bottomContent}
             tutorBarComponent={<GlobalTutorBar />}
             economyBarComponent={<EconomyBar />}

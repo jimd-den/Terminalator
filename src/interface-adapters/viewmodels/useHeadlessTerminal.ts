@@ -16,6 +16,7 @@ import { TutorShadow } from '../../domain/services/tutor/TutorShadow';
 import { ArchiveService, CapturedBuffer } from '../../domain/services/ArchiveService';
 import { HintService } from '../../domain/services/HintService';
 import { BufferMapper } from '../mappers/BufferMapper';
+import { SimulationMediator } from '../../core/presentation/SimulationMediator';
 
 // Import Decomposed ViewModels
 import { useShellViewModel } from './useShellViewModel';
@@ -27,7 +28,8 @@ export const useHeadlessTerminal = (
     fs: FileSystem,
     commandCoordinator: CommandCoordinator,
     gameManager: GameManager,
-    tutorShadow: TutorShadow
+    tutorShadow: TutorShadow,
+    simulationMediator: SimulationMediator
 ) => {
     // -- View State (Top Level UI) --
     const [activeView, setActiveView] = useState<ActiveView>('SHELL');
@@ -36,7 +38,14 @@ export const useHeadlessTerminal = (
 
     // -- Sub-ViewModels --
     const missionVM = useMissionViewModel(gameManager);
-    const shellVM = useShellViewModel(fs, commandCoordinator as any, gameManager, tutorShadow, missionVM.refreshMissions);
+    const shellVM = useShellViewModel(
+        fs, 
+        commandCoordinator as any, 
+        gameManager, 
+        tutorShadow, 
+        missionVM.refreshMissions,
+        simulationMediator
+    );
 
     const archiveService = useMemo(() => new ArchiveService(), []);
     const hintService = useMemo(() => new HintService(), []);
@@ -90,6 +99,27 @@ export const useHeadlessTerminal = (
         shellVM.handleKeyPress(key);
     }, [shellVM.handleKeyPress, resetInactivityTimer]);
 
+    // -- F-Key / Macro Actions --
+    const handleAction = useCallback((action: string) => {
+        if (action === 'HELP') {
+            ['h', 'e', 'l', 'p', 'ENTER'].forEach(k => handleKeyPressWrapped(k));
+        } else if (action === 'COMMS') {
+            toggleCommsView();
+        } else if (action === 'BUFFERS') {
+            toggleBufferView();
+        }
+    }, [handleKeyPressWrapped, toggleCommsView, toggleBufferView]);
+
+    const fKeys = useMemo(() => [
+        { key: 'F1', label: 'HELP', action: () => handleAction('HELP') },
+        { key: 'F2', label: 'COMMS', action: () => handleAction('COMMS') },
+        { key: 'F3', label: 'ARCHIVE', action: () => handleAction('BUFFERS') },
+        { key: 'TAB', label: 'AUTO', action: () => handleKeyPressWrapped('TAB') },
+        { key: '▲', label: 'UP', action: () => handleKeyPressWrapped('UP') },
+        { key: '▼', label: 'DOWN', action: () => handleKeyPressWrapped('DOWN') },
+        { key: 'ENT', label: 'EXEC', action: () => handleKeyPressWrapped('ENTER') },
+    ], [handleAction, handleKeyPressWrapped]);
+
     return {
         // App State
         activeApp: shellVM.activeApp,
@@ -97,6 +127,14 @@ export const useHeadlessTerminal = (
         contextualHint,
         activeView,
         isTransitioning: shellVM.isTransitioning,
+
+        // Actions
+        fKeys,
+        handleAction,
+        handleKeyPress: handleKeyPressWrapped,
+        handleVimExit: shellVM.handleVimExit,
+        toggleCommsView,
+        toggleBufferView,
 
         // Mission State
         ircMissionId: missionVM.ircMissionId,
@@ -108,14 +146,11 @@ export const useHeadlessTerminal = (
             missionVM.refreshMissions();
         },
         handleAbandonMission: missionVM.handleAbandonMission,
-        toggleCommsView,
 
         // Shell/Input State
         input: shellVM.input,
         ghostText: shellVM.ghostText,
         handleInputChange: shellVM.handleInputChange,
-        handleKeyPress: handleKeyPressWrapped,
-        handleVimExit: shellVM.handleVimExit,
 
         // Output State
         outputLines: shellVM.outputLines,
@@ -130,7 +165,6 @@ export const useHeadlessTerminal = (
 
         // Buffer State
         archiveService,
-        toggleBufferView,
         buffers: buffers.map(BufferMapper.toDTO),
         saveToArchive,
     };

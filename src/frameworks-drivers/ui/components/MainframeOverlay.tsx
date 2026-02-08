@@ -68,7 +68,7 @@ export const MainframeOverlay: React.FC = () => {
             
             if (typeStr === 'PRESENTATION_START') {
                 setActiveVerb(payload.verb);
-            } else if (typeStr === 'PRESENTATION_END') {
+            } else if (typeStr === 'THEATRE_COMPLETE' || typeStr === 'PRESENTATION_END') {
                 setActiveVerb(null);
             }
         });
@@ -79,6 +79,9 @@ export const MainframeOverlay: React.FC = () => {
         });
 
         const unsubKeystroke = bus.subscribe(GameEventType.KEYSTROKE_ACCEPTED, () => {
+            // Only show "PERFECT" during an active tutor lesson
+            if (!gameManager.tutorEngine.isActive()) return;
+
             // "PERFECT" Pop-up
             setShowPerfect(true);
             perfectAnim.setValue(1);

@@ -26,3 +26,6 @@ This file tracks all major tracks for the project. Each track has its own detail
 *Link (Active): [./tracks/generative_mission_arch_20260206/](./tracks/generative_mission_arch_20260206/)*
 *Link (Active): [./tracks/dispositional_tutor_20260206/](./tracks/dispositional_tutor_20260206/)*
 *Link (Active): [./tracks/explode_game_context_20260207/](./tracks/explode_game_context_20260207/)*
+
+- [~] **Track: Formalize Central Nervous System & Humble Screens**
+*Link: [./tracks/formalize_cns_humble_screens_20260208/](./tracks/formalize_cns_humble_screens_20260208/)*

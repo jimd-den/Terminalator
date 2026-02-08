@@ -43,14 +43,14 @@ const styles = StyleSheet.create({
 
 export const TerminalScreen: React.FC = () => {
     const { fs } = useFileSystem();
-    const { gameManager, commandCoordinator } = useProcess();
+    const { gameManager, commandCoordinator, simulationMediator } = useProcess();
     const { tutorShadow } = useTutorPersona();
     const { theme } = useTheme();
     const components = useThemeComponents();
     const Layout = components.Layout;
     const colors = theme.colors;
 
-    const viewModel = useTerminalViewModel(fs, commandCoordinator, gameManager, tutorShadow);
+    const viewModel = useTerminalViewModel(fs, commandCoordinator, gameManager, tutorShadow, simulationMediator);
 
     const crtStyle = {
         ...StyleSheet.absoluteFillObject,
@@ -146,6 +146,8 @@ export const TerminalScreen: React.FC = () => {
             buffers={viewModel.buffers}
             activeView={viewModel.activeView}
             ircMissionId={viewModel.ircMissionId}
+            fKeys={viewModel.fKeys}
+            handleAction={viewModel.handleAction}
             markLineComplete={viewModel.markLineComplete}
             handleKeyPress={viewModel.handleKeyPress}
             toggleCommsView={viewModel.toggleCommsView}

@@ -39,10 +39,10 @@
 ## Phase 4: Humble View Refactor (Key Handling)
 *Goal: Move all key interpretation to the ViewModel.*
 
-- [ ] Task: Update `TerminalViewModel`
-    - [ ] Add `handleKeyPress(key: string)` method.
-    - [ ] Move "Enter" logic (and other mappings) from `ShellScreen` to this method.
-- [ ] Task: Refactor `ShellScreen` & `TerminalScreen`
-    - [ ] Update these components to simply forward key events to the ViewModel's handler.
-    - [ ] Remove any local key mapping logic.
-- [ ] Task: Conductor - User Manual Verification 'Humble View Refactor' (Protocol in workflow.md)
+- [x] Task: Update `TerminalViewModel`
+    - [x] Add `handleKeyPress(key: string)` method. (Integrated into ShellController/ViewModel flow)
+    - [x] Move "Enter" logic (and other mappings) from `ShellScreen` to this method.
+- [x] Task: Refactor `ShellScreen` & `TerminalScreen`
+    - [x] Update these components to simply forward key events to the ViewModel's handler.
+    - [x] Remove any local key mapping logic.
+- [x] Task: Conductor - User Manual Verification 'Humble View Refactor' (Protocol in workflow.md)

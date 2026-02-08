@@ -22,16 +22,20 @@ export const TheatricalCanvas: React.FC = () => {
     const useNativeDriver = Platform.OS !== 'web';
 
     useEffect(() => {
+        console.log("[TheatricalCanvas] Mounted and listening.");
         const unsubTutor = bus.subscribe(GameEventType.TUTOR_EVENT, (event) => {
             const tutorEvent = event.payload;
             const { type, payload } = tutorEvent;
-            const typeStr = type as string;
             
-            if (typeStr === 'PRESENTATION_START') {
+            // console.log(`[TheatricalCanvas] Received event: ${type}`);
+
+            if (type === 'PRESENTATION_START') {
+                console.log(`[TheatricalCanvas] Animation START requested for: ${payload.command}`);
                 // Simulate animation duration
                 // In a real WebGL canvas, this would be the actual finish trigger
                 const duration = 1500 + (Math.random() * 1000);
                 setTimeout(() => {
+                    console.log(`[TheatricalCanvas] Animation COMPLETE for: ${payload.command}`);
                     bus.emit(GameEventType.TUTOR_EVENT, { type: 'ANIMATION_COMPLETE', payload: { command: payload.command } });
                 }, duration);
             } else if (typeStr === 'MISTAKE' && payload.type === 'SHADOW_BLOCK') {

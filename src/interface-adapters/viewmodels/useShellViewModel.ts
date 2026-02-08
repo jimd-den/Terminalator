@@ -27,6 +27,7 @@ import { useTutorController, TutorControllerCallbacks } from '../controllers/Tut
 import { ShellController } from '../controllers/ShellController';
 import { Lesson } from '../../domain/entities/TutorEngine';
 import { TutorShadow } from '../../domain/services/tutor/TutorShadow';
+import { SimulationMediator } from '../../core/presentation/SimulationMediator';
 
 export type ActiveApp = { type: 'SHELL' } | { type: 'VIM', filename: string };
 
@@ -35,7 +36,8 @@ export const useShellViewModel = (
     commandExecutor: ExecuteCommand,
     gameManager: IGameManager,
     tutorShadow: TutorShadow,
-    setMissions: (missions: any[]) => void // Hook to update mission state from shell
+    setMissions: (missions: any[]) => void, // Hook to update mission state from shell
+    simulationMediator: SimulationMediator
 ) => {
     const navigation = useNavigation();
 
@@ -141,8 +143,9 @@ export const useShellViewModel = (
         navigation,
         setIsTransitioning,
         setActiveApp,
-        setMissions
-    }), [commandExecutor, gameManager, gameObserver, outputController, inputController, navigation]);
+        setMissions,
+        simulationMediator
+    }), [commandExecutor, gameManager, gameObserver, outputController, inputController, navigation, simulationMediator]);
 
     const handleCommand = useCallback((manualCommand?: string) => {
         const cmd = manualCommand !== undefined ? manualCommand : inputController.input;

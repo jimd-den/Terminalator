@@ -66,6 +66,8 @@ conductor/
       metadata.json
     glass_box_refactor_20260206/
       metadata.json
+    implement_humble_view_screens_20260208/
+      metadata.json
     mission_tutor_audit_20260205/
       metadata.json
     mission_tutor_scaling_20260205/
@@ -79,17 +81,19 @@ conductor/
   tracks/
     dispositional_tutor_20260206/
       metadata.json
+    formalize_cns_humble_screens_20260208/
+      metadata.json
     generative_mission_arch_20260206/
       metadata.json
     generative_narrative_20260206/
-      metadata.json
-    implement_humble_view_screens_20260208/
       metadata.json
     semantic_unix_model_20260206/
       metadata.json
   setup_state.json
 src/
   core/
+    presentation/
+      SimulationMediator.ts
     CoreEngine.ts
   domain/
     commands/
@@ -742,6 +746,17 @@ This section contains the contents of the repository's files.
 5:   "created_at": "2026-02-05T00:00:00Z",
 6:   "updated_at": "2026-02-05T00:00:00Z",
 7:   "description": "Refactor Tutor Architecture for Persistence and Concurrency"
+8: }
+</file>
+
+<file path="conductor/tracks/formalize_cns_humble_screens_20260208/metadata.json">
+1: {
+2:   "track_id": "formalize_cns_humble_screens_20260208",
+3:   "type": "refactor",
+4:   "status": "new",
+5:   "created_at": "2026-02-08T01:00:00Z",
+6:   "updated_at": "2026-02-08T01:00:00Z",
+7:   "description": "Formalize Central Nervous System (Mediator) and refactor primary screens into Humble Views."
 8: }
 </file>
 
@@ -9852,6 +9867,49 @@ This section contains the contents of the repository's files.
 9: }
 </file>
 
+<file path="src/domain/entities/VimEngine.ts">
+ 1: import { EditorBuffer } from './EditorBuffer';
+ 2: import { IVimState, VimMode, VimCursor, SyntaxError } from './vim/IVimState';
+ 3: import { VimStateEntity } from './vim/VimStateEntity';
+ 4: import { VimInputHandler } from '../usecases/vim/VimInputHandler';
+ 5: import { VimCommandManager } from '../usecases/vim/VimCommandManager';
+ 6: export { VimMode, VimCursor, SyntaxError, IVimState as VimState };
+ 7: export class VimEngine {
+ 8:     private buffer: EditorBuffer;
+ 9:     private state: VimStateEntity;
+10:     private handler: VimInputHandler;
+11:     private commands: VimCommandManager;
+12:     constructor(buffer: EditorBuffer) {
+13:         this.buffer = buffer;
+14:         this.state = new VimStateEntity();
+15:         this.handler = new VimInputHandler();
+16:         this.commands = new VimCommandManager(buffer);
+17:     }
+18:     getState(): IVimState {
+19:         return this.state.clone();
+20:     }
+21:     handleInput(input: string): void {
+22:         this.state = this.handler.handleKey(input, this.state, this.buffer, this.commands) as VimStateEntity;
+23:     }
+24:     setMode(mode: VimMode): void {
+25:         this.state.mode = mode;
+26:         this.state.statusMessage = mode === 'NORMAL' ? '' : `-- ${mode} --`;
+27:     }
+28:     setStatusMessage(msg: string): void {
+29:         this.state.statusMessage = msg;
+30:     }
+31:     setLintErrors(errors: SyntaxError[]): void {
+32:         this.state.lintErrors = errors;
+33:     }
+34:     undo(): void {
+35:         this.commands.undo();
+36:     }
+37:     redo(): void {
+38:         this.commands.redo();
+39:     }
+40: }
+</file>
+
 <file path="src/domain/factories/KnuthianMissionFactory.ts">
  1: import { Mission, MissionStep } from '../entities/Mission';
  2: import { NPC } from '../entities/NPC';
@@ -14536,6 +14594,41 @@ This section contains the contents of the repository's files.
 17: }
 </file>
 
+<file path="src/domain/usecases/vim/modes/CommandMode.ts">
+ 1: import { IVimMode } from '../IVimMode';
+ 2: import { IVimState } from '../../../entities/vim/IVimState';
+ 3: import { IVimBuffer } from '../../../entities/vim/IVimBuffer';
+ 4: import { VimCommandManager } from '../VimCommandManager';
+ 5: export class CommandMode implements IVimMode {
+ 6:     readonly name = 'COMMAND';
+ 7:     handleKey(
+ 8:         key: string,
+ 9:         state: IVimState,
+10:         buffer: IVimBuffer,
+11:         commands: VimCommandManager
+12:     ): string | null {
+13:         if (key === 'ESC') {
+14:             state.statusMessage = '';
+15:             return 'NORMAL';
+16:         }
+17:         if (key === 'ENTER' || key === '\n' || key === '\r') {
+18:             return 'NORMAL';
+19:         }
+20:         if (key === 'BACKSPACE') {
+21:             if (state.statusMessage.length > 1) {
+22:                 state.statusMessage = state.statusMessage.slice(0, -1);
+23:             } else {
+24:                 state.statusMessage = '';
+25:                 return 'NORMAL';
+26:             }
+27:         } else if (key.length === 1) {
+28:             state.statusMessage += key;
+29:         }
+30:         return null;
+31:     }
+32: }
+</file>
+
 <file path="src/domain/usecases/vim/modes/InsertMode.ts">
  1: import { IVimMode } from '../IVimMode';
  2: import { IVimState } from '../../../entities/vim/IVimState';
@@ -18563,6 +18656,17 @@ This section contains the contents of the repository's files.
 7: }
 </file>
 
+<file path="conductor/archive/implement_humble_view_screens_20260208/metadata.json">
+1: {
+2:   "track_id": "implement_humble_view_screens_20260208",
+3:   "type": "refactor",
+4:   "status": "new",
+5:   "created_at": "2026-02-08T00:30:00Z",
+6:   "updated_at": "2026-02-08T00:30:00Z",
+7:   "description": "Decouple presentation layer from domain logic via Input Proxy, Command Coordinator, and Humble Views."
+8: }
+</file>
+
 <file path="conductor/archive/mission_tutor_audit_20260205/metadata.json">
 1: {
 2:   "track_id": "mission_tutor_audit_20260205",
@@ -18625,17 +18729,6 @@ This section contains the contents of the repository's files.
 7: }
 </file>
 
-<file path="conductor/tracks/implement_humble_view_screens_20260208/metadata.json">
-1: {
-2:   "track_id": "implement_humble_view_screens_20260208",
-3:   "type": "refactor",
-4:   "status": "new",
-5:   "created_at": "2026-02-08T00:30:00Z",
-6:   "updated_at": "2026-02-08T00:30:00Z",
-7:   "description": "Decouple presentation layer from domain logic via Input Proxy, Command Coordinator, and Humble Views."
-8: }
-</file>
-
 <file path="conductor/tracks/semantic_unix_model_20260206/metadata.json">
 1: {
 2:   "track_id": "semantic_unix_model_20260206",
@@ -18644,6 +18737,36 @@ This section contains the contents of the repository's files.
 5:   "status": "active",
 6:   "created_at": "2026-02-06"
 7: }
+</file>
+
+<file path="src/core/presentation/SimulationMediator.ts">
+ 1: import { SimulationBus, GameEventType } from '../../domain/services/SimulationBus';
+ 2: import { PresentationDirector } from '../../domain/services/PresentationDirector';
+ 3: import { IShellExecutor } from '../../domain/interfaces/IShellExecutor';
+ 4: import { CommandResponse } from '../../domain/entities/Command';
+ 5: import { TerminalState } from '../../domain/entities/TerminalState';
+ 6: export class SimulationMediator {
+ 7:     constructor(
+ 8:         private bus: SimulationBus,
+ 9:         private director: PresentationDirector,
+10:         private executor: IShellExecutor
+11:     ) {}
+12:     public async executeWithTheatre(input: string, state: TerminalState): Promise<CommandResponse> {
+13:         if (!input.trim()) {
+14:             return { output: '', exitCode: 0, newState: state, command: input };
+15:         }
+16:         // 1. Lock Input (Signal Start)
+17:         // We use a custom event or reuse PRESENTATION_START context
+18:         // But the plan says: "Emit THEATRE_ACTIVE"
+19:         // Let's assume THEATRE_ACTIVE is mapped to PRESENTATION_START in the listener for now,
+20:         const parts = input.trim().split(/\s+/);
+21:         const verb = parts[0];
+22:         const args = parts.slice(1);
+23:         await this.director.presentCommand(verb, args);
+24:         const response = await this.executor.execute(input, state);
+25:         return response;
+26:     }
+27: }
 </file>
 
 <file path="src/domain/commands/core/AwkCommand.ts">
@@ -22734,49 +22857,6 @@ This section contains the contents of the repository's files.
 173: }
 </file>
 
-<file path="src/domain/entities/VimEngine.ts">
- 1: import { EditorBuffer } from './EditorBuffer';
- 2: import { IVimState, VimMode, VimCursor, SyntaxError } from './vim/IVimState';
- 3: import { VimStateEntity } from './vim/VimStateEntity';
- 4: import { VimInputHandler } from '../usecases/vim/VimInputHandler';
- 5: import { VimCommandManager } from '../usecases/vim/VimCommandManager';
- 6: export { VimMode, VimCursor, SyntaxError, IVimState as VimState };
- 7: export class VimEngine {
- 8:     private buffer: EditorBuffer;
- 9:     private state: VimStateEntity;
-10:     private handler: VimInputHandler;
-11:     private commands: VimCommandManager;
-12:     constructor(buffer: EditorBuffer) {
-13:         this.buffer = buffer;
-14:         this.state = new VimStateEntity();
-15:         this.handler = new VimInputHandler();
-16:         this.commands = new VimCommandManager(buffer);
-17:     }
-18:     getState(): IVimState {
-19:         return this.state.clone();
-20:     }
-21:     handleInput(input: string): void {
-22:         this.state = this.handler.handleKey(input, this.state, this.buffer, this.commands) as VimStateEntity;
-23:     }
-24:     setMode(mode: VimMode): void {
-25:         this.state.mode = mode;
-26:         this.state.statusMessage = mode === 'NORMAL' ? '' : `-- ${mode} --`;
-27:     }
-28:     setStatusMessage(msg: string): void {
-29:         this.state.statusMessage = msg;
-30:     }
-31:     setLintErrors(errors: SyntaxError[]): void {
-32:         this.state.lintErrors = errors;
-33:     }
-34:     undo(): void {
-35:         this.commands.undo();
-36:     }
-37:     redo(): void {
-38:         this.commands.redo();
-39:     }
-40: }
-</file>
-
 <file path="src/domain/factories/ProceduralMissionFactory.ts">
  1: import { Mission, MissionStep } from '../entities/Mission';
  2: import { NPC } from '../entities/NPC';
@@ -25915,85 +25995,6 @@ This section contains the contents of the repository's files.
 137: }
 </file>
 
-<file path="src/domain/services/SimulationBus.ts">
- 1: import { TelemetryPort } from '../ports/TelemetryPort';
- 2: export enum GameEventType {
- 3:     COMMAND_EXECUTED = 'COMMAND_EXECUTED',
- 4:     REGISTER_MODIFIED = 'REGISTER_MODIFIED',
- 5:     FILE_ACCESS = 'FILE_ACCESS',
- 6:     MISSION_PROGRESS = 'MISSION_PROGRESS',
- 7:     TUTOR_EVENT = 'TUTOR_EVENT',
- 8:     ECONOMY_UPDATE = 'ECONOMY_UPDATE',
- 9:     KEYSTROKE_ACCEPTED = 'KEYSTROKE_ACCEPTED',
-10:     ERROR_OCCURRED = 'ERROR_OCCURRED'
-11: }
-12: export interface CommandExecutedPayload {
-13:     command: string;
-14:     args: string[];
-15:     exitCode: number;
-16:     output: string;
-17:     cwd: string;
-18: }
-19: export interface RegisterModifiedPayload {
-20:     register: string;
-21:     oldValue: number;
-22:     newValue: number;
-23:     instruction?: string;
-24: }
-25: export interface FileAccessPayload {
-26:     path: string;
-27:     operation: 'READ' | 'WRITE' | 'DELETE' | 'EXECUTE';
-28:     success: boolean;
-29: }
-30: export interface GameEvent {
-31:     type: GameEventType;
-32:     timestamp: string;
-33:     payload: CommandExecutedPayload | RegisterModifiedPayload | FileAccessPayload | any;
-34: }
-35: export type GameEventCallback = (event: GameEvent) => void;
-36: export class SimulationBus {
-37:     private listeners: Map<GameEventType | '*', GameEventCallback[]> = new Map();
-38:     constructor(private telemetry: TelemetryPort) {}
-39:     public subscribe(type: GameEventType | '*', callback: GameEventCallback): () => void {
-40:         console.log(`[SimulationBus] SUBSCRIBE: ${type}`);
-41:         this.telemetry.trace('SimulationBus.subscribe', () => {
-42:             if (!this.listeners.has(type)) {
-43:                 this.listeners.set(type, []);
-44:             }
-45:             this.listeners.get(type)!.push(callback);
-46:         }, type);
-47:         return () => {
-48:             console.log(`[SimulationBus] UNSUBSCRIBE: ${type}`);
-49:             const list = this.listeners.get(type);
-50:             if (list) {
-51:                 this.listeners.set(type, list.filter(l => l !== callback));
-52:             }
-53:         };
-54:     }
-55:     public emit(type: GameEventType, payload: any): void {
-56:         console.log(`[SimulationBus] EMIT: ${type}`, payload);
-57:         this.telemetry.trace('SimulationBus.emit', () => {
-58:             const event: GameEvent = {
-59:                 type,
-60:                 timestamp: new Date().toISOString(),
-61:                 payload
-62:             };
-63:             const specificListeners = this.listeners.get(type) || [];
-64:             const wildcardListeners = this.listeners.get('*') || [];
-65:             const allListeners = [...specificListeners, ...wildcardListeners];
-66:             this.telemetry.debug(`Emitting ${type} to ${allListeners.length} listeners`, { payload });
-67:             allListeners.forEach(callback => {
-68:                 try {
-69:                     callback(event);
-70:                 } catch (error) {
-71:                     this.telemetry.error(`Error in SimulationBus listener for ${type}`, { error, event });
-72:                 }
-73:             });
-74:         }, type, payload);
-75:     }
-76: }
-</file>
-
 <file path="src/domain/services/TutorService.ts">
  1: import { TerminalState } from '../entities/TerminalState';
  2: import { Mission, MissionStep } from '../entities/Mission';
@@ -26329,41 +26330,6 @@ This section contains the contents of the repository's files.
 115: }
 </file>
 
-<file path="src/domain/usecases/vim/modes/CommandMode.ts">
- 1: import { IVimMode } from '../IVimMode';
- 2: import { IVimState } from '../../../entities/vim/IVimState';
- 3: import { IVimBuffer } from '../../../entities/vim/IVimBuffer';
- 4: import { VimCommandManager } from '../VimCommandManager';
- 5: export class CommandMode implements IVimMode {
- 6:     readonly name = 'COMMAND';
- 7:     handleKey(
- 8:         key: string,
- 9:         state: IVimState,
-10:         buffer: IVimBuffer,
-11:         commands: VimCommandManager
-12:     ): string | null {
-13:         if (key === 'ESC') {
-14:             state.statusMessage = '';
-15:             return 'NORMAL';
-16:         }
-17:         if (key === 'ENTER' || key === '\n' || key === '\r') {
-18:             return 'NORMAL';
-19:         }
-20:         if (key === 'BACKSPACE') {
-21:             if (state.statusMessage.length > 1) {
-22:                 state.statusMessage = state.statusMessage.slice(0, -1);
-23:             } else {
-24:                 state.statusMessage = '';
-25:                 return 'NORMAL';
-26:             }
-27:         } else if (key.length === 1) {
-28:             state.statusMessage += key;
-29:         }
-30:         return null;
-31:     }
-32: }
-</file>
-
 <file path="src/domain/usecases/vim/MotionStrategy.ts">
  1: import { IVimBuffer } from '../../entities/vim/IVimBuffer';
  2: export class MotionStrategy {
@@ -26468,6 +26434,75 @@ This section contains the contents of the repository's files.
 33:         this.history.clear();
 34:     }
 35: }
+</file>
+
+<file path="src/domain/usecases/vim/VimInputHandler.ts">
+ 1: import { IVimState } from '../../entities/vim/IVimState';
+ 2: import { IVimBuffer } from '../../entities/vim/IVimBuffer';
+ 3: import { VimStateEntity } from '../../entities/vim/VimStateEntity';
+ 4: import { IVimMode } from './IVimMode';
+ 5: import { NormalMode } from './modes/NormalMode';
+ 6: import { InsertMode } from './modes/InsertMode';
+ 7: import { CommandMode } from './modes/CommandMode';
+ 8: import { VimCommandManager } from './VimCommandManager';
+ 9: export class VimInputHandler {
+10:     private modes: Map<string, IVimMode> = new Map();
+11:     constructor() {
+12:         this.modes.set('NORMAL', new NormalMode());
+13:         this.modes.set('INSERT', new InsertMode());
+14:         this.modes.set('COMMAND', new CommandMode());
+15:     }
+16:     public handleKey(key: string, state: IVimState, buffer: IVimBuffer, commands: VimCommandManager): IVimState {
+17:         const nextState = (state as VimStateEntity).clone
+18:             ? (state as VimStateEntity).clone()
+19:             : new VimStateEntity(state.mode, { ...state.cursor }, state.pendingAction, state.statusMessage, [...state.lintErrors], state.isLocked || false);
+20:         if (nextState.isLocked) return nextState;
+21:         if (['SHIFT', 'CONTROL', 'ALT', 'META'].includes(key.toUpperCase())) return nextState;
+22:         if (key === 'ESC') {
+23:             nextState.mode = 'NORMAL';
+24:             nextState.pendingAction = null;
+25:             nextState.statusMessage = '';
+26:             this.clampCursor(nextState, buffer);
+27:             return nextState;
+28:         }
+29:         // 4. Delegate to Strategy (State Pattern)
+30:         const modeStrategy = this.modes.get(nextState.mode);
+31:         if (modeStrategy) {
+32:             const result = modeStrategy.handleKey(key, nextState, buffer, commands);
+33:             // Handle Mode Transition
+34:             if (result && result !== nextState.mode) {
+35:                 nextState.mode = result as any;
+36:                 this.updateStatusForMode(nextState);
+37:             }
+38:         }
+39:         // 5. Post-process (Invariant enforcement)
+40:         this.clampCursor(nextState, buffer);
+41:         return nextState;
+42:     }
+43:     private updateStatusForMode(state: IVimState): void {
+44:         switch (state.mode) {
+45:             case 'NORMAL':
+46:                 state.statusMessage = '';
+47:                 break;
+48:             case 'INSERT':
+49:                 state.statusMessage = '-- INSERT --';
+50:                 break;
+51:             case 'COMMAND':
+52:                 state.statusMessage = ':';
+53:                 break;
+54:         }
+55:     }
+56:     private clampCursor(state: IVimState, buffer: IVimBuffer): void {
+57:         const lineCount = buffer.length;
+58:         if (state.cursor.line < 0) state.cursor.line = 0;
+59:         if (state.cursor.line >= lineCount) state.cursor.line = lineCount - 1;
+60:         const line = buffer.getLine(state.cursor.line);
+61:         const lineLen = line.length;
+62:         const maxCol = state.mode === 'INSERT' ? lineLen : Math.max(0, lineLen - 1);
+63:         if (state.cursor.col < 0) state.cursor.col = 0;
+64:         if (state.cursor.col > maxCol) state.cursor.col = maxCol;
+65:     }
+66: }
 </file>
 
 <file path="src/domain/usecases/CodeCompiler.ts">
@@ -27928,60 +27963,6 @@ This section contains the contents of the repository's files.
 31: };
 </file>
 
-<file path="src/frameworks-drivers/ui/screens/VimScreen.tsx">
- 1: import React, { useMemo } from 'react';
- 2: import { View } from 'react-native';
- 3: import { useVimEditor } from '../components/vim/VimEditor';
- 4: import { GlobalTutorBar } from '../components/GlobalTutorBar';
- 5: import { EconomyBar } from '../components/EconomyBar';
- 6: import { useTheme, useThemeComponents } from '../context/ThemeContext';
- 7: import { useFileSystem } from '../context/FileSystemProvider';
- 8: import { useProcess } from '../context/ProcessProvider';
- 9: import { useSystemState } from '../context/SystemStateProvider';
-10: import { useTutorPersona } from '../context/TutorPersonaProvider';
-11: import { MainframeOverlay } from '../components/MainframeOverlay';
-12: import { TheatricalCanvas } from '../components/theatrical/TheatricalCanvas';
-13: import { FileSystemService } from '../../../domain/services/FileSystemService';
-14: export interface VimScreenProps {
-15:     filename: string;
-16:     onExit: () => void;
-17: }
-18: export const VimScreen: React.FC<VimScreenProps> = ({ filename, onExit }) => {
-19:     const components = useThemeComponents();
-20:     const Layout = components.Layout;
-21:     const { fs } = useFileSystem();
-22:     const { gameManager } = useProcess();
-23:     const { isInputLocked } = useSystemState();
-24:     const { tutorShadow } = useTutorPersona();
-25:     const fsService = useMemo(() => new FileSystemService(fs), [fs]);
-26:     const vim = useVimEditor(
-27:         filename,
-28:         onExit,
-29:         fsService,
-30:         gameManager.tutorEngine,
-31:         tutorShadow,
-32:         isInputLocked
-33:     );
-34:     const topContent = (
-35:         <View style={{ flex: 1 }}>
-36:             {vim.topContent}
-37:             <MainframeOverlay />
-38:             <TheatricalCanvas />
-39:         </View>
-40:     );
-41:     return (
-42:         <Layout
-43:             status={`EDITING: ${filename}`}
-44:             topContent={topContent}
-45:             middleContent={vim.middleContent}
-46:             bottomContent={vim.bottomContent}
-47:             tutorBarComponent={<GlobalTutorBar />}
-48:             economyBarComponent={<EconomyBar />}
-49:         />
-50:     );
-51: };
-</file>
-
 <file path="src/frameworks-drivers/ui/themes/standard/StandardLayout.tsx">
   1: import React from 'react';
   2: import { View, Text, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
@@ -29075,97 +29056,6 @@ This section contains the contents of the repository's files.
 16: }
 </file>
 
-<file path="src/core/CoreEngine.ts">
- 1: import { FileSystem } from '../domain/entities/FileSystem';
- 2: import { GameManager } from '../interface-adapters/GameManager';
- 3: import { GameCommandExecutor } from '../interface-adapters/GameCommandExecutor';
- 4: import { FileSystemService } from '../domain/services/FileSystemService';
- 5: import { NetworkMap } from '../domain/services/NetworkMap';
- 6: import { ConsoleTelemetryAdapter } from '../infrastructure/telemetry/ConsoleTelemetryAdapter';
- 7: import { DependencyContainer } from '../infrastructure/di/DependencyContainer';
- 8: import { TutorMessagingService } from '../domain/services/tutor/TutorMessagingService';
- 9: import { EconomyService } from '../domain/services/EconomyService';
-10: import { TutorShadow } from '../domain/services/tutor/TutorShadow';
-11: import { TutorBrain } from '../domain/entities/tutor/TutorBrain';
-12: import { MasteryTracker } from '../domain/services/tutor/MasteryTracker';
-13: import { SimulationBus } from '../domain/services/SimulationBus';
-14: import { CommandCoordinator } from '../interface-adapters/controllers/CommandCoordinator';
-15: export class CoreEngine {
-16:     private static instance: CoreEngine;
-17:     private initialized: boolean = false;
-18:     private fs!: FileSystem;
-19:     private telemetry!: ConsoleTelemetryAdapter;
-20:     private networkMap!: NetworkMap;
-21:     private bus!: SimulationBus;
-22:     private tutorMessaging!: TutorMessagingService;
-23:     private economyService!: EconomyService;
-24:     private masteryTracker!: MasteryTracker;
-25:     private tutorBrain!: TutorBrain;
-26:     private gameManager!: GameManager;
-27:     private commandExecutor!: GameCommandExecutor;
-28:     private tutorShadow!: TutorShadow;
-29:     private commandCoordinator!: CommandCoordinator;
-30:     private constructor() {}
-31:     public static getInstance(): CoreEngine {
-32:         if (!CoreEngine.instance) {
-33:             CoreEngine.instance = new CoreEngine();
-34:         }
-35:         return CoreEngine.instance;
-36:     }
-37:     public async initialize(): Promise<void> {
-38:         if (this.initialized) return;
-39:         console.log("CoreEngine: Starting initialization...");
-40:         this.fs = new FileSystem();
-41:         this.telemetry = new ConsoleTelemetryAdapter();
-42:         this.networkMap = new NetworkMap();
-43:         this.bus = new SimulationBus(this.telemetry);
-44:         this.tutorMessaging = new TutorMessagingService();
-45:         console.log("CoreEngine: Infrastructure ready.");
-46:         const fsService = new FileSystemService(this.fs);
-47:         this.economyService = DependencyContainer.createEconomyService(this.fs, this.bus);
-48:         this.masteryTracker = DependencyContainer.createMasteryTracker(this.fs);
-49:         this.tutorBrain = DependencyContainer.createTutorBrain(this.fs, this.bus);
-50:         console.log("CoreEngine: Service instances created.");
-51:         this.tutorBrain.setPersona(DependencyContainer.createPersona('standard', 'TUTOR'));
-52:         console.log("CoreEngine: Persona set.");
-53:         this.gameManager = DependencyContainer.createGameManager(this.fs, this.networkMap, this.telemetry, this.bus);
-54:         console.log("CoreEngine: GameManager ready.");
-55:         this.commandExecutor = new GameCommandExecutor(fsService, this.gameManager, this.networkMap, this.telemetry);
-56:         this.tutorShadow = DependencyContainer.createTutorShadow(
-57:             this.gameManager.tutorEngine,
-58:             this.economyService,
-59:             this.bus,
-60:             this.gameManager.getPresentationDirector()
-61:         );
-62:         this.commandCoordinator = new CommandCoordinator(this.commandExecutor, this.gameManager.getPresentationDirector());
-63:         console.log("CoreEngine: Controllers ready.");
-64:         console.log("CoreEngine: Initialization complete.");
-65:         this.initialized = true;
-66:     }
-67:     public isInitialized(): boolean {
-68:         return this.initialized;
-69:     }
-70:     public getFileSystem(): FileSystem { return this.fs; }
-71:     public getTelemetry(): ConsoleTelemetryAdapter { return this.telemetry; }
-72:     public getNetworkMap(): NetworkMap { return this.networkMap; }
-73:     public getSimulationBus(): SimulationBus { return this.bus; }
-74:     public getTutorMessaging(): TutorMessagingService { return this.tutorMessaging; }
-75:     public getEconomyService(): EconomyService { return this.economyService; }
-76:     public getMasteryTracker(): MasteryTracker { return this.masteryTracker; }
-77:     public getTutorBrain(): TutorBrain { return this.tutorBrain; }
-78:     public getGameManager(): GameManager { return this.gameManager; }
-79:     public getCommandExecutor(): GameCommandExecutor { return this.commandExecutor; }
-80:     public getTutorShadow(): TutorShadow { return this.tutorShadow; }
-81:     public getCommandCoordinator(): CommandCoordinator { return this.commandCoordinator; }
-82:     public shutdown() {
-83:         if (this.tutorBrain) {
-84:             this.tutorBrain.dispose();
-85:         }
-86:         this.initialized = false;
-87:     }
-88: }
-</file>
-
 <file path="src/domain/commands/core/CatCommand.ts">
  1: import { getStdinAsString } from '../../entities/ProcessContext';
  2: import { CommandBase } from '../CommandBase';
@@ -29539,6 +29429,102 @@ This section contains the contents of the repository's files.
 107: }
 </file>
 
+<file path="src/domain/services/SimulationBus.ts">
+ 1: import { TelemetryPort } from '../ports/TelemetryPort';
+ 2: export enum GameEventType {
+ 3:     COMMAND_EXECUTED = 'COMMAND_EXECUTED',
+ 4:     REGISTER_MODIFIED = 'REGISTER_MODIFIED',
+ 5:     FILE_ACCESS = 'FILE_ACCESS',
+ 6:     MISSION_PROGRESS = 'MISSION_PROGRESS',
+ 7:     TUTOR_EVENT = 'TUTOR_EVENT',
+ 8:     ECONOMY_UPDATE = 'ECONOMY_UPDATE',
+ 9:     KEYSTROKE_ACCEPTED = 'KEYSTROKE_ACCEPTED',
+10:     ERROR_OCCURRED = 'ERROR_OCCURRED'
+11: }
+12: export interface CommandExecutedPayload {
+13:     command: string;
+14:     args: string[];
+15:     exitCode: number;
+16:     output: string;
+17:     cwd: string;
+18: }
+19: export interface RegisterModifiedPayload {
+20:     register: string;
+21:     oldValue: number;
+22:     newValue: number;
+23:     instruction?: string;
+24: }
+25: export interface FileAccessPayload {
+26:     path: string;
+27:     operation: 'READ' | 'WRITE' | 'DELETE' | 'EXECUTE';
+28:     success: boolean;
+29: }
+30: export interface GameEvent {
+31:     type: GameEventType;
+32:     timestamp: string;
+33:     payload: CommandExecutedPayload | RegisterModifiedPayload | FileAccessPayload | any;
+34: }
+35: export type GameEventCallback = (event: GameEvent) => void;
+36: export class SimulationBus {
+37:     private listeners: Map<GameEventType | '*', GameEventCallback[]> = new Map();
+38:     constructor(private telemetry: TelemetryPort) {}
+39:     public subscribe(type: GameEventType | '*', callback: GameEventCallback): () => void {
+40:         console.log(`[SimulationBus] SUBSCRIBE: ${type}`);
+41:         this.telemetry.trace('SimulationBus.subscribe', () => {
+42:             if (!this.listeners.has(type)) {
+43:                 this.listeners.set(type, []);
+44:             }
+45:             this.listeners.get(type)!.push(callback);
+46:         }, type);
+47:         return () => {
+48:             console.log(`[SimulationBus] UNSUBSCRIBE: ${type}`);
+49:             const list = this.listeners.get(type);
+50:             if (list) {
+51:                 this.listeners.set(type, list.filter(l => l !== callback));
+52:             }
+53:         };
+54:     }
+55:     public once(type: GameEventType, callback: GameEventCallback): void {
+56:         const unsubscribe = this.subscribe(type, (event) => {
+57:             unsubscribe();
+58:             callback(event);
+59:         });
+60:     }
+61:     public waitFor(type: GameEventType, timeoutMs: number = 5000): Promise<GameEvent> {
+62:         return new Promise((resolve, reject) => {
+63:             const timer = setTimeout(() => {
+64:                 reject(new Error(`Timeout waiting for event: ${type}`));
+65:             }, timeoutMs);
+66:             this.once(type, (event) => {
+67:                 clearTimeout(timer);
+68:                 resolve(event);
+69:             });
+70:         });
+71:     }
+72:     public emit(type: GameEventType, payload: any): void {
+73:         console.log(`[SimulationBus] EMIT: ${type}`, payload);
+74:         this.telemetry.trace('SimulationBus.emit', () => {
+75:             const event: GameEvent = {
+76:                 type,
+77:                 timestamp: new Date().toISOString(),
+78:                 payload
+79:             };
+80:             const specificListeners = this.listeners.get(type) || [];
+81:             const wildcardListeners = this.listeners.get('*') || [];
+82:             const allListeners = [...specificListeners, ...wildcardListeners];
+83:             this.telemetry.debug(`Emitting ${type} to ${allListeners.length} listeners`, { payload });
+84:             allListeners.forEach(callback => {
+85:                 try {
+86:                     callback(event);
+87:                 } catch (error) {
+88:                     this.telemetry.error(`Error in SimulationBus listener for ${type}`, { error, event });
+89:                 }
+90:             });
+91:         }, type, payload);
+92:     }
+93: }
+</file>
+
 <file path="src/domain/usecases/tutor/TutorLedProgression.ts">
  1: import { ConstraintMissionFactory, ProblemDefinition } from '../mission/ConstraintMissionFactory';
  2: import { MasteryTracker } from '../../services/tutor/MasteryTracker';
@@ -29605,355 +29591,6 @@ This section contains the contents of the repository's files.
 63:         return this.factory.createMission(problem);
 64:     }
 65: }
-</file>
-
-<file path="src/domain/usecases/vim/VimInputHandler.ts">
- 1: import { IVimState } from '../../entities/vim/IVimState';
- 2: import { IVimBuffer } from '../../entities/vim/IVimBuffer';
- 3: import { VimStateEntity } from '../../entities/vim/VimStateEntity';
- 4: import { IVimMode } from './IVimMode';
- 5: import { NormalMode } from './modes/NormalMode';
- 6: import { InsertMode } from './modes/InsertMode';
- 7: import { CommandMode } from './modes/CommandMode';
- 8: import { VimCommandManager } from './VimCommandManager';
- 9: export class VimInputHandler {
-10:     private modes: Map<string, IVimMode> = new Map();
-11:     constructor() {
-12:         this.modes.set('NORMAL', new NormalMode());
-13:         this.modes.set('INSERT', new InsertMode());
-14:         this.modes.set('COMMAND', new CommandMode());
-15:     }
-16:     public handleKey(key: string, state: IVimState, buffer: IVimBuffer, commands: VimCommandManager): IVimState {
-17:         const nextState = (state as VimStateEntity).clone
-18:             ? (state as VimStateEntity).clone()
-19:             : new VimStateEntity(state.mode, { ...state.cursor }, state.pendingAction, state.statusMessage, [...state.lintErrors], state.isLocked || false);
-20:         if (nextState.isLocked) return nextState;
-21:         if (['SHIFT', 'CONTROL', 'ALT', 'META'].includes(key.toUpperCase())) return nextState;
-22:         if (key === 'ESC') {
-23:             nextState.mode = 'NORMAL';
-24:             nextState.pendingAction = null;
-25:             nextState.statusMessage = '';
-26:             this.clampCursor(nextState, buffer);
-27:             return nextState;
-28:         }
-29:         // 4. Delegate to Strategy (State Pattern)
-30:         const modeStrategy = this.modes.get(nextState.mode);
-31:         if (modeStrategy) {
-32:             const result = modeStrategy.handleKey(key, nextState, buffer, commands);
-33:             // Handle Mode Transition
-34:             if (result && result !== nextState.mode) {
-35:                 nextState.mode = result as any;
-36:                 this.updateStatusForMode(nextState);
-37:             }
-38:         }
-39:         // 5. Post-process (Invariant enforcement)
-40:         this.clampCursor(nextState, buffer);
-41:         return nextState;
-42:     }
-43:     private updateStatusForMode(state: IVimState): void {
-44:         switch (state.mode) {
-45:             case 'NORMAL':
-46:                 state.statusMessage = '';
-47:                 break;
-48:             case 'INSERT':
-49:                 state.statusMessage = '-- INSERT --';
-50:                 break;
-51:             case 'COMMAND':
-52:                 state.statusMessage = ':';
-53:                 break;
-54:         }
-55:     }
-56:     private clampCursor(state: IVimState, buffer: IVimBuffer): void {
-57:         const lineCount = buffer.length;
-58:         if (state.cursor.line < 0) state.cursor.line = 0;
-59:         if (state.cursor.line >= lineCount) state.cursor.line = lineCount - 1;
-60:         const line = buffer.getLine(state.cursor.line);
-61:         const lineLen = line.length;
-62:         const maxCol = state.mode === 'INSERT' ? lineLen : Math.max(0, lineLen - 1);
-63:         if (state.cursor.col < 0) state.cursor.col = 0;
-64:         if (state.cursor.col > maxCol) state.cursor.col = maxCol;
-65:     }
-66: }
-</file>
-
-<file path="src/frameworks-drivers/ui/components/vim/VimEditor.tsx">
-  1: import React, { useEffect, useMemo } from 'react';
-  2: import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
-  3: import { useInput } from '../../context/InputContext';
-  4: import { THEME } from '../../Theme';
-  5: import { useFileSystem } from '../../context/FileSystemProvider';
-  6: import { useProcess } from '../../context/ProcessProvider';
-  7: import { useSystemState } from '../../context/SystemStateProvider';
-  8: import { useTutorPersona } from '../../context/TutorPersonaProvider';
-  9: import { VirtualKeyboard } from '../VirtualKeyboard';
- 10: import { useTheme, useThemeComponents } from '../../context/ThemeContext';
- 11: import { FileSystemService } from '../../../../domain/services/FileSystemService';
- 12: import { useHeadlessVim } from '../../../../interface-adapters/viewmodels/useHeadlessVim';
- 13: interface VimEditorProps {
- 14:     filename: string;
- 15:     onExit: () => void;
- 16: }
- 17: export const useVimEditor = (
- 18:     filename: string,
- 19:     onExit: () => void,
- 20:     fsService: FileSystemService,
- 21:     tutorEngine: any,
- 22:     tutorShadow: any,
- 23:     isInputLocked: boolean
- 24: ) => {
- 25:     const { theme, settings } = useTheme();
- 26:     const components = useThemeComponents();
- 27:     const { TextRenderer, Cursor } = components;
- 28:     const colors = theme.colors;
- 29:     const headless = useHeadlessVim(filename, fsService, tutorEngine, tutorShadow, onExit);
- 30:     const [isMounting, setIsMounting] = React.useState(true);
- 31:     const { setOnInput, setOnKeyPress, refocus } = useInput();
- 32:     React.useEffect(() => {
- 33:         setOnInput((text) => {
- 34:             if (isInputLocked) return;
- 35:             for (const char of text) {
- 36:                 if (char === '\n') headless.handleVirtualKey('ENTER');
- 37:                 else headless.handleVirtualKey(char);
- 38:             }
- 39:         });
- 40:         setOnKeyPress((key) => {
- 41:             if (isInputLocked) return;
- 42:             headless.handleVirtualKey(key);
- 43:         });
- 44:     }, [headless.handleVirtualKey, setOnInput, setOnKeyPress]);
- 45:     useEffect(() => {
- 46:         setIsMounting(true);
- 47:         const timer = setTimeout(() => setIsMounting(false), 150);
- 48:         return () => clearTimeout(timer);
- 49:     }, [filename]);
- 50:     useEffect(() => {
- 51:         refocus();
- 52:         const interval = setInterval(refocus, 2000);
- 53:         return () => clearInterval(interval);
- 54:     }, [refocus]);
- 55:     const dynamicStyles = StyleSheet.create({
- 56:         editorContainer: {
- 57:             flex: 1,
- 58:             backgroundColor: colors.surface,
- 59:         },
- 60:         contentArea: {
- 61:             flex: 1,
- 62:             padding: THEME.spacing.sm,
- 63:         },
- 64:         scrollContent: {
- 65:             paddingBottom: THEME.spacing.xl,
- 66:         },
- 67:         lineWrapper: {
- 68:             flexDirection: 'row',
- 69:             paddingHorizontal: THEME.spacing.xs,
- 70:         },
- 71:         lineText: {
- 72:             fontSize: THEME.typography.fontSize.md,
- 73:             lineHeight: 24,
- 74:         },
- 75:         errorLine: {
- 76:             backgroundColor: 'rgba(255, 0, 0, 0.15)',
- 77:             borderLeftWidth: 3,
- 78:             borderLeftColor: colors.error,
- 79:         },
- 80:         cursorBlock: {
- 81:             backgroundColor: colors.primary,
- 82:             display: 'flex',
- 83:         },
- 84:         footer: {
- 85:             justifyContent: 'center',
- 86:             padding: THEME.spacing.sm,
- 87:         },
- 88:         statusBar: {
- 89:             backgroundColor: colors.background,
- 90:             paddingVertical: THEME.spacing.sm,
- 91:             paddingHorizontal: THEME.spacing.md,
- 92:             borderTopWidth: 1,
- 93:             borderTopColor: colors.primary,
- 94:             flexDirection: 'row',
- 95:             justifyContent: 'space-between',
- 96:         },
- 97:         statusText: {
- 98:             fontWeight: 'bold',
- 99:         },
-100:         errorStatusText: {
-101:             color: colors.error,
-102:         },
-103:         commandRow: {
-104:             flexDirection: 'row',
-105:             alignItems: 'center',
-106:             backgroundColor: colors.background,
-107:             paddingHorizontal: THEME.spacing.sm,
-108:             height: 40,
-109:         },
-110:         commandText: {
-111:             fontSize: THEME.typography.fontSize.md,
-112:         },
-113:         commandCursor: {
-114:             width: 10,
-115:             height: 20,
-116:             backgroundColor: colors.primary,
-117:             marginLeft: 2,
-118:         },
-119:         buttonRow: {
-120:             flexDirection: 'row',
-121:             gap: 8,
-122:             justifyContent: 'center',
-123:             flexWrap: 'wrap',
-124:         },
-125:         hintButton: {
-126:             borderWidth: 1,
-127:             borderColor: colors.border,
-128:             paddingHorizontal: 8,
-129:             paddingVertical: 4,
-130:             backgroundColor: 'rgba(0, 255, 65, 0.05)',
-131:             alignItems: 'center',
-132:             justifyContent: 'center',
-133:             minWidth: 40,
-134:         },
-135:         hintText: {
-136:             fontSize: THEME.typography.fontSize.sm,
-137:             textAlign: 'center',
-138:         },
-139:         crtBlinkOverlay: {
-140:             ...StyleSheet.absoluteFillObject,
-141:             backgroundColor: colors.background,
-142:             zIndex: 999,
-143:         },
-144:         tutorOverlay: {
-145:             position: 'absolute',
-146:             top: 0,
-147:             left: 0,
-148:             right: 0,
-149:             backgroundColor: 'rgba(0,0,0,0.8)',
-150:             padding: 10,
-151:             zIndex: 100,
-152:             borderBottomWidth: 1,
-153:             borderColor: colors.primary
-154:         }
-155:     });
-156:     const getTokenColor = (type: string) => {
-157:         switch (type) {
-158:             case 'keyword': return colors.secondary;
-159:             case 'string': return '#CE9178';
-160:             case 'comment': return colors.text.dim;
-161:             case 'number': return '#B5CEA8';
-162:             case 'operator': return '#D4D4D4';
-163:             default: return colors.text.primary;
-164:         }
-165:     };
-166:     const state = headless;
-167:     const commandInput = headless.commandInput;
-168:     const tutorState = headless.tutor;
-169:     const highlighter = headless.highlighter;
-170:     const renderLine = (lineContent: string, lineIdx: number) => {
-171:         const isCurrentLine = lineIdx === state.cursor.line;
-172:         const lineError = state.lintErrors.find(e => e.line === lineIdx + 1);
-173:         const tokens = highlighter.highlight(lineContent);
-174:         let cursorRendered = false;
-175:         return (
-176:             <View key={lineIdx} style={[dynamicStyles.lineWrapper, lineError && dynamicStyles.errorLine]}>
-177:                 <View style={{ flexDirection: 'row' }}>
-178:                     {tokens.map((token, tokenIdx) => {
-179:                         const tokenColor = getTokenColor(token.type);
-180:                         if (isCurrentLine && !cursorRendered) {
-181:                             let offsetBefore = tokens.slice(0, tokenIdx).reduce((acc, t) => acc + t.text.length, 0);
-182:                             const cursorInToken = state.cursor.col >= offsetBefore && state.cursor.col < offsetBefore + token.text.length;
-183:                             if (cursorInToken) {
-184:                                 cursorRendered = true;
-185:                                 const cursorRelPos = state.cursor.col - offsetBefore;
-186:                                 const head = token.text.slice(0, cursorRelPos);
-187:                                 const char = token.text[cursorRelPos];
-188:                                 const tail = token.text.slice(cursorRelPos + 1);
-189:                                 return (
-190:                                     <React.Fragment key={tokenIdx}>
-191:                                         <TextRenderer content={head} style={{ color: tokenColor }} />
-192:                                         {state.mode === 'INSERT' && (
-193:                                             <Cursor active={true} color={colors.primary} type="line" />
-194:                                         )}
-195:                                         <TextRenderer
-196:                                             content={char}
-197:                                             style={state.mode === 'NORMAL' ? { backgroundColor: colors.primary, color: colors.background } : { color: tokenColor }}
-198:                                         />
-199:                                         <TextRenderer content={tail} style={{ color: tokenColor }} />
-200:                                     </React.Fragment>
-201:                                 );
-202:                             }
-203:                         }
-204:                         return <TextRenderer key={tokenIdx} content={token.text} style={{ color: tokenColor }} />;
-205:                     })}
-206:                     {isCurrentLine && !cursorRendered && (
-207:                         <Cursor
-208:                             active={true}
-209:                             color={colors.primary}
-210:                             type={state.mode === 'INSERT' ? 'line' : 'block'}
-211:                         />
-212:                     )}
-213:                 </View>
-214:             </View>
-215:         );
-216:     };
-217:     const topContent = (
-218:         <View style={dynamicStyles.editorContainer}>
-219:             {tutorState.active && (
-220:                 <View style={dynamicStyles.tutorOverlay}>
-221:                     <TextRenderer style={{ fontWeight: 'bold' }} content="TUTOR PROTOCOL ACTIVE" />
-222:                     <View style={{ flexDirection: 'row' }}>
-223:                         <TextRenderer content="TARGET: " />
-224:                         <TextRenderer type="secondary" content={tutorState.completed} />
-225:                         <TextRenderer type="dim" content={tutorState.text} />
-226:                     </View>
-227:                 </View>
-228:             )}
-229:             {isMounting && <View style={dynamicStyles.crtBlinkOverlay} />}
-230:             <ScrollView
-231:                 style={dynamicStyles.contentArea}
-232:                 contentContainerStyle={dynamicStyles.scrollContent}
-233:                 keyboardShouldPersistTaps="always"
-234:                 ref={(ref: ScrollView | null) => {
-235:                     if (ref) {
-236:                         const lineHeight = 24;
-237:                         ref.scrollTo({ y: state.cursor.line * lineHeight - 100, animated: true });
-238:                     }
-239:                 }}
-240:             >
-241:                 <Pressable style={{ flex: 1 }} onPress={() => { refocus(); }}>
-242:                     {state.lines.map((line, idx) => renderLine(line, idx))}
-243:                 </Pressable>
-244:             </ScrollView>
-245:             <View style={dynamicStyles.statusBar}>
-246:                 <TextRenderer
-247:                     style={[dynamicStyles.statusText, !!state.lintErrors.find(e => e.line === state.cursor.line + 1) && dynamicStyles.errorStatusText]}
-248:                     content={state.lintErrors.find(e => e.line === state.cursor.line + 1)?.message || (state.statusMessage || (state.mode === 'NORMAL' ? '-- NORMAL --' : `-- ${state.mode} --`))}
-249:                 />
-250:                 <TextRenderer
-251:                     style={dynamicStyles.statusText}
-252:                     content={`${highlighter.language.toUpperCase()} | Ln ${state.cursor.line + 1}, Col ${state.cursor.col + 1}`}
-253:                 />
-254:             </View>
-255:         </View>
-256:     );
-257:     const middleContent = <VirtualKeyboard onKeyPress={headless.handleVirtualKey} />;
-258:     const bottomContent = (
-259:         <View style={dynamicStyles.footer}>
-260:             {state.mode === 'COMMAND' ? (
-261:                 <View style={dynamicStyles.commandRow}>
-262:                     <TextRenderer style={dynamicStyles.commandText} content={commandInput} />
-263:                     <Cursor active={true} color={colors.primary} />
-264:                 </View>
-265:             ) : (
-266:                 <View style={dynamicStyles.buttonRow}>
-267:                     {['i', ':', 'ESC', 'h', 'j', 'k', 'l'].map(k => (
-268:                         <Pressable key={k} style={dynamicStyles.hintButton} onPress={() => headless.handleVirtualKey(k)}>
-269:                             <TextRenderer style={dynamicStyles.hintText} content={`[${k.toUpperCase()}]`} />
-270:                         </Pressable>
-271:                     ))}
-272:                 </View>
-273:             )}
-274:         </View>
-275:     );
-276:     return { topContent, middleContent, bottomContent };
-277: };
 </file>
 
 <file path="src/frameworks-drivers/ui/components/EconomyBar.tsx">
@@ -30148,44 +29785,6 @@ This section contains the contents of the repository's files.
 77: };
 </file>
 
-<file path="src/frameworks-drivers/ui/context/ProcessProvider.tsx">
- 1: import React, { createContext, useContext, ReactNode } from 'react';
- 2: import { GameManager } from '../../../interface-adapters/GameManager';
- 3: import { GameCommandExecutor } from '../../../interface-adapters/GameCommandExecutor';
- 4: import { SimulationBus } from '../../../domain/services/SimulationBus';
- 5: import { ConsoleTelemetryAdapter } from '../../../infrastructure/telemetry/ConsoleTelemetryAdapter';
- 6: import { CoreEngine } from '../../../core/CoreEngine';
- 7: import { CommandCoordinator } from '../../../interface-adapters/controllers/CommandCoordinator';
- 8: interface ProcessContextType {
- 9:     gameManager: GameManager;
-10:     commandExecutor: GameCommandExecutor;
-11:     commandCoordinator: CommandCoordinator;
-12:     bus: SimulationBus;
-13:     telemetry: ConsoleTelemetryAdapter;
-14: }
-15: const ProcessContext = createContext<ProcessContextType | undefined>(undefined);
-16: export const ProcessProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-17:     const engine = CoreEngine.getInstance();
-18:     const gameManager = engine.getGameManager();
-19:     const commandExecutor = engine.getCommandExecutor();
-20:     const commandCoordinator = engine.getCommandCoordinator();
-21:     const bus = engine.getSimulationBus();
-22:     const telemetry = engine.getTelemetry();
-23:     return (
-24:         <ProcessContext.Provider value={{ gameManager, commandExecutor, commandCoordinator, bus, telemetry }}>
-25:             {children}
-26:         </ProcessContext.Provider>
-27:     );
-28: };
-29: export const useProcess = () => {
-30:     const context = useContext(ProcessContext);
-31:     if (!context) {
-32:         throw new Error('useProcess must be used within a ProcessProvider');
-33:     }
-34:     return context;
-35: };
-</file>
-
 <file path="src/frameworks-drivers/ui/context/ThemeContext.tsx">
  1: import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
  2: import { THEMES, ThemeDefinition, ThemeColors } from '../../../domain/entities/Theme';
@@ -30275,6 +29874,60 @@ This section contains the contents of the repository's files.
 3:     const { activeTutorMessage, isTutorTyping } = useTutorMessaging();
 4:     return { activeMessage: activeTutorMessage, isTyping: isTutorTyping };
 5: };
+</file>
+
+<file path="src/frameworks-drivers/ui/screens/VimScreen.tsx">
+ 1: import React, { useMemo } from 'react';
+ 2: import { View } from 'react-native';
+ 3: import { useVimEditor } from '../components/vim/VimEditor';
+ 4: import { GlobalTutorBar } from '../components/GlobalTutorBar';
+ 5: import { EconomyBar } from '../components/EconomyBar';
+ 6: import { useTheme, useThemeComponents } from '../context/ThemeContext';
+ 7: import { useFileSystem } from '../context/FileSystemProvider';
+ 8: import { useProcess } from '../context/ProcessProvider';
+ 9: import { useSystemState } from '../context/SystemStateProvider';
+10: import { useTutorPersona } from '../context/TutorPersonaProvider';
+11: import { MainframeOverlay } from '../components/MainframeOverlay';
+12: import { TheatricalCanvas } from '../components/theatrical/TheatricalCanvas';
+13: import { FileSystemService } from '../../../domain/services/FileSystemService';
+14: export interface VimScreenProps {
+15:     filename: string;
+16:     onExit: () => void;
+17: }
+18: export const VimScreen: React.FC<VimScreenProps> = ({ filename, onExit }) => {
+19:     const components = useThemeComponents();
+20:     const Layout = components.Layout;
+21:     const { fs } = useFileSystem();
+22:     const { gameManager } = useProcess();
+23:     const { isInputLocked } = useSystemState();
+24:     const { tutorShadow } = useTutorPersona();
+25:     const fsService = useMemo(() => new FileSystemService(fs), [fs]);
+26:     const vim = useVimEditor(
+27:         filename,
+28:         onExit,
+29:         fsService,
+30:         gameManager.tutorEngine,
+31:         tutorShadow,
+32:         isInputLocked
+33:     );
+34:     const topContent = (
+35:         <View style={{ flex: 1 }}>
+36:             {vim.topContent}
+37:             <MainframeOverlay />
+38:             <TheatricalCanvas />
+39:         </View>
+40:     );
+41:     return (
+42:         <Layout
+43:             status={`EDITING: ${filename}`}
+44:             topContent={topContent}
+45:             middleContent={vim.middleContent}
+46:             bottomContent={vim.bottomContent}
+47:             tutorBarComponent={<GlobalTutorBar />}
+48:             economyBarComponent={<EconomyBar />}
+49:         />
+50:     );
+51: };
 </file>
 
 <file path="src/frameworks-drivers/ui/themes/standard/StandardCursor.tsx">
@@ -31050,6 +30703,105 @@ This section contains the contents of the repository's files.
 69: }
 </file>
 
+<file path="src/core/CoreEngine.ts">
+ 1: import { FileSystem } from '../domain/entities/FileSystem';
+ 2: import { GameManager } from '../interface-adapters/GameManager';
+ 3: import { GameCommandExecutor } from '../interface-adapters/GameCommandExecutor';
+ 4: import { FileSystemService } from '../domain/services/FileSystemService';
+ 5: import { NetworkMap } from '../domain/services/NetworkMap';
+ 6: import { ConsoleTelemetryAdapter } from '../infrastructure/telemetry/ConsoleTelemetryAdapter';
+ 7: import { DependencyContainer } from '../infrastructure/di/DependencyContainer';
+ 8: import { TutorMessagingService } from '../domain/services/tutor/TutorMessagingService';
+ 9: import { EconomyService } from '../domain/services/EconomyService';
+10: import { TutorShadow } from '../domain/services/tutor/TutorShadow';
+11: import { TutorBrain } from '../domain/entities/tutor/TutorBrain';
+12: import { MasteryTracker } from '../domain/services/tutor/MasteryTracker';
+13: import { SimulationBus } from '../domain/services/SimulationBus';
+14: import { CommandCoordinator } from '../interface-adapters/controllers/CommandCoordinator';
+15: import { SimulationMediator } from './presentation/SimulationMediator';
+16: export class CoreEngine {
+17:     private static instance: CoreEngine;
+18:     private initialized: boolean = false;
+19:     private fs!: FileSystem;
+20:     private telemetry!: ConsoleTelemetryAdapter;
+21:     private networkMap!: NetworkMap;
+22:     private bus!: SimulationBus;
+23:     private tutorMessaging!: TutorMessagingService;
+24:     private economyService!: EconomyService;
+25:     private masteryTracker!: MasteryTracker;
+26:     private tutorBrain!: TutorBrain;
+27:     private gameManager!: GameManager;
+28:     private commandExecutor!: GameCommandExecutor;
+29:     private tutorShadow!: TutorShadow;
+30:     private commandCoordinator!: CommandCoordinator;
+31:     private simulationMediator!: SimulationMediator;
+32:     private constructor() {}
+33:     public static getInstance(): CoreEngine {
+34:         if (!CoreEngine.instance) {
+35:             CoreEngine.instance = new CoreEngine();
+36:         }
+37:         return CoreEngine.instance;
+38:     }
+39:     public async initialize(): Promise<void> {
+40:         if (this.initialized) return;
+41:         console.log("CoreEngine: Starting initialization...");
+42:         this.fs = new FileSystem();
+43:         this.telemetry = new ConsoleTelemetryAdapter();
+44:         this.networkMap = new NetworkMap();
+45:         this.bus = new SimulationBus(this.telemetry);
+46:         this.tutorMessaging = new TutorMessagingService();
+47:         console.log("CoreEngine: Infrastructure ready.");
+48:         const fsService = new FileSystemService(this.fs);
+49:         this.economyService = DependencyContainer.createEconomyService(this.fs, this.bus);
+50:         this.masteryTracker = DependencyContainer.createMasteryTracker(this.fs);
+51:         this.tutorBrain = DependencyContainer.createTutorBrain(this.fs, this.bus);
+52:         console.log("CoreEngine: Service instances created.");
+53:         this.tutorBrain.setPersona(DependencyContainer.createPersona('standard', 'TUTOR'));
+54:         console.log("CoreEngine: Persona set.");
+55:         this.gameManager = DependencyContainer.createGameManager(this.fs, this.networkMap, this.telemetry, this.bus);
+56:         console.log("CoreEngine: GameManager ready.");
+57:         this.commandExecutor = new GameCommandExecutor(fsService, this.gameManager, this.networkMap, this.telemetry);
+58:         this.tutorShadow = DependencyContainer.createTutorShadow(
+59:             this.gameManager.tutorEngine,
+60:             this.economyService,
+61:             this.bus,
+62:             this.gameManager.getPresentationDirector()
+63:         );
+64:         this.simulationMediator = new SimulationMediator(
+65:             this.bus,
+66:             this.gameManager.getPresentationDirector(),
+67:             this.commandExecutor
+68:         );
+69:         this.commandCoordinator = new CommandCoordinator(this.commandExecutor, this.gameManager.getPresentationDirector());
+70:         console.log("CoreEngine: Controllers ready.");
+71:         console.log("CoreEngine: Initialization complete.");
+72:         this.initialized = true;
+73:     }
+74:     public isInitialized(): boolean {
+75:         return this.initialized;
+76:     }
+77:     public getFileSystem(): FileSystem { return this.fs; }
+78:     public getTelemetry(): ConsoleTelemetryAdapter { return this.telemetry; }
+79:     public getNetworkMap(): NetworkMap { return this.networkMap; }
+80:     public getSimulationBus(): SimulationBus { return this.bus; }
+81:     public getTutorMessaging(): TutorMessagingService { return this.tutorMessaging; }
+82:     public getEconomyService(): EconomyService { return this.economyService; }
+83:     public getMasteryTracker(): MasteryTracker { return this.masteryTracker; }
+84:     public getTutorBrain(): TutorBrain { return this.tutorBrain; }
+85:     public getGameManager(): GameManager { return this.gameManager; }
+86:     public getCommandExecutor(): GameCommandExecutor { return this.commandExecutor; }
+87:     public getTutorShadow(): TutorShadow { return this.tutorShadow; }
+88:     public getCommandCoordinator(): CommandCoordinator { return this.commandCoordinator; }
+89:     public getSimulationMediator(): SimulationMediator { return this.simulationMediator; }
+90:     public shutdown() {
+91:         if (this.tutorBrain) {
+92:             this.tutorBrain.dispose();
+93:         }
+94:         this.initialized = false;
+95:     }
+96: }
+</file>
+
 <file path="src/domain/data/tutor/DialogueLibrary.json">
  1: {
  2:   "fragments": {
@@ -31387,6 +31139,286 @@ This section contains the contents of the repository's files.
 104: }
 </file>
 
+<file path="src/frameworks-drivers/ui/components/vim/VimEditor.tsx">
+  1: import React, { useEffect, useMemo } from 'react';
+  2: import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+  3: import { useInput } from '../../context/InputContext';
+  4: import { THEME } from '../../Theme';
+  5: import { useFileSystem } from '../../context/FileSystemProvider';
+  6: import { useProcess } from '../../context/ProcessProvider';
+  7: import { useSystemState } from '../../context/SystemStateProvider';
+  8: import { useTutorPersona } from '../../context/TutorPersonaProvider';
+  9: import { VirtualKeyboard } from '../VirtualKeyboard';
+ 10: import { useTheme, useThemeComponents } from '../../context/ThemeContext';
+ 11: import { FileSystemService } from '../../../../domain/services/FileSystemService';
+ 12: import { useHeadlessVim } from '../../../../interface-adapters/viewmodels/useHeadlessVim';
+ 13: interface VimEditorProps {
+ 14:     filename: string;
+ 15:     onExit: () => void;
+ 16: }
+ 17: export const useVimEditor = (
+ 18:     filename: string,
+ 19:     onExit: () => void,
+ 20:     fsService: FileSystemService,
+ 21:     tutorEngine: any,
+ 22:     tutorShadow: any,
+ 23:     isInputLocked: boolean
+ 24: ) => {
+ 25:     const { theme, settings } = useTheme();
+ 26:     const components = useThemeComponents();
+ 27:     const { TextRenderer, Cursor } = components;
+ 28:     const colors = theme.colors;
+ 29:     const headless = useHeadlessVim(filename, fsService, tutorEngine, tutorShadow, onExit);
+ 30:     const [isMounting, setIsMounting] = React.useState(true);
+ 31:     const { setOnInput, setOnKeyPress, refocus } = useInput();
+ 32:     React.useEffect(() => {
+ 33:         setOnInput((text) => {
+ 34:             if (isInputLocked) return;
+ 35:             for (const char of text) {
+ 36:                 if (char === '\n') headless.handleVirtualKey('ENTER');
+ 37:                 else headless.handleVirtualKey(char);
+ 38:             }
+ 39:         });
+ 40:         setOnKeyPress((key) => {
+ 41:             if (isInputLocked) return;
+ 42:             headless.handleVirtualKey(key);
+ 43:         });
+ 44:     }, [headless.handleVirtualKey, setOnInput, setOnKeyPress]);
+ 45:     useEffect(() => {
+ 46:         setIsMounting(true);
+ 47:         const timer = setTimeout(() => setIsMounting(false), 150);
+ 48:         return () => clearTimeout(timer);
+ 49:     }, [filename]);
+ 50:     useEffect(() => {
+ 51:         refocus();
+ 52:         const interval = setInterval(refocus, 2000);
+ 53:         return () => clearInterval(interval);
+ 54:     }, [refocus]);
+ 55:     const dynamicStyles = StyleSheet.create({
+ 56:         editorContainer: {
+ 57:             flex: 1,
+ 58:             backgroundColor: colors.surface,
+ 59:         },
+ 60:         contentArea: {
+ 61:             flex: 1,
+ 62:             padding: THEME.spacing.sm,
+ 63:         },
+ 64:         scrollContent: {
+ 65:             paddingBottom: THEME.spacing.xl,
+ 66:         },
+ 67:         lineWrapper: {
+ 68:             flexDirection: 'row',
+ 69:             paddingHorizontal: THEME.spacing.xs,
+ 70:         },
+ 71:         lineText: {
+ 72:             fontSize: THEME.typography.fontSize.md,
+ 73:             lineHeight: 24,
+ 74:         },
+ 75:         errorLine: {
+ 76:             backgroundColor: 'rgba(255, 0, 0, 0.15)',
+ 77:             borderLeftWidth: 3,
+ 78:             borderLeftColor: colors.error,
+ 79:         },
+ 80:         cursorBlock: {
+ 81:             backgroundColor: colors.primary,
+ 82:             display: 'flex',
+ 83:         },
+ 84:         footer: {
+ 85:             justifyContent: 'center',
+ 86:             padding: THEME.spacing.sm,
+ 87:         },
+ 88:         statusBar: {
+ 89:             backgroundColor: colors.background,
+ 90:             paddingVertical: THEME.spacing.sm,
+ 91:             paddingHorizontal: THEME.spacing.md,
+ 92:             borderTopWidth: 1,
+ 93:             borderTopColor: colors.primary,
+ 94:             flexDirection: 'row',
+ 95:             justifyContent: 'space-between',
+ 96:         },
+ 97:         statusText: {
+ 98:             fontWeight: 'bold',
+ 99:         },
+100:         errorStatusText: {
+101:             color: colors.error,
+102:         },
+103:         commandRow: {
+104:             flexDirection: 'row',
+105:             alignItems: 'center',
+106:             backgroundColor: colors.background,
+107:             paddingHorizontal: THEME.spacing.sm,
+108:             height: 40,
+109:         },
+110:         commandText: {
+111:             fontSize: THEME.typography.fontSize.md,
+112:         },
+113:         commandCursor: {
+114:             width: 10,
+115:             height: 20,
+116:             backgroundColor: colors.primary,
+117:             marginLeft: 2,
+118:         },
+119:         buttonRow: {
+120:             flexDirection: 'row',
+121:             gap: 8,
+122:             justifyContent: 'center',
+123:             flexWrap: 'wrap',
+124:         },
+125:         hintButton: {
+126:             borderWidth: 1,
+127:             borderColor: colors.border,
+128:             paddingHorizontal: 8,
+129:             paddingVertical: 4,
+130:             backgroundColor: 'rgba(0, 255, 65, 0.05)',
+131:             alignItems: 'center',
+132:             justifyContent: 'center',
+133:             minWidth: 40,
+134:         },
+135:         hintText: {
+136:             fontSize: THEME.typography.fontSize.sm,
+137:             textAlign: 'center',
+138:         },
+139:         crtBlinkOverlay: {
+140:             ...StyleSheet.absoluteFillObject,
+141:             backgroundColor: colors.background,
+142:             zIndex: 999,
+143:         },
+144:         tutorOverlay: {
+145:             position: 'absolute',
+146:             top: 0,
+147:             left: 0,
+148:             right: 0,
+149:             backgroundColor: 'rgba(0,0,0,0.8)',
+150:             padding: 10,
+151:             zIndex: 100,
+152:             borderBottomWidth: 1,
+153:             borderColor: colors.primary
+154:         }
+155:     });
+156:     const getTokenColor = (type: string) => {
+157:         switch (type) {
+158:             case 'keyword': return colors.secondary;
+159:             case 'string': return '#CE9178';
+160:             case 'comment': return colors.text.dim;
+161:             case 'number': return '#B5CEA8';
+162:             case 'operator': return '#D4D4D4';
+163:             default: return colors.text.primary;
+164:         }
+165:     };
+166:     const state = headless;
+167:     const commandInput = headless.commandInput;
+168:     const tutorState = headless.tutor;
+169:     const highlighter = headless.highlighter;
+170:     const renderLine = (lineContent: string, lineIdx: number) => {
+171:         const isCurrentLine = lineIdx === state.cursor.line;
+172:         const lineError = state.lintErrors.find(e => e.line === lineIdx + 1);
+173:         const tokens = highlighter.highlight(lineContent);
+174:         let cursorRendered = false;
+175:         return (
+176:             <View key={lineIdx} style={[dynamicStyles.lineWrapper, lineError && dynamicStyles.errorLine]}>
+177:                 <View style={{ flexDirection: 'row' }}>
+178:                     {tokens.map((token, tokenIdx) => {
+179:                         const tokenColor = getTokenColor(token.type);
+180:                         if (isCurrentLine && !cursorRendered) {
+181:                             let offsetBefore = tokens.slice(0, tokenIdx).reduce((acc, t) => acc + t.text.length, 0);
+182:                             const cursorInToken = state.cursor.col >= offsetBefore && state.cursor.col < offsetBefore + token.text.length;
+183:                             if (cursorInToken) {
+184:                                 cursorRendered = true;
+185:                                 const cursorRelPos = state.cursor.col - offsetBefore;
+186:                                 const head = token.text.slice(0, cursorRelPos);
+187:                                 const char = token.text[cursorRelPos];
+188:                                 const tail = token.text.slice(cursorRelPos + 1);
+189:                                 return (
+190:                                     <React.Fragment key={tokenIdx}>
+191:                                         <TextRenderer content={head} style={{ color: tokenColor }} />
+192:                                         {state.mode === 'INSERT' && (
+193:                                             <Cursor active={true} color={colors.primary} type="line" />
+194:                                         )}
+195:                                         <TextRenderer
+196:                                             content={char}
+197:                                             style={state.mode === 'NORMAL' ? { backgroundColor: colors.primary, color: colors.background } : { color: tokenColor }}
+198:                                         />
+199:                                         <TextRenderer content={tail} style={{ color: tokenColor }} />
+200:                                     </React.Fragment>
+201:                                 );
+202:                             }
+203:                         }
+204:                         return <TextRenderer key={tokenIdx} content={token.text} style={{ color: tokenColor }} />;
+205:                     })}
+206:                     {isCurrentLine && !cursorRendered && (
+207:                         <Cursor
+208:                             active={true}
+209:                             color={colors.primary}
+210:                             type={state.mode === 'INSERT' ? 'line' : 'block'}
+211:                         />
+212:                     )}
+213:                 </View>
+214:             </View>
+215:         );
+216:     };
+217:     const topContent = (
+218:         <View style={dynamicStyles.editorContainer}>
+219:             {tutorState.active && (
+220:                 <View style={dynamicStyles.tutorOverlay}>
+221:                     <TextRenderer style={{ fontWeight: 'bold' }} content="TUTOR PROTOCOL ACTIVE" />
+222:                     <View style={{ flexDirection: 'row' }}>
+223:                         <TextRenderer content="TARGET: " />
+224:                         <TextRenderer type="secondary" content={tutorState.completed} />
+225:                         <TextRenderer type="dim" content={tutorState.text} />
+226:                     </View>
+227:                 </View>
+228:             )}
+229:             {isMounting && <View style={dynamicStyles.crtBlinkOverlay} />}
+230:             <ScrollView
+231:                 style={dynamicStyles.contentArea}
+232:                 contentContainerStyle={dynamicStyles.scrollContent}
+233:                 keyboardShouldPersistTaps="always"
+234:                 ref={(ref: ScrollView | null) => {
+235:                     if (ref) {
+236:                         const lineHeight = 24;
+237:                         ref.scrollTo({ y: state.cursor.line * lineHeight - 100, animated: true });
+238:                     }
+239:                 }}
+240:             >
+241:                 <Pressable style={{ flex: 1 }} onPress={() => { refocus(); }}>
+242:                     {state.lines.map((line, idx) => renderLine(line, idx))}
+243:                 </Pressable>
+244:             </ScrollView>
+245:             <View style={dynamicStyles.statusBar}>
+246:                 <TextRenderer
+247:                     style={[dynamicStyles.statusText, !!state.lintErrors.find(e => e.line === state.cursor.line + 1) && dynamicStyles.errorStatusText]}
+248:                     content={state.lintErrors.find(e => e.line === state.cursor.line + 1)?.message || (state.statusMessage || (state.mode === 'NORMAL' ? '-- NORMAL --' : `-- ${state.mode} --`))}
+249:                 />
+250:                 <TextRenderer
+251:                     style={dynamicStyles.statusText}
+252:                     content={`${highlighter.language.toUpperCase()} | Ln ${state.cursor.line + 1}, Col ${state.cursor.col + 1}`}
+253:                 />
+254:             </View>
+255:         </View>
+256:     );
+257:     const middleContent = <VirtualKeyboard onKeyPress={headless.handleVirtualKey} />;
+258:     const bottomContent = (
+259:         <View style={dynamicStyles.footer}>
+260:             {state.mode === 'COMMAND' ? (
+261:                 <View style={dynamicStyles.commandRow}>
+262:                     <TextRenderer style={dynamicStyles.commandText} content={commandInput} />
+263:                     <Cursor active={true} color={colors.primary} />
+264:                 </View>
+265:             ) : (
+266:                 <View style={dynamicStyles.buttonRow}>
+267:                     {['i', ':', 'ESC', 'h', 'j', 'k', 'l'].map(k => (
+268:                         <Pressable key={k} style={dynamicStyles.hintButton} onPress={() => headless.handleVirtualKey(k)}>
+269:                             <TextRenderer style={dynamicStyles.hintText} content={`[${k.toUpperCase()}]`} />
+270:                         </Pressable>
+271:                     ))}
+272:                 </View>
+273:             )}
+274:         </View>
+275:     );
+276:     return { topContent, middleContent, bottomContent };
+277: };
+</file>
+
 <file path="src/frameworks-drivers/ui/components/MainframeOverlay.tsx">
   1: import React, { useEffect, useState, useRef } from 'react';
   2: import { View, Text, StyleSheet, Animated, Platform } from 'react-native';
@@ -31574,6 +31606,44 @@ This section contains the contents of the repository's files.
 184:         </Animated.View>
 185:     );
 186: };
+</file>
+
+<file path="src/frameworks-drivers/ui/context/ProcessProvider.tsx">
+ 1: import React, { createContext, useContext, ReactNode } from 'react';
+ 2: import { GameManager } from '../../../interface-adapters/GameManager';
+ 3: import { GameCommandExecutor } from '../../../interface-adapters/GameCommandExecutor';
+ 4: import { SimulationBus } from '../../../domain/services/SimulationBus';
+ 5: import { ConsoleTelemetryAdapter } from '../../../infrastructure/telemetry/ConsoleTelemetryAdapter';
+ 6: import { CoreEngine } from '../../../core/CoreEngine';
+ 7: import { CommandCoordinator } from '../../../interface-adapters/controllers/CommandCoordinator';
+ 8: interface ProcessContextType {
+ 9:     gameManager: GameManager;
+10:     commandExecutor: GameCommandExecutor;
+11:     commandCoordinator: CommandCoordinator;
+12:     bus: SimulationBus;
+13:     telemetry: ConsoleTelemetryAdapter;
+14: }
+15: const ProcessContext = createContext<ProcessContextType | undefined>(undefined);
+16: export const ProcessProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+17:     const engine = CoreEngine.getInstance();
+18:     const gameManager = engine.getGameManager();
+19:     const commandExecutor = engine.getCommandExecutor();
+20:     const commandCoordinator = engine.getCommandCoordinator();
+21:     const bus = engine.getSimulationBus();
+22:     const telemetry = engine.getTelemetry();
+23:     return (
+24:         <ProcessContext.Provider value={{ gameManager, commandExecutor, commandCoordinator, bus, telemetry }}>
+25:             {children}
+26:         </ProcessContext.Provider>
+27:     );
+28: };
+29: export const useProcess = () => {
+30:     const context = useContext(ProcessContext);
+31:     if (!context) {
+32:         throw new Error('useProcess must be used within a ProcessProvider');
+33:     }
+34:     return context;
+35: };
 </file>
 
 <file path="src/frameworks-drivers/ui/screens/ShellScreen.tsx">

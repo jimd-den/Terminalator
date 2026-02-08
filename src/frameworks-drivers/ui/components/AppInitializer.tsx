@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { useTutorMessaging } from '../context/TutorMessagingProvider';
+import { useInput } from '../context/InputContext';
 import { TutorPersonalityService } from '../../../domain/services/tutor/TutorPersonalityService';
 
 /**
@@ -9,9 +10,13 @@ import { TutorPersonalityService } from '../../../domain/services/tutor/TutorPer
  */
 export const AppInitializer = () => {
     const { sendTutorMessage } = useTutorMessaging();
+    const { setInputLocked } = useInput();
     const personality = useMemo(() => new TutorPersonalityService(), []);
 
     useEffect(() => {
+        // Ensure input is unlocked on boot
+        setInputLocked(false);
+
         // Send initial welcome message on boot
         sendTutorMessage(
             personality.getLine('GREETING'),
