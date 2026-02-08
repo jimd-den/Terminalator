@@ -15,13 +15,13 @@
 ## Phase 2: Command Coordinator (The Brain)
 *Goal: Centralize command execution flow to support theatrical triggers.*
 
-- [ ] Task: Create `CommandCoordinator`
-    - [ ] Implement `src/interface-adapters/controllers/CommandCoordinator.ts`.
-    - [ ] Inject `ExecuteCommand` (Domain) and `PresentationDirector` (Service).
-    - [ ] Implement `execute(input: string)` method that parses input, triggers presentation, and then executes domain command.
-- [ ] Task: Integrate Coordinator into `TerminalViewModel`
-    - [ ] Replace direct `commandExecutor.execute()` calls with `CommandCoordinator.execute()`.
-- [ ] Task: Conductor - User Manual Verification 'Command Coordinator' (Protocol in workflow.md)
+- [x] Task: Create `CommandCoordinator`
+    - [x] Implement `src/interface-adapters/controllers/CommandCoordinator.ts`.
+    - [x] Inject `ExecuteCommand` (Domain) and `PresentationDirector` (Service).
+    - [x] Implement `execute(input: string)` method that parses input, triggers presentation, and then executes domain command.
+- [x] Task: Integrate Coordinator into `TerminalViewModel`
+    - [x] Replace direct `commandExecutor.execute()` calls with `CommandCoordinator.execute()`.
+- [x] Task: Conductor - User Manual Verification 'Command Coordinator' (Protocol in workflow.md)
 
 ## Phase 3: Theatrical Canvas Plugin (The Show)
 *Goal: Move animation logic into a standalone, scrappable component.*
