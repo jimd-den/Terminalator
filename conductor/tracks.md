@@ -12,13 +12,13 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [ ] **Track: Generative Narrative** (ACTIVE)
 - [ ] **Track: Generative Mission Arch** (ACTIVE)
 - [ ] **Track: Dispositional Tutor** (ACTIVE)
-- [x] **Track: Explode GameContext (Humble Delivery Refactor)** (NEW)
 
 ---
 
 *Link (Archived): [./archive/arch_cleanup_20260206/](./archive/arch_cleanup_20260206/)*
 *Link (Archived): [./archive/glass_box_refactor_20260206/](./archive/glass_box_refactor_20260206/)*
 *Link (Archived): [./archive/architectural_robustness_20260206/](./archive/architectural_robustness_20260206/)*
+*Link (Archived): [./archive/explode_game_context_20260207/](./archive/explode_game_context_20260207/)*
 
 *Link (Active): [./tracks/semantic_unix_model_20260206/](./tracks/semantic_unix_model_20260206/)*
 *Link (Active): [./tracks/generative_narrative_20260206/](./tracks/generative_narrative_20260206/)*
