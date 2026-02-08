@@ -107,6 +107,39 @@ export class SimulationBus {
     }
 
     /**
+     * Subscribes a callback to a specific event type for a single execution.
+     *
+     * @param type - The event type to listen for.
+     * @param callback - The function to execute when the event occurs.
+     */
+    public once(type: GameEventType, callback: GameEventCallback): void {
+        const unsubscribe = this.subscribe(type, (event) => {
+            unsubscribe();
+            callback(event);
+        });
+    }
+
+    /**
+     * Waits for a specific event to occur.
+     *
+     * @param type - The event type to wait for.
+     * @param timeoutMs - Optional timeout in milliseconds.
+     * @returns A promise that resolves with the event payload.
+     */
+    public waitFor(type: GameEventType, timeoutMs: number = 5000): Promise<GameEvent> {
+        return new Promise((resolve, reject) => {
+            const timer = setTimeout(() => {
+                reject(new Error(`Timeout waiting for event: ${type}`));
+            }, timeoutMs);
+
+            this.once(type, (event) => {
+                clearTimeout(timer);
+                resolve(event);
+            });
+        });
+    }
+
+    /**
      * Emits a GameEvent to all relevant subscribers.
      *
      * @param type - The type of event to emit.

@@ -12,6 +12,7 @@ import { TutorBrain } from '../domain/entities/tutor/TutorBrain';
 import { MasteryTracker } from '../domain/services/tutor/MasteryTracker';
 import { SimulationBus } from '../domain/services/SimulationBus';
 import { CommandCoordinator } from '../interface-adapters/controllers/CommandCoordinator';
+import { SimulationMediator } from './presentation/SimulationMediator';
 
 /**
  * CoreEngine - Domain/Service Layer
@@ -39,6 +40,7 @@ export class CoreEngine {
     private commandExecutor!: GameCommandExecutor;
     private tutorShadow!: TutorShadow;
     private commandCoordinator!: CommandCoordinator;
+    private simulationMediator!: SimulationMediator;
 
     private constructor() {}
 
@@ -83,7 +85,17 @@ export class CoreEngine {
             this.gameManager.getPresentationDirector()
         );
 
-        // 3. Controllers
+        // 3. Controllers & Mediators
+        this.simulationMediator = new SimulationMediator(
+            this.bus,
+            this.gameManager.getPresentationDirector(),
+            this.commandExecutor
+        );
+        
+        // CommandCoordinator now delegates to the Mediator? 
+        // Or ViewModel delegates to Mediator?
+        // For now, let's keep CommandCoordinator as the controller that might use Mediator later,
+        // or effectively redundant.
         this.commandCoordinator = new CommandCoordinator(this.commandExecutor, this.gameManager.getPresentationDirector());
         console.log("CoreEngine: Controllers ready.");
 
@@ -108,6 +120,7 @@ export class CoreEngine {
     public getCommandExecutor(): GameCommandExecutor { return this.commandExecutor; }
     public getTutorShadow(): TutorShadow { return this.tutorShadow; }
     public getCommandCoordinator(): CommandCoordinator { return this.commandCoordinator; }
+    public getSimulationMediator(): SimulationMediator { return this.simulationMediator; }
 
     public shutdown() {
         if (this.tutorBrain) {
