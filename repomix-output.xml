@@ -749,17 +749,6 @@ This section contains the contents of the repository's files.
 8: }
 </file>
 
-<file path="conductor/tracks/formalize_cns_humble_screens_20260208/metadata.json">
-1: {
-2:   "track_id": "formalize_cns_humble_screens_20260208",
-3:   "type": "refactor",
-4:   "status": "new",
-5:   "created_at": "2026-02-08T01:00:00Z",
-6:   "updated_at": "2026-02-08T01:00:00Z",
-7:   "description": "Formalize Central Nervous System (Mediator) and refactor primary screens into Humble Views."
-8: }
-</file>
-
 <file path="conductor/setup_state.json">
 1: {"last_successful_step": "3.3_initial_track_generated"}
 </file>
@@ -8832,6 +8821,31 @@ This section contains the contents of the repository's files.
 21: }
 </file>
 
+<file path="src/domain/entities/vim/commands/DeleteRangeCommand.ts">
+ 1: import { IVimCommand } from '../IVimCommand';
+ 2: import { IVimBuffer } from '../IVimBuffer';
+ 3: export class DeleteRangeCommand implements IVimCommand {
+ 4:     private deletedText: string = '';
+ 5:     constructor(
+ 6:         private buffer: IVimBuffer,
+ 7:         private line: number,
+ 8:         private startCol: number,
+ 9:         private endCol: number
+10:     ) {}
+11:     execute(): void {
+12:         const lineContent = this.buffer.getLine(this.line);
+13:         this.deletedText = lineContent.slice(this.startCol, this.endCol + 1);
+14:         const newContent = lineContent.slice(0, this.startCol) + lineContent.slice(this.endCol + 1);
+15:         this.buffer.updateLine(this.line, newContent);
+16:     }
+17:     undo(): void {
+18:         const lineContent = this.buffer.getLine(this.line);
+19:         const newContent = lineContent.slice(0, this.startCol) + this.deletedText + lineContent.slice(this.startCol);
+20:         this.buffer.updateLine(this.line, newContent);
+21:     }
+22: }
+</file>
+
 <file path="src/domain/entities/vim/commands/InsertCharCommand.ts">
  1: import { IVimCommand } from '../IVimCommand';
  2: import { IVimBuffer } from '../IVimBuffer';
@@ -14720,6 +14734,72 @@ This section contains the contents of the repository's files.
 12: }
 </file>
 
+<file path="src/domain/usecases/vim/MotionStrategy.ts">
+ 1: import { IVimBuffer } from '../../entities/vim/IVimBuffer';
+ 2: export class MotionStrategy {
+ 3:     public static findNextWordStart(buffer: IVimBuffer, lineIdx: number, colIdx: number): { line: number, col: number } {
+ 4:         const line = buffer.getLine(lineIdx);
+ 5:         let current = colIdx;
+ 6:         while (current < line.length && !this.isWhitespace(line[current])) {
+ 7:             current++;
+ 8:         }
+ 9:         while (current < line.length && this.isWhitespace(line[current])) {
+10:             current++;
+11:         }
+12:         if (current >= line.length && line.length > 0) {
+13:             current = line.length - 1;
+14:         }
+15:         return { line: lineIdx, col: current };
+16:     }
+17:     public static findEndOfLine(buffer: IVimBuffer, lineIdx: number): { line: number, col: number } {
+18:         const line = buffer.getLine(lineIdx);
+19:         const col = Math.max(0, line.length - 1);
+20:         return { line: lineIdx, col };
+21:     }
+22:     private static isWhitespace(char: string): boolean {
+23:         return /\s/.test(char);
+24:     }
+25: }
+</file>
+
+<file path="src/domain/usecases/vim/VimCommandManager.ts">
+ 1: import { IVimBuffer } from '../../entities/vim/IVimBuffer';
+ 2: import { IVimCommand } from '../../entities/vim/IVimCommand';
+ 3: import { CommandHistory } from './CommandHistory';
+ 4: import { InsertCharCommand } from '../../entities/vim/commands/InsertCharCommand';
+ 5: import { DeleteCharCommand } from '../../entities/vim/commands/DeleteCharCommand';
+ 6: import { DeleteRangeCommand } from '../../entities/vim/commands/DeleteRangeCommand';
+ 7: export class VimCommandManager {
+ 8:     private history: CommandHistory = new CommandHistory();
+ 9:     constructor(private buffer: IVimBuffer) {}
+10:     public insertChar(char: string, line: number, col: number): void {
+11:         const cmd = new InsertCharCommand(this.buffer, char, line, col);
+12:         this.execute(cmd);
+13:     }
+14:     public deleteChar(line: number, col: number): void {
+15:         const cmd = new DeleteCharCommand(this.buffer, line, col);
+16:         this.execute(cmd);
+17:     }
+18:     public deleteRange(line: number, startCol: number, endCol: number): void {
+19:         const cmd = new DeleteRangeCommand(this.buffer, line, startCol, endCol);
+20:         this.execute(cmd);
+21:     }
+22:     public undo(): void {
+23:         this.history.undo();
+24:     }
+25:     public redo(): void {
+26:         this.history.redo();
+27:     }
+28:     private execute(command: IVimCommand): void {
+29:         command.execute();
+30:         this.history.push(command);
+31:     }
+32:     public clearHistory(): void {
+33:         this.history.clear();
+34:     }
+35: }
+</file>
+
 <file path="src/domain/usecases/MailSystem.ts">
  1: import { NPC } from '../entities/NPC';
  2: import { FileSystem, S_IFREG, Dentry } from '../entities/FileSystem';
@@ -18709,6 +18789,17 @@ This section contains the contents of the repository's files.
 7: }
 </file>
 
+<file path="conductor/tracks/formalize_cns_humble_screens_20260208/metadata.json">
+1: {
+2:   "track_id": "formalize_cns_humble_screens_20260208",
+3:   "type": "refactor",
+4:   "status": "new",
+5:   "created_at": "2026-02-08T01:00:00Z",
+6:   "updated_at": "2026-02-08T01:00:00Z",
+7:   "description": "Formalize Central Nervous System (Mediator) and refactor primary screens into Humble Views."
+8: }
+</file>
+
 <file path="conductor/tracks/generative_mission_arch_20260206/metadata.json">
 1: {
 2:   "track_id": "generative_mission_arch_20260206",
@@ -18737,36 +18828,6 @@ This section contains the contents of the repository's files.
 5:   "status": "active",
 6:   "created_at": "2026-02-06"
 7: }
-</file>
-
-<file path="src/core/presentation/SimulationMediator.ts">
- 1: import { SimulationBus, GameEventType } from '../../domain/services/SimulationBus';
- 2: import { PresentationDirector } from '../../domain/services/PresentationDirector';
- 3: import { IShellExecutor } from '../../domain/interfaces/IShellExecutor';
- 4: import { CommandResponse } from '../../domain/entities/Command';
- 5: import { TerminalState } from '../../domain/entities/TerminalState';
- 6: export class SimulationMediator {
- 7:     constructor(
- 8:         private bus: SimulationBus,
- 9:         private director: PresentationDirector,
-10:         private executor: IShellExecutor
-11:     ) {}
-12:     public async executeWithTheatre(input: string, state: TerminalState): Promise<CommandResponse> {
-13:         if (!input.trim()) {
-14:             return { output: '', exitCode: 0, newState: state, command: input };
-15:         }
-16:         // 1. Lock Input (Signal Start)
-17:         // We use a custom event or reuse PRESENTATION_START context
-18:         // But the plan says: "Emit THEATRE_ACTIVE"
-19:         // Let's assume THEATRE_ACTIVE is mapped to PRESENTATION_START in the listener for now,
-20:         const parts = input.trim().split(/\s+/);
-21:         const verb = parts[0];
-22:         const args = parts.slice(1);
-23:         await this.director.presentCommand(verb, args);
-24:         const response = await this.executor.execute(input, state);
-25:         return response;
-26:     }
-27: }
 </file>
 
 <file path="src/domain/commands/core/AwkCommand.ts">
@@ -22523,31 +22584,6 @@ This section contains the contents of the repository's files.
 7: }
 </file>
 
-<file path="src/domain/entities/vim/commands/DeleteRangeCommand.ts">
- 1: import { IVimCommand } from '../IVimCommand';
- 2: import { IVimBuffer } from '../IVimBuffer';
- 3: export class DeleteRangeCommand implements IVimCommand {
- 4:     private deletedText: string = '';
- 5:     constructor(
- 6:         private buffer: IVimBuffer,
- 7:         private line: number,
- 8:         private startCol: number,
- 9:         private endCol: number
-10:     ) {}
-11:     execute(): void {
-12:         const lineContent = this.buffer.getLine(this.line);
-13:         this.deletedText = lineContent.slice(this.startCol, this.endCol + 1);
-14:         const newContent = lineContent.slice(0, this.startCol) + lineContent.slice(this.endCol + 1);
-15:         this.buffer.updateLine(this.line, newContent);
-16:     }
-17:     undo(): void {
-18:         const lineContent = this.buffer.getLine(this.line);
-19:         const newContent = lineContent.slice(0, this.startCol) + this.deletedText + lineContent.slice(this.startCol);
-20:         this.buffer.updateLine(this.line, newContent);
-21:     }
-22: }
-</file>
-
 <file path="src/domain/entities/world/SystemPreparationSpec.ts">
  1: export interface FileSpec {
  2:     path: string;
@@ -25733,54 +25769,6 @@ This section contains the contents of the repository's files.
 13: }
 </file>
 
-<file path="src/domain/services/PresentationDirector.ts">
- 1: import { SimulationBus, GameEventType } from './SimulationBus';
- 2: export enum TheatricalVerb {
- 3:     SYNTHESIZE = "SYNTHESIZING BINARY",
- 4:     SCAN = "SCANNING DATA SECTORS",
- 5:     PURGE = "PURGING ARTIFACTS",
- 6:     EXTRACT = "EXTRACTING DATA STREAM",
- 7:     UPLINK = "ESTABLISHING SECURE UPLINK",
- 8:     HANDSHAKE = "SYNCHRONIZING DATA HANDSHAKE",
- 9:     OVERRIDE = "OVERRIDING SYSTEM PERMISSIONS"
-10: }
-11: export class PresentationDirector {
-12:     private readonly VERB_MAP: Record<string, TheatricalVerb> = {
-13:         'gcc': TheatricalVerb.SYNTHESIZE,
-14:         'compile': TheatricalVerb.SYNTHESIZE,
-15:         'ls': TheatricalVerb.SCAN,
-16:         'rm': TheatricalVerb.PURGE,
-17:         'cat': TheatricalVerb.EXTRACT,
-18:         'grep': TheatricalVerb.EXTRACT,
-19:         'ssh': TheatricalVerb.UPLINK,
-20:         'connect': TheatricalVerb.UPLINK,
-21:         'chmod': TheatricalVerb.OVERRIDE,
-22:         'chown': TheatricalVerb.OVERRIDE
-23:     };
-24:     constructor(private bus: SimulationBus) {}
-25:     public async presentCommand(command: string, args: string[]): Promise<void> {
-26:         const verb = this.VERB_MAP[command] || TheatricalVerb.EXTRACT;
-27:         this.bus.emit(GameEventType.TUTOR_EVENT, {
-28:             type: 'PRESENTATION_START' as any,
-29:             payload: { verb, command, args }
-30:         });
-31:         const duration = 1500 + (Math.random() * 1000);
-32:         await new Promise(resolve => setTimeout(resolve, duration));
-33:         this.bus.emit(GameEventType.TUTOR_EVENT, {
-34:             type: 'PRESENTATION_END' as any,
-35:             payload: { verb, command }
-36:         });
-37:     }
-38:     public async presentPipe(source: string, target: string): Promise<void> {
-39:         this.bus.emit(GameEventType.TUTOR_EVENT, {
-40:             type: 'PIPE_VISUALIZATION' as any,
-41:             payload: { source, target, verb: TheatricalVerb.HANDSHAKE }
-42:         });
-43:         await new Promise(resolve => setTimeout(resolve, 1000));
-44:     }
-45: }
-</file>
-
 <file path="src/domain/services/ShellInterpreter.ts">
  1: import { ASTNode, NodeType } from './ShellParser';
  2: import { TerminalState } from '../entities/TerminalState';
@@ -26330,32 +26318,111 @@ This section contains the contents of the repository's files.
 115: }
 </file>
 
-<file path="src/domain/usecases/vim/MotionStrategy.ts">
- 1: import { IVimBuffer } from '../../entities/vim/IVimBuffer';
- 2: export class MotionStrategy {
- 3:     public static findNextWordStart(buffer: IVimBuffer, lineIdx: number, colIdx: number): { line: number, col: number } {
- 4:         const line = buffer.getLine(lineIdx);
- 5:         let current = colIdx;
- 6:         while (current < line.length && !this.isWhitespace(line[current])) {
- 7:             current++;
- 8:         }
- 9:         while (current < line.length && this.isWhitespace(line[current])) {
-10:             current++;
-11:         }
-12:         if (current >= line.length && line.length > 0) {
-13:             current = line.length - 1;
-14:         }
-15:         return { line: lineIdx, col: current };
-16:     }
-17:     public static findEndOfLine(buffer: IVimBuffer, lineIdx: number): { line: number, col: number } {
-18:         const line = buffer.getLine(lineIdx);
-19:         const col = Math.max(0, line.length - 1);
-20:         return { line: lineIdx, col };
-21:     }
-22:     private static isWhitespace(char: string): boolean {
-23:         return /\s/.test(char);
-24:     }
-25: }
+<file path="src/domain/usecases/vim/modes/NormalMode.ts">
+  1: import { IVimMode } from '../IVimMode';
+  2: import { IVimState } from '../../../entities/vim/IVimState';
+  3: import { IVimBuffer } from '../../../entities/vim/IVimBuffer';
+  4: import { VimCommandManager } from '../VimCommandManager';
+  5: import { MotionStrategy } from '../MotionStrategy';
+  6: export class NormalMode implements IVimMode {
+  7:     readonly name = 'NORMAL';
+  8:     handleKey(
+  9:         key: string,
+ 10:         state: IVimState,
+ 11:         buffer: IVimBuffer,
+ 12:         commands: VimCommandManager
+ 13:     ): string | null {
+ 14:         if (state.pendingAction === 'DELETE') {
+ 15:             return this.handleDeleteAction(key, state, buffer, commands);
+ 16:         }
+ 17:         if (state.pendingAction === 'G_PREFIX') {
+ 18:             if (key === 'g') {
+ 19:                 state.cursor.line = 0;
+ 20:                 state.cursor.col = 0;
+ 21:             }
+ 22:             state.pendingAction = null;
+ 23:             return null;
+ 24:         }
+ 25:         switch (key) {
+ 26:             case 'h': this.moveCursor(state, 0, -1); break;
+ 27:             case 'j': this.moveCursor(state, 1, 0); break;
+ 28:             case 'k': this.moveCursor(state, -1, 0); break;
+ 29:             case 'l': this.moveCursor(state, 0, 1); break;
+ 30:             case 'w':
+ 31:                 const nextPos = MotionStrategy.findNextWordStart(buffer, state.cursor.line, state.cursor.col);
+ 32:                 state.cursor.line = nextPos.line;
+ 33:                 state.cursor.col = nextPos.col;
+ 34:                 break;
+ 35:             case '$':
+ 36:                 const eolPos = MotionStrategy.findEndOfLine(buffer, state.cursor.line);
+ 37:                 state.cursor.col = eolPos.col;
+ 38:                 break;
+ 39:             case '0':
+ 40:             case '^':
+ 41:                 state.cursor.col = 0;
+ 42:                 break;
+ 43:             case 'G':
+ 44:                 state.cursor.line = Math.max(0, buffer.length - 1);
+ 45:                 state.cursor.col = 0;
+ 46:                 break;
+ 47:             case 'g':
+ 48:                 state.pendingAction = 'G_PREFIX';
+ 49:                 break;
+ 50:             case 'd':
+ 51:                 state.pendingAction = 'DELETE';
+ 52:                 break;
+ 53:             case 'D':
+ 54:                 const eol = MotionStrategy.findEndOfLine(buffer, state.cursor.line);
+ 55:                 commands.deleteRange(state.cursor.line, state.cursor.col, eol.col);
+ 56:                 break;
+ 57:             case 'i':
+ 58:                 return 'INSERT';
+ 59:             case 'a':
+ 60:                 this.moveCursor(state, 0, 1);
+ 61:                 return 'INSERT';
+ 62:             case ':':
+ 63:                 return 'COMMAND';
+ 64:             case 'x':
+ 65:                 commands.deleteChar(state.cursor.line, state.cursor.col);
+ 66:                 break;
+ 67:             case 'u':
+ 68:                 commands.undo();
+ 69:                 break;
+ 70:             case 'CTRL_R':
+ 71:                 commands.redo();
+ 72:                 break;
+ 73:         }
+ 74:         return null;
+ 75:     }
+ 76:     private handleDeleteAction(key: string, state: IVimState, buffer: IVimBuffer, commands: VimCommandManager): string | null {
+ 77:         state.pendingAction = null;
+ 78:         switch (key) {
+ 79:             case 'w':
+ 80:                 const nextPos = MotionStrategy.findNextWordStart(buffer, state.cursor.line, state.cursor.col);
+ 81:                 if (nextPos.col > state.cursor.col) {
+ 82:                     commands.deleteRange(state.cursor.line, state.cursor.col, nextPos.col - 1);
+ 83:                 } else {
+ 84:                     commands.deleteChar(state.cursor.line, state.cursor.col);
+ 85:                 }
+ 86:                 break;
+ 87:             case '$':
+ 88:                 const eolPos = MotionStrategy.findEndOfLine(buffer, state.cursor.line);
+ 89:                 commands.deleteRange(state.cursor.line, state.cursor.col, eolPos.col);
+ 90:                 break;
+ 91:             case 'd':
+ 92:                 const fullLine = MotionStrategy.findEndOfLine(buffer, state.cursor.line);
+ 93:                 commands.deleteRange(state.cursor.line, 0, fullLine.col);
+ 94:                 break;
+ 95:             case 'ESC':
+ 96:                 break;
+ 97:         }
+ 98:         return null;
+ 99:     }
+100:     private moveCursor(state: IVimState, dLine: number, dCol: number): void {
+101:         state.cursor.line += dLine;
+102:         state.cursor.col += dCol;
+103:     }
+104: }
 </file>
 
 <file path="src/domain/usecases/vim/ProcessVimCommand.ts">
@@ -26396,44 +26463,6 @@ This section contains the contents of the repository's files.
  8:         return `"${filename}" written`;
  9:     }
 10: }
-</file>
-
-<file path="src/domain/usecases/vim/VimCommandManager.ts">
- 1: import { IVimBuffer } from '../../entities/vim/IVimBuffer';
- 2: import { IVimCommand } from '../../entities/vim/IVimCommand';
- 3: import { CommandHistory } from './CommandHistory';
- 4: import { InsertCharCommand } from '../../entities/vim/commands/InsertCharCommand';
- 5: import { DeleteCharCommand } from '../../entities/vim/commands/DeleteCharCommand';
- 6: import { DeleteRangeCommand } from '../../entities/vim/commands/DeleteRangeCommand';
- 7: export class VimCommandManager {
- 8:     private history: CommandHistory = new CommandHistory();
- 9:     constructor(private buffer: IVimBuffer) {}
-10:     public insertChar(char: string, line: number, col: number): void {
-11:         const cmd = new InsertCharCommand(this.buffer, char, line, col);
-12:         this.execute(cmd);
-13:     }
-14:     public deleteChar(line: number, col: number): void {
-15:         const cmd = new DeleteCharCommand(this.buffer, line, col);
-16:         this.execute(cmd);
-17:     }
-18:     public deleteRange(line: number, startCol: number, endCol: number): void {
-19:         const cmd = new DeleteRangeCommand(this.buffer, line, startCol, endCol);
-20:         this.execute(cmd);
-21:     }
-22:     public undo(): void {
-23:         this.history.undo();
-24:     }
-25:     public redo(): void {
-26:         this.history.redo();
-27:     }
-28:     private execute(command: IVimCommand): void {
-29:         command.execute();
-30:         this.history.push(command);
-31:     }
-32:     public clearHistory(): void {
-33:         this.history.clear();
-34:     }
-35: }
 </file>
 
 <file path="src/domain/usecases/vim/VimInputHandler.ts">
@@ -26794,75 +26823,6 @@ This section contains the contents of the repository's files.
 198:         return executeLogic();
 199:     }
 200: }
-</file>
-
-<file path="src/frameworks-drivers/ui/components/theatrical/TheatricalCanvas.tsx">
- 1: import React, { useEffect, useState, useRef } from 'react';
- 2: import { View, StyleSheet, Animated, Platform } from 'react-native';
- 3: import { useProcess } from '../../context/ProcessProvider';
- 4: import { GameEventType } from '../../../../domain/services/SimulationBus';
- 5: export const TheatricalCanvas: React.FC = () => {
- 6:     const { bus } = useProcess();
- 7:     const [isCriticalError, setIsCriticalError] = useState(false);
- 8:     const shakeAnim = useRef(new Animated.Value(0)).current;
- 9:     const useNativeDriver = Platform.OS !== 'web';
-10:     useEffect(() => {
-11:         const unsubTutor = bus.subscribe(GameEventType.TUTOR_EVENT, (event) => {
-12:             const tutorEvent = event.payload;
-13:             const { type, payload } = tutorEvent;
-14:             const typeStr = type as string;
-15:             if (typeStr === 'MISTAKE' && payload.type === 'SHADOW_BLOCK') {
-16:                 setIsCriticalError(true);
-17:                 Animated.sequence([
-18:                     Animated.timing(shakeAnim, { toValue: 20, duration: 50, useNativeDriver }),
-19:                     Animated.timing(shakeAnim, { toValue: -20, duration: 50, useNativeDriver }),
-20:                     Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver })
-21:                 ]).start(() => {
-22:                     setTimeout(() => setIsCriticalError(false), 500);
-23:                 });
-24:             }
-25:         });
-26:         return () => {
-27:             unsubTutor();
-28:         };
-29:     }, [bus, shakeAnim, useNativeDriver]);
-30:     return (
-31:         <Animated.View
-32:             pointerEvents="none"
-33:             style={[
-34:                 styles.overlay,
-35:                 {
-36:                     backgroundColor: isCriticalError ? 'rgba(255,0,0,0.3)' : 'transparent',
-37:                     transform: [{ translateX: shakeAnim }]
-38:                 }
-39:             ]}
-40:         />
-41:     );
-42: };
-43: const styles = StyleSheet.create({
-44:     overlay: {
-45:         ...StyleSheet.absoluteFillObject,
-46:         zIndex: 999,
-47:     }
-48: });
-</file>
-
-<file path="src/frameworks-drivers/ui/components/AppInitializer.tsx">
- 1: import React, { useEffect, useMemo } from 'react';
- 2: import { useTutorMessaging } from '../context/TutorMessagingProvider';
- 3: import { TutorPersonalityService } from '../../../domain/services/tutor/TutorPersonalityService';
- 4: export const AppInitializer = () => {
- 5:     const { sendTutorMessage } = useTutorMessaging();
- 6:     const personality = useMemo(() => new TutorPersonalityService(), []);
- 7:     useEffect(() => {
- 8:         sendTutorMessage(
- 9:             personality.getLine('GREETING'),
-10:             "hint",
-11:             "TUTOR"
-12:         );
-13:     }, []);
-14:     return null;
-15: };
 </file>
 
 <file path="src/frameworks-drivers/ui/components/GlobalTutorBar.tsx">
@@ -27904,31 +27864,6 @@ This section contains the contents of the repository's files.
 33: };
 </file>
 
-<file path="src/frameworks-drivers/ui/hooks/useTheatricalInputLock.ts">
- 1: import { useEffect } from 'react';
- 2: import { useProcess } from '../context/ProcessProvider';
- 3: import { useInput } from '../context/InputContext';
- 4: import { GameEventType } from '../../../domain/services/SimulationBus';
- 5: export const useTheatricalInputLock = () => {
- 6:     const { bus } = useProcess();
- 7:     const { setInputLocked } = useInput();
- 8:     useEffect(() => {
- 9:         const unsubStart = bus.subscribe(GameEventType.TUTOR_EVENT, (event) => {
-10:             if (event.payload.type === 'PRESENTATION_START') {
-11:                 console.log("[useTheatricalInputLock] Seizing input control.");
-12:                 setInputLocked(true);
-13:             } else if (event.payload.type === 'PRESENTATION_END') {
-14:                 console.log("[useTheatricalInputLock] Releasing input control.");
-15:                 setInputLocked(false);
-16:             }
-17:         });
-18:         return () => {
-19:             unsubStart();
-20:         };
-21:     }, [bus, setInputLocked]);
-22: };
-</file>
-
 <file path="src/frameworks-drivers/ui/hooks/useTutorAnimation.ts">
  1: import { useRef, useEffect } from 'react';
  2: import { Animated, Platform } from 'react-native';
@@ -28392,109 +28327,6 @@ This section contains the contents of the repository's files.
 21: }
 </file>
 
-<file path="src/interface-adapters/controllers/ShellController.ts">
-  1: import { MutableRefObject } from 'react';
-  2: import { ExecuteCommand } from '../../domain/usecases/ExecuteCommand';
-  3: import { TerminalState } from '../../domain/entities/TerminalState';
-  4: import { CommandResponse } from '../../domain/entities/Command';
-  5: import { TerminalOutputLine, OutputControllerActions } from './OutputController';
-  6: import { ShellPresenter } from '../presenters/ShellPresenter';
-  7: import { IGameManager } from '../../domain/interfaces/IGameManager';
-  8: import { GameEventObserver } from '../../domain/services/GameEventObserver';
-  9: export interface ShellControllerDeps {
- 10:     commandExecutor: ExecuteCommand;
- 11:     gameManager: IGameManager;
- 12:     gameEventObserver: GameEventObserver;
- 13:     outputController: OutputControllerActions;
- 14:     setState: (update: (prev: TerminalState) => TerminalState) => void;
- 15:     stateRef: MutableRefObject<TerminalState>;
- 16:     inputController: { clearInput: () => void };
- 17:     navigation: any;
- 18:     setIsTransitioning: (val: boolean) => void;
- 19:     setActiveApp: (app: any) => void;
- 20:     setMissions: (missions: any[]) => void;
- 21: }
- 22: export class ShellController {
- 23:     private deps: ShellControllerDeps;
- 24:     constructor(deps: ShellControllerDeps) {
- 25:         this.deps = deps;
- 26:     }
- 27:     async execute(cmdToRun: string): Promise<void> {
- 28:         if (!cmdToRun) return;
- 29:         const {
- 30:             outputController,
- 31:             inputController,
- 32:             commandExecutor,
- 33:             stateRef,
- 34:             setState,
- 35:             gameManager,
- 36:             gameEventObserver,
- 37:             navigation,
- 38:             setIsTransitioning,
- 39:             setActiveApp,
- 40:             setMissions
- 41:         } = this.deps;
- 42:         const cmdIndex = outputController.getLineCount();
- 43:         outputController.appendLine(
- 44:             ShellPresenter.presentInputEcho(cmdToRun, true)
- 45:         );
- 46:         inputController.clearInput();
- 47:         await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 300));
- 48:         const response: CommandResponse = await commandExecutor.execute(cmdToRun, stateRef.current);
- 49:         const { output: cmdOutput, newState, navigationAction, uiAction, exitCode, controlFlow } = response;
- 50:         if (newState) {
- 51:             const updated = { ...stateRef.current, ...newState };
- 52:             stateRef.current = updated;
- 53:             setState(() => updated);
- 54:         }
- 55:         if (controlFlow === 'EXIT') {
- 56:             gameManager.tutorEngine.stop();
- 57:             outputController.clear();
- 58:             return;
- 59:         }
- 60:         if (uiAction === 'CLEAR') {
- 61:             outputController.clear();
- 62:             return;
- 63:         }
- 64:         if (navigationAction?.type === 'NAVIGATE') {
- 65:             await this.handleNavigation(navigationAction, setIsTransitioning, setActiveApp, navigation);
- 66:             return;
- 67:         }
- 68:         outputController.updateInputStatus(cmdIndex, exitCode, false);
- 69:         if (cmdOutput !== undefined && cmdOutput !== null) {
- 70:             outputController.appendLine(
- 71:                 ShellPresenter.presentOutput(cmdOutput, response.metadata)
- 72:             );
- 73:         }
- 74:         const prevFsContext = stateRef.current.fsContext;
- 75:         gameManager.onCommandExecuted(stateRef.current, response, prevFsContext);
- 76:         const eventMsg = await gameEventObserver.checkProceduralEvents(outputController.getLineCount());
- 77:         if (eventMsg) {
- 78:             outputController.appendLine(
- 79:                 ShellPresenter.presentSystemMessage(eventMsg)
- 80:             );
- 81:         }
- 82:         setMissions([...gameManager.getActiveMissions()]);
- 83:     }
- 84:     private async handleNavigation(
- 85:         action: any,
- 86:         setIsTransitioning: (v: boolean) => void,
- 87:         setActiveApp: (app: any) => void,
- 88:         navigation: any
- 89:     ) {
- 90:         if (action.target === 'Editor') {
- 91:             setIsTransitioning(true);
- 92:             setTimeout(() => {
- 93:                 setActiveApp({ type: 'VIM', filename: action.params.filename });
- 94:                 setTimeout(() => setIsTransitioning(false), 300);
- 95:             }, 100);
- 96:             return;
- 97:         }
- 98:         navigation.navigate(action.target, action.params);
- 99:     }
-100: }
-</file>
-
 <file path="src/interface-adapters/controllers/VimInputController.ts">
  1: import { useState, useCallback } from 'react';
  2: import { VimSimulator } from '../VimSimulator';
@@ -28642,172 +28474,6 @@ This section contains the contents of the repository's files.
 47:         handleVirtualKey: inputController.handleVirtualKey
 48:     };
 49: };
-</file>
-
-<file path="src/interface-adapters/viewmodels/useShellViewModel.ts">
-  1: import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-  2: import { useNavigation } from '@react-navigation/native';
-  3: import { FileSystem } from '../../domain/entities/FileSystem';
-  4: import { FileSystemService } from '../../domain/services/FileSystemService';
-  5: import { ExecuteCommand } from '../../domain/usecases/ExecuteCommand';
-  6: import { IGameManager } from '../../domain/interfaces/IGameManager';
-  7: import { createInitialTerminalState, TerminalState } from '../../domain/entities/TerminalState';
-  8: import { TerminalStateMapper } from '../mappers/TerminalStateMapper';
-  9: import { AutocompleteService } from '../../domain/services/AutocompleteService';
- 10: import { GameEventObserver } from '../../domain/services/GameEventObserver';
- 11: import { ShellPresenter } from '../presenters/ShellPresenter';
- 12: import { useInputController } from '../controllers/InputController';
- 13: import { useOutputController, TerminalOutputLine } from '../controllers/OutputController';
- 14: import { useTutorController, TutorControllerCallbacks } from '../controllers/TutorController';
- 15: import { ShellController } from '../controllers/ShellController';
- 16: import { Lesson } from '../../domain/entities/TutorEngine';
- 17: import { TutorShadow } from '../../domain/services/tutor/TutorShadow';
- 18: export type ActiveApp = { type: 'SHELL' } | { type: 'VIM', filename: string };
- 19: export const useShellViewModel = (
- 20:     fs: FileSystem,
- 21:     commandExecutor: ExecuteCommand,
- 22:     gameManager: IGameManager,
- 23:     tutorShadow: TutorShadow,
- 24:     setMissions: (missions: any[]) => void
- 25: ) => {
- 26:     const navigation = useNavigation();
- 27:     const autocompleteService = useMemo(() => {
- 28:         return new AutocompleteService(new FileSystemService(fs));
- 29:     }, [fs]);
- 30:     const gameObserver = useMemo(() => {
- 31:         return new GameEventObserver(gameManager);
- 32:     }, [gameManager]);
- 33:     const [state, setState] = useState<TerminalState>(createInitialTerminalState());
- 34:     const [activeApp, setActiveApp] = useState<ActiveApp>({ type: 'SHELL' });
- 35:     const [isTransitioning, setIsTransitioning] = useState(false);
- 36:     const stateRef = useRef(state);
- 37:     useEffect(() => { stateRef.current = state; }, [state]);
- 38:     const inputController = useInputController(
- 39:         autocompleteService,
- 40:         state.currentDirectory,
- 41:         () => gameManager.tutorEngine.isActive()
- 42:     );
- 43:     const outputController = useOutputController();
- 44:     const handleCommandRef = useRef<((cmd?: string) => Promise<void>) | null>(null);
- 45:     const tutorCallbacks: TutorControllerCallbacks = useMemo(() => ({
- 46:         onStart: (lesson: Lesson, targetCwd: string) => {
- 47:             const isMission = lesson.isMission || lesson.id.startsWith('MISSION_');
- 48:             if (isMission) return;
- 49:             setState(prev => ({ ...prev, currentDirectory: targetCwd }));
- 50:             outputController.appendLine(
- 51:                 ShellPresenter.presentSystemMessage(`RELOCATING TO TRAINING ENVIRONMENT: ${targetCwd}...`)
- 52:             );
- 53:         },
- 54:         onStop: (originalCwd: string | null) => {
- 55:             const current = stateRef.current;
- 56:             const isMission = gameManager.tutorEngine.getCurrentLesson()?.isMission;
- 57:             if (originalCwd && !current.fsContext && !isMission) {
- 58:                 setState(prev => ({ ...prev, currentDirectory: originalCwd }));
- 59:                 outputController.appendLine(
- 60:                     ShellPresenter.presentSystemMessage(`TRAINING HALTED. RESTORING CONTEXT: ${originalCwd}`)
- 61:                 );
- 62:             }
- 63:         },
- 64:         onProgress: (input: string, ghostText: string) => {
- 65:             inputController.setInput(input);
- 66:             inputController.updateGhostText(ghostText);
- 67:         },
- 68:         onCorrection: (input: string, ghostText: string) => {
- 69:             inputController.setInput(input);
- 70:             inputController.updateGhostText(ghostText);
- 71:         },
- 72:         onMistake: (input: string, ghostText: string, _droppedCount: number) => {
- 73:             inputController.setInput(input);
- 74:             inputController.updateGhostText(ghostText);
- 75:         },
- 76:         onComplete: (lesson: Lesson, originalCwd: string | null) => {
- 77:             inputController.setInput(lesson.text);
- 78:             inputController.updateGhostText('');
- 79:             if (handleCommandRef.current) {
- 80:                 handleCommandRef.current(lesson.text);
- 81:                 inputController.clearInput();
- 82:             }
- 83:             const isMission = lesson.isMission || lesson.id.startsWith('MISSION_');
- 84:             const hasSwitchedContext = !!stateRef.current.fsContext;
- 85:             if (originalCwd && !isMission && !hasSwitchedContext) {
- 86:                 setTimeout(() => {
- 87:                     if (!stateRef.current.fsContext) {
- 88:                         setState(prev => ({ ...prev, currentDirectory: originalCwd }));
- 89:                         outputController.appendLine(
- 90:                             ShellPresenter.presentSystemMessage(`CONTEXT RESTORED: ${originalCwd}`)
- 91:                         );
- 92:                     }
- 93:                 }, 1000);
- 94:             }
- 95:         }
- 96:     }), [inputController, outputController]);
- 97:     const tutorController = useTutorController(
- 98:         gameManager.tutorEngine,
- 99:         tutorCallbacks,
-100:         state.currentDirectory
-101:     );
-102:     const shellController = useMemo(() => new ShellController({
-103:         commandExecutor,
-104:         gameManager,
-105:         gameEventObserver: gameObserver,
-106:         outputController,
-107:         setState,
-108:         stateRef,
-109:         inputController,
-110:         navigation,
-111:         setIsTransitioning,
-112:         setActiveApp,
-113:         setMissions
-114:     }), [commandExecutor, gameManager, gameObserver, outputController, inputController, navigation]);
-115:     const handleCommand = useCallback((manualCommand?: string) => {
-116:         const cmd = manualCommand !== undefined ? manualCommand : inputController.input;
-117:         return shellController.execute(cmd);
-118:     }, [shellController, inputController.input]);
-119:     useEffect(() => {
-120:         handleCommandRef.current = handleCommand;
-121:     }, [handleCommand]);
-122:     const handleKeyPress = useCallback((key: string) => {
-123:         const allowed = tutorShadow.intercept(key, 'SHELL');
-124:         if (!allowed) return;
-125:         if (gameManager.tutorEngine.isActive()) {
-126:             const lesson = gameManager.tutorEngine.getCurrentLesson();
-127:             if (lesson && lesson.type === 'SHELL' && key.length === 1) {
-128:                 return;
-129:             }
-130:         }
-131:         if (key === 'TAB') inputController.acceptAutocomplete();
-132:         else if (key === 'ESC') inputController.clearInput();
-133:         else if (key === 'BACKSPACE') inputController.deleteChar();
-134:         else if (key === 'ENTER') handleCommand();
-135:         else if (key.length === 1) inputController.appendChar(key);
-136:     }, [inputController, handleCommand, tutorShadow, gameManager]);
-137:     const handleVimExit = useCallback(() => {
-138:         setIsTransitioning(true);
-139:         setTimeout(() => {
-140:             setActiveApp({ type: 'SHELL' });
-141:             setTimeout(() => setIsTransitioning(false), 300);
-142:         }, 100);
-143:     }, []);
-144:     return {
-145:         state: TerminalStateMapper.toDTO(state),
-146:         activeApp,
-147:         isTransitioning,
-148:         input: inputController.input,
-149:         ghostText: inputController.ghostText,
-150:         outputLines: outputController.outputLines,
-151:         renderedLineCount: outputController.renderedLineCount,
-152:         markLineComplete: outputController.markLineComplete,
-153:         tutorEmotion: tutorController.emotion,
-154:         crashingIndices: tutorController.crashingIndices,
-155:         handleInputChange: (text: string) => inputController.setInput(text),
-156:         handleKeyPress,
-157:         handleVimExit,
-158:         toggleMinimize: outputController.toggleMinimize,
-159:         deleteGroup: outputController.deleteGroup,
-160:         outputController,
-161:         fsContext: state.fsContext
-162:     };
-163: };
 </file>
 
 <file path="src/interface-adapters/LessonCoordinator.ts">
@@ -29429,6 +29095,48 @@ This section contains the contents of the repository's files.
 107: }
 </file>
 
+<file path="src/domain/services/PresentationDirector.ts">
+ 1: import { SimulationBus, GameEventType } from './SimulationBus';
+ 2: export enum TheatricalVerb {
+ 3:     SYNTHESIZE = "SYNTHESIZING BINARY",
+ 4:     SCAN = "SCANNING DATA SECTORS",
+ 5:     PURGE = "PURGING ARTIFACTS",
+ 6:     EXTRACT = "EXTRACTING DATA STREAM",
+ 7:     UPLINK = "ESTABLISHING SECURE UPLINK",
+ 8:     HANDSHAKE = "SYNCHRONIZING DATA HANDSHAKE",
+ 9:     OVERRIDE = "OVERRIDING SYSTEM PERMISSIONS"
+10: }
+11: export class PresentationDirector {
+12:     private readonly VERB_MAP: Record<string, TheatricalVerb> = {
+13:         'gcc': TheatricalVerb.SYNTHESIZE,
+14:         'compile': TheatricalVerb.SYNTHESIZE,
+15:         'ls': TheatricalVerb.SCAN,
+16:         'rm': TheatricalVerb.PURGE,
+17:         'cat': TheatricalVerb.EXTRACT,
+18:         'grep': TheatricalVerb.EXTRACT,
+19:         'ssh': TheatricalVerb.UPLINK,
+20:         'connect': TheatricalVerb.UPLINK,
+21:         'chmod': TheatricalVerb.OVERRIDE,
+22:         'chown': TheatricalVerb.OVERRIDE
+23:     };
+24:     constructor(private bus: SimulationBus) {}
+25:     public async presentCommand(command: string, args: string[]): Promise<void> {
+26:         const verb = this.VERB_MAP[command] || TheatricalVerb.EXTRACT;
+27:         this.bus.emit(GameEventType.TUTOR_EVENT, {
+28:             type: 'PRESENTATION_START' as any,
+29:             payload: { verb, command, args }
+30:         });
+31:     }
+32:     public async presentPipe(source: string, target: string): Promise<void> {
+33:         this.bus.emit(GameEventType.TUTOR_EVENT, {
+34:             type: 'PIPE_VISUALIZATION' as any,
+35:             payload: { source, target, verb: TheatricalVerb.HANDSHAKE }
+36:         });
+37:         await new Promise(resolve => setTimeout(resolve, 1000));
+38:     }
+39: }
+</file>
+
 <file path="src/domain/services/SimulationBus.ts">
  1: import { TelemetryPort } from '../ports/TelemetryPort';
  2: export enum GameEventType {
@@ -29591,6 +29299,27 @@ This section contains the contents of the repository's files.
 63:         return this.factory.createMission(problem);
 64:     }
 65: }
+</file>
+
+<file path="src/frameworks-drivers/ui/components/AppInitializer.tsx">
+ 1: import React, { useEffect, useMemo } from 'react';
+ 2: import { useTutorMessaging } from '../context/TutorMessagingProvider';
+ 3: import { useInput } from '../context/InputContext';
+ 4: import { TutorPersonalityService } from '../../../domain/services/tutor/TutorPersonalityService';
+ 5: export const AppInitializer = () => {
+ 6:     const { sendTutorMessage } = useTutorMessaging();
+ 7:     const { setInputLocked } = useInput();
+ 8:     const personality = useMemo(() => new TutorPersonalityService(), []);
+ 9:     useEffect(() => {
+10:         setInputLocked(false);
+11:         sendTutorMessage(
+12:             personality.getLine('GREETING'),
+13:             "hint",
+14:             "TUTOR"
+15:         );
+16:     }, []);
+17:     return null;
+18: };
 </file>
 
 <file path="src/frameworks-drivers/ui/components/EconomyBar.tsx">
@@ -29838,6 +29567,32 @@ This section contains the contents of the repository's files.
 50:     const { theme } = useTheme();
 51:     return useMemo(() => getComponentsForTheme(theme.id), [theme.id]);
 52: };
+</file>
+
+<file path="src/frameworks-drivers/ui/hooks/useTheatricalInputLock.ts">
+ 1: import { useEffect } from 'react';
+ 2: import { useProcess } from '../context/ProcessProvider';
+ 3: import { useInput } from '../context/InputContext';
+ 4: import { GameEventType } from '../../../domain/services/SimulationBus';
+ 5: export const useTheatricalInputLock = () => {
+ 6:     const { bus } = useProcess();
+ 7:     const { setInputLocked } = useInput();
+ 8:     useEffect(() => {
+ 9:         const unsub = bus.subscribe(GameEventType.TUTOR_EVENT, (event) => {
+10:             const type = event.payload.type;
+11:             if (type === 'THEATRE_ACTIVE') {
+12:                 console.log("[useTheatricalInputLock] Seizing input control.");
+13:                 setInputLocked(true);
+14:             } else if (type === 'THEATRE_COMPLETE') {
+15:                 console.log("[useTheatricalInputLock] Releasing input control.");
+16:                 setInputLocked(false);
+17:             }
+18:         });
+19:         return () => {
+20:             unsub();
+21:         };
+22:     }, [bus, setInputLocked]);
+23: };
 </file>
 
 <file path="src/frameworks-drivers/ui/hooks/useTutorMessagingController.ts">
@@ -30186,124 +29941,278 @@ This section contains the contents of the repository's files.
 171: }
 </file>
 
-<file path="src/interface-adapters/viewmodels/TerminalViewModel.ts">
- 1: import { FileSystem } from '../../domain/entities/FileSystem';
- 2: import { CommandCoordinator } from '../controllers/CommandCoordinator';
- 3: import { GameManager } from '../GameManager';
- 4: import { TutorShadow } from '../../domain/services/tutor/TutorShadow';
- 5: import { useHeadlessTerminal } from './useHeadlessTerminal';
- 6: export { ActiveView } from './useHeadlessTerminal';
- 7: export { TerminalOutputLine } from '../controllers/OutputController';
- 8: export const useTerminalViewModel = (
- 9:     fs: FileSystem,
-10:     commandCoordinator: CommandCoordinator,
-11:     gameManager: GameManager,
-12:     tutorShadow: TutorShadow
-13: ) => {
-14:     return useHeadlessTerminal(fs, commandCoordinator, gameManager, tutorShadow);
-15: };
+<file path="src/interface-adapters/controllers/ShellController.ts">
+  1: import { MutableRefObject } from 'react';
+  2: import { ExecuteCommand } from '../../domain/usecases/ExecuteCommand';
+  3: import { TerminalState } from '../../domain/entities/TerminalState';
+  4: import { CommandResponse } from '../../domain/entities/Command';
+  5: import { TerminalOutputLine, OutputControllerActions } from './OutputController';
+  6: import { ShellPresenter } from '../presenters/ShellPresenter';
+  7: import { IGameManager } from '../../domain/interfaces/IGameManager';
+  8: import { GameEventObserver } from '../../domain/services/GameEventObserver';
+  9: import { SimulationMediator } from '../../core/presentation/SimulationMediator';
+ 10: export interface ShellControllerDeps {
+ 11:     commandExecutor: ExecuteCommand;
+ 12:     gameManager: IGameManager;
+ 13:     gameEventObserver: GameEventObserver;
+ 14:     outputController: OutputControllerActions;
+ 15:     setState: (update: (prev: TerminalState) => TerminalState) => void;
+ 16:     stateRef: MutableRefObject<TerminalState>;
+ 17:     inputController: { clearInput: () => void };
+ 18:     navigation: any;
+ 19:     setIsTransitioning: (val: boolean) => void;
+ 20:     setActiveApp: (app: any) => void;
+ 21:     setMissions: (missions: any[]) => void;
+ 22:     simulationMediator: SimulationMediator;
+ 23: }
+ 24: export class ShellController {
+ 25:     private deps: ShellControllerDeps;
+ 26:     constructor(deps: ShellControllerDeps) {
+ 27:         this.deps = deps;
+ 28:     }
+ 29:     async execute(cmdToRun: string): Promise<void> {
+ 30:         if (!cmdToRun) return;
+ 31:         const {
+ 32:             outputController,
+ 33:             inputController,
+ 34:             commandExecutor,
+ 35:             stateRef,
+ 36:             setState,
+ 37:             gameManager,
+ 38:             gameEventObserver,
+ 39:             navigation,
+ 40:             setIsTransitioning,
+ 41:             setActiveApp,
+ 42:             setMissions
+ 43:         } = this.deps;
+ 44:         const cmdIndex = outputController.getLineCount();
+ 45:         outputController.appendLine(
+ 46:             ShellPresenter.presentInputEcho(cmdToRun, true)
+ 47:         );
+ 48:         inputController.clearInput();
+ 49:         const { simulationMediator } = this.deps;
+ 50:         const response: CommandResponse = await simulationMediator.executeWithTheatre(cmdToRun, stateRef.current);
+ 51:         const { output: cmdOutput, newState, navigationAction, uiAction, exitCode, controlFlow } = response;
+ 52:         if (newState) {
+ 53:             const updated = { ...stateRef.current, ...newState };
+ 54:             stateRef.current = updated;
+ 55:             setState(() => updated);
+ 56:         }
+ 57:         if (controlFlow === 'EXIT') {
+ 58:             gameManager.tutorEngine.stop();
+ 59:             outputController.clear();
+ 60:             return;
+ 61:         }
+ 62:         if (uiAction === 'CLEAR') {
+ 63:             outputController.clear();
+ 64:             return;
+ 65:         }
+ 66:         if (navigationAction?.type === 'NAVIGATE') {
+ 67:             await this.handleNavigation(navigationAction, setIsTransitioning, setActiveApp, navigation);
+ 68:             return;
+ 69:         }
+ 70:         outputController.updateInputStatus(cmdIndex, exitCode, false);
+ 71:         if (cmdOutput !== undefined && cmdOutput !== null) {
+ 72:             outputController.appendLine(
+ 73:                 ShellPresenter.presentOutput(cmdOutput, response.metadata)
+ 74:             );
+ 75:         }
+ 76:         const prevFsContext = stateRef.current.fsContext;
+ 77:         gameManager.onCommandExecuted(stateRef.current, response, prevFsContext);
+ 78:         const eventMsg = await gameEventObserver.checkProceduralEvents(outputController.getLineCount());
+ 79:         if (eventMsg) {
+ 80:             outputController.appendLine(
+ 81:                 ShellPresenter.presentSystemMessage(eventMsg)
+ 82:             );
+ 83:         }
+ 84:         setMissions([...gameManager.getActiveMissions()]);
+ 85:     }
+ 86:     private async handleNavigation(
+ 87:         action: any,
+ 88:         setIsTransitioning: (v: boolean) => void,
+ 89:         setActiveApp: (app: any) => void,
+ 90:         navigation: any
+ 91:     ) {
+ 92:         if (action.target === 'Editor') {
+ 93:             setIsTransitioning(true);
+ 94:             setTimeout(() => {
+ 95:                 setActiveApp({ type: 'VIM', filename: action.params.filename });
+ 96:                 setTimeout(() => setIsTransitioning(false), 300);
+ 97:             }, 100);
+ 98:             return;
+ 99:         }
+100:         navigation.navigate(action.target, action.params);
+101:     }
+102: }
 </file>
 
-<file path="src/interface-adapters/viewmodels/useHeadlessTerminal.ts">
- 1: import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
- 2: import { FileSystem } from '../../domain/entities/FileSystem';
- 3: import { CommandCoordinator } from '../controllers/CommandCoordinator';
- 4: import { GameManager } from '../GameManager';
- 5: import { TutorShadow } from '../../domain/services/tutor/TutorShadow';
- 6: import { ArchiveService, CapturedBuffer } from '../../domain/services/ArchiveService';
- 7: import { HintService } from '../../domain/services/HintService';
- 8: import { BufferMapper } from '../mappers/BufferMapper';
- 9: import { useShellViewModel } from './useShellViewModel';
-10: import { useMissionViewModel } from './useMissionViewModel';
-11: export type ActiveView = 'SHELL' | 'COMMS' | 'BUFFERS';
-12: export const useHeadlessTerminal = (
-13:     fs: FileSystem,
-14:     commandCoordinator: CommandCoordinator,
-15:     gameManager: GameManager,
-16:     tutorShadow: TutorShadow
-17: ) => {
-18:     const [activeView, setActiveView] = useState<ActiveView>('SHELL');
-19:     const [contextualHint, setContextualHint] = useState<string | null>(null);
-20:     const lastActivityRef = useRef<number>(Date.now());
-21:     const missionVM = useMissionViewModel(gameManager);
-22:     const shellVM = useShellViewModel(fs, commandCoordinator as any, gameManager, tutorShadow, missionVM.refreshMissions);
-23:     const archiveService = useMemo(() => new ArchiveService(), []);
-24:     const hintService = useMemo(() => new HintService(), []);
-25:     const [buffers, setBuffers] = useState<CapturedBuffer[]>([]);
-26:     const saveToArchive = useCallback((index: number) => {
-27:         archiveService.recordFromOutput(
-28:             index,
-29:             shellVM.outputLines,
-30:             shellVM.fsContext || 'LOCAL'
-31:         );
-32:         setBuffers(archiveService.getAll());
-33:     }, [shellVM.outputLines, archiveService, shellVM.fsContext]);
-34:     const toggleBufferView = useCallback(() => {
-35:         setActiveView(prev => prev === 'BUFFERS' ? 'SHELL' : 'BUFFERS');
-36:     }, []);
-37:     const toggleCommsView = useCallback(() => {
-38:         setActiveView(prev => prev === 'COMMS' ? 'SHELL' : 'COMMS');
-39:         if (activeView !== 'COMMS' && !missionVM.ircMissionId) {
-40:             const active = missionVM.missions.find(m => m.status === 'active');
-41:             missionVM.setIrcMissionId(active ? active.id : (missionVM.missions[0]?.id || null));
-42:         }
-43:     }, [activeView, missionVM.ircMissionId, missionVM.missions, missionVM.setIrcMissionId]);
-44:     const resetInactivityTimer = useCallback(() => {
-45:         lastActivityRef.current = Date.now();
-46:         if (contextualHint) setContextualHint(null);
-47:     }, [contextualHint]);
-48:     useEffect(() => {
-49:         const interval = setInterval(() => {
-50:             const idleTime = Date.now() - lastActivityRef.current;
-51:             if (idleTime > 15000 && !contextualHint) {
-52:                 const hint = hintService.getHint(
-53:                     missionVM.missions,
-54:                     gameManager.tutorEngine.isActive(),
-55:                     !!shellVM.fsContext
-56:                 );
-57:                 setContextualHint(hint);
-58:             }
-59:         }, 1000);
-60:         return () => clearInterval(interval);
-61:     }, [contextualHint, missionVM.missions, shellVM.fsContext, gameManager, hintService]);
-62:     const handleKeyPressWrapped = useCallback((key: string) => {
-63:         resetInactivityTimer();
-64:         shellVM.handleKeyPress(key);
-65:     }, [shellVM.handleKeyPress, resetInactivityTimer]);
-66:     return {
-67:         activeApp: shellVM.activeApp,
-68:         state: shellVM.state,
-69:         contextualHint,
-70:         activeView,
-71:         isTransitioning: shellVM.isTransitioning,
-72:         ircMissionId: missionVM.ircMissionId,
-73:         setIrcMissionId: missionVM.setIrcMissionId,
-74:         missions: missionVM.missions,
-75:         handleStartMission: (id: string) => {
-76:             const minimalState = { fsContext: shellVM.fsContext } as any;
-77:             gameManager.startMission(id, minimalState);
-78:             missionVM.refreshMissions();
-79:         },
-80:         handleAbandonMission: missionVM.handleAbandonMission,
-81:         toggleCommsView,
-82:         input: shellVM.input,
-83:         ghostText: shellVM.ghostText,
-84:         handleInputChange: shellVM.handleInputChange,
-85:         handleKeyPress: handleKeyPressWrapped,
-86:         handleVimExit: shellVM.handleVimExit,
-87:         outputLines: shellVM.outputLines,
-88:         renderedLineCount: shellVM.renderedLineCount,
-89:         markLineComplete: shellVM.markLineComplete,
-90:         toggleMinimize: shellVM.toggleMinimize,
-91:         deleteGroup: shellVM.deleteGroup,
-92:         tutorEmotion: shellVM.tutorEmotion,
-93:         crashingIndices: shellVM.crashingIndices,
-94:         archiveService,
-95:         toggleBufferView,
-96:         buffers: buffers.map(BufferMapper.toDTO),
-97:         saveToArchive,
-98:     };
-99: };
+<file path="src/interface-adapters/viewmodels/useShellViewModel.ts">
+  1: import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+  2: import { useNavigation } from '@react-navigation/native';
+  3: import { FileSystem } from '../../domain/entities/FileSystem';
+  4: import { FileSystemService } from '../../domain/services/FileSystemService';
+  5: import { ExecuteCommand } from '../../domain/usecases/ExecuteCommand';
+  6: import { IGameManager } from '../../domain/interfaces/IGameManager';
+  7: import { createInitialTerminalState, TerminalState } from '../../domain/entities/TerminalState';
+  8: import { TerminalStateMapper } from '../mappers/TerminalStateMapper';
+  9: import { AutocompleteService } from '../../domain/services/AutocompleteService';
+ 10: import { GameEventObserver } from '../../domain/services/GameEventObserver';
+ 11: import { ShellPresenter } from '../presenters/ShellPresenter';
+ 12: import { useInputController } from '../controllers/InputController';
+ 13: import { useOutputController, TerminalOutputLine } from '../controllers/OutputController';
+ 14: import { useTutorController, TutorControllerCallbacks } from '../controllers/TutorController';
+ 15: import { ShellController } from '../controllers/ShellController';
+ 16: import { Lesson } from '../../domain/entities/TutorEngine';
+ 17: import { TutorShadow } from '../../domain/services/tutor/TutorShadow';
+ 18: import { SimulationMediator } from '../../core/presentation/SimulationMediator';
+ 19: export type ActiveApp = { type: 'SHELL' } | { type: 'VIM', filename: string };
+ 20: export const useShellViewModel = (
+ 21:     fs: FileSystem,
+ 22:     commandExecutor: ExecuteCommand,
+ 23:     gameManager: IGameManager,
+ 24:     tutorShadow: TutorShadow,
+ 25:     setMissions: (missions: any[]) => void,
+ 26:     simulationMediator: SimulationMediator
+ 27: ) => {
+ 28:     const navigation = useNavigation();
+ 29:     const autocompleteService = useMemo(() => {
+ 30:         return new AutocompleteService(new FileSystemService(fs));
+ 31:     }, [fs]);
+ 32:     const gameObserver = useMemo(() => {
+ 33:         return new GameEventObserver(gameManager);
+ 34:     }, [gameManager]);
+ 35:     const [state, setState] = useState<TerminalState>(createInitialTerminalState());
+ 36:     const [activeApp, setActiveApp] = useState<ActiveApp>({ type: 'SHELL' });
+ 37:     const [isTransitioning, setIsTransitioning] = useState(false);
+ 38:     const stateRef = useRef(state);
+ 39:     useEffect(() => { stateRef.current = state; }, [state]);
+ 40:     const inputController = useInputController(
+ 41:         autocompleteService,
+ 42:         state.currentDirectory,
+ 43:         () => gameManager.tutorEngine.isActive()
+ 44:     );
+ 45:     const outputController = useOutputController();
+ 46:     const handleCommandRef = useRef<((cmd?: string) => Promise<void>) | null>(null);
+ 47:     const tutorCallbacks: TutorControllerCallbacks = useMemo(() => ({
+ 48:         onStart: (lesson: Lesson, targetCwd: string) => {
+ 49:             const isMission = lesson.isMission || lesson.id.startsWith('MISSION_');
+ 50:             if (isMission) return;
+ 51:             setState(prev => ({ ...prev, currentDirectory: targetCwd }));
+ 52:             outputController.appendLine(
+ 53:                 ShellPresenter.presentSystemMessage(`RELOCATING TO TRAINING ENVIRONMENT: ${targetCwd}...`)
+ 54:             );
+ 55:         },
+ 56:         onStop: (originalCwd: string | null) => {
+ 57:             const current = stateRef.current;
+ 58:             const isMission = gameManager.tutorEngine.getCurrentLesson()?.isMission;
+ 59:             if (originalCwd && !current.fsContext && !isMission) {
+ 60:                 setState(prev => ({ ...prev, currentDirectory: originalCwd }));
+ 61:                 outputController.appendLine(
+ 62:                     ShellPresenter.presentSystemMessage(`TRAINING HALTED. RESTORING CONTEXT: ${originalCwd}`)
+ 63:                 );
+ 64:             }
+ 65:         },
+ 66:         onProgress: (input: string, ghostText: string) => {
+ 67:             inputController.setInput(input);
+ 68:             inputController.updateGhostText(ghostText);
+ 69:         },
+ 70:         onCorrection: (input: string, ghostText: string) => {
+ 71:             inputController.setInput(input);
+ 72:             inputController.updateGhostText(ghostText);
+ 73:         },
+ 74:         onMistake: (input: string, ghostText: string, _droppedCount: number) => {
+ 75:             inputController.setInput(input);
+ 76:             inputController.updateGhostText(ghostText);
+ 77:         },
+ 78:         onComplete: (lesson: Lesson, originalCwd: string | null) => {
+ 79:             inputController.setInput(lesson.text);
+ 80:             inputController.updateGhostText('');
+ 81:             if (handleCommandRef.current) {
+ 82:                 handleCommandRef.current(lesson.text);
+ 83:                 inputController.clearInput();
+ 84:             }
+ 85:             const isMission = lesson.isMission || lesson.id.startsWith('MISSION_');
+ 86:             const hasSwitchedContext = !!stateRef.current.fsContext;
+ 87:             if (originalCwd && !isMission && !hasSwitchedContext) {
+ 88:                 setTimeout(() => {
+ 89:                     if (!stateRef.current.fsContext) {
+ 90:                         setState(prev => ({ ...prev, currentDirectory: originalCwd }));
+ 91:                         outputController.appendLine(
+ 92:                             ShellPresenter.presentSystemMessage(`CONTEXT RESTORED: ${originalCwd}`)
+ 93:                         );
+ 94:                     }
+ 95:                 }, 1000);
+ 96:             }
+ 97:         }
+ 98:     }), [inputController, outputController]);
+ 99:     const tutorController = useTutorController(
+100:         gameManager.tutorEngine,
+101:         tutorCallbacks,
+102:         state.currentDirectory
+103:     );
+104:     const shellController = useMemo(() => new ShellController({
+105:         commandExecutor,
+106:         gameManager,
+107:         gameEventObserver: gameObserver,
+108:         outputController,
+109:         setState,
+110:         stateRef,
+111:         inputController,
+112:         navigation,
+113:         setIsTransitioning,
+114:         setActiveApp,
+115:         setMissions,
+116:         simulationMediator
+117:     }), [commandExecutor, gameManager, gameObserver, outputController, inputController, navigation, simulationMediator]);
+118:     const handleCommand = useCallback((manualCommand?: string) => {
+119:         const cmd = manualCommand !== undefined ? manualCommand : inputController.input;
+120:         return shellController.execute(cmd);
+121:     }, [shellController, inputController.input]);
+122:     useEffect(() => {
+123:         handleCommandRef.current = handleCommand;
+124:     }, [handleCommand]);
+125:     const handleKeyPress = useCallback((key: string) => {
+126:         const allowed = tutorShadow.intercept(key, 'SHELL');
+127:         if (!allowed) return;
+128:         if (gameManager.tutorEngine.isActive()) {
+129:             const lesson = gameManager.tutorEngine.getCurrentLesson();
+130:             if (lesson && lesson.type === 'SHELL' && key.length === 1) {
+131:                 return;
+132:             }
+133:         }
+134:         if (key === 'TAB') inputController.acceptAutocomplete();
+135:         else if (key === 'ESC') inputController.clearInput();
+136:         else if (key === 'BACKSPACE') inputController.deleteChar();
+137:         else if (key === 'ENTER') handleCommand();
+138:         else if (key.length === 1) inputController.appendChar(key);
+139:     }, [inputController, handleCommand, tutorShadow, gameManager]);
+140:     const handleVimExit = useCallback(() => {
+141:         setIsTransitioning(true);
+142:         setTimeout(() => {
+143:             setActiveApp({ type: 'SHELL' });
+144:             setTimeout(() => setIsTransitioning(false), 300);
+145:         }, 100);
+146:     }, []);
+147:     return {
+148:         state: TerminalStateMapper.toDTO(state),
+149:         activeApp,
+150:         isTransitioning,
+151:         input: inputController.input,
+152:         ghostText: inputController.ghostText,
+153:         outputLines: outputController.outputLines,
+154:         renderedLineCount: outputController.renderedLineCount,
+155:         markLineComplete: outputController.markLineComplete,
+156:         tutorEmotion: tutorController.emotion,
+157:         crashingIndices: tutorController.crashingIndices,
+158:         handleInputChange: (text: string) => inputController.setInput(text),
+159:         handleKeyPress,
+160:         handleVimExit,
+161:         toggleMinimize: outputController.toggleMinimize,
+162:         deleteGroup: outputController.deleteGroup,
+163:         outputController,
+164:         fsContext: state.fsContext
+165:     };
+166: };
 </file>
 
 <file path="src/interface-adapters/GameCommandExecutor.ts">
@@ -30703,6 +30612,56 @@ This section contains the contents of the repository's files.
 69: }
 </file>
 
+<file path="src/core/presentation/SimulationMediator.ts">
+ 1: import { SimulationBus, GameEventType } from '../../domain/services/SimulationBus';
+ 2: import { PresentationDirector } from '../../domain/services/PresentationDirector';
+ 3: import { IShellExecutor } from '../../domain/interfaces/IShellExecutor';
+ 4: import { CommandResponse } from '../../domain/entities/Command';
+ 5: import { TerminalState } from '../../domain/entities/TerminalState';
+ 6: export class SimulationMediator {
+ 7:     constructor(
+ 8:         private bus: SimulationBus,
+ 9:         private director: PresentationDirector,
+10:         private executor: IShellExecutor
+11:     ) {}
+12:     public async executeWithTheatre(input: string, state: TerminalState): Promise<CommandResponse> {
+13:         if (!input.trim()) {
+14:             return { output: '', exitCode: 0, newState: state, command: input };
+15:         }
+16:         const parts = input.trim().split(/\s+/);
+17:         const verb = parts[0];
+18:         const args = parts.slice(1);
+19:         console.log(`[SimulationMediator] Orchestrating execution for: ${verb}`);
+20:         // 1. Prepare for Animation Completion (Subscribe BEFORE triggering)
+21:         const animationPromise = new Promise<void>((resolve) => {
+22:             const unsub = this.bus.subscribe(GameEventType.TUTOR_EVENT, (event) => {
+23:                 if (event.payload.type === 'ANIMATION_COMPLETE') {
+24:                     console.log("[SimulationMediator] Received ANIMATION_COMPLETE. Proceeding.");
+25:                     unsub();
+26:                     resolve();
+27:                 }
+28:             });
+29:             setTimeout(() => {
+30:                 console.warn("[SimulationMediator] Animation timed out. Forcing continuation.");
+31:                 unsub();
+32:                 resolve();
+33:             }, 2000);
+34:         });
+35:         console.log("[SimulationMediator] Emitting THEATRE_ACTIVE.");
+36:         this.bus.emit(GameEventType.TUTOR_EVENT, { type: 'THEATRE_ACTIVE' as any, payload: { command: verb } });
+37:         console.log("[SimulationMediator] Triggering PresentationDirector.");
+38:         await this.director.presentCommand(verb, args);
+39:         console.log("[SimulationMediator] Awaiting animation completion...");
+40:         await animationPromise;
+41:         console.log("[SimulationMediator] Executing domain command.");
+42:         const response = await this.executor.execute(input, state);
+43:         console.log("[SimulationMediator] Emitting THEATRE_COMPLETE.");
+44:         this.bus.emit(GameEventType.TUTOR_EVENT, { type: 'THEATRE_COMPLETE' as any, payload: { command: verb } });
+45:         return response;
+46:     }
+47: }
+</file>
+
 <file path="src/core/CoreEngine.ts">
  1: import { FileSystem } from '../domain/entities/FileSystem';
  2: import { GameManager } from '../interface-adapters/GameManager';
@@ -31032,111 +30991,62 @@ This section contains the contents of the repository's files.
 140: }
 </file>
 
-<file path="src/domain/usecases/vim/modes/NormalMode.ts">
-  1: import { IVimMode } from '../IVimMode';
-  2: import { IVimState } from '../../../entities/vim/IVimState';
-  3: import { IVimBuffer } from '../../../entities/vim/IVimBuffer';
-  4: import { VimCommandManager } from '../VimCommandManager';
-  5: import { MotionStrategy } from '../MotionStrategy';
-  6: export class NormalMode implements IVimMode {
-  7:     readonly name = 'NORMAL';
-  8:     handleKey(
-  9:         key: string,
- 10:         state: IVimState,
- 11:         buffer: IVimBuffer,
- 12:         commands: VimCommandManager
- 13:     ): string | null {
- 14:         if (state.pendingAction === 'DELETE') {
- 15:             return this.handleDeleteAction(key, state, buffer, commands);
- 16:         }
- 17:         if (state.pendingAction === 'G_PREFIX') {
- 18:             if (key === 'g') {
- 19:                 state.cursor.line = 0;
- 20:                 state.cursor.col = 0;
- 21:             }
- 22:             state.pendingAction = null;
- 23:             return null;
- 24:         }
- 25:         switch (key) {
- 26:             case 'h': this.moveCursor(state, 0, -1); break;
- 27:             case 'j': this.moveCursor(state, 1, 0); break;
- 28:             case 'k': this.moveCursor(state, -1, 0); break;
- 29:             case 'l': this.moveCursor(state, 0, 1); break;
- 30:             case 'w':
- 31:                 const nextPos = MotionStrategy.findNextWordStart(buffer, state.cursor.line, state.cursor.col);
- 32:                 state.cursor.line = nextPos.line;
- 33:                 state.cursor.col = nextPos.col;
- 34:                 break;
- 35:             case '$':
- 36:                 const eolPos = MotionStrategy.findEndOfLine(buffer, state.cursor.line);
- 37:                 state.cursor.col = eolPos.col;
- 38:                 break;
- 39:             case '0':
- 40:             case '^':
- 41:                 state.cursor.col = 0;
- 42:                 break;
- 43:             case 'G':
- 44:                 state.cursor.line = Math.max(0, buffer.length - 1);
- 45:                 state.cursor.col = 0;
- 46:                 break;
- 47:             case 'g':
- 48:                 state.pendingAction = 'G_PREFIX';
- 49:                 break;
- 50:             case 'd':
- 51:                 state.pendingAction = 'DELETE';
- 52:                 break;
- 53:             case 'D':
- 54:                 const eol = MotionStrategy.findEndOfLine(buffer, state.cursor.line);
- 55:                 commands.deleteRange(state.cursor.line, state.cursor.col, eol.col);
- 56:                 break;
- 57:             case 'i':
- 58:                 return 'INSERT';
- 59:             case 'a':
- 60:                 this.moveCursor(state, 0, 1);
- 61:                 return 'INSERT';
- 62:             case ':':
- 63:                 return 'COMMAND';
- 64:             case 'x':
- 65:                 commands.deleteChar(state.cursor.line, state.cursor.col);
- 66:                 break;
- 67:             case 'u':
- 68:                 commands.undo();
- 69:                 break;
- 70:             case 'CTRL_R':
- 71:                 commands.redo();
- 72:                 break;
- 73:         }
- 74:         return null;
- 75:     }
- 76:     private handleDeleteAction(key: string, state: IVimState, buffer: IVimBuffer, commands: VimCommandManager): string | null {
- 77:         state.pendingAction = null;
- 78:         switch (key) {
- 79:             case 'w':
- 80:                 const nextPos = MotionStrategy.findNextWordStart(buffer, state.cursor.line, state.cursor.col);
- 81:                 if (nextPos.col > state.cursor.col) {
- 82:                     commands.deleteRange(state.cursor.line, state.cursor.col, nextPos.col - 1);
- 83:                 } else {
- 84:                     commands.deleteChar(state.cursor.line, state.cursor.col);
- 85:                 }
- 86:                 break;
- 87:             case '$':
- 88:                 const eolPos = MotionStrategy.findEndOfLine(buffer, state.cursor.line);
- 89:                 commands.deleteRange(state.cursor.line, state.cursor.col, eolPos.col);
- 90:                 break;
- 91:             case 'd':
- 92:                 const fullLine = MotionStrategy.findEndOfLine(buffer, state.cursor.line);
- 93:                 commands.deleteRange(state.cursor.line, 0, fullLine.col);
- 94:                 break;
- 95:             case 'ESC':
- 96:                 break;
- 97:         }
- 98:         return null;
- 99:     }
-100:     private moveCursor(state: IVimState, dLine: number, dCol: number): void {
-101:         state.cursor.line += dLine;
-102:         state.cursor.col += dCol;
-103:     }
-104: }
+<file path="src/frameworks-drivers/ui/components/theatrical/TheatricalCanvas.tsx">
+ 1: import React, { useEffect, useState, useRef } from 'react';
+ 2: import { View, StyleSheet, Animated, Platform } from 'react-native';
+ 3: import { useProcess } from '../../context/ProcessProvider';
+ 4: import { GameEventType } from '../../../../domain/services/SimulationBus';
+ 5: export const TheatricalCanvas: React.FC = () => {
+ 6:     const { bus } = useProcess();
+ 7:     const [isCriticalError, setIsCriticalError] = useState(false);
+ 8:     const shakeAnim = useRef(new Animated.Value(0)).current;
+ 9:     const useNativeDriver = Platform.OS !== 'web';
+10:     useEffect(() => {
+11:         console.log("[TheatricalCanvas] Mounted and listening.");
+12:         const unsubTutor = bus.subscribe(GameEventType.TUTOR_EVENT, (event) => {
+13:             const tutorEvent = event.payload;
+14:             const { type, payload } = tutorEvent;
+15:             if (type === 'PRESENTATION_START') {
+16:                 console.log(`[TheatricalCanvas] Animation START requested for: ${payload.command}`);
+17:                 const duration = 1500 + (Math.random() * 1000);
+18:                 setTimeout(() => {
+19:                     console.log(`[TheatricalCanvas] Animation COMPLETE for: ${payload.command}`);
+20:                     bus.emit(GameEventType.TUTOR_EVENT, { type: 'ANIMATION_COMPLETE', payload: { command: payload.command } });
+21:                 }, duration);
+22:             } else if (typeStr === 'MISTAKE' && payload.type === 'SHADOW_BLOCK') {
+23:                 setIsCriticalError(true);
+24:                 Animated.sequence([
+25:                     Animated.timing(shakeAnim, { toValue: 20, duration: 50, useNativeDriver }),
+26:                     Animated.timing(shakeAnim, { toValue: -20, duration: 50, useNativeDriver }),
+27:                     Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver })
+28:                 ]).start(() => {
+29:                     setTimeout(() => setIsCriticalError(false), 500);
+30:                 });
+31:             }
+32:         });
+33:         return () => {
+34:             unsubTutor();
+35:         };
+36:     }, [bus, shakeAnim, useNativeDriver]);
+37:     return (
+38:         <Animated.View
+39:             pointerEvents="none"
+40:             style={[
+41:                 styles.overlay,
+42:                 {
+43:                     backgroundColor: isCriticalError ? 'rgba(255,0,0,0.3)' : 'transparent',
+44:                     transform: [{ translateX: shakeAnim }]
+45:                 }
+46:             ]}
+47:         />
+48:     );
+49: };
+50: const styles = StyleSheet.create({
+51:     overlay: {
+52:         ...StyleSheet.absoluteFillObject,
+53:         zIndex: 999,
+54:     }
+55: });
 </file>
 
 <file path="src/frameworks-drivers/ui/components/vim/VimEditor.tsx">
@@ -31419,6 +31329,157 @@ This section contains the contents of the repository's files.
 277: };
 </file>
 
+<file path="src/interface-adapters/viewmodels/TerminalViewModel.ts">
+ 1: import { FileSystem } from '../../domain/entities/FileSystem';
+ 2: import { CommandCoordinator } from '../controllers/CommandCoordinator';
+ 3: import { GameManager } from '../GameManager';
+ 4: import { TutorShadow } from '../../domain/services/tutor/TutorShadow';
+ 5: import { SimulationMediator } from '../../core/presentation/SimulationMediator';
+ 6: import { useHeadlessTerminal } from './useHeadlessTerminal';
+ 7: export { ActiveView } from './useHeadlessTerminal';
+ 8: export { TerminalOutputLine } from '../controllers/OutputController';
+ 9: export const useTerminalViewModel = (
+10:     fs: FileSystem,
+11:     commandCoordinator: CommandCoordinator,
+12:     gameManager: GameManager,
+13:     tutorShadow: TutorShadow,
+14:     simulationMediator: SimulationMediator
+15: ) => {
+16:     return useHeadlessTerminal(fs, commandCoordinator, gameManager, tutorShadow, simulationMediator);
+17: };
+</file>
+
+<file path="src/interface-adapters/viewmodels/useHeadlessTerminal.ts">
+  1: import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+  2: import { FileSystem } from '../../domain/entities/FileSystem';
+  3: import { CommandCoordinator } from '../controllers/CommandCoordinator';
+  4: import { GameManager } from '../GameManager';
+  5: import { TutorShadow } from '../../domain/services/tutor/TutorShadow';
+  6: import { ArchiveService, CapturedBuffer } from '../../domain/services/ArchiveService';
+  7: import { HintService } from '../../domain/services/HintService';
+  8: import { BufferMapper } from '../mappers/BufferMapper';
+  9: import { SimulationMediator } from '../../core/presentation/SimulationMediator';
+ 10: import { useShellViewModel } from './useShellViewModel';
+ 11: import { useMissionViewModel } from './useMissionViewModel';
+ 12: export type ActiveView = 'SHELL' | 'COMMS' | 'BUFFERS';
+ 13: export const useHeadlessTerminal = (
+ 14:     fs: FileSystem,
+ 15:     commandCoordinator: CommandCoordinator,
+ 16:     gameManager: GameManager,
+ 17:     tutorShadow: TutorShadow,
+ 18:     simulationMediator: SimulationMediator
+ 19: ) => {
+ 20:     const [activeView, setActiveView] = useState<ActiveView>('SHELL');
+ 21:     const [contextualHint, setContextualHint] = useState<string | null>(null);
+ 22:     const lastActivityRef = useRef<number>(Date.now());
+ 23:     const missionVM = useMissionViewModel(gameManager);
+ 24:     const shellVM = useShellViewModel(
+ 25:         fs,
+ 26:         commandCoordinator as any,
+ 27:         gameManager,
+ 28:         tutorShadow,
+ 29:         missionVM.refreshMissions,
+ 30:         simulationMediator
+ 31:     );
+ 32:     const archiveService = useMemo(() => new ArchiveService(), []);
+ 33:     const hintService = useMemo(() => new HintService(), []);
+ 34:     const [buffers, setBuffers] = useState<CapturedBuffer[]>([]);
+ 35:     const saveToArchive = useCallback((index: number) => {
+ 36:         archiveService.recordFromOutput(
+ 37:             index,
+ 38:             shellVM.outputLines,
+ 39:             shellVM.fsContext || 'LOCAL'
+ 40:         );
+ 41:         setBuffers(archiveService.getAll());
+ 42:     }, [shellVM.outputLines, archiveService, shellVM.fsContext]);
+ 43:     const toggleBufferView = useCallback(() => {
+ 44:         setActiveView(prev => prev === 'BUFFERS' ? 'SHELL' : 'BUFFERS');
+ 45:     }, []);
+ 46:     const toggleCommsView = useCallback(() => {
+ 47:         setActiveView(prev => prev === 'COMMS' ? 'SHELL' : 'COMMS');
+ 48:         if (activeView !== 'COMMS' && !missionVM.ircMissionId) {
+ 49:             const active = missionVM.missions.find(m => m.status === 'active');
+ 50:             missionVM.setIrcMissionId(active ? active.id : (missionVM.missions[0]?.id || null));
+ 51:         }
+ 52:     }, [activeView, missionVM.ircMissionId, missionVM.missions, missionVM.setIrcMissionId]);
+ 53:     const resetInactivityTimer = useCallback(() => {
+ 54:         lastActivityRef.current = Date.now();
+ 55:         if (contextualHint) setContextualHint(null);
+ 56:     }, [contextualHint]);
+ 57:     useEffect(() => {
+ 58:         const interval = setInterval(() => {
+ 59:             const idleTime = Date.now() - lastActivityRef.current;
+ 60:             if (idleTime > 15000 && !contextualHint) {
+ 61:                 const hint = hintService.getHint(
+ 62:                     missionVM.missions,
+ 63:                     gameManager.tutorEngine.isActive(),
+ 64:                     !!shellVM.fsContext
+ 65:                 );
+ 66:                 setContextualHint(hint);
+ 67:             }
+ 68:         }, 1000);
+ 69:         return () => clearInterval(interval);
+ 70:     }, [contextualHint, missionVM.missions, shellVM.fsContext, gameManager, hintService]);
+ 71:     const handleKeyPressWrapped = useCallback((key: string) => {
+ 72:         resetInactivityTimer();
+ 73:         shellVM.handleKeyPress(key);
+ 74:     }, [shellVM.handleKeyPress, resetInactivityTimer]);
+ 75:     const handleAction = useCallback((action: string) => {
+ 76:         if (action === 'HELP') {
+ 77:             ['h', 'e', 'l', 'p', 'ENTER'].forEach(k => handleKeyPressWrapped(k));
+ 78:         } else if (action === 'COMMS') {
+ 79:             toggleCommsView();
+ 80:         } else if (action === 'BUFFERS') {
+ 81:             toggleBufferView();
+ 82:         }
+ 83:     }, [handleKeyPressWrapped, toggleCommsView, toggleBufferView]);
+ 84:     const fKeys = useMemo(() => [
+ 85:         { key: 'F1', label: 'HELP', action: () => handleAction('HELP') },
+ 86:         { key: 'F2', label: 'COMMS', action: () => handleAction('COMMS') },
+ 87:         { key: 'F3', label: 'ARCHIVE', action: () => handleAction('BUFFERS') },
+ 88:         { key: 'TAB', label: 'AUTO', action: () => handleKeyPressWrapped('TAB') },
+ 89:         { key: '▲', label: 'UP', action: () => handleKeyPressWrapped('UP') },
+ 90:         { key: '▼', label: 'DOWN', action: () => handleKeyPressWrapped('DOWN') },
+ 91:         { key: 'ENT', label: 'EXEC', action: () => handleKeyPressWrapped('ENTER') },
+ 92:     ], [handleAction, handleKeyPressWrapped]);
+ 93:     return {
+ 94:         activeApp: shellVM.activeApp,
+ 95:         state: shellVM.state,
+ 96:         contextualHint,
+ 97:         activeView,
+ 98:         isTransitioning: shellVM.isTransitioning,
+ 99:         fKeys,
+100:         handleAction,
+101:         handleKeyPress: handleKeyPressWrapped,
+102:         handleVimExit: shellVM.handleVimExit,
+103:         toggleCommsView,
+104:         toggleBufferView,
+105:         ircMissionId: missionVM.ircMissionId,
+106:         setIrcMissionId: missionVM.setIrcMissionId,
+107:         missions: missionVM.missions,
+108:         handleStartMission: (id: string) => {
+109:             const minimalState = { fsContext: shellVM.fsContext } as any;
+110:             gameManager.startMission(id, minimalState);
+111:             missionVM.refreshMissions();
+112:         },
+113:         handleAbandonMission: missionVM.handleAbandonMission,
+114:         input: shellVM.input,
+115:         ghostText: shellVM.ghostText,
+116:         handleInputChange: shellVM.handleInputChange,
+117:         outputLines: shellVM.outputLines,
+118:         renderedLineCount: shellVM.renderedLineCount,
+119:         markLineComplete: shellVM.markLineComplete,
+120:         toggleMinimize: shellVM.toggleMinimize,
+121:         deleteGroup: shellVM.deleteGroup,
+122:         tutorEmotion: shellVM.tutorEmotion,
+123:         crashingIndices: shellVM.crashingIndices,
+124:         archiveService,
+125:         buffers: buffers.map(BufferMapper.toDTO),
+126:         saveToArchive,
+127:     };
+128: };
+</file>
+
 <file path="src/frameworks-drivers/ui/components/MainframeOverlay.tsx">
   1: import React, { useEffect, useState, useRef } from 'react';
   2: import { View, Text, StyleSheet, Animated, Platform } from 'react-native';
@@ -31468,7 +31529,7 @@ This section contains the contents of the repository's files.
  46:             const typeStr = type as string;
  47:             if (typeStr === 'PRESENTATION_START') {
  48:                 setActiveVerb(payload.verb);
- 49:             } else if (typeStr === 'PRESENTATION_END') {
+ 49:             } else if (typeStr === 'THEATRE_COMPLETE' || typeStr === 'PRESENTATION_END') {
  50:                 setActiveVerb(null);
  51:             }
  52:         });
@@ -31477,135 +31538,136 @@ This section contains the contents of the repository's files.
  55:             setSessionReward(event.payload.sessionReward || 0);
  56:         });
  57:         const unsubKeystroke = bus.subscribe(GameEventType.KEYSTROKE_ACCEPTED, () => {
- 58:             setShowPerfect(true);
- 59:             perfectAnim.setValue(1);
- 60:             Animated.parallel([
- 61:                 Animated.timing(perfectAnim, { toValue: 0, duration: 400, useNativeDriver }),
- 62:             ]).start(() => setShowPerfect(false));
- 63:         });
- 64:         return () => {
- 65:             unsubTutor();
- 66:             unsubEconomy();
- 67:             unsubKeystroke();
- 68:         };
- 69:     }, [bus, perfectAnim, useNativeDriver]);
- 70:     useEffect(() => {
- 71:         const updateGlyph = () => {
- 72:             if (gameManager.tutorEngine.isActive()) {
- 73:                 const lesson = gameManager.tutorEngine.getCurrentLesson();
- 74:                 if (lesson) {
- 75:                     const completed = gameManager.tutorEngine.getCompletedText();
- 76:                     const next = lesson.text[completed.length];
- 77:                     setProjectedGlyph(next || null);
- 78:                 }
- 79:             } else {
- 80:                 setProjectedGlyph(null);
- 81:             }
- 82:         };
- 83:         const unsubscribe = bus.subscribe(GameEventType.TUTOR_EVENT, () => {
- 84:             updateGlyph();
- 85:         });
- 86:         updateGlyph();
- 87:         return unsubscribe;
- 88:     }, [gameManager, bus]);
- 89:     useEffect(() => {
- 90:         if (isVisible) {
- 91:             Animated.timing(fadeAnim, {
- 92:                 toValue: 1,
- 93:                 duration: 300,
- 94:                 useNativeDriver
- 95:             }).start();
- 96:         } else {
- 97:             Animated.timing(fadeAnim, {
- 98:                 toValue: 0,
- 99:                 duration: 300,
-100:                 useNativeDriver
-101:             }).start();
-102:         }
-103:     }, [isVisible, fadeAnim, useNativeDriver]);
-104:     const dynamicStyles = StyleSheet.create({
-105:         overlay: {
-106:             ...StyleSheet.absoluteFillObject,
-107:             backgroundColor: 'rgba(0,0,0,0.85)',
-108:             justifyContent: 'center',
-109:             alignItems: 'center',
-110:             zIndex: 5,
-111:         },
-112:         verbText: {
-113:             fontFamily: THEME.typography.fontFamily,
-114:             fontSize: THEME.typography.fontSize.xl,
-115:             color: colors.primary,
-116:             fontWeight: 'bold',
-117:             textAlign: 'center',
-118:             letterSpacing: 4,
-119:         },
-120:         glyphText: {
-121:             fontFamily: THEME.typography.fontFamily,
-122:             fontSize: 160,
-123:             color: colors.secondary,
-124:             fontWeight: '900',
-125:         },
-126:         multiplierText: {
-127:             fontFamily: THEME.typography.fontFamily,
-128:             fontSize: 24,
-129:             color: '#000',
-130:             backgroundColor: colors.primary,
-131:             paddingHorizontal: 12,
-132:             paddingVertical: 4,
-133:             marginTop: 20,
-134:             letterSpacing: 2,
-135:             fontWeight: 'bold',
-136:         },
-137:         rewardText: {
-138:             fontFamily: THEME.typography.fontFamily,
-139:             fontSize: 16,
-140:             color: '#000',
-141:             backgroundColor: colors.secondary,
-142:             paddingHorizontal: 10,
-143:             paddingVertical: 2,
-144:             marginTop: 10,
-145:             fontWeight: 'bold',
-146:         },
-147:         perfectText: {
-148:             position: 'absolute',
-149:             top: '20%',
-150:             fontFamily: THEME.typography.fontFamily,
-151:             fontSize: 40,
-152:             color: colors.secondary,
-153:             fontWeight: 'bold',
-154:             letterSpacing: 8,
-155:         }
-156:     });
-157:     return (
-158:         <Animated.View
-159:             pointerEvents={isVisible ? 'auto' : 'none'}
-160:             style={[dynamicStyles.overlay, { opacity: isVisible ? fadeAnim : 0 }]}
-161:         >
-162:             {showPerfect && (
-163:                 <Animated.Text style={[dynamicStyles.perfectText, { opacity: perfectAnim, transform: [{ translateY: perfectAnim.interpolate({ inputRange: [0, 1], outputRange: [-20, 0] }) }] }]}>
-164:                     PERFECT
-165:                 </Animated.Text>
-166:             )}
-167:             {activeVerb && (
-168:                 <View style={{ alignItems: 'center' }}>
-169:                     <Text style={dynamicStyles.verbText}>{activeVerb}</Text>
-170:                     <View style={{ height: 2, backgroundColor: colors.primary, marginTop: 10, width: 300 }} />
-171:                 </View>
-172:             )}
-173:             {projectedGlyph && (
-174:                 <View style={{ alignItems: 'center' }}>
-175:                     <Animated.Text style={[dynamicStyles.glyphText, { transform: [{ scale: scaleAnim }] }]}>
-176:                         {projectedGlyph}
-177:                     </Animated.Text>
-178:                     <Text style={dynamicStyles.multiplierText}>{multiplier.toFixed(2)}x HASHRATE</Text>
-179:                     <Text style={dynamicStyles.rewardText}>
-180:                         +Ƶ {sessionReward.toFixed(12)}
-181:                     </Text>
-182:                 </View>
-183:             )}
-184:         </Animated.View>
-185:     );
-186: };
+ 58:             if (!gameManager.tutorEngine.isActive()) return;
+ 59:             setShowPerfect(true);
+ 60:             perfectAnim.setValue(1);
+ 61:             Animated.parallel([
+ 62:                 Animated.timing(perfectAnim, { toValue: 0, duration: 400, useNativeDriver }),
+ 63:             ]).start(() => setShowPerfect(false));
+ 64:         });
+ 65:         return () => {
+ 66:             unsubTutor();
+ 67:             unsubEconomy();
+ 68:             unsubKeystroke();
+ 69:         };
+ 70:     }, [bus, perfectAnim, useNativeDriver]);
+ 71:     useEffect(() => {
+ 72:         const updateGlyph = () => {
+ 73:             if (gameManager.tutorEngine.isActive()) {
+ 74:                 const lesson = gameManager.tutorEngine.getCurrentLesson();
+ 75:                 if (lesson) {
+ 76:                     const completed = gameManager.tutorEngine.getCompletedText();
+ 77:                     const next = lesson.text[completed.length];
+ 78:                     setProjectedGlyph(next || null);
+ 79:                 }
+ 80:             } else {
+ 81:                 setProjectedGlyph(null);
+ 82:             }
+ 83:         };
+ 84:         const unsubscribe = bus.subscribe(GameEventType.TUTOR_EVENT, () => {
+ 85:             updateGlyph();
+ 86:         });
+ 87:         updateGlyph();
+ 88:         return unsubscribe;
+ 89:     }, [gameManager, bus]);
+ 90:     useEffect(() => {
+ 91:         if (isVisible) {
+ 92:             Animated.timing(fadeAnim, {
+ 93:                 toValue: 1,
+ 94:                 duration: 300,
+ 95:                 useNativeDriver
+ 96:             }).start();
+ 97:         } else {
+ 98:             Animated.timing(fadeAnim, {
+ 99:                 toValue: 0,
+100:                 duration: 300,
+101:                 useNativeDriver
+102:             }).start();
+103:         }
+104:     }, [isVisible, fadeAnim, useNativeDriver]);
+105:     const dynamicStyles = StyleSheet.create({
+106:         overlay: {
+107:             ...StyleSheet.absoluteFillObject,
+108:             backgroundColor: 'rgba(0,0,0,0.85)',
+109:             justifyContent: 'center',
+110:             alignItems: 'center',
+111:             zIndex: 5,
+112:         },
+113:         verbText: {
+114:             fontFamily: THEME.typography.fontFamily,
+115:             fontSize: THEME.typography.fontSize.xl,
+116:             color: colors.primary,
+117:             fontWeight: 'bold',
+118:             textAlign: 'center',
+119:             letterSpacing: 4,
+120:         },
+121:         glyphText: {
+122:             fontFamily: THEME.typography.fontFamily,
+123:             fontSize: 160,
+124:             color: colors.secondary,
+125:             fontWeight: '900',
+126:         },
+127:         multiplierText: {
+128:             fontFamily: THEME.typography.fontFamily,
+129:             fontSize: 24,
+130:             color: '#000',
+131:             backgroundColor: colors.primary,
+132:             paddingHorizontal: 12,
+133:             paddingVertical: 4,
+134:             marginTop: 20,
+135:             letterSpacing: 2,
+136:             fontWeight: 'bold',
+137:         },
+138:         rewardText: {
+139:             fontFamily: THEME.typography.fontFamily,
+140:             fontSize: 16,
+141:             color: '#000',
+142:             backgroundColor: colors.secondary,
+143:             paddingHorizontal: 10,
+144:             paddingVertical: 2,
+145:             marginTop: 10,
+146:             fontWeight: 'bold',
+147:         },
+148:         perfectText: {
+149:             position: 'absolute',
+150:             top: '20%',
+151:             fontFamily: THEME.typography.fontFamily,
+152:             fontSize: 40,
+153:             color: colors.secondary,
+154:             fontWeight: 'bold',
+155:             letterSpacing: 8,
+156:         }
+157:     });
+158:     return (
+159:         <Animated.View
+160:             pointerEvents={isVisible ? 'auto' : 'none'}
+161:             style={[dynamicStyles.overlay, { opacity: isVisible ? fadeAnim : 0 }]}
+162:         >
+163:             {showPerfect && (
+164:                 <Animated.Text style={[dynamicStyles.perfectText, { opacity: perfectAnim, transform: [{ translateY: perfectAnim.interpolate({ inputRange: [0, 1], outputRange: [-20, 0] }) }] }]}>
+165:                     PERFECT
+166:                 </Animated.Text>
+167:             )}
+168:             {activeVerb && (
+169:                 <View style={{ alignItems: 'center' }}>
+170:                     <Text style={dynamicStyles.verbText}>{activeVerb}</Text>
+171:                     <View style={{ height: 2, backgroundColor: colors.primary, marginTop: 10, width: 300 }} />
+172:                 </View>
+173:             )}
+174:             {projectedGlyph && (
+175:                 <View style={{ alignItems: 'center' }}>
+176:                     <Animated.Text style={[dynamicStyles.glyphText, { transform: [{ scale: scaleAnim }] }]}>
+177:                         {projectedGlyph}
+178:                     </Animated.Text>
+179:                     <Text style={dynamicStyles.multiplierText}>{multiplier.toFixed(2)}x HASHRATE</Text>
+180:                     <Text style={dynamicStyles.rewardText}>
+181:                         +Ƶ {sessionReward.toFixed(12)}
+182:                     </Text>
+183:                 </View>
+184:             )}
+185:         </Animated.View>
+186:     );
+187: };
 </file>
 
 <file path="src/frameworks-drivers/ui/context/ProcessProvider.tsx">
@@ -31616,34 +31678,37 @@ This section contains the contents of the repository's files.
  5: import { ConsoleTelemetryAdapter } from '../../../infrastructure/telemetry/ConsoleTelemetryAdapter';
  6: import { CoreEngine } from '../../../core/CoreEngine';
  7: import { CommandCoordinator } from '../../../interface-adapters/controllers/CommandCoordinator';
- 8: interface ProcessContextType {
- 9:     gameManager: GameManager;
-10:     commandExecutor: GameCommandExecutor;
-11:     commandCoordinator: CommandCoordinator;
-12:     bus: SimulationBus;
-13:     telemetry: ConsoleTelemetryAdapter;
-14: }
-15: const ProcessContext = createContext<ProcessContextType | undefined>(undefined);
-16: export const ProcessProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-17:     const engine = CoreEngine.getInstance();
-18:     const gameManager = engine.getGameManager();
-19:     const commandExecutor = engine.getCommandExecutor();
-20:     const commandCoordinator = engine.getCommandCoordinator();
-21:     const bus = engine.getSimulationBus();
-22:     const telemetry = engine.getTelemetry();
-23:     return (
-24:         <ProcessContext.Provider value={{ gameManager, commandExecutor, commandCoordinator, bus, telemetry }}>
-25:             {children}
-26:         </ProcessContext.Provider>
-27:     );
-28: };
-29: export const useProcess = () => {
-30:     const context = useContext(ProcessContext);
-31:     if (!context) {
-32:         throw new Error('useProcess must be used within a ProcessProvider');
-33:     }
-34:     return context;
-35: };
+ 8: import { SimulationMediator } from '../../../core/presentation/SimulationMediator';
+ 9: interface ProcessContextType {
+10:     gameManager: GameManager;
+11:     commandExecutor: GameCommandExecutor;
+12:     commandCoordinator: CommandCoordinator;
+13:     simulationMediator: SimulationMediator;
+14:     bus: SimulationBus;
+15:     telemetry: ConsoleTelemetryAdapter;
+16: }
+17: const ProcessContext = createContext<ProcessContextType | undefined>(undefined);
+18: export const ProcessProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+19:     const engine = CoreEngine.getInstance();
+20:     const gameManager = engine.getGameManager();
+21:     const commandExecutor = engine.getCommandExecutor();
+22:     const commandCoordinator = engine.getCommandCoordinator();
+23:     const simulationMediator = engine.getSimulationMediator();
+24:     const bus = engine.getSimulationBus();
+25:     const telemetry = engine.getTelemetry();
+26:     return (
+27:         <ProcessContext.Provider value={{ gameManager, commandExecutor, commandCoordinator, simulationMediator, bus, telemetry }}>
+28:             {children}
+29:         </ProcessContext.Provider>
+30:     );
+31: };
+32: export const useProcess = () => {
+33:     const context = useContext(ProcessContext);
+34:     if (!context) {
+35:         throw new Error('useProcess must be used within a ProcessProvider');
+36:     }
+37:     return context;
+38: };
 </file>
 
 <file path="src/frameworks-drivers/ui/screens/ShellScreen.tsx">
@@ -31678,103 +31743,87 @@ This section contains the contents of the repository's files.
  29:     buffers: BufferDTO[];
  30:     activeView: 'SHELL' | 'COMMS' | 'BUFFERS';
  31:     ircMissionId: string | null;
- 32:     markLineComplete: () => void;
- 33:     handleKeyPress: (key: string) => void;
- 34:     toggleCommsView: () => void;
- 35:     toggleBufferView: () => void;
- 36:     setIrcMissionId: (id: string | null) => void;
- 37:     handleStartMission: (id: string) => void;
- 38:     handleAbandonMission: (id: string) => void;
- 39:     saveToArchive: (index: number) => void;
- 40:     toggleMinimize: (index: number) => void;
- 41:     deleteGroup: (index: number) => void;
- 42: }
- 43: export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
- 44:     const { theme } = useTheme();
- 45:     const components = useThemeComponents();
- 46:     const { isInputLocked } = useSystemState();
- 47:     const Layout = components.Layout;
- 48:     const { setOnInput, setOnKeyPress, refocus } = useInput();
- 49:     useEffect(() => {
- 50:         setOnInput((text) => {
- 51:             if (isInputLocked) return;
- 52:             for (const char of text) {
- 53:                 props.handleKeyPress(char);
- 54:             }
- 55:         });
- 56:         setOnKeyPress((key) => {
- 57:             if (isInputLocked) return;
- 58:             props.handleKeyPress(key);
- 59:         });
- 60:         const timer = setTimeout(refocus, 50);
- 61:         return () => clearTimeout(timer);
- 62:     }, [props.handleKeyPress, setOnInput, setOnKeyPress, refocus]);
- 63:     const handleFKeyAction = (action: string) => {
- 64:         if (action === 'HELP') {
- 65:             ['h', 'e', 'l', 'p', 'ENTER'].forEach(k => props.handleKeyPress(k));
- 66:         } else if (action === 'IRC') {
- 67:             props.toggleCommsView();
- 68:         } else if (action === 'BUFFERS') {
- 69:             props.toggleBufferView();
- 70:         }
- 71:     };
- 72:     const keys: FKeyDef[] = [
- 73:         { key: 'F1', label: 'HELP', action: () => handleFKeyAction('HELP') },
- 74:         { key: 'F2', label: 'COMMS', action: () => handleFKeyAction('IRC') },
- 75:         { key: 'F3', label: 'ARCHIVE', action: () => handleFKeyAction('BUFFERS') },
- 76:         { key: 'TAB', label: 'AUTO', action: () => props.handleKeyPress('TAB') },
- 77:         { key: '▲', label: 'UP', action: () => props.handleKeyPress('UP') },
- 78:         { key: '▼', label: 'DOWN', action: () => props.handleKeyPress('DOWN') },
- 79:         { key: 'ENT', label: 'EXEC', action: () => props.handleKeyPress('ENTER') },
- 80:     ];
- 81:     const shellView = useShellView({
- 82:         outputLines: props.outputLines,
- 83:         renderedLineCount: props.renderedLineCount,
- 84:         markLineComplete: props.markLineComplete,
- 85:         input: props.input,
- 86:         ghostText: props.ghostText,
- 87:         user: props.state.environment.USER || 'operator',
- 88:         hostname: props.state.fsContext || props.state.environment.HOSTNAME || 'system',
- 89:         tutorEmotion: props.tutorEmotion,
- 90:         crashingIndices: props.crashingIndices,
- 91:         contextualHint: props.contextualHint,
- 92:         onRefocus: refocus,
- 93:         onKeyPress: props.handleKeyPress,
- 94:         onFKeyAction: handleFKeyAction,
- 95:         onSave: props.saveToArchive,
- 96:         onMinimize: props.toggleMinimize,
- 97:         onDelete: props.deleteGroup
- 98:     });
- 99:     const activeMission = props.missions.find(m => m.status === 'active');
-100:     const missionName = activeMission ? activeMission.type.toUpperCase() : null;
-101:     const statusText = "OPERATIONAL";
-102:     const mainLayout = (
-103:         <View style={{ flex: 1 }}>
-104:             {shellView.topContent}
-105:             <MainframeOverlay />
-106:             <TheatricalCanvas />
-107:         </View>
-108:     );
-109:     const statusBar = (
-110:         <StatusBar
-111:             status={props.state.fsContext ? "REMOTE" : "OPERATIONAL"}
-112:             user={props.state.environment.USER || "OPERATOR"}
-113:             connectionStatus={props.state.fsContext ? 'SECURE' : 'LOCAL'}
-114:             activeMissionName={missionName}
-115:         />
-116:     );
-117:     return (
-118:         <Layout
-119:             headerComponent={statusBar}
-120:             status={statusText}
-121:             topContent={mainLayout}
-122:             middleContent={<FKeyBar keys={keys} />}
-123:             bottomContent={shellView.bottomContent}
-124:             tutorBarComponent={<GlobalTutorBar />}
-125:             economyBarComponent={<EconomyBar />}
-126:         />
-127:     );
-128: };
+ 32:     fKeys: FKeyDef[];
+ 33:     handleAction: (action: string) => void;
+ 34:     markLineComplete: () => void;
+ 35:     handleKeyPress: (key: string) => void;
+ 36:     toggleCommsView: () => void;
+ 37:     toggleBufferView: () => void;
+ 38:     setIrcMissionId: (id: string | null) => void;
+ 39:     handleStartMission: (id: string) => void;
+ 40:     handleAbandonMission: (id: string) => void;
+ 41:     saveToArchive: (index: number) => void;
+ 42:     toggleMinimize: (index: number) => void;
+ 43:     deleteGroup: (index: number) => void;
+ 44: }
+ 45: export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
+ 46:     const { theme } = useTheme();
+ 47:     const components = useThemeComponents();
+ 48:     const { isInputLocked } = useSystemState();
+ 49:     const Layout = components.Layout;
+ 50:     const { setOnInput, setOnKeyPress, refocus } = useInput();
+ 51:     useEffect(() => {
+ 52:         setOnInput((text) => {
+ 53:             if (isInputLocked) return;
+ 54:             for (const char of text) {
+ 55:                 props.handleKeyPress(char);
+ 56:             }
+ 57:         });
+ 58:         setOnKeyPress((key) => {
+ 59:             if (isInputLocked) return;
+ 60:             props.handleKeyPress(key);
+ 61:         });
+ 62:         const timer = setTimeout(refocus, 50);
+ 63:         return () => clearTimeout(timer);
+ 64:     }, [props.handleKeyPress, setOnInput, setOnKeyPress, refocus, isInputLocked]);
+ 65:     const shellView = useShellView({
+ 66:         outputLines: props.outputLines,
+ 67:         renderedLineCount: props.renderedLineCount,
+ 68:         markLineComplete: props.markLineComplete,
+ 69:         input: props.input,
+ 70:         ghostText: props.ghostText,
+ 71:         user: props.state.environment.USER || 'operator',
+ 72:         hostname: props.state.fsContext || props.state.environment.HOSTNAME || 'system',
+ 73:         tutorEmotion: props.tutorEmotion,
+ 74:         crashingIndices: props.crashingIndices,
+ 75:         contextualHint: props.contextualHint,
+ 76:         onRefocus: refocus,
+ 77:         onKeyPress: props.handleKeyPress,
+ 78:         onFKeyAction: props.handleAction,
+ 79:         onSave: props.saveToArchive,
+ 80:         onMinimize: props.toggleMinimize,
+ 81:         onDelete: props.deleteGroup
+ 82:     });
+ 83:     const activeMission = props.missions.find(m => m.status === 'active');
+ 84:     const missionName = activeMission ? activeMission.type.toUpperCase() : null;
+ 85:     const statusText = "OPERATIONAL";
+ 86:     const mainLayout = (
+ 87:         <View style={{ flex: 1 }}>
+ 88:             {shellView.topContent}
+ 89:             <MainframeOverlay />
+ 90:             <TheatricalCanvas />
+ 91:         </View>
+ 92:     );
+ 93:     const statusBar = (
+ 94:         <StatusBar
+ 95:             status={props.state.fsContext ? "REMOTE" : "OPERATIONAL"}
+ 96:             user={props.state.environment.USER || "OPERATOR"}
+ 97:             connectionStatus={props.state.fsContext ? 'SECURE' : 'LOCAL'}
+ 98:             activeMissionName={missionName}
+ 99:         />
+100:     );
+101:     return (
+102:         <Layout
+103:             headerComponent={statusBar}
+104:             status={statusText}
+105:             topContent={mainLayout}
+106:             middleContent={<FKeyBar keys={props.fKeys} />}
+107:             bottomContent={shellView.bottomContent}
+108:             tutorBarComponent={<GlobalTutorBar />}
+109:             economyBarComponent={<EconomyBar />}
+110:         />
+111:     );
+112: };
 </file>
 
 <file path="src/frameworks-drivers/ui/screens/TerminalScreen.tsx">
@@ -31805,13 +31854,13 @@ This section contains the contents of the repository's files.
  25: });
  26: export const TerminalScreen: React.FC = () => {
  27:     const { fs } = useFileSystem();
- 28:     const { gameManager, commandCoordinator } = useProcess();
+ 28:     const { gameManager, commandCoordinator, simulationMediator } = useProcess();
  29:     const { tutorShadow } = useTutorPersona();
  30:     const { theme } = useTheme();
  31:     const components = useThemeComponents();
  32:     const Layout = components.Layout;
  33:     const colors = theme.colors;
- 34:     const viewModel = useTerminalViewModel(fs, commandCoordinator, gameManager, tutorShadow);
+ 34:     const viewModel = useTerminalViewModel(fs, commandCoordinator, gameManager, tutorShadow, simulationMediator);
  35:     const crtStyle = {
  36:         ...StyleSheet.absoluteFillObject,
  37:         backgroundColor: colors.background,
@@ -31900,31 +31949,33 @@ This section contains the contents of the repository's files.
 120:             buffers={viewModel.buffers}
 121:             activeView={viewModel.activeView}
 122:             ircMissionId={viewModel.ircMissionId}
-123:             markLineComplete={viewModel.markLineComplete}
-124:             handleKeyPress={viewModel.handleKeyPress}
-125:             toggleCommsView={viewModel.toggleCommsView}
-126:             toggleBufferView={viewModel.toggleBufferView}
-127:             setIrcMissionId={viewModel.setIrcMissionId}
-128:             handleStartMission={viewModel.handleStartMission}
-129:             handleAbandonMission={viewModel.handleAbandonMission}
-130:             saveToArchive={viewModel.saveToArchive}
-131:             toggleMinimize={viewModel.toggleMinimize}
-132:             deleteGroup={viewModel.deleteGroup}
-133:         />
-134:     );
-135:     const renderActiveContent = () => {
-136:         if (viewModel.activeApp.type === 'VIM') return renderVim();
-137:         if (viewModel.activeView === 'COMMS') return renderComms();
-138:         if (viewModel.activeView === 'BUFFERS') return renderBuffers();
-139:         return renderShell();
-140:     };
-141:     return (
-142:         <View style={styles.container}>
-143:             {renderActiveContent()}
-144:             {viewModel.isTransitioning && <View style={crtStyle} />}
-145:         </View>
-146:     );
-147: };
+123:             fKeys={viewModel.fKeys}
+124:             handleAction={viewModel.handleAction}
+125:             markLineComplete={viewModel.markLineComplete}
+126:             handleKeyPress={viewModel.handleKeyPress}
+127:             toggleCommsView={viewModel.toggleCommsView}
+128:             toggleBufferView={viewModel.toggleBufferView}
+129:             setIrcMissionId={viewModel.setIrcMissionId}
+130:             handleStartMission={viewModel.handleStartMission}
+131:             handleAbandonMission={viewModel.handleAbandonMission}
+132:             saveToArchive={viewModel.saveToArchive}
+133:             toggleMinimize={viewModel.toggleMinimize}
+134:             deleteGroup={viewModel.deleteGroup}
+135:         />
+136:     );
+137:     const renderActiveContent = () => {
+138:         if (viewModel.activeApp.type === 'VIM') return renderVim();
+139:         if (viewModel.activeView === 'COMMS') return renderComms();
+140:         if (viewModel.activeView === 'BUFFERS') return renderBuffers();
+141:         return renderShell();
+142:     };
+143:     return (
+144:         <View style={styles.container}>
+145:             {renderActiveContent()}
+146:             {viewModel.isTransitioning && <View style={crtStyle} />}
+147:         </View>
+148:     );
+149: };
 </file>
 
 </files>
