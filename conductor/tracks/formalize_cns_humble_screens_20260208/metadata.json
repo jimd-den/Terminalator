@@ -1,0 +1,8 @@
+{
+  "track_id": "formalize_cns_humble_screens_20260208",
+  "type": "refactor",
+  "status": "new",
+  "created_at": "2026-02-08T01:00:00Z",
+  "updated_at": "2026-02-08T01:00:00Z",
+  "description": "Formalize Central Nervous System (Mediator) and refactor primary screens into Humble Views."
+}
