@@ -9,7 +9,7 @@
     - [ ] Create unit tests to verify services are instantiated and accessible without React.
 - [x] Task: Conductor - User Manual Verification 'Core Engine Bootstrapping' (Protocol in workflow.md)
 
-## Phase 2: Domain Provider Creation
+## Phase 2: Domain Provider Creation [checkpoint: 1e875ba]
 *This phase creates granular Context Providers that wrap the `CoreEngine` services.*
 
 - [x] Task: Create `FileSystemProvider`
