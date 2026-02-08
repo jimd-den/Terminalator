@@ -51,7 +51,7 @@
     - [x] Remove `src/frameworks-drivers/ui/context/GameContext.tsx`.
 - [x] Task: Conductor - User Manual Verification 'Migration & Integration' (Protocol in workflow.md)
 
-## Phase 4: Final Verification
+## Phase 4: Final Verification [checkpoint: 8fd5900]
 *This phase confirms that the architecture is robust and performance is improved.*
 
 - [x] Task: Run Smoke Tests
