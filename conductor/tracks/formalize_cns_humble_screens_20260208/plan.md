@@ -19,22 +19,22 @@
 ## Phase 2: Awaitable Animation Refactor
 *Goal: Ensure animations drive the timing, not hardcoded timeouts.*
 
-- [ ] Task: Update `TheatricalCanvas`
-    - [ ] Refactor animation logic to emit `ANIMATION_COMPLETE` via the bus when the animation finishes.
-- [ ] Task: Update `PresentationDirector`
-    - [ ] Remove hardcoded `setTimeout`.
-    - [ ] Ensure it correctly triggers the Canvas via the bus.
-- [ ] Task: Conductor - User Manual Verification 'Awaitable Animation' (Protocol in workflow.md)
+- [x] Task: Update `TheatricalCanvas`
+    - [x] Refactor animation logic to emit `ANIMATION_COMPLETE` via the bus when the animation finishes.
+- [x] Task: Update `PresentationDirector`
+    - [x] Remove hardcoded `setTimeout`.
+    - [x] Ensure it correctly triggers the Canvas via the bus.
+- [x] Task: Conductor - User Manual Verification 'Awaitable Animation' (Protocol in workflow.md)
 
-## Phase 3: Theatrical Input Proxy (Humble Gating)
+## Phase 3: Theatrical Input Proxy (Humble Gating) [checkpoint: 73e5aff]
 *Goal: Implement the lock using event observation.*
 
-- [ ] Task: Update `useTheatricalInputLock`
-    - [ ] Refactor to listen for `THEATRE_ACTIVE` and `THEATRE_COMPLETE` instead of `PRESENTATION_START/END`.
-    - [ ] Ensure it correctly toggles the `InputContext` locked state.
-- [ ] Task: Verify Input Locking
-    - [ ] Ensure keyboard input is ignored during the "active" window.
-- [ ] Task: Conductor - User Manual Verification 'Input Proxy' (Protocol in workflow.md)
+- [x] Task: Update `useTheatricalInputLock`
+    - [x] Refactor to listen for `THEATRE_ACTIVE` and `THEATRE_COMPLETE` instead of `PRESENTATION_START/END`.
+    - [x] Ensure it correctly toggles the `InputContext` locked state.
+- [x] Task: Verify Input Locking
+    - [x] Ensure keyboard input is ignored during the "active" window.
+- [x] Task: Conductor - User Manual Verification 'Input Proxy' (Protocol in workflow.md)
 
 ## Phase 4: Humble View Refactor (Key Handling)
 *Goal: Move all key interpretation to the ViewModel.*
