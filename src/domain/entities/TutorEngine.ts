@@ -14,6 +14,13 @@
  */
 
 import { FileSystem } from './FileSystem';
+import { SimulationBus, GameEventType } from '../services/SimulationBus';
+
+export enum InputResult {
+    ACCEPTED = 'ACCEPTED',
+    REJECTED = 'REJECTED',
+    IGNORED = 'IGNORED'
+}
 
 export enum TutorEmotion {
     NORMAL = 'NORMAL',
@@ -57,7 +64,7 @@ export class TutorEngine {
 
     private listeners: ((event: TutorEvent) => void)[] = [];
 
-    constructor() { }
+    constructor(private bus?: SimulationBus) { }
 
     public startLesson(lesson: Lesson): boolean {
         if (!lesson) return false;
@@ -115,8 +122,8 @@ export class TutorEngine {
      * Core Rhythm Mechanic:
      * Handles a keystroke. If match, advance. If mismatch, rewind (penalty).
      */
-    public handleInput(char: string): void {
-        if (!this.active || !this.currentLesson) return;
+    public handleInput(char: string): InputResult {
+        if (!this.active || !this.currentLesson) return InputResult.IGNORED;
 
         const now = Date.now();
         this.trackSpeed(now);
@@ -134,6 +141,7 @@ export class TutorEngine {
             if (this.progressIndex >= this.currentLesson.text.length) {
                 this.completeLesson();
             }
+            return InputResult.ACCEPTED;
         } else {
             // 2. Mismatch logic
             this.consecutiveMistakes++;
@@ -157,6 +165,7 @@ export class TutorEngine {
                 // Emit Correction Event (UI should show angry backspace)
                 this.emit({ type: 'CORRECTION', payload: { expected: targetChar, actual: char } });
             }
+            return InputResult.REJECTED;
         }
     }
 
@@ -229,7 +238,10 @@ export class TutorEngine {
         };
     }
 
-    private emit(event: TutorEvent) {
+    public emit(event: TutorEvent) {
         this.listeners.forEach(l => l(event));
+        if (this.bus) {
+            this.bus.emit(GameEventType.TUTOR_EVENT, event);
+        }
     }
 }

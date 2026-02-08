@@ -69,6 +69,7 @@ import { ExprCommand } from '../commands/core/ExprCommand';
 import { TestCommand } from '../commands/core/TestCommand';
 import { OdCommand } from '../commands/core/OdCommand';
 import { UuencodeCommand } from '../commands/core/UuencodeCommand';
+import { UuencodeCommand as UuencodeCommandAlias } from '../commands/core/UuencodeCommand';
 import { UudecodeCommand } from '../commands/core/UudecodeCommand';
 import { WhoCommand } from '../commands/core/WhoCommand';
 import { TtyCommand } from '../commands/core/TtyCommand';
@@ -153,7 +154,6 @@ import { PaxCommand } from '../commands/core/PaxCommand';
 import { LpCommand } from '../commands/core/LpCommand';
 import { ReniceCommand } from '../commands/core/ReniceCommand';
 import { AdminCommand } from '../commands/core/AdminCommand';
-import { C17Command } from '../commands/core/C17Command';
 import { CflowCommand } from '../commands/core/CflowCommand';
 import { CsplitCommand } from '../commands/core/CsplitCommand';
 import { CtagsCommand } from '../commands/core/CtagsCommand';
@@ -185,24 +185,25 @@ import { GzipCommand } from '../commands/core/GzipCommand';
 import { GunzipCommand } from '../commands/core/GunzipCommand';
 import { TarCommand } from '../commands/core/TarCommand';
 import { CpioCommand } from '../commands/core/CpioCommand';
-import { WasmCompilerService } from '../../infrastructure/services/WasmCompilerService';
 import { GccCommand } from '../commands/core/GccCommand';
 import { WhoamiCommand } from '../commands/core/WhoamiCommand';
 import { DateCommand } from '../commands/core/DateCommand';
 import { GuiCommand } from '../commands/special/GuiCommand';
 import { DispatchCommand } from '../commands/special/DispatchCommand';
 import { ScpCommand } from '../commands/core/ScpCommand';
+import { CodeCompiler } from '../usecases/CodeCompiler';
 
 export class CoreUtilsModule implements CommandModule {
     private fsService: FileSystemService;
+    private compiler: CodeCompiler;
 
     constructor(private fs: FileSystem, private identityService: IdentityService) {
         this.fsService = new FileSystemService(fs);
+        this.compiler = new CodeCompiler(fs);
     }
 
     register(registry: CommandRegistry): void {
         const fsService = this.fsService;
-        const fs = this.fs; // Keep fs for Wasm/Legacy if needed
 
         registry.register('ls', new LsCommand(fsService));
         registry.register('cd', new CdCommand(fsService));
@@ -316,7 +317,6 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('unset', new UnsetCommand());
         registry.register('export', new ExportCommand());
         registry.register('readonly', new ReadonlyCommand());
-        registry.register('exec', new ExecCommand());
         registry.register('eval', new EvalCommand());
         registry.register('break', new BreakCommand());
         registry.register('continue', new ContinueCommand());
@@ -347,7 +347,7 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('lp', new LpCommand());
         registry.register('renice', new ReniceCommand());
         registry.register('admin', new AdminCommand());
-        registry.register('c17', new C17Command(new WasmCompilerService(fsService), fsService));
+        registry.register('c17', new GccCommand(this.compiler, fsService));
         registry.register('cflow', new CflowCommand(fsService));
         registry.register('csplit', new CsplitCommand());
         registry.register('ctags', new CtagsCommand());
@@ -379,7 +379,7 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('gunzip', new GunzipCommand());
         registry.register('tar', new TarCommand());
         registry.register('cpio', new CpioCommand());
-        registry.register('gcc', new GccCommand(new WasmCompilerService(fsService), fsService));
+        registry.register('gcc', new GccCommand(this.compiler, fsService));
 
         // Factory-like registration for Xargs to avoid circular dependency in constructor
         registry.register('xargs', new XargsCommand(fsService, (name) => registry.get(name)));

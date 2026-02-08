@@ -10,14 +10,11 @@ import { getStdinAsString } from '../../entities/ProcessContext';
  *
  * Intent:
  * Allows the operator to process text columns.
- *
- * Note:
- * Uses `new Function` to simulate the AWK interpreter. This is acceptable within the
- * context of a client-side simulation where the "environment" is already sandboxed
- * by the browser/runtime, but would be a security risk in a server-side shell.
+ * Refactored to implement IStructuredCommand for combinatorial scaling.
  */
 
-import { ICommand } from '../ICommand';
+import { CommandBase } from '../CommandBase';
+import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
@@ -27,65 +24,70 @@ import { AwkLexer } from './awk/AwkLexer';
 import { AwkParser } from './awk/AwkParser';
 import { AwkInterpreter } from './awk/AwkInterpreter';
 
-export class AwkCommand implements ICommand {
-    private fs: FileSystemService;
-    constructor(fs: FileSystemService) {
-        this.fs = fs;
+export class AwkCommand extends CommandBase {
+    public readonly capabilities = [CommandCapability.TRANSFORM, CommandCapability.FILTER];
+    public readonly utility = 'awk';
+
+    constructor(private fs: FileSystemService) {
+        super();
     }
 
-    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+    /**
+     * Protocol: Build arguments programmatically.
+     */
+    public override buildArgs(requirements: Record<string, any>): string[] {
+        const args: string[] = [];
+        if (requirements.fieldSeparator) args.push('-F', requirements.fieldSeparator);
+        if (requirements.program) args.push(requirements.program);
+        if (requirements.path) args.push(requirements.path);
+        return args;
+    }
+
+    protected override parseArgs(args: string[]) {
+        // awk options that take arguments: -F, -v
+        super.parseArgs(args, ['F', 'v']);
+    }
+
+    protected async executeInternal(
+        rawArgs: string[],
+        flags: Set<string>,
+        operands: string[],
+        context: ProcessContext,
+        state: TerminalState
+    ): Promise<CommandResponse> {
         const input = getStdinAsString(context);
         let program = '';
         const files: string[] = [];
-        let fieldSeparator = ' ';
+        let fieldSeparator = this.options.get('F') || ' ';
 
-        let skipNext = false;
-        for (let i = 0; i < args.length; i++) {
-            if (skipNext) {
-                skipNext = false;
-                continue;
-            }
-            const arg = args[i];
-            if (arg.startsWith('-F')) {
-                if (arg.length > 2) {
-                    fieldSeparator = arg.substring(2);
-                } else if (i + 1 < args.length) {
-                    fieldSeparator = args[i + 1];
-                    skipNext = true;
-                }
-            } else if (!program && !arg.startsWith('-')) {
-                program = arg;
-            } else if (arg.startsWith('-')) {
-                // flags ignored for now
-            } else {
-                files.push(arg);
-            }
+        let opIndex = 0;
+        if (operands.length > 0) {
+            program = operands[opIndex++];
+        }
+
+        while (opIndex < operands.length) {
+            files.push(operands[opIndex++]);
         }
 
         if (!program) {
             return { output: 'awk: missing program', newState: state, exitCode: 1 };
         }
 
-        // Robustness: Strip surrounding quotes if the parser left them
         if ((program.startsWith("'") && program.endsWith("'")) || (program.startsWith('"') && program.endsWith('"'))) {
             program = program.slice(1, -1);
         }
 
         try {
-            // Handle -F by prepending BEGIN block before parsing
             if (fieldSeparator !== ' ') {
                 program = `BEGIN { FS="${fieldSeparator}" } ` + program;
             }
 
-            // 1. Lexing
             const lexer = new AwkLexer(program);
             const tokens = lexer.tokenize();
 
-            // 2. Parsing
             const parser = new AwkParser(tokens);
             const ast = parser.parse();
 
-            // 3. Read input content (unified logic)
             let content = '';
             if (files.length > 0) {
                 for (const file of files) {
@@ -101,7 +103,6 @@ export class AwkCommand implements ICommand {
                 content = input;
             }
 
-            // 4. Execute
             const interpreter = new AwkInterpreter();
             const output = interpreter.execute(ast, content);
             return { output: output.trimEnd(), newState: state, exitCode: 0 };

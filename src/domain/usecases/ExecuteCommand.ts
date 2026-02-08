@@ -15,6 +15,11 @@ import { ShellInterpreter } from '../services/ShellInterpreter';
 import { RedirectionService } from '../services/RedirectionService';
 import { mergeState, fail } from '../utils/TerminalStateUtils';
 import { NetworkMap } from '../services/NetworkMap';
+import { IWorldManager } from '../interfaces/IWorldManager';
+import { RISCVInterpreter } from './asm/RISCVInterpreter';
+import { CpuState } from '../entities/asm/CpuState';
+
+export { CommandResponse };
 
 /**
  * ExecuteCommand (Refactored Facade)
@@ -35,13 +40,16 @@ export class ExecuteCommand implements IShellExecutor {
     private interpreter: ShellInterpreter;
     private redirectionService: RedirectionService;
     protected networkMap: NetworkMap;
+    private worldManager?: IWorldManager;
+    private riscv: RISCVInterpreter;
 
     constructor(
         fsOrService: FileSystem | FileSystemService,
         protected telemetry?: TelemetryPort,
         registry?: CommandRegistry,
         protected binaryRunner?: IBinaryRunner,
-        networkMap?: NetworkMap
+        networkMap?: NetworkMap,
+        worldManager?: IWorldManager
     ) {
         if (fsOrService instanceof FileSystemService) {
             this.service = fsOrService;
@@ -51,7 +59,15 @@ export class ExecuteCommand implements IShellExecutor {
             this.service = new FileSystemService(this.fs);
         }
 
+        this.worldManager = worldManager;
         this.networkMap = networkMap || new NetworkMap();
+        this.riscv = new RISCVInterpreter();
+        
+        // Register local host
+        if (this.worldManager) {
+            this.worldManager.registerHost('terminalator', this.service);
+        }
+
         this.parser = new ShellParser();
         this.expansionService = new ShellExpansionService(this.service);
         this.jobControl = new JobControlService();
@@ -104,6 +120,17 @@ export class ExecuteCommand implements IShellExecutor {
         }
 
         // 2. Remote Context (SSH)
+        if (state.fsContext && this.worldManager) {
+            const remoteService = this.worldManager.getHostFileSystem(state.fsContext);
+            if (remoteService) {
+                if (this.telemetry) {
+                    this.telemetry.info(`[ExecuteCommand] Switching to remote interpreter for host: ${state.fsContext}`);
+                }
+                return this.createInterpreter(remoteService);
+            }
+        }
+
+        // 3. Fallback to NetworkMap (Legacy)
         if (this.networkMap) {
             const remoteFs = this.networkMap.getSystem(state.fsContext);
             if (remoteFs) {
@@ -121,6 +148,36 @@ export class ExecuteCommand implements IShellExecutor {
     async execute(input: string, state: TerminalState): Promise<CommandResponse> {
         const executeLogic = async (): Promise<CommandResponse> => {
             if (!input.trim()) return { output: '', exitCode: 0, newState: state, command: input };
+
+            // 1. Artifact Detection (Phase 1: Glass Box)
+            const parts = input.trim().split(/\s+/);
+            const cmd = parts[0];
+            if (cmd.startsWith('./') || cmd.startsWith('/')) {
+                const node = this.service.resolve(cmd, state.currentDirectory);
+                if (node) {
+                    const inode = this.service.getInode(node.inodeId);
+                    if (inode && typeof inode.content === 'string' && inode.content.includes('"type": "RISCV_EXECUTABLE"')) {
+                        try {
+                            const artifact = JSON.parse(inode.content);
+                            const cpu = new CpuState();
+                            const res = this.riscv.run(
+                                artifact.program,
+                                new Uint8Array(artifact.memory),
+                                cpu,
+                                new Map(Object.entries(artifact.labels))
+                            );
+                            return {
+                                output: res.stdout,
+                                exitCode: res.exitCode,
+                                newState: state,
+                                command: input
+                            };
+                        } catch (e: any) {
+                            return { output: `Runtime Error: ${e.message}`, exitCode: 1, newState: state, command: input };
+                        }
+                    }
+                }
+            }
 
             try {
                 const ast = this.parser.parse(input);

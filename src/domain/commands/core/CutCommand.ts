@@ -10,9 +10,11 @@ import { getStdinAsString } from '../../entities/ProcessContext';
  *
  * Intent:
  * Allows the operator to extract sections from each line of input.
+ * Refactored to implement IStructuredCommand for combinatorial scaling.
  */
 
-import { ICommand } from '../ICommand';
+import { CommandBase } from '../CommandBase';
+import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
@@ -28,36 +30,38 @@ interface CutOptions {
     files: string[];
 }
 
-export class CutCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+export class CutCommand extends CommandBase {
+    public readonly capabilities = [CommandCapability.FILTER];
+    public readonly utility = 'cut';
 
-    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+    constructor(private fs: FileSystemService) { 
+        super();
+    }
+
+    protected override parseArgs(args: string[]) {
+        // cut options that take arguments: -b, -c, -f, -d
+        super.parseArgs(args, ['b', 'c', 'f', 'd']);
+    }
+
+    protected async executeInternal(
+        rawArgs: string[],
+        flags: Set<string>,
+        operands: string[],
+        context: ProcessContext,
+        state: TerminalState
+    ): Promise<CommandResponse> {
         const input = getStdinAsString(context);
         const options: CutOptions = {
-            delimiter: '\t',
-            suppress: false,
-            files: []
+            bytes: this.options.get('b'),
+            chars: this.options.get('c'),
+            fields: this.options.get('f'),
+            delimiter: this.options.get('d') || '\t',
+            suppress: flags.has('s'),
+            files: operands
         };
 
-        // Argument Parsing
-        for (let i = 0; i < args.length; i++) {
-            const arg = args[i];
-            if (arg === '-b') {
-                options.bytes = args[++i];
-            } else if (arg === '-c') {
-                options.chars = args[++i];
-            } else if (arg === '-f') {
-                options.fields = args[++i];
-            } else if (arg === '-d') {
-                options.delimiter = args[++i];
-                if (options.delimiter && options.delimiter.startsWith('"') && options.delimiter.endsWith('"')) {
-                    options.delimiter = options.delimiter.slice(1, -1);
-                }
-            } else if (arg === '-s') {
-                options.suppress = true;
-            } else if (!arg.startsWith('-')) {
-                options.files.push(arg);
-            }
+        if (options.delimiter && options.delimiter.startsWith('"') && options.delimiter.endsWith('"')) {
+            options.delimiter = options.delimiter.slice(1, -1);
         }
 
         if (!options.bytes && !options.chars && !options.fields) {
@@ -85,8 +89,6 @@ export class CutCommand implements ICommand {
                 }
                 try {
                     const resolvedPath = this.resolvePath(file, state);
-                    const node = this.fs.resolve(resolvedPath);
-                    if (!node) throw new Error();
                     inputContent += this.fs.readFile(resolvedPath) + '\n';
                 } catch (e) {
                     return {
@@ -106,7 +108,6 @@ export class CutCommand implements ICommand {
         const lines = inputContent.split('\n');
         const results: string[] = [];
 
-        // Processing
         for (const line of lines) {
             if (line === '') {
                 results.push('');

@@ -9,31 +9,40 @@ import { getStdinAsString } from '../../entities/ProcessContext';
  *
  * Intent:
  * Break long lines for display.
+ * Refactored to implement IStructuredCommand for combinatorial scaling.
  */
 
-import { ICommand } from '../ICommand';
+import { CommandBase } from '../CommandBase';
+import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
 
 import { FileSystemService } from '../../services/FileSystemService';
 
-export class FoldCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+export class FoldCommand extends CommandBase {
+    public readonly capabilities = [CommandCapability.TRANSFORM];
+    public readonly utility = 'fold';
 
-    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+    constructor(private fs: FileSystemService) { 
+        super();
+    }
+
+    protected override parseArgs(args: string[]) {
+        // fold options that take arguments: -w
+        super.parseArgs(args, ['w']);
+    }
+
+    protected async executeInternal(
+        rawArgs: string[],
+        flags: Set<string>,
+        operands: string[],
+        context: ProcessContext,
+        state: TerminalState
+    ): Promise<CommandResponse> {
         const input = getStdinAsString(context);
-        let width = 80;
-        let files: string[] = [];
-
-        for (let i = 0; i < args.length; i++) {
-            const arg = args[i];
-            if (arg === '-w') {
-                width = parseInt(args[++i], 10) || 80;
-            } else if (!arg.startsWith('-')) {
-                files.push(arg);
-            }
-        }
+        let width = parseInt(this.options.get('w') || '80', 10) || 80;
+        let files = operands;
 
         let content = '';
 
@@ -42,9 +51,6 @@ export class FoldCommand implements ICommand {
                 try {
                     const path = this.resolvePath(file, state);
                     content += this.fs.readFile(path);
-                    // Add newline between files? standard fold catenates?
-                    // Usually tools operate sequentially.
-                    // For simplicity, we concat.
                 } catch (e) {
                     return { output: `fold: ${file}: No such file`, newState: state, exitCode: 1 };
                 }

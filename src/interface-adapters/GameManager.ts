@@ -1,4 +1,4 @@
-
+import { getStdinAsString } from '../domain/entities/ProcessContext';
 import { IGameManager } from '../domain/interfaces/IGameManager';
 import { NetworkMap } from '../domain/services/NetworkMap';
 import { TerminalState } from '../domain/entities/TerminalState';
@@ -8,219 +8,837 @@ import { Mission, MissionStep } from '../domain/entities/Mission';
 import { MailSystem } from '../domain/usecases/MailSystem';
 import { FileSystem } from '../domain/entities/FileSystem';
 import { TelemetryPort } from '../domain/ports/TelemetryPort';
-import { FileSystemService } from '../domain/services/FileSystemService';
 import { TutorEngine, Lesson } from '../domain/entities/TutorEngine';
+import { PresentationDirector } from '../domain/services/PresentationDirector';
 import { LessonService } from '../domain/services/LessonService';
 import { LessonType } from '../domain/services/LessonGenerator';
 
-// New Domain Services
 import { MissionService } from '../domain/services/MissionService';
+
 import { NPCService } from '../domain/services/NPCService';
-import { SystemPreparationService } from '../domain/services/SystemPreparationService';
-import { MissionRepository } from '../domain/services/MissionRepository';
-import { LessonRegistry } from '../domain/services/LessonRegistry';
-import { TutorService } from '../domain/services/TutorService';
+
+import { WorldPatchService } from '../domain/services/world/WorldPatchService';
+
 import { LessonCoordinator } from './LessonCoordinator';
 
-/**
- * GameManager - Interface Adapter layer
- * 
- * Acts as a Facade/Coordinator for the game's various subsystems.
- * It delegatest heavy lifting to specialized Domain Services while
- * providing a unified interface for the UI and other adapters.
- *
- * Pillar: The Four-Fold Shield (Strict Architecture)
- * Pillar: The Balanced Scale (SOLID / KISS) - SRP: This class is now a coordinator.
- */
-export class GameManager implements IGameManager {
-    private missionService: MissionService;
-    private npcService: NPCService;
-    private systemPreparationService: SystemPreparationService;
-    private lessonCoordinator: LessonCoordinator;
-    private mailSystem: MailSystem;
-    private lessonService: LessonService;
+import { IWorldManager } from '../domain/interfaces/IWorldManager';
 
-    public readonly tutorEngine: TutorEngine;
+import { IWorldStateProvider } from '../domain/interfaces/IWorldStateProvider';
+
+import { SystemPreparationSpec } from '../domain/entities/world/SystemPreparationSpec';
+
+
+
+/**
+
+ * GameManager - Interface Adapter layer
+
+ * 
+
+ * Acts as a Facade/Coordinator for the game's various subsystems.
+
+ * Upgraded to support Scaling Engines.
+
+ *
+
+ * Pillar: The Four-Fold Shield (Strict Architecture)
+
+ * Pillar: The Balanced Scale (SOLID / KISS)
+
+ */
+
+export class GameManager implements IGameManager {
+
+    private missionService: MissionService;
+
+    private npcService: NPCService;
+
+    private worldPatchService: WorldPatchService;
+
+    private lessonCoordinator: LessonCoordinator;
+
+    private mailSystem: MailSystem;
+
+        private lessonService: LessonService;
+
+        private worldManager: IWorldManager & IWorldStateProvider;
+
+        private presentationDirector: PresentationDirector;
+
+    
+
+        public readonly tutorEngine: TutorEngine;
+
+
 
     constructor(
+
         private fs: FileSystem,
+
         private networkMap: NetworkMap,
-        private telemetry?: TelemetryPort
-    ) {
-        if (!this.fs) {
-            throw new Error("GameManager initialized without FileSystem! Critical Error.");
-        }
 
-        const fsService = new FileSystemService(fs);
-        const missionRepository = new MissionRepository();
-        const lessonRegistry = new LessonRegistry();
-        const tutorService = new TutorService(missionRepository, lessonRegistry);
+        missionService: MissionService,
 
-        // Initialize Domain Services
-        this.missionService = new MissionService(missionRepository, tutorService);
-        this.npcService = new NPCService();
-        this.systemPreparationService = new SystemPreparationService(networkMap);
+        npcService: NPCService,
 
-        // Initialize Core Use Cases / Engines
-        this.mailSystem = new MailSystem(fsService, telemetry);
-        this.tutorEngine = new TutorEngine();
-        this.lessonService = new LessonService();
+        worldPatchService: WorldPatchService,
 
-        // Initialize Coordinator (Interface Adapter)
-        this.lessonCoordinator = new LessonCoordinator(this.tutorEngine, this.mailSystem, this.missionService);
+        lessonCoordinator: LessonCoordinator,
 
-        // Initial setup
-        this.systemPreparationService.initializeRootFileSystem(fs);
-    }
+        mailSystem: MailSystem,
 
-    /**
-     * Called after every command execution to update game state and trigger updates.
-     */
-    public onCommandExecuted(state: TerminalState, response: CommandResponse, _prevFsContext?: string) {
-        // Delegate mission logic to MissionService
-        const { hints, progression } = this.missionService.updateMissions(state, response);
+        lessonService: LessonService,
 
-        // Handle Payment Lore if a mission was completed
-        hints.filter(h => h.type === 'CONGRATS').forEach(h => {
-            const mission = this.missionService.getMissionById(h.missionId);
-            if (mission) {
-                this.mailSystem.sendMail(
-                    { id: 'bank', name: 'Bank', origin: '', career: '', goal: '', status: 'active', traits: [], loadout: [] },
-                    'PAYMENT RECEIVED',
-                    `Escrow released for Mission ${mission.id}. ${mission.reward} transferred.`
-                );
-            }
-        });
+                worldManager: IWorldManager & IWorldStateProvider,
 
-        // Trigger Lessons based on progression
-        if (progression && progression.result && progression.result.type === 'START_LESSON') {
-            const result = progression.result;
-            const lessonId = result.lessonId;
-            const objective = result.objectiveTarget || 'TARGET';
+                tutorEngine: TutorEngine,
 
-            setTimeout(() => {
-                const lesson: Lesson = {
-                    id: lessonId,
-                    type: 'SHELL',
-                    text: result.text || 'ls -la', // Dynamic command from strategy
-                    instructions: result.instructions || `CONNECTION ESTABLISHED. SCAN SYSTEM FOR ${objective}`,
-                    isMission: result.isMission || true
-                };
-                this.tutorEngine.startLesson(lesson);
-            }, 200);
-        }
-    }
+                presentationDirector: PresentationDirector,
 
-    /**
-     * Triggers a new transmission from a random NPC and generates a mission.
-     */
-    public spawnNPCEvent(): Mission | null {
-        const spawnLogic = () => {
-            if (this.missionService.getActiveMissions().length >= 4) {
-                return null;
+                private telemetry?: TelemetryPort
+
+            ) {
+
+                if (!this.fs) {
+
+                    throw new Error("GameManager initialized without FileSystem! Critical Error.");
+
+                }
+
+        
+
+                this.missionService = missionService;
+
+                this.npcService = npcService;
+
+                this.worldPatchService = worldPatchService;
+
+                this.lessonCoordinator = lessonCoordinator;
+
+                this.mailSystem = mailSystem;
+
+                this.lessonService = lessonService;
+
+                this.worldManager = worldManager;
+
+                this.tutorEngine = tutorEngine;
+
+                this.presentationDirector = presentationDirector;
+
             }
 
-            const npc = this.npcService.spawnNPC();
-            const mission = this.missionService.createMission(npc);
 
-            // Ensure target system exists and is prepared
-            this.networkMap.getSystem(mission.targetSystem);
-            this.systemPreparationService.prepareSystemForMissions(mission.targetSystem, [mission]);
 
-            return mission;
+        public getWorldManager(): IWorldManager & IWorldStateProvider {
+
+
+
+            return this.worldManager;
+
+
+
+        }
+
+
+
+    
+
+
+
+        public getPresentationDirector(): PresentationDirector {
+
+
+
+            return this.presentationDirector;
+
+
+
+        }
+
+
+
+    private listeners: ((event: string, payload?: any) => void)[] = [];
+
+
+
+    public subscribeToEvents(listener: (event: string, payload?: any) => void) {
+
+        this.listeners.push(listener);
+
+        return () => {
+
+            this.listeners = this.listeners.filter(l => l !== listener);
+
         };
 
-        if (this.telemetry) {
-            return this.telemetry.trace('GameManager.spawnNPCEvent', spawnLogic);
-        }
-
-        return spawnLogic();
     }
 
-    public getActiveNPCs(): NPC[] {
-        return this.npcService.getActiveNPCs();
+
+
+    private emitEvent(event: string, payload?: any) {
+
+        this.listeners.forEach(l => l(event, payload));
+
     }
 
-    public getActiveMissions(): Mission[] {
-        return this.missionService.getActiveMissions();
-    }
 
-    public startMission(missionId: string, currentState?: TerminalState) {
-        const mission = this.missionService.getMissionById(missionId);
-        if (mission && mission.status === 'pending') {
-            mission.status = 'active';
-            mission.chatHistory.push({
-                sender: 'SYSTEM',
-                message: `MISSION STARTED. TARGET: ${mission.targetSystem}`,
-                timestamp: Date.now()
-            });
 
-            // If already connected, skip the SSH lesson and trigger next step analysis
-            if (currentState && currentState.fsContext === mission.targetSystem) {
-                mission.chatHistory.push({
-                    sender: 'TutorBot',
-                    message: `Link verified. You are already on ${mission.targetSystem}. Proceed with objectives.`,
-                    timestamp: Date.now() + 100
+    /**
+
+     * Called after every command execution to update game state.
+
+     */
+
+    public onCommandExecuted(state: TerminalState, response: CommandResponse, _prevFsContext?: string) {
+
+                // Emit for TutorBrain observation (includes exitCode and utility)
+
+                this.emitEvent('COMMAND_EXECUTED', { 
+
+                    output: response.output, 
+
+                    exitCode: response.exitCode,
+
+                    utility: response.utility || 'unknown'
+
                 });
 
-                // Manually trigger one update to get the next lesson
-                this.onCommandExecuted(currentState, { output: 'SYSTEM RECOVERY INITIALIZED', exitCode: 0, newState: currentState } as any);
-                return;
+
+
+        const { hints, progression } = this.missionService.updateMissions(state, response);
+
+
+
+        hints.filter(h => h.type === 'CONGRATS').forEach(h => {
+
+            const mission = this.missionService.getMissionById(h.missionId);
+
+            if (mission) {
+
+                this.mailSystem.sendMail(
+
+                    { id: 'bank', name: 'Bank', origin: '', career: '', goal: '', status: 'active', traits: [], loadout: [] },
+
+                    'PAYMENT RECEIVED',
+
+                    `Escrow released for Mission ${mission.id}. ${mission.reward} transferred.`
+
+                );
+
             }
 
-            mission.chatHistory.push({
-                sender: 'TutorBot',
-                message: `Acknowledged. Initiate connection protocol: 'ssh admin@${mission.targetSystem}'.`,
-                timestamp: Date.now() + 100
+        });
+
+
+
+                if (progression && progression.result && progression.result.type === 'START_LESSON') {
+
+
+
+                    const result = progression.result;
+
+
+
+                    const lessonId = result.lessonId || 'DUMMY_LESSON';
+
+
+
+                    const objective = result.objectiveTarget || 'TARGET';
+
+
+
+        
+
+
+
+                    setTimeout(() => {
+
+
+
+                        const lesson: Lesson = {
+
+
+
+                            id: lessonId,
+
+
+
+                            type: 'SHELL',
+
+                    text: result.text || 'ls -la',
+
+                    instructions: result.instructions || `CONNECTION ESTABLISHED. SCAN SYSTEM FOR ${objective}`,
+
+                    isMission: result.isMission || true
+
+                };
+
+                this.tutorEngine.startLesson(lesson);
+
+            }, 200);
+
+        }
+
+    }
+
+
+
+    /**
+
+     * Triggers a new transmission from a random NPC and generates a mission.
+
+     */
+
+    public async spawnNPCEvent(): Promise<Mission | null> {
+
+        const spawnLogic = async () => {
+
+            if (this.missionService.getActiveMissions().length >= 4) {
+
+                return null;
+
+            }
+
+
+
+            const npc = this.npcService.spawnNPC();
+
+            const mission = await this.missionService.createMission(npc);
+
+
+
+            this.prepareSystem(mission.targetSystem, [mission]);
+
+
+
+            return mission;
+
+        };
+
+
+
+        if (this.telemetry) {
+
+            return this.telemetry.trace('GameManager.spawnNPCEvent', spawnLogic);
+
+        }
+
+
+
+        return spawnLogic();
+
+    }
+
+
+
+        private prepareSystem(hostname: string, missions: Mission[]) {
+
+
+
+            // Legacy Adapter: Convert missions to Specs if they don't have one
+
+
+
+            missions.filter(m => m.targetSystem === hostname).forEach(m => {
+
+
+
+                if (m.metadata?.prepSpec) {
+
+
+
+                    this.worldPatchService.patch(m.metadata.prepSpec);
+
+
+
+                } else {
+
+
+
+                    // Fallback to archetype-aware spec for legacy missions
+
+
+
+                    const spec: SystemPreparationSpec = {
+
+
+
+                        hostname,
+
+
+
+                        requiredDirs: [],
+
+
+
+                        files: [],
+
+
+
+                        logs: []
+
+
+
+                    };
+
+
+
+    
+
+
+
+                    if (m.type === 'log-analysis') {
+
+
+
+                        spec.requiredDirs.push('/var/log/httpd', '/etc/httpd/conf.d');
+
+
+
+                                            spec.logs.push({
+
+
+
+                                                path: '/var/log/httpd/access.log',
+
+
+
+                                                type: 'ACCESS',
+
+
+
+                                                lineCount: 2000,
+
+
+
+                                                errorRate: 0.05,
+
+
+
+                                                keyPhrase: 'DB_FAIL'
+
+
+
+                                            });
+
+
+
+                                            spec.files.push({
+
+
+
+                                                path: '/etc/httpd/conf.d/proxy.conf',
+
+
+
+                                                rawContent: '# HTTP PROXY CONFIGURATION\n# Route all traffic to backends\n# BUG: Invalid route at 10.0.0.5'
+
+
+
+                                            });
+
+
+
+                                        } else if (m.type === 'dispatcher') {
+
+
+
+                                            spec.requiredDirs.push('/var/db');
+
+
+
+                                            spec.logs.push({
+
+
+
+                                                path: '/var/db/incidents.csv',
+
+
+
+                                                type: 'INCIDENT',
+
+
+
+                                                lineCount: 10,
+
+
+
+                                                errorRate: 0.1,
+
+
+
+                                                keyPhrase: m.objectiveTarget
+
+
+
+                                            });
+
+
+
+                                            spec.logs.push({
+
+
+
+                                                path: '/var/db/units.csv',
+
+
+
+                                                type: 'UNIT',
+
+
+
+                                                lineCount: 15,
+
+
+
+                                                errorRate: 0,
+
+
+
+                                                keyPhrase: ''
+
+
+
+                                            });
+
+
+
+                    } else {
+
+
+
+                        // Standard Payload
+
+
+
+                        spec.requiredDirs.push('/home/admin');
+
+
+
+                        spec.files.push({
+
+
+
+                            path: `/home/admin/${m.objectiveTarget}`,
+
+
+
+                            rawContent: `[ SECURE DATA ]\nSYSTEM: ${hostname}\nPAYLOAD: ${m.objectiveTarget}\n\n${m.description}`,
+
+
+
+                            owner: 'admin',
+
+
+
+                            mode: 0o644
+
+
+
+                        });
+
+
+
+                    }
+
+
+
+    
+
+
+
+                    this.worldPatchService.patch(spec);
+
+
+
+                }
+
+
+
             });
 
-            // Auto-start Tutor Lesson for this mission
-            const sshCommand = `ssh admin@${mission.targetSystem}`;
-            const lesson: Lesson = {
-                id: `MISSION_${mission.id}`,
-                type: 'SHELL' as const,
-                text: sshCommand,
-                instructions: `INITIATE SATLINK // CONNECT TO ${mission.targetSystem}`,
-                isMission: true
-            };
 
-            this.tutorEngine.startLesson(lesson);
+
         }
+
+
+
+    public getActiveNPCs(): NPC[] {
+
+        return this.npcService.getActiveNPCs();
+
     }
+
+
+
+    public getActiveMissions(): Mission[] {
+
+        return this.missionService.getActiveMissions();
+
+    }
+
+
+
+    public getMissionById(id: string): Mission | undefined {
+
+        return this.missionService.getMissionById(id);
+
+    }
+
+
+
+        public startMission(missionId: string, currentState?: TerminalState) {
+
+
+
+            const mission = this.missionService.getMissionById(missionId);
+
+
+
+            if (mission && mission.status === 'pending') {
+
+
+
+                mission.status = 'active';
+
+
+
+                mission.chatHistory.push({
+
+
+
+                    sender: 'SYSTEM',
+
+
+
+                    message: `MISSION STARTED. TARGET: ${mission.targetSystem}`,
+
+
+
+                    timestamp: Date.now()
+
+
+
+                });
+
+
+
+    
+
+
+
+                                                        if (currentState && currentState.fsContext === mission.targetSystem) {
+
+
+
+    
+
+
+
+                                                            // Use Brain to generate reaction
+
+
+
+    
+
+
+
+                                                            this.tutorEngine.emit({ type: 'START', payload: { text: 'ssh', instructions: 'LINK ALREADY ACTIVE' } });
+
+
+
+    
+
+
+
+                                                            
+
+
+
+    
+
+
+
+                                                            this.onCommandExecuted(currentState, { output: 'SYSTEM RECOVERY INITIALIZED', exitCode: 0, newState: currentState } as any);
+
+
+
+    
+
+
+
+                                                            return;
+
+
+
+    
+
+
+
+                                                        }
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                            // Determine lesson from grammar
+
+
+
+    
+
+
+
+                                            let lessonText = `ssh admin@${mission.targetSystem}`;
+
+
+
+    
+
+
+
+                                            let instructions = `INITIATE SATLINK // CONNECT TO ${mission.targetSystem}`;
+
+
+
+    
+
+
+
+                if (mission.grammar) {
+
+
+
+                    const step = mission.grammar.steps.find(s => s.id === mission.currentStepId);
+
+
+
+                    if (step && step.lessonText) {
+
+
+
+                        lessonText = step.lessonText;
+
+
+
+                        instructions = step.description;
+
+
+
+                    }
+
+
+
+                }
+
+
+
+    
+
+
+
+                const lesson: Lesson = {
+
+
+
+                    id: `MISSION_${mission.id}`,
+
+
+
+                    type: 'SHELL' as const,
+
+
+
+                    text: lessonText,
+
+
+
+                    instructions: instructions,
+
+
+
+                    isMission: true
+
+
+
+                };
+
+
+
+    
+
+
+
+                this.tutorEngine.startLesson(lesson);
+
+
+
+            }
+
+
+
+        }
+
+
 
     public abandonMission(missionId: string) {
+
         this.missionService.abandonMission(missionId);
+
     }
 
-    /**
-     * Ensures a system has all necessary files for active missions.
-     * Delegated to SystemPreparationService.
-     */
+
+
     public ensureSystemPrepared(hostname: string) {
-        this.systemPreparationService.prepareSystemForMissions(hostname, this.missionService.getActiveMissions());
+
+        this.prepareSystem(hostname, this.missionService.getActiveMissions());
+
     }
 
-    /**
-     * Debug/admin method to start a specific lesson.
-     */
+
+
     public startTutor(lessonId: string) {
+
         const lesson = this.lessonService.getLesson(lessonId);
+
         if (lesson) {
+
             this.lessonService.setupLesson(lesson, this.fs);
+
             this.tutorEngine.startLesson(lesson);
+
         }
+
     }
 
-    /**
-     * Starts a dynamic, procedurally generated lesson.
-     */
+
+
     public startRandomLesson(): Lesson {
+
         const types: LessonType[] = ['LOG_ANALYSIS', 'BULK_ORG', 'SCAFFOLDING', 'CLEANUP'];
+
         const randomType = types[Math.floor(Math.random() * types.length)];
+
         const lesson = this.lessonService.generateDynamicLesson(randomType);
 
+
+
         this.lessonService.setupLesson(lesson, this.fs);
+
         this.tutorEngine.startLesson(lesson);
+
         return lesson;
+
     }
+
 }

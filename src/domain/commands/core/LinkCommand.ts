@@ -9,44 +9,41 @@ import { getStdinAsString } from '../../entities/ProcessContext';
  *
  * Intent:
  * Create hard links.
+ * Refactored to implement IStructuredCommand for combinatorial scaling.
  */
 
-import { ICommand } from '../ICommand';
+import { CommandBase } from '../CommandBase';
+import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { FileSystemService } from '../../../domain/services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
 
-import { FileSystem } from '../../entities/FileSystem';
+export class LinkCommand extends CommandBase {
+    public readonly capabilities = [CommandCapability.MODIFY];
+    public readonly utility = 'link';
 
-export class LinkCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+    constructor(private fs: FileSystemService) { 
+        super();
+    }
 
-    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = getStdinAsString(context);
-        // link file1 file2
-        const files = args.filter(a => !a.startsWith('-'));
-        if (files.length !== 2) {
+    protected async executeInternal(
+        rawArgs: string[],
+        flags: Set<string>,
+        operands: string[],
+        context: ProcessContext,
+        state: TerminalState
+    ): Promise<CommandResponse> {
+        if (operands.length !== 2) {
             return { output: 'link: missing operand', newState: state, exitCode: 1 };
         }
 
-        const source = files[0];
-        const target = files[1];
+        const source = operands[0];
+        const target = operands[1];
 
         try {
             const sourcePath = this.resolvePath(source, state);
             const targetPath = this.resolvePath(target, state);
-
-            // FS should have a method to create hard link.
-            // If not, we simulate by creating dentry pointing to same inode.
-            // this.fs.createLink(sourcePath, targetPath)?
-            // Assuming `ln` logic: `fs.createLink(target, source)` usually.
-            // Let's assume `createLink` exists on `FileSystem` (it should for POSIX).
-            // Checking memories... "FileSystem entity functions as a Facade".
-            // I'll try calling `createLink`.
-
-            // Note: `ln` command usually does `createLink`.
-            // Wait, `LnCommand` exists. It uses `createLink`.
 
             this.fs.link(sourcePath, targetPath);
 

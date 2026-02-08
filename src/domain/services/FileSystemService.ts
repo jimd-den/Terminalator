@@ -35,6 +35,7 @@ export class FileSystemService {
     private ownershipService: OwnershipService;
     private fileOps: FileOperationService;
     private dirService: DirectoryService;
+    private writeListeners: ((path: string, content: string | Uint8Array, actingUser?: { uid: number, gid: number, groups: number[] }) => void)[] = [];
 
     constructor(private fs: FileSystem) {
         // Dependency Injection / Composition Root for FS Sub-system
@@ -60,6 +61,13 @@ export class FileSystemService {
         );
     }
 
+    /**
+     * Registers a listener for all write operations.
+     */
+    public onWrite(listener: (path: string, content: string | Uint8Array, actingUser?: { uid: number, gid: number, groups: number[] }) => void): void {
+        this.writeListeners.push(listener);
+    }
+
     get fileSystem(): FileSystem {
         return this.fs;
     }
@@ -73,22 +81,7 @@ export class FileSystemService {
     }
 
     resolveAbsolutePath(path: string, cwd: string): string {
-        // Logic duplicated in PathResolver? No, resolveAbsolutePath in PathResolver is about Dentry->String.
-        // This is String->String (normalization). 
-        // We should move this to PathResolver too for DRY, but for now strict Facade.
-
-        let absolutePath = path.startsWith('/') ? path : (cwd === '/' ? `/${path}` : `${cwd}/${path}`);
-        const parts = absolutePath.split('/').filter(p => p.length > 0 && p !== '.');
-        const stack: string[] = [];
-
-        for (const part of parts) {
-            if (part === '..') {
-                stack.pop();
-            } else {
-                stack.push(part);
-            }
-        }
-        return '/' + stack.join('/');
+        return PathResolver.resolveString(path, cwd);
     }
 
     getAbsolutePath(dentry: Dentry): string {
@@ -152,6 +145,11 @@ export class FileSystemService {
         }
 
         this.fileOps.writeFile(dentry, content, modeStr, actingUser);
+        
+        // Notify listeners
+        const absPath = this.resolveAbsolutePath(path, cwd);
+        this.writeListeners.forEach(l => l(absPath, content, actingUser));
+
         return dentry;
     }
 

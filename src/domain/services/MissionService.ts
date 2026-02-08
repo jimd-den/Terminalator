@@ -3,10 +3,11 @@
  * 
  * Manages the lifecycle and state transitions of game missions.
  * Responsible for tracking active missions and delegating progression analysis.
+ * Upgraded to support Combinatorial Scaling.
  *
  * Pillar: The Four-Fold Shield (Strict Architecture)
  * Pillar: The Storyteller’s Code (Literate Documentation)
- * Pillar: The Balanced Scale (SOLID) - Decouples mission state from UI logic.
+ * Pillar: THE MASTER'S TOOL (Combinatorial Factory)
  */
 
 import { Mission, MissionStep } from '../entities/Mission';
@@ -16,51 +17,78 @@ import { CommandResponse } from '../entities/Command';
 import { TutorService, TutorProgressionResult } from './TutorService';
 import { MissionRepository } from './MissionRepository';
 import { generateHostname, generateObjectiveFilename } from '../utils/NameGenerator';
+import { IWorldStateProvider } from '../interfaces/IWorldStateProvider';
+import { ProceduralMissionFactory } from '../factories/ProceduralMissionFactory';
+import { ConstraintValidator } from './constraints/ConstraintValidator';
+import { ComplexityEstimator } from './constraints/ComplexityEstimator';
+import { OrganizationGenerator } from './generation/OrganizationGenerator';
+import { KnuthianMissionFactory } from '../factories/KnuthianMissionFactory';
+import { Organization } from '../entities/world/Organization';
+import { MissionPopulator } from './MissionPopulator';
+
+// Scaling Engine
+import { TutorLedProgression } from '../usecases/tutor/TutorLedProgression';
+import { AdaptiveTutorEngine } from './tutor/AdaptiveTutorEngine';
+import { TutorIntent } from '../entities/tutor/TutorIntent';
+import { TutorToneProfile } from '../entities/tutor/TutorToneProfile';
+import { UnixKnowledgeBase } from './knowledge/UnixKnowledgeBase';
 
 export class MissionService {
     private activeMissions: Mission[] = [];
+    private organizationGenerator = new OrganizationGenerator();
+    private adaptiveEngine: AdaptiveTutorEngine;
 
     constructor(
         private missionRepository: MissionRepository,
-        private tutorService: TutorService
-    ) { }
+        private tutorService: TutorService,
+        private worldState?: IWorldStateProvider,
+        private proceduralFactory?: ProceduralMissionFactory,
+        private constraintValidator?: ConstraintValidator,
+        private knuthianFactory?: KnuthianMissionFactory,
+        private missionPopulator?: MissionPopulator,
+        private tutorProgression?: TutorLedProgression // [NEW]
+    ) { 
+        this.adaptiveEngine = new AdaptiveTutorEngine(new UnixKnowledgeBase());
+    }
 
     /**
      * Creates a new mission assigned by the given NPC.
      * @param npc - The NPC assigning the mission.
      */
-    public createMission(npc: NPC): Mission {
+    public async createMission(npc: NPC): Promise<Mission> {
+        // Unify: All missions are now generative.
+        // Single Source of Truth: TutorLedProgression -> CombinatorialFactory -> MissionGrammar
         const targetSystem = generateHostname(npc.faction || 'corporate');
-        const objectiveTarget = generateObjectiveFilename();
-
-        const variables = {
-            targetSystem,
-            objectiveTarget,
-            unitId: `UNIT-${Math.floor(Math.random() * 900 + 100)}`,
-            incidentId: `INC-${Math.floor(Math.random() * 9000 + 1000)}`,
-            faultType: this.missionRepository.getPool('faultType')[Math.floor(Math.random() * this.missionRepository.getPool('faultType').length)] || 'System Fault'
-        };
-
-        const archetypes = this.missionRepository.getArchetypeKeys();
-        const type = archetypes[Math.floor(Math.random() * archetypes.length)];
-
-        const mission = this.missionRepository.createMissionFromTemplate(type, npc, variables);
-
-        // Setup initial chat history
-        mission.chatHistory = [
-            { sender: 'SYSTEM', message: `CONNECTING TO SECURE CHANNEL ${mission.id}...`, timestamp: Date.now() },
-            { sender: npc.name, message: `Operator, I require assistance with a ${mission.type} operation.`, timestamp: Date.now() },
-            { sender: npc.name, message: mission.description, timestamp: Date.now() },
-            { sender: 'SYSTEM', message: `REWARD ESCROW: ${mission.reward}`, timestamp: Date.now() },
-        ];
-
+        const mission = await this.tutorProgression!.generateNextMission(targetSystem);
+        
+        // Enrich with NPC specific metadata
+        mission.assignedBy = npc.id;
+        mission.assignerName = npc.name;
+        
+        this.setupMissionChat(mission, npc);
         this.activeMissions.push(mission);
         return mission;
     }
 
+    private setupMissionChat(mission: Mission, npc: NPC) {
+        // Determine Tone based on NPC faction/role (Simplistic mapping for now)
+        const tone = npc.faction === 'resistance' ? TutorToneProfile.RESISTANCE_LEADER : TutorToneProfile.CORPORATE_DRONE;
+
+        const briefing = this.adaptiveEngine.generateAdvice(
+            TutorIntent.MISSION_BRIEFING,
+            tone,
+            mission
+        );
+
+        mission.chatHistory = [
+            { sender: 'SYSTEM', message: `CONNECTING TO SECURE CHANNEL ${mission.id}...`, timestamp: Date.now() },
+            { sender: npc.name, message: briefing.message, timestamp: Date.now() },
+            { sender: 'SYSTEM', message: `REWARD ESCROW: ${mission.reward}`, timestamp: Date.now() },
+        ];
+    }
+
     /**
      * Updates mission state based on command execution results.
-     * Returns hints or progression triggers.
      */
     public updateMissions(state: TerminalState, response: CommandResponse): { hints: { missionId: string, sender: string, message: string, type: string }[], progression: { result: TutorProgressionResult | null, missionId: string } | null } {
         const hints: { missionId: string, sender: string, message: string, type: string }[] = [];
@@ -89,10 +117,18 @@ export class MissionService {
             }
         }
 
-        // Apply progression state changes if any
         if (progression && progression.result && progression.result.nextStep) {
             const mission = this.activeMissions.find(m => m.id === progression.missionId);
             if (mission) {
+                if (this.constraintValidator && response.executionStats && mission.constraints) {
+                    const validation = this.constraintValidator.validate(mission, response.executionStats);
+                    if (!validation.valid) {
+                        const rejectionMsg = `CONSTRAINT VIOLATION: ${validation.reason}`;
+                        mission.chatHistory.push({ sender: 'SYSTEM', message: rejectionMsg, timestamp: Date.now() });
+                        hints.push({ missionId: mission.id, sender: 'SYSTEM', message: rejectionMsg, type: 'WARNING' });
+                        return { hints, progression: null };
+                    }
+                }
                 mission.currentStep = progression.result.nextStep;
             }
         }

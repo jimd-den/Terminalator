@@ -10,37 +10,36 @@ import { getStdinAsString } from '../../entities/ProcessContext';
  *
  * Intent:
  * Allows the operator to create files or signal updates.
+ * Refactored to implement IStructuredCommand for combinatorial scaling.
  */
 
-import { ICommand } from '../ICommand';
+import { CommandBase } from '../CommandBase';
+import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
 
 import { FileSystemService } from '../../services/FileSystemService';
-import { S_IFREG } from '../../entities/FileSystem';
 
-export class TouchCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+export class TouchCommand extends CommandBase {
+    public readonly capabilities = [CommandCapability.MODIFY];
+    public readonly utility = 'touch';
 
-    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+    constructor(private fs: FileSystemService) {
+        super();
+    }
+
+    protected async executeInternal(
+        rawArgs: string[],
+        flags: Set<string>,
+        operands: string[],
+        context: ProcessContext,
+        state: TerminalState
+    ): Promise<CommandResponse> {
         const fsService = context.fileSystemService || this.fs;
-        const input = getStdinAsString(context);
-        // Parse flags
-        let noCreate = false; // -c
-        const targets: string[] = [];
+        const noCreate = flags.has('c');
 
-        for (const arg of args) {
-            if (arg === '-c') {
-                noCreate = true;
-            } else if (arg.startsWith('-')) {
-                // Ignore other flags
-            } else {
-                targets.push(arg);
-            }
-        }
-
-        if (targets.length === 0) {
+        if (operands.length === 0) {
             return {
                 output: 'touch: missing operand',
                 newState: state,
@@ -51,8 +50,7 @@ export class TouchCommand implements ICommand {
         let exitCode = 0;
         let output = '';
 
-        for (const target of targets) {
-            // Explicitly forbid touching root to satisfy compliance test
+        for (const target of operands) {
             if (target === '/') {
                 output += `touch: setting times of '/': Permission denied\n`;
                 exitCode = 1;
@@ -66,7 +64,6 @@ export class TouchCommand implements ICommand {
                     : `${state.currentDirectory}/${target}`;
             }
 
-            // Remove trailing slash if present (unless it is root) to correctly identify parent
             if (path.length > 1 && path.endsWith('/')) {
                 path = path.slice(0, -1);
             }
@@ -74,7 +71,6 @@ export class TouchCommand implements ICommand {
             const existing = fsService.resolve(path);
 
             if (existing) {
-                // Update timestamps
                 const inode = fsService.getInode(existing.inodeId);
                 if (inode) {
                     const now = Date.now();
@@ -83,13 +79,10 @@ export class TouchCommand implements ICommand {
                     inode.ctime = now;
                 }
             } else {
-                // If -c is set, do NOT create file if it doesn't exist
                 if (noCreate) {
                     continue;
                 }
 
-                // Create new empty file
-                // We need to verify parent exists
                 const lastSlashIndex = path.lastIndexOf('/');
                 const parentPath = lastSlashIndex === 0 ? '/' : path.substring(0, lastSlashIndex);
 

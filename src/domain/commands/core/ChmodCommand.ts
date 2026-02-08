@@ -9,7 +9,7 @@
  * of the file named by each file operand.
  * 
  * THE EIGHT PILLARS OF THE CRAFT:
- * 1. Strict Architecture: Implements ICommand.
+ * 1. Strict Architecture: Implements IStructuredCommand.
  * 2. Literate Documentation: Supports octal AND symbolic modes (u+x, etc.).
  * 3. Dependency Minimalism: Uses FileSystemService for application.
  * 5. Performance: O(1) mode calculation.
@@ -18,18 +18,29 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 
-import { ICommand, CommandResponse } from '../ICommand';
+import { CommandResponse } from '../ICommand';
+import { CommandBase } from '../CommandBase';
+import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { FileSystemService } from '../../services/FileSystemService';
 
-export class ChmodCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+export class ChmodCommand extends CommandBase {
+    public readonly capabilities = [CommandCapability.MODIFY];
+    public readonly utility = 'chmod';
 
-    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const flags = args.filter(a => a.startsWith('-'));
-        const operands = args.filter(a => !a.startsWith('-'));
-        const recursive = flags.includes('-R');
+    constructor(private fs: FileSystemService) {
+        super();
+    }
+
+    protected async executeInternal(
+        rawArgs: string[],
+        flags: Set<string>,
+        operands: string[],
+        context: ProcessContext,
+        state: TerminalState
+    ): Promise<CommandResponse> {
+        const recursive = flags.has('R');
 
         if (operands.length < 2) {
             return { output: 'chmod: missing operand', newState: state, exitCode: 1 };
@@ -72,7 +83,6 @@ export class ChmodCommand implements ICommand {
         const newMode = this.calculateMode(inode.mode, modeSpec);
         const path = this.fs.getAbsolutePath(dentry);
 
-        // We use absolute path and bypass CWD since we are traversing
         this.fs.chmod(path, newMode, '/', user);
 
         if (dentry.children) {
@@ -83,15 +93,12 @@ export class ChmodCommand implements ICommand {
     }
 
     private calculateMode(currentMode: number, spec: string): number {
-        // Octal mode
         if (/^[0-7]+$/.test(spec)) {
             const octal = parseInt(spec, 8);
-            // Preserve file type bits
             return (currentMode & 0o170000) | octal;
         }
 
-        // Symbolic mode (simplified: u+x, g-w, o=r, a+r, etc.)
-        let newMode = currentMode & 0o7777; // Keep type bits separate
+        let newMode = currentMode & 0o7777;
         const typeBits = currentMode & 0o170000;
 
         const clauses = spec.split(',');

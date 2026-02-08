@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ViewStyle } fro
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { THEME } from '../Theme';
 import { useTheme } from '../context/ThemeContext';
+import { GlobalTutorBar } from './GlobalTutorBar';
 
 interface ConsoleLayoutProps {
     status?: string;
@@ -102,6 +103,9 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
                         <View style={dynamicStyles.topBox}>
                             {topContent}
                         </View>
+
+                        {/* TUTOR BAR: IRC-style chat above the keyboard/F-keys */}
+                        <GlobalTutorBar />
 
                         {/* MIDDLE: Virtual Toolbar (Optional) */}
                         {middleContent}

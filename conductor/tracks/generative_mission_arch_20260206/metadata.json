@@ -1,0 +1,7 @@
+{
+  "track_id": "generative_mission_arch_20260206",
+  "name": "Generative Mission Architecture",
+  "description": "Transition from JSON-based templates to a Scheme DSL and Event-Driven Simulation Bus for scalable mission generation.",
+  "status": "active",
+  "created_at": "2026-02-06"
+}

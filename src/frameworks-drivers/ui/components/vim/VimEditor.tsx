@@ -8,47 +8,49 @@
  * Pillar: THE BALANCED SCALE (KISS)
  * 
  * Intent:
- * Renders the state provided by the VimSimulator.
- * Composes VimInputController and VimTutorController for clean separation.
+ * Renders the state provided by the Headless ViewModel.
+ * Decoupled from logic, purely focused on pixel-perfect rendering.
  */
 
 import React, { useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { useInput } from '../../context/InputContext';
 import { THEME } from '../../Theme';
-import { useGame } from '../../context/GameContext';
+import { useFileSystem } from '../../context/FileSystemProvider';
+import { useProcess } from '../../context/ProcessProvider';
+import { useSystemState } from '../../context/SystemStateProvider';
+import { useTutorPersona } from '../../context/TutorPersonaProvider';
 import { VirtualKeyboard } from '../VirtualKeyboard';
-import { VimSimulator } from '../../../../interface-adapters/VimSimulator';
-import { HighlighterRegistry } from '../../../../interface-adapters/vim/HighlighterRegistry';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme, useThemeComponents } from '../../context/ThemeContext';
+import { FileSystemService } from '../../../../domain/services/FileSystemService';
 
-// Import Controllers
-import { useVimInputController } from '../../../../interface-adapters/controllers/VimInputController';
-import { useVimTutorController } from '../../../../interface-adapters/controllers/VimTutorController';
+// Import Headless ViewModel
+import { useHeadlessVim } from '../../../../interface-adapters/viewmodels/useHeadlessVim';
 
 interface VimEditorProps {
     filename: string;
     onExit: () => void;
 }
 
-const highlighterRegistry = new HighlighterRegistry();
-
-export const useVimEditor = (filename: string, onExit: () => void) => {
-    const { fs, gameManager } = useGame();
+export const useVimEditor = (
+    filename: string, 
+    onExit: () => void,
+    fsService: FileSystemService,
+    tutorEngine: any,
+    tutorShadow: any,
+    isInputLocked: boolean
+) => {
     const { theme, settings } = useTheme();
+    const components = useThemeComponents();
+    const { TextRenderer, Cursor } = components;
     const colors = theme.colors;
 
-    // -- Simulator (Domain Orchestrator) --
-    // Create FileSystemService from FileSystem (GameContext provides FileSystem, not service)
-    const fsService = useMemo(() => new (require('../../../../domain/services/FileSystemService').FileSystemService)(fs), [fs]);
-    const simulator = useMemo(() => new VimSimulator(fsService, filename), [filename, fsService]);
-    const highlighter = useMemo(() => highlighterRegistry.getHighlighterForFile(filename), [filename]);
+    // -- Headless Logic --
+    // All editor state and logic is now managed by this hook.
+    // This component is merely a renderer.
+    const headless = useHeadlessVim(filename, fsService, tutorEngine, tutorShadow, onExit);
 
-    // -- Controllers --
-    const inputController = useVimInputController(simulator, onExit, gameManager.tutorEngine);
-    const tutorState = useVimTutorController(gameManager.tutorEngine);
-
-    // -- Mount State --
+    // -- Mount State (Visual Only) --
     const [isMounting, setIsMounting] = React.useState(true);
 
     // -- Input Context Wiring --
@@ -56,17 +58,19 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
 
     React.useEffect(() => {
         setOnInput((text) => {
+            if (isInputLocked) return;
             for (const char of text) {
-                if (char === '\n') inputController.handleVirtualKey('ENTER');
-                else inputController.handleVirtualKey(char);
+                if (char === '\n') headless.handleVirtualKey('ENTER');
+                else headless.handleVirtualKey(char);
             }
         });
         setOnKeyPress((key) => {
-            inputController.handleVirtualKey(key);
+            if (isInputLocked) return;
+            headless.handleVirtualKey(key);
         });
-    }, [inputController.handleVirtualKey, setOnInput, setOnKeyPress]);
+    }, [headless.handleVirtualKey, setOnInput, setOnKeyPress]);
 
-    // -- Initialization --
+    // -- Initialization (Visual Effects) --
     useEffect(() => {
         setIsMounting(true);
         const timer = setTimeout(() => setIsMounting(false), 150);
@@ -98,8 +102,6 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
             paddingHorizontal: THEME.spacing.xs,
         },
         lineText: {
-            color: colors.text.primary,
-            fontFamily: settings.fontFamily,
             fontSize: THEME.typography.fontSize.md,
             lineHeight: 24,
         },
@@ -126,9 +128,7 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
             justifyContent: 'space-between',
         },
         statusText: {
-            color: colors.primary,
             fontWeight: 'bold',
-            fontFamily: settings.fontFamily,
         },
         errorStatusText: {
             color: colors.error,
@@ -141,8 +141,6 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
             height: 40,
         },
         commandText: {
-            color: colors.text.primary,
-            fontFamily: settings.fontFamily,
             fontSize: THEME.typography.fontSize.md,
         },
         commandCursor: {
@@ -168,8 +166,6 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
             minWidth: 40,
         },
         hintText: {
-            color: colors.text.primary,
-            fontFamily: settings.fontFamily,
             fontSize: THEME.typography.fontSize.sm,
             textAlign: 'center',
         },
@@ -204,8 +200,11 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
     };
 
     // -- State Aliases --
-    const state = inputController.state;
-    const commandInput = inputController.commandInput;
+    // We alias the headless state to match the structure the renderer expects.
+    const state = headless;
+    const commandInput = headless.commandInput;
+    const tutorState = headless.tutor;
+    const highlighter = headless.highlighter;
 
     // -- Line Renderer --
     const renderLine = (lineContent: string, lineIdx: number) => {
@@ -216,7 +215,7 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
 
         return (
             <View key={lineIdx} style={[dynamicStyles.lineWrapper, lineError && dynamicStyles.errorLine]}>
-                <Text style={dynamicStyles.lineText} numberOfLines={1}>
+                <View style={{ flexDirection: 'row' }}>
                     {tokens.map((token, tokenIdx) => {
                         const tokenColor = getTokenColor(token.type);
                         if (isCurrentLine && !cursorRendered) {
@@ -231,30 +230,30 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
                                 const tail = token.text.slice(cursorRelPos + 1);
 
                                 return (
-                                    <Text key={tokenIdx} style={{ color: tokenColor }}>
-                                        {head}
+                                    <React.Fragment key={tokenIdx}>
+                                        <TextRenderer content={head} style={{ color: tokenColor }} />
                                         {state.mode === 'INSERT' && (
-                                            <View style={{ width: 2, height: 18, backgroundColor: colors.primary, transform: [{ translateY: 4 }] }} />
+                                            <Cursor active={true} color={colors.primary} type="line" />
                                         )}
-                                        <Text style={state.mode === 'NORMAL' ? { backgroundColor: colors.primary, color: colors.background } : {}}>
-                                            {char}
-                                        </Text>
-                                        {tail}
-                                    </Text>
+                                        <TextRenderer 
+                                            content={char} 
+                                            style={state.mode === 'NORMAL' ? { backgroundColor: colors.primary, color: colors.background } : { color: tokenColor }} 
+                                        />
+                                        <TextRenderer content={tail} style={{ color: tokenColor }} />
+                                    </React.Fragment>
                                 );
                             }
                         }
-                        return <Text key={tokenIdx} style={{ color: tokenColor }}>{token.text}</Text>;
+                        return <TextRenderer key={tokenIdx} content={token.text} style={{ color: tokenColor }} />;
                     })}
                     {isCurrentLine && !cursorRendered && (
-                        <View style={state.mode === 'INSERT'
-                            ? { width: 2, height: 18, backgroundColor: colors.primary, transform: [{ translateY: 4 }] }
-                            : { backgroundColor: colors.primary, height: 20, justifyContent: 'center', transform: [{ translateY: 2 }] }
-                        }>
-                            <Text style={{ color: colors.background, fontSize: THEME.typography.fontSize.md, opacity: state.mode === 'INSERT' ? 0 : 1 }}> </Text>
-                        </View>
+                        <Cursor 
+                            active={true} 
+                            color={colors.primary} 
+                            type={state.mode === 'INSERT' ? 'line' : 'block'} 
+                        />
                     )}
-                </Text>
+                </View>
             </View>
         );
     };
@@ -264,11 +263,12 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
         <View style={dynamicStyles.editorContainer}>
             {tutorState.active && (
                 <View style={dynamicStyles.tutorOverlay}>
-                    <Text style={{ color: colors.primary, fontWeight: 'bold' }}>TUTOR PROTOCOL ACTIVE</Text>
-                    <Text style={{ color: colors.text.primary, fontFamily: settings.fontFamily }}>
-                        TARGET: <Text style={{ color: colors.secondary }}>{tutorState.completed}</Text>
-                        <Text style={{ color: colors.text.dim }}>{tutorState.text}</Text>
-                    </Text>
+                    <TextRenderer style={{ fontWeight: 'bold' }} content="TUTOR PROTOCOL ACTIVE" />
+                    <View style={{ flexDirection: 'row' }}>
+                        <TextRenderer content="TARGET: " />
+                        <TextRenderer type="secondary" content={tutorState.completed} />
+                        <TextRenderer type="dim" content={tutorState.text} />
+                    </View>
                 </View>
             )}
 
@@ -289,30 +289,32 @@ export const useVimEditor = (filename: string, onExit: () => void) => {
                 </Pressable>
             </ScrollView>
             <View style={dynamicStyles.statusBar}>
-                <Text style={[dynamicStyles.statusText, !!state.lintErrors.find(e => e.line === state.cursor.line + 1) && dynamicStyles.errorStatusText]}>
-                    {state.lintErrors.find(e => e.line === state.cursor.line + 1)?.message || (state.statusMessage || (state.mode === 'NORMAL' ? '-- NORMAL --' : `-- ${state.mode} --`))}
-                </Text>
-                <Text style={dynamicStyles.statusText}>
-                    {highlighter.language.toUpperCase()} | Ln {state.cursor.line + 1}, Col {state.cursor.col + 1}
-                </Text>
+                <TextRenderer 
+                    style={[dynamicStyles.statusText, !!state.lintErrors.find(e => e.line === state.cursor.line + 1) && dynamicStyles.errorStatusText]}
+                    content={state.lintErrors.find(e => e.line === state.cursor.line + 1)?.message || (state.statusMessage || (state.mode === 'NORMAL' ? '-- NORMAL --' : `-- ${state.mode} --`))}
+                />
+                <TextRenderer 
+                    style={dynamicStyles.statusText}
+                    content={`${highlighter.language.toUpperCase()} | Ln ${state.cursor.line + 1}, Col ${state.cursor.col + 1}`}
+                />
             </View>
         </View>
     );
 
-    const middleContent = <VirtualKeyboard onKeyPress={inputController.handleVirtualKey} />;
+    const middleContent = <VirtualKeyboard onKeyPress={headless.handleVirtualKey} />;
 
     const bottomContent = (
         <View style={dynamicStyles.footer}>
             {state.mode === 'COMMAND' ? (
                 <View style={dynamicStyles.commandRow}>
-                    <Text style={dynamicStyles.commandText}>{commandInput}</Text>
-                    <View style={dynamicStyles.commandCursor} />
+                    <TextRenderer style={dynamicStyles.commandText} content={commandInput} />
+                    <Cursor active={true} color={colors.primary} />
                 </View>
             ) : (
                 <View style={dynamicStyles.buttonRow}>
                     {['i', ':', 'ESC', 'h', 'j', 'k', 'l'].map(k => (
-                        <Pressable key={k} style={dynamicStyles.hintButton} onPress={() => inputController.handleVirtualKey(k)}>
-                            <Text style={dynamicStyles.hintText}>[{k.toUpperCase()}]</Text>
+                        <Pressable key={k} style={dynamicStyles.hintButton} onPress={() => headless.handleVirtualKey(k)}>
+                            <TextRenderer style={dynamicStyles.hintText} content={`[${k.toUpperCase()}]`} />
                         </Pressable>
                     ))}
                 </View>

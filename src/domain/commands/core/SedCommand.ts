@@ -10,11 +10,11 @@ import { getStdinAsString } from '../../entities/ProcessContext';
  *
  * Intent:
  * Provides a POSIX-compliant entry point for the sed utility.
- * It handles argument parsing, file I/O, and delegates the core
- * streaming logic to the SedEngine VM.
+ * Refactored to implement IStructuredCommand for combinatorial scaling.
  */
 
-import { ICommand } from '../ICommand';
+import { CommandBase } from '../CommandBase';
+import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
@@ -22,50 +22,53 @@ import { CommandResponse } from '../../entities/Command';
 import { FileSystemService } from '../../services/FileSystemService';
 import { SedParser, SedVM, SedState } from '../../services/SedEngine';
 
-export class SedCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+export class SedCommand extends CommandBase {
+    public readonly capabilities = [CommandCapability.FILTER, CommandCapability.TRANSFORM];
+    public readonly utility = 'sed';
 
-    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+    constructor(private fs: FileSystemService) { 
+        super();
+    }
+
+    protected override parseArgs(args: string[]) {
+        // sed options that take arguments: -e, -f
+        super.parseArgs(args, ['e', 'f']);
+    }
+
+    protected async executeInternal(
+        rawArgs: string[],
+        flags: Set<string>,
+        operands: string[],
+        context: ProcessContext,
+        state: TerminalState
+    ): Promise<CommandResponse> {
         const input = getStdinAsString(context);
         const scripts: string[] = [];
         const files: string[] = [];
-        let suppressAutoPrint = false;
-        let ereMode = false;
-        let inPlace = false;
+        const suppressAutoPrint = flags.has('n');
+        const ereMode = flags.has('E');
+        const inPlace = flags.has('i');
 
-        // Parse options
-        let i = 0;
-        while (i < args.length) {
-            const arg = args[i];
-            if (arg === '-e') {
-                if (++i < args.length) scripts.push(args[i]);
-            } else if (arg === '-f') {
-                if (++i < args.length) {
-                    try {
-                        scripts.push(this.fs.readFile(this.resolvePath(args[i], state)));
-                    } catch (e) {
-                        return { output: `sed: cannot read script file ${args[i]}`, newState: state, exitCode: 1 };
-                    }
-                }
-            } else if (arg === '-n') {
-                suppressAutoPrint = true;
-            } else if (arg === '-E') {
-                ereMode = true;
-            } else if (arg === '-i') {
-                inPlace = true;
-            } else if (arg.startsWith('-')) {
-                // Ignore unknown options or group them
-                if (arg.includes('n')) suppressAutoPrint = true;
-                if (arg.includes('E')) ereMode = true;
-                if (arg.includes('i')) inPlace = true;
-            } else {
-                if (scripts.length === 0) {
-                    scripts.push(arg);
-                } else {
-                    files.push(arg);
-                }
+        // Extract scripts from -e and -f
+        const eOptions = this.options.get('e');
+        if (eOptions) scripts.push(eOptions);
+
+        const fOptions = this.options.get('f');
+        if (fOptions) {
+            try {
+                scripts.push(this.fs.readFile(this.resolvePath(fOptions, state)));
+            } catch (e) {
+                return { output: `sed: cannot read script file ${fOptions}`, newState: state, exitCode: 1 };
             }
-            i++;
+        }
+
+        let opIndex = 0;
+        if (scripts.length === 0 && operands.length > 0) {
+            scripts.push(operands[opIndex++]);
+        }
+
+        while (opIndex < operands.length) {
+            files.push(operands[opIndex++]);
         }
 
         if (scripts.length === 0) {
@@ -81,7 +84,6 @@ export class SedCommand implements ICommand {
 
         const processContent = (content: string) => {
             const lines = content.split('\n');
-            // Remove trailing empty line if it resulted from a trailing newline
             const hasTrailingNewline = content.endsWith('\n');
             if (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
 
@@ -116,29 +118,16 @@ export class SedCommand implements ICommand {
 
                 sedState = SedVM.execute(instructions, sedState);
 
-                // 1. Inserted/Changed lines
-                for (const il of sedState.insertBuffer) {
-                    resultLines.push(il);
-                }
-
-                // 2. Explicitly printed lines during script execution (p, =, etc)
-                for (const pl of sedState.printed) {
-                    resultLines.push(pl);
-                }
+                for (const il of sedState.insertBuffer) resultLines.push(il);
+                for (const pl of sedState.printed) resultLines.push(pl);
 
                 if (!sedState.deleted) {
-                    // 3. Default behavior: print final pattern space if not suppressed
                     if (!suppressAutoPrint) resultLines.push(sedState.patternSpace);
                 }
 
-                // 4. Appended lines
-                for (const al of sedState.appendBuffer) {
-                    resultLines.push(al);
-                }
+                for (const al of sedState.appendBuffer) resultLines.push(al);
 
-                // Sync index back from VM (for n/N commands)
                 j = sedState.currentIndex;
-
                 if (sedState.quit) break;
             }
 

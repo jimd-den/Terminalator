@@ -3,17 +3,17 @@
  *
  * Visualizes the current input buffer, cursor, and ghost text.
  *
- * Pillar: The Four-Fold Shield (Interface Adapter)
- * Pillar: The Balanced Scale (SRP)
+ * Pillar: THE UNIVERSAL INTERFACE (Headless Rendering)
+ * Pillar: THE FOUR-FOLD SHIELD (Interface Adapter)
+ * Pillar: THE BALANCED SCALE (SRP)
  */
 
 import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { useTheme } from '../context/ThemeContext';
+import { View, Pressable, StyleSheet } from 'react-native';
+import { useTheme, useThemeComponents } from '../context/ThemeContext';
 import { THEME } from '../Theme';
 import { TutorEmotion } from '../../../domain/entities/TutorEngine';
 import { PopChar } from './PopChar';
-import { Cursor } from './Cursor';
 
 interface InputBarProps {
     input: string;
@@ -35,6 +35,8 @@ export const InputBar: React.FC<InputBarProps> = ({
     onRefocus
 }) => {
     const { theme, settings } = useTheme();
+    const components = useThemeComponents();
+    const { TextRenderer, Cursor } = components;
     const colors = theme.colors;
 
     /**
@@ -46,10 +48,7 @@ export const InputBar: React.FC<InputBarProps> = ({
             width: '100%',
             flexDirection: 'column',
         },
-        inputLabel: {
-            color: colors.primary,
-            fontFamily: settings.fontFamily,
-            fontSize: THEME.typography.fontSize.sm,
+        inputLabelStyle: {
             marginBottom: THEME.spacing.xs,
             opacity: 0.6,
             letterSpacing: 2,
@@ -64,20 +63,14 @@ export const InputBar: React.FC<InputBarProps> = ({
             flexWrap: 'wrap',
             alignItems: 'center'
         },
-        inputChar: {
+        inputCharStyle: {
             color: colors.text.primary,
             fontFamily: settings.fontFamily,
             fontSize: THEME.typography.fontSize.lg,
-            height: 35,
-            lineHeight: 35,
         },
-        ghostText: {
-            color: colors.text.dim,
-            fontFamily: settings.fontFamily,
-            fontSize: THEME.typography.fontSize.lg,
-            height: 35,
-            lineHeight: 35,
-            opacity: 0.5,
+        ghostTextStyle: {
+            color: '#00FFFF', // Cyan
+            opacity: 0.3,
         },
     });
 
@@ -85,26 +78,32 @@ export const InputBar: React.FC<InputBarProps> = ({
 
     return (
         <View style={styles.inputWrapper}>
-            <Text style={styles.inputLabel}>
-                INPUT // {user}@{hostname || 'system'}
-            </Text>
+            <TextRenderer
+                type="primary"
+                style={styles.inputLabelStyle}
+                content={`INPUT // ${user}@${hostname || 'system'}`}
+            />
             <Pressable style={styles.inputContainer} onPress={onRefocus}>
                 <View style={styles.inputRow}>
                     {input.split('').map((char, index) => (
                         <PopChar
                             key={`${index}-${char}`}
-                            style={styles.inputChar}
+                            style={styles.inputCharStyle}
                             isCrashing={crashingIndices.includes(index)}
                         >
                             {char}
                         </PopChar>
                     ))}
                     <Cursor
+                        active={true}
                         color={colors.primary}
-                        inputTrigger={input.length}
-                        emotion={tutorEmotion}
+                        metadata={{ emotion: tutorEmotion }}
                     />
-                    <Text style={[styles.inputChar, styles.ghostText]}>{ghostText}</Text>
+                    <TextRenderer
+                        content={ghostText}
+                        type="dim"
+                        style={[styles.inputCharStyle, styles.ghostTextStyle]}
+                    />
                 </View>
             </Pressable>
         </View>

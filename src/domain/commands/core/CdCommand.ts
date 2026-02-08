@@ -11,37 +11,42 @@ import { getStdinAsString } from '../../entities/ProcessContext';
  *
  * Intent:
  * Allows the operator to navigate the file system hierarchy.
- * Critical for exploration and locating mission objectives.
+ * Refactored to implement IStructuredCommand for combinatorial scaling.
  */
 
-import { ICommand } from '../ICommand';
+import { CommandBase } from '../CommandBase';
+import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
 
 import { FileSystemService } from '../../services/FileSystemService';
+import { PathResolver } from '../../services/filesystem/PathResolver';
 
-export class CdCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+export class CdCommand extends CommandBase {
+    public readonly capabilities = [CommandCapability.NAVIGATE];
+    public readonly utility = 'cd';
+
+    constructor(private fs: FileSystemService) {
+        super();
+    }
 
     /**
      * Executes the 'cd' command.
-     *
-     * @param args - Arguments passed to cd (target directory).
-     * @param state - Current terminal state.
      */
-    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+    protected async executeInternal(
+        rawArgs: string[],
+        flags: Set<string>,
+        operands: string[],
+        context: ProcessContext,
+        state: TerminalState
+    ): Promise<CommandResponse> {
         const fsService = context.fileSystemService || this.fs;
-        const input = getStdinAsString(context);
-        const target = args.length > 0 ? args[0] : '~';
+        const target = operands.length > 0 ? operands[0] : '~';
         let newPath = target;
 
-        // Handle '~' (Home Directory)
-        if (target === '~') {
-            newPath = state.environment.HOME || '/home/operator';
-        }
         // Handle '-' (Previous Directory)
-        else if (target === '-') {
+        if (target === '-') {
             if (state.environment.OLDPWD) {
                 newPath = state.environment.OLDPWD;
             } else {
@@ -53,11 +58,11 @@ export class CdCommand implements ICommand {
             }
         }
 
-        const node = fsService.resolve(newPath, state.currentDirectory);
+        const absolutePath = PathResolver.resolveString(newPath, state.currentDirectory, state.environment.HOME);
+        const node = fsService.resolve(absolutePath, '/');
 
         if (node) {
             if (fsService.isDirectory(node)) {
-                const absolutePath = fsService.getAbsolutePath(node);
                 return {
                     output: target === '-' ? absolutePath : '',
                     newState: {
@@ -68,7 +73,10 @@ export class CdCommand implements ICommand {
                             OLDPWD: state.currentDirectory
                         }
                     },
-                    exitCode: 0
+                    exitCode: 0,
+                    metadata: {
+                        data: { targetDir: absolutePath }
+                    }
                 };
             } else {
                 return {

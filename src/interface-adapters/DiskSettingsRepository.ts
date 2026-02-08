@@ -11,6 +11,7 @@
 import { SettingsRepository } from '../domain/ports/SettingsRepository';
 import { UserSettings, DEFAULT_SETTINGS } from '../domain/entities/Settings';
 import { FileSystem } from '../domain/entities/FileSystem';
+import { FileSystemService } from '../domain/services/FileSystemService';
 
 export class DiskSettingsRepository implements SettingsRepository {
     private fs: FileSystemService;

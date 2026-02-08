@@ -15,13 +15,18 @@
 
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { ConsoleLayout } from '../components/ConsoleLayout';
 import { FKeyBar } from '../components/FKeyBar';
-import { useGame } from '../context/GameContext';
+import { GlobalTutorBar } from '../components/GlobalTutorBar';
+import { useFileSystem } from '../context/FileSystemProvider';
+import { useProcess } from '../context/ProcessProvider';
+import { useTutorPersona } from '../context/TutorPersonaProvider';
 import { useTerminalViewModel } from '../../../interface-adapters/viewmodels/TerminalViewModel';
-import { useTheme } from '../context/ThemeContext';
+import { useTheme, useThemeComponents } from '../context/ThemeContext';
 import { CommsPane } from '../components/CommsPane';
 import { StatusBar } from '../components/StatusBar';
+import { MainframeOverlay } from '../components/MainframeOverlay';
+import { TheatricalCanvas } from '../components/theatrical/TheatricalCanvas';
+import { EconomyBar } from '../components/EconomyBar';
 
 import { ShellScreen } from './ShellScreen';
 import { VimScreen } from './VimScreen';
@@ -37,11 +42,15 @@ const styles = StyleSheet.create({
 });
 
 export const TerminalScreen: React.FC = () => {
-    const { fs, gameManager, commandExecutor } = useGame();
+    const { fs } = useFileSystem();
+    const { gameManager, commandCoordinator, simulationMediator } = useProcess();
+    const { tutorShadow } = useTutorPersona();
     const { theme } = useTheme();
+    const components = useThemeComponents();
+    const Layout = components.Layout;
     const colors = theme.colors;
 
-    const viewModel = useTerminalViewModel(fs, commandExecutor, gameManager);
+    const viewModel = useTerminalViewModel(fs, commandCoordinator, gameManager, tutorShadow, simulationMediator);
 
     const crtStyle = {
         ...StyleSheet.absoluteFillObject,
@@ -59,7 +68,7 @@ export const TerminalScreen: React.FC = () => {
     );
 
     const renderComms = () => (
-        <ConsoleLayout
+        <Layout
             headerComponent={
                 <StatusBar
                     status="COMMS LINK"
@@ -70,24 +79,30 @@ export const TerminalScreen: React.FC = () => {
             }
             status="ENCRYPTED TRANSMISSION"
             topContent={
-                <CommsPane
-                    missions={viewModel.missions}
-                    activeMissionId={viewModel.ircMissionId}
-                    onMissionSelect={viewModel.setIrcMissionId}
-                    onStartMission={viewModel.handleStartMission}
-                    onAbandonMission={viewModel.handleAbandonMission}
-                />
+                <View style={{ flex: 1 }}>
+                    <CommsPane
+                        missions={viewModel.missions}
+                        activeMissionId={viewModel.ircMissionId}
+                        onMissionSelect={viewModel.setIrcMissionId}
+                        onStartMission={viewModel.handleStartMission}
+                        onAbandonMission={viewModel.handleAbandonMission}
+                    />
+                    <MainframeOverlay />
+                    <TheatricalCanvas />
+                </View>
             }
             middleContent={<FKeyBar keys={[
                 { key: 'F2', label: 'CLOSE', action: viewModel.toggleCommsView },
                 { key: 'ESC', label: 'BACK', action: viewModel.toggleCommsView }
             ]} />}
             bottomContent={<View style={styles.footerPlaceholder} />}
+            tutorBarComponent={<GlobalTutorBar />}
+            economyBarComponent={<EconomyBar />}
         />
     );
 
     const renderBuffers = () => (
-        <ConsoleLayout
+        <Layout
             headerComponent={
                 <StatusBar
                     status="ARCHIVE"
@@ -98,16 +113,22 @@ export const TerminalScreen: React.FC = () => {
             }
             status="RECOVERED DATA BANKS"
             topContent={
-                <BufferScreen
-                    buffers={viewModel.buffers}
-                    onClose={viewModel.toggleBufferView}
-                />
+                <View style={{ flex: 1 }}>
+                    <BufferScreen
+                        buffers={viewModel.buffers}
+                        onClose={viewModel.toggleBufferView}
+                    />
+                    <MainframeOverlay />
+                    <TheatricalCanvas />
+                </View>
             }
             middleContent={<FKeyBar keys={[
                 { key: 'F3', label: 'CLOSE', action: viewModel.toggleBufferView },
                 { key: 'ESC', label: 'BACK', action: viewModel.toggleBufferView }
             ]} />}
             bottomContent={<View style={styles.footerPlaceholder} />}
+            tutorBarComponent={<GlobalTutorBar />}
+            economyBarComponent={<EconomyBar />}
         />
     );
 
@@ -125,6 +146,8 @@ export const TerminalScreen: React.FC = () => {
             buffers={viewModel.buffers}
             activeView={viewModel.activeView}
             ircMissionId={viewModel.ircMissionId}
+            fKeys={viewModel.fKeys}
+            handleAction={viewModel.handleAction}
             markLineComplete={viewModel.markLineComplete}
             handleKeyPress={viewModel.handleKeyPress}
             toggleCommsView={viewModel.toggleCommsView}

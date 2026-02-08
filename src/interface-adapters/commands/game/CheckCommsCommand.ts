@@ -12,7 +12,7 @@ export class CheckCommsCommand implements ICommand {
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
         const input = context.stdin;
-        const mission = this.gameManager.spawnNPCEvent();
+        const mission = await this.gameManager.spawnNPCEvent();
 
         if (!mission) {
             return {

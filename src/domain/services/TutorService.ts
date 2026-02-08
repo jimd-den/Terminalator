@@ -2,28 +2,12 @@ import { TerminalState } from '../entities/TerminalState';
 import { Mission, MissionStep } from '../entities/Mission';
 import { CommandResponse } from '../entities/Command';
 import { IMissionStrategy } from './mission-strategies/IMissionStrategy';
-import { ExfiltrateStrategy } from './mission-strategies/ExfiltrateStrategy';
-import { ModifyStrategy } from './mission-strategies/ModifyStrategy';
-import { LogAnalysisStrategy } from './mission-strategies/LogAnalysisStrategy';
-import { DispatcherStrategy } from './mission-strategies/DispatcherStrategy';
 import { MissionRepository } from './MissionRepository';
 import { LessonRegistry } from './LessonRegistry';
+import { TutorAction, TutorProgressionResult } from '../interfaces/ITutorService';
+import { StrategyRegistry } from './mission-strategies/StrategyRegistry';
 
-export interface TutorAction {
-    message: string;
-    type: 'HINT' | 'WARNING' | 'CONGRATS';
-    confidence: number; // 0-1
-}
-
-export interface TutorProgressionResult {
-    type: 'START_LESSON';
-    lessonId: string;
-    objectiveTarget?: string;
-    nextStep?: MissionStep;
-    text?: string;        // [NEW] Dynamic command for the lesson
-    instructions?: string; // [NEW] Narrative instructions
-    isMission?: boolean;   // [NEW] Carry mission context
-}
+export { TutorAction, TutorProgressionResult };
 
 /**
  * TutorService - Domain Service
@@ -34,20 +18,14 @@ export interface TutorProgressionResult {
  * Pillar: The Balanced Scale (SOLID / KISS)
  */
 export class TutorService {
-    private strategies: Record<string, IMissionStrategy> = {
-        'exfiltrate': new ExfiltrateStrategy(),
-        'modify': new ModifyStrategy(),
-        'log-analysis': new LogAnalysisStrategy(),
-        'dispatcher': new DispatcherStrategy()
-    };
-
     constructor(
         private missionRepository: MissionRepository,
-        private lessonRegistry: LessonRegistry
+        private lessonRegistry: LessonRegistry,
+        private strategyRegistry: StrategyRegistry
     ) { }
 
     private getStrategy(type: string): IMissionStrategy {
-        return this.strategies[type] || this.strategies['exfiltrate'];
+        return this.strategyRegistry.get(type);
     }
 
     /**
@@ -55,6 +33,10 @@ export class TutorService {
      */
     public analyzeGameState(mission: Mission, state: TerminalState, lastResponse: CommandResponse): TutorAction | null {
         if (!mission || mission.status !== 'active') return null;
+        
+        // Unify: Generative missions use TutorBrain for dialogue via Bus.
+        if (mission.type === 'generative') return null;
+
         const strategy = this.getStrategy(mission.type);
         const result = strategy.evaluate(mission, state, lastResponse, this.missionRepository, this.lessonRegistry);
         return result.hint;

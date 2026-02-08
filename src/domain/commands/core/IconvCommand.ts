@@ -77,7 +77,7 @@ export class IconvCommand implements ICommand {
         if (outputFile) {
             try {
                 // FileSystemService.writeFile resolves path internally
-                this.fs.writeFile(outputFile, content, state.currentDirectory);
+                this.fs.writeFile(outputFile, content, 'w', 1000, 1000, state.currentDirectory);
             } catch (e) {
                 if (!silent) return { output: `iconv: cannot write to ${outputFile}`, newState: state, exitCode: 1 };
                 return { output: '', newState: state, exitCode: 1 };

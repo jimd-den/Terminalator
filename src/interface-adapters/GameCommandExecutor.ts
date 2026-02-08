@@ -2,24 +2,19 @@
  * GameCommandExecutor - Interface Adapter Layer
  * 
  * Orchestrates terminal commands including game-specific logic.
- * Registers game commands ('mail', 'check-comms', 'compile', 'vim')
- * alongside core commands via the Registry.
+ * Composition over Inheritance: Composes a pure domain ExecuteCommand service.
  *
  * Pillar: The Four-Fold Shield (Strict Architecture)
- * Pillar: The Master’s Tool (Pragmatic Design Patterns) - Command Pattern
+ * Pillar: The Master’s Tool (Pragmatic Design Patterns) - Composition
  */
 
 import { ExecuteCommand } from '../domain/usecases/ExecuteCommand';
 import { MailSystem } from '../domain/usecases/MailSystem';
-import { FileSystem } from '../domain/entities/FileSystem';
 import { FileSystemService } from '../domain/services/FileSystemService';
 import { CodeCompiler } from '../domain/usecases/CodeCompiler';
 import { TelemetryPort } from '../domain/ports/TelemetryPort';
-
 import { IdentityService } from '../domain/services/IdentityService';
-
 import { GameManager } from './GameManager';
-
 import { MailCommand } from './commands/MailCommand';
 import { CheckCommsCommand } from './commands/game/CheckCommsCommand';
 import { CompileCommand } from './commands/CompileCommand';
@@ -27,78 +22,83 @@ import { VimCommand } from './commands/VimCommand';
 import { SchemeCommand } from './commands/game/SchemeCommand';
 import { AsmCommand } from './commands/game/AsmCommand';
 import { SettingsCommand } from './commands/game/SettingsCommand';
-
 import { TutorCommand } from './commands/game/TutorCommand';
-
 import { CommandRegistry } from '../domain/commands/CommandRegistry';
 import { CoreUtilsModule } from '../domain/modules/CoreUtilsModule';
 import { SystemUtilsModule } from '../domain/modules/SystemUtilsModule';
-
 import { ConnectCommand } from './commands/game/ConnectCommand';
 import { NetworkMap } from '../domain/services/NetworkMap';
 import { TerminalState } from '../domain/entities/TerminalState';
 import { CommandResponse } from '../domain/entities/Command';
+import { IShellExecutor } from '../domain/interfaces/IShellExecutor';
 
-export class GameCommandExecutor extends ExecuteCommand {
+export class GameCommandExecutor implements IShellExecutor {
     private mailSystem: MailSystem;
     private compiler: CodeCompiler;
     private gameManager: GameManager;
+    private engine: ExecuteCommand;
+    private registry: CommandRegistry;
 
     constructor(
-        fs: FileSystemService,
+        fsService: FileSystemService,
         gameManager: GameManager,
-        networkMap: NetworkMap, // [NEW] Injected
-        telemetry?: TelemetryPort
+        private networkMap: NetworkMap,
+        private telemetry?: TelemetryPort
     ) {
-        // Initialize Core Registry
-        const registry = new CommandRegistry();
+        this.gameManager = gameManager;
+        this.registry = new CommandRegistry();
         const identityService = new IdentityService();
 
-        // Register Core Modules
-        new CoreUtilsModule(fs.fileSystem, identityService).register(registry);
-        new SystemUtilsModule(fs).register(registry);
+        // 1. Register Core Modules
+        new CoreUtilsModule(fsService.fileSystem, identityService).register(this.registry);
+        new SystemUtilsModule(fsService).register(this.registry);
 
-        // Pass dependencies to super
-        super(fs, telemetry, registry, undefined, networkMap);
+        // 2. Compose Domain Engine
+        this.engine = new ExecuteCommand(
+            fsService,
+            telemetry,
+            this.registry,
+            undefined,
+            networkMap,
+            gameManager.getWorldManager()
+        );
 
-        this.networkMap = networkMap;
-        this.mailSystem = new MailSystem(fs, telemetry);
-        this.compiler = new CodeCompiler(this.fs, telemetry);
-        this.gameManager = gameManager; // Note: GameManager instance passed in might need NetworkMap too!
-        // ISSUE: GameManager is passed IN. Who constructs GameManager?
-        // Usually TerminalViewModel.
-        // If Logic demands GameManager has NetworkMap, TerminalViewModel must pass it.
-        // OR GameCommandExecutor initializes GameManager?
-        // Let's assume for now we must refactor how GameManager is created or updated.
-        // But types says 'gameManager: GameManager'.
+        this.mailSystem = new MailSystem(fsService, telemetry);
+        this.compiler = new CodeCompiler(fsService.fileSystem, telemetry);
 
-        this.registerGameCommands();
+        // 3. Register Game Commands
+        this.registerGameCommands(fsService);
     }
 
-    private registerGameCommands() {
-        const registry = this.getRegistry();
-
-        registry.register('mail', new MailCommand(this.mailSystem));
-        registry.register('check-comms', new CheckCommsCommand(this.gameManager));
-        registry.register('compile', new CompileCommand(this.compiler));
-        registry.register('vim', new VimCommand());
-        registry.register('scheme', new SchemeCommand(this.service));
-        registry.register('asm', new AsmCommand(this.service));
-        registry.register('options', new SettingsCommand());
-        registry.register('settings', new SettingsCommand());
+    private registerGameCommands(fsService: FileSystemService) {
+        this.registry.register('mail', new MailCommand(this.mailSystem));
+        this.registry.register('check-comms', new CheckCommsCommand(this.gameManager));
+        this.registry.register('compile', new CompileCommand(this.compiler));
+        this.registry.register('vim', new VimCommand());
+        this.registry.register('scheme', new SchemeCommand(fsService));
+        this.registry.register('asm', new AsmCommand(fsService));
+        this.registry.register('options', new SettingsCommand());
+        this.registry.register('settings', new SettingsCommand());
 
         // SSH
-        registry.register('ssh', new ConnectCommand(this.networkMap));
-        registry.register('connect', new ConnectCommand(this.networkMap));
+        this.registry.register('ssh', new ConnectCommand(this.networkMap));
+        this.registry.register('connect', new ConnectCommand(this.networkMap));
 
         // Register Tutor
-        registry.register('tutor', new TutorCommand(this.gameManager));
-        registry.register('train', new TutorCommand(this.gameManager));
+        this.registry.register('tutor', new TutorCommand(this.gameManager));
+        this.registry.register('train', new TutorCommand(this.gameManager));
     }
 
-    // Override execute to trigger Tutor and handle connection setup
+    public getRegistry(): CommandRegistry {
+        return this.registry;
+    }
+
+    /**
+     * Executes a command by delegating to the composed domain engine and
+     * triggering game-specific events.
+     */
     async execute(input: string, state: TerminalState): Promise<CommandResponse> {
-        const response = await super.execute(input, state);
+        const response = await this.engine.execute(input, state);
 
         // 1. Connection established trigger: Ensure remote system is prepared with mission files
         if (response.newState?.fsContext && response.newState.fsContext !== state.fsContext) {

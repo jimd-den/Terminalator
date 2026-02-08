@@ -50,12 +50,19 @@ export class AsmCommand implements ICommand {
             const { program, memory, labels } = this.assembler.assemble(source);
 
             // Step 2: Run
-            const { stdout, exitCode } = this.interpreter.run(program, memory, this.cpu, labels);
+            const startTime = Date.now();
+            const { stdout, exitCode, instructionCount } = this.interpreter.run(program, memory, this.cpu, labels);
+            const endTime = Date.now();
 
             return {
                 output: stdout + `\n[VM EXITED WITH CODE ${exitCode}]`,
                 newState: state,
-                exitCode: 0
+                exitCode: 0,
+                executionStats: {
+                    timeMs: endTime - startTime,
+                    iterations: instructionCount,
+                    memoryUsed: memory.length // Or actual usage if tracked
+                }
             };
         } catch (err: any) {
             return {

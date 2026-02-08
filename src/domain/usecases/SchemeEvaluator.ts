@@ -22,6 +22,7 @@ import { MacroExpander } from '../services/scheme/MacroExpander';
 export class SchemeEvaluator {
     private compiler: SchemeCompiler;
     private macroExpander: MacroExpander;
+    public lastInstructionCount: number = 0;
 
     constructor() {
         this.compiler = new SchemeCompiler();
@@ -41,6 +42,8 @@ export class SchemeEvaluator {
 
         // 3. Execute
         const vm = new SchemeVM(env);
-        return vm.execute(code);
+        const result = vm.execute(code);
+        this.lastInstructionCount = vm.getInstructionCount();
+        return result;
     }
 }

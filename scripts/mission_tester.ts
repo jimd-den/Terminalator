@@ -5,6 +5,8 @@ import { TutorService } from '../src/domain/services/TutorService';
 import { MissionRepository } from '../src/domain/services/MissionRepository';
 import { LessonRegistry } from '../src/domain/services/LessonRegistry';
 import { NPC } from '../src/domain/entities/NPC';
+import { JsonMissionDataProvider } from '../src/infrastructure/data/JsonMissionDataProvider';
+import { StrategyRegistry } from '../src/domain/services/mission-strategies/StrategyRegistry';
 
 /**
  * MISSION TESTER
@@ -14,9 +16,10 @@ import { NPC } from '../src/domain/entities/NPC';
 async function runTest() {
     console.log("--- MISSION TESTER STARTING ---");
 
-    const repo = new MissionRepository();
+    const repo = new MissionRepository(new JsonMissionDataProvider());
     const registry = new LessonRegistry();
-    const tutor = new TutorService(repo, registry);
+    const strategyRegistry = new StrategyRegistry();
+    const tutor = new TutorService(repo, registry, strategyRegistry);
 
     const npc: NPC = {
         id: 'test-npc',

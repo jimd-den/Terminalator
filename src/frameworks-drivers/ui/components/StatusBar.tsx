@@ -29,14 +29,13 @@ export const StatusBar: React.FC<StatusBarProps> = ({
     const styles = StyleSheet.create({
         container: {
             flexDirection: 'row',
-            justifyContent: 'center', // [MOBILE-CENTRIC] Aligned to center for focal point
+            justifyContent: 'center',
             alignItems: 'center',
             backgroundColor: colors.primary,
-            paddingHorizontal: THEME.spacing.md,
-            paddingVertical: 6,
+            paddingVertical: THEME.spacing.sm,
             borderBottomWidth: 1,
             borderBottomColor: colors.primary,
-            gap: 16, // Spacing between groups
+            gap: 16,
         },
         section: {
             flexDirection: 'row',
@@ -46,7 +45,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
         label: {
             color: colors.background,
             fontFamily: settings.fontFamily,
-            fontSize: 10, // Slightly smaller for dense technical look
+            fontSize: 10,
             fontWeight: 'bold',
         }
     });

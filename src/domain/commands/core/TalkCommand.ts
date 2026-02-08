@@ -30,8 +30,9 @@ export class TalkCommand implements ICommand {
         }
 
         // Simulation
+        const hostname = state.environment.HOSTNAME || 'terminalator';
         return {
-            output: `[Checking for invitation on ${state.hostname}]`,
+            output: `[Checking for invitation on ${hostname}]`,
             newState: state,
             exitCode: 0
         };

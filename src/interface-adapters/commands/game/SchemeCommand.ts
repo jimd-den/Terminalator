@@ -112,11 +112,28 @@ export class SchemeCommand implements ICommand {
                 const content = fs.readFile(filename, state.currentDirectory);
                 const expressions = this.parser.parse(content);
                 let lastResult = '';
+                
+                const startTime = Date.now();
+                let totalInstructions = 0;
+
                 for (const expr of expressions) {
                     const result = this.evaluator.evaluate(expr, env);
                     lastResult = schemeToString(result);
+                    totalInstructions += this.evaluator.lastInstructionCount;
                 }
-                return { output: lastResult, newState: state, exitCode: 0 };
+                
+                const endTime = Date.now();
+
+                return { 
+                    output: lastResult, 
+                    newState: state, 
+                    exitCode: 0,
+                    executionStats: {
+                        timeMs: endTime - startTime,
+                        iterations: totalInstructions,
+                        memoryUsed: 0 // Not tracked yet
+                    }
+                };
             } catch (err: any) {
                 return { output: `scheme error: ${err.message}`, newState: state, exitCode: 1 };
             }
@@ -127,8 +144,20 @@ export class SchemeCommand implements ICommand {
                 const expressions = this.parser.parse(exprCode);
                 if (expressions.length === 0) return { output: '', newState: state, exitCode: 0 };
 
+                const startTime = Date.now();
                 const result = this.evaluator.evaluate(expressions[0], env);
-                return { output: schemeToString(result), newState: state, exitCode: 0 };
+                const endTime = Date.now();
+
+                return { 
+                    output: schemeToString(result), 
+                    newState: state, 
+                    exitCode: 0,
+                    executionStats: {
+                        timeMs: endTime - startTime,
+                        iterations: this.evaluator.lastInstructionCount,
+                        memoryUsed: 0
+                    }
+                };
             } catch (err: any) {
                 return { output: `scheme error: ${err.message}`, newState: state, exitCode: 1 };
             }

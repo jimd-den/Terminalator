@@ -1,5 +1,5 @@
 import { Token, TokenType } from '../ShellLexer';
-import { ASTNode, RedirectNode } from '../ShellParser';
+import { ASTNode, RedirectNode } from '../../interfaces/ShellAST';
 
 /**
  * IShellParserFacade - Domain Layer

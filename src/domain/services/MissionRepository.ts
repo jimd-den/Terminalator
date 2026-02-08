@@ -1,47 +1,30 @@
-import MissionCatalog from '../data/MissionCatalog.json';
 import { Mission, MissionStep } from '../entities/Mission';
 import { NPC } from '../entities/NPC';
+import { IMissionDataProvider, MissionTemplate } from '../interfaces/IMissionDataProvider';
 
 /**
  * MissionRepository - Domain Service
  * 
- * Responsible for loading mission templates from static data
+ * Responsible for loading mission templates from abstract data provider
  * and performing variable injection.
  * 
  * Pillar: The Master's Tool (Technical Excellence)
  * Pillar: The Balanced Scale (KISS)
  */
 
-export interface MissionTemplate {
-    id: string;
-    display_name: string;
-    narrative_fallback: string;
-    steps: {
-        type: string;
-        instructions: string;
-        command: string;
-        nextStep: string;
-        cwd?: string; // [NEW] Required working directory for this step
-    }[];
-    templates: {
-        description: string;
-        reward: string;
-    }[];
-}
-
 export class MissionRepository {
-    private catalog = MissionCatalog;
+    constructor(private dataProvider: IMissionDataProvider) {}
 
     public getRandomTemplate(archetype: string): MissionTemplate | null {
-        return (this.catalog.archetypes as any)[archetype] || null;
+        return this.dataProvider.getTemplate(archetype);
     }
 
     public getArchetypeKeys(): string[] {
-        return Object.keys(this.catalog.archetypes);
+        return this.dataProvider.getAllArchetypeIds();
     }
 
     public getPool(key: string): string[] {
-        return (this.catalog as any).variable_pools[key] || [];
+        return this.dataProvider.getVariablePool(key);
     }
 
     /**

@@ -10,8 +10,11 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
 import { THEMES, ThemeDefinition, ThemeColors } from '../../../domain/entities/Theme';
 import { UserSettings, DEFAULT_SETTINGS } from '../../../domain/entities/Settings';
-import { useGame } from './GameContext';
+import { useFileSystem } from './FileSystemProvider';
 import { DiskSettingsRepository } from '../../../interface-adapters/DiskSettingsRepository';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
+import { ThemeComponentMap } from '../../../domain/entities/ThemeComponents';
+import { getComponentsForTheme } from '../themes/ThemeRegistry';
 
 interface ThemeContextType {
     theme: ThemeDefinition;
@@ -23,8 +26,8 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const { fs } = useGame();
-    const settingsRepo = useMemo(() => new DiskSettingsRepository(fs), [fs]);
+    const { fs } = useFileSystem();
+    const settingsRepo = useMemo(() => new DiskSettingsRepository(new FileSystemService(fs)), [fs]);
 
     const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
 
@@ -62,4 +65,9 @@ export const useTheme = () => {
         throw new Error('useTheme must be used within a ThemeProvider');
     }
     return context;
+};
+
+export const useThemeComponents = (): ThemeComponentMap => {
+    const { theme } = useTheme();
+    return useMemo(() => getComponentsForTheme(theme.id), [theme.id]);
 };

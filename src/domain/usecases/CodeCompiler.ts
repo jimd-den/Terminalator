@@ -13,18 +13,22 @@ import { FileSystem, S_IFREG, S_IFMT } from '../entities/FileSystem';
 import { FileSystemService } from '../services/FileSystemService';
 import { Interpreter } from '../interpreters/Interpreter';
 import { LispInterpreter } from '../interpreters/LispInterpreter';
+import { Assembler } from './asm/Assembler';
 
 export interface CompilationResult {
     success: boolean;
     output: string;
+    artifactPath?: string;
 }
 
 export class CodeCompiler {
     private interpreters: Record<string, Interpreter>;
     private service: FileSystemService;
+    private assembler: Assembler;
 
     constructor(private fs: FileSystem, private telemetry?: TelemetryPort) {
         this.service = new FileSystemService(fs);
+        this.assembler = new Assembler();
         this.interpreters = {
             'lisp': new LispInterpreter(),
             // Future interpreters (python, js, etc.) can be added here
@@ -58,6 +62,29 @@ export class CodeCompiler {
                     success: true,
                     output: `EXECUTING LISP RUNTIME...\n> ${output}\n\nPROCESS COMPLETED.`
                 };
+            }
+
+            if (extension === 's' || extension === 'asm') {
+                try {
+                    const { program, memory, labels } = this.assembler.assemble(content);
+                    const artifact = {
+                        type: 'RISCV_EXECUTABLE',
+                        program,
+                        memory: Array.from(memory),
+                        labels: Object.fromEntries(labels)
+                    };
+
+                    const artifactPath = path.replace(/\.(s|asm)$/, '.exe');
+                    this.service.writeFile(artifactPath, JSON.stringify(artifact, null, 2), 'w', inode.uid, inode.gid, cwd);
+
+                    return {
+                        success: true,
+                        output: `ASSEMBLING ${path}...\nOPTIMIZING OPCODES...\nARTIFACT GENERATED: ${artifactPath}\n\nSUCCESS.`,
+                        artifactPath
+                    };
+                } catch (e: any) {
+                    return { success: false, output: `ASSEMBLER ERROR: ${e.message}` };
+                }
             }
 
             // Fallback for legacy 24XX scripts (simulated)

@@ -10,9 +10,11 @@ import { getStdinAsString } from '../../entities/ProcessContext';
  *
  * Intent:
  * Allows the operator to delete nodes from the file system.
+ * Refactored to implement IStructuredCommand for combinatorial scaling.
  */
 
 import { CommandBase } from '../CommandBase';
+import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
@@ -21,12 +23,15 @@ import { FileSystemService } from '../../services/FileSystemService';
 import { DirectoryNode } from '../../entities/filesystem/DirectoryNode';
 
 export class RmCommand extends CommandBase {
+    public readonly capabilities = [CommandCapability.MODIFY];
+    public readonly utility = 'rm';
+
     constructor(private fsService: FileSystemService) { super(); }
 
     executeInternal(args: string[], flags: Set<string>, targets: string[], context: ProcessContext, state: TerminalState): CommandResponse {
         const fsService = context.fileSystemService || this.fsService;
-        const recursive = this.hasFlag('r') || this.hasFlag('R');
-        const force = this.hasFlag('f');
+        const recursive = flags.has('r') || flags.has('R');
+        const force = flags.has('f');
 
         if (targets.length === 0) {
             return {
@@ -49,7 +54,6 @@ export class RmCommand extends CommandBase {
                 };
             }
 
-            // Check if directory
             if (fsService.isDirectory(existing)) {
                 if (!recursive) {
                     return {
@@ -59,7 +63,6 @@ export class RmCommand extends CommandBase {
                     };
                 }
 
-                // Recursive deletion
                 try {
                     this.deleteRecursive(path, fsService);
                 } catch (e: any) {
@@ -70,11 +73,9 @@ export class RmCommand extends CommandBase {
                     };
                 }
             } else {
-                // Remove file
                 try {
                     fsService.deleteNode(path);
                 } catch (e: any) {
-                    // Should not happen if we resolved it, unless permissions/race
                     return {
                         output: `rm: cannot remove '${target}': ${e.message}`,
                         newState: state,
@@ -96,7 +97,6 @@ export class RmCommand extends CommandBase {
         if (!node) return;
 
         if (fsService.isDirectory(node)) {
-            // Delete all children first
             const children = Array.from((node as DirectoryNode).children.values());
             for (const child of children) {
                 const childPath = path === '/' ? `/${child.name}` : `${path}/${child.name}`;
@@ -104,7 +104,6 @@ export class RmCommand extends CommandBase {
             }
         }
 
-        // Now valid to delete (empty dir or file)
         fsService.deleteNode(path);
     }
 }

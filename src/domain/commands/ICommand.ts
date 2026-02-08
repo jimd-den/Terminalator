@@ -10,7 +10,7 @@
 
 import { FileSystemService } from '../../domain/services/FileSystemService';
 import { TerminalState } from '../entities/TerminalState';
-import { CommandResponse } from '../usecases/ExecuteCommand';
+import { CommandResponse } from '../entities/Command';
 import { ProcessContext } from '../entities/ProcessContext';
 
 export { CommandResponse };

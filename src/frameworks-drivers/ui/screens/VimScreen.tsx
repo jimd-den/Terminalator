@@ -8,9 +8,19 @@
  * Pillar: The Balanced Scale (Composition)
  */
 
-import React from 'react';
-import { ConsoleLayout } from '../components/ConsoleLayout';
+import React, { useMemo } from 'react';
+import { View } from 'react-native';
 import { useVimEditor } from '../components/vim/VimEditor';
+import { GlobalTutorBar } from '../components/GlobalTutorBar';
+import { EconomyBar } from '../components/EconomyBar';
+import { useTheme, useThemeComponents } from '../context/ThemeContext';
+import { useFileSystem } from '../context/FileSystemProvider';
+import { useProcess } from '../context/ProcessProvider';
+import { useSystemState } from '../context/SystemStateProvider';
+import { useTutorPersona } from '../context/TutorPersonaProvider';
+import { MainframeOverlay } from '../components/MainframeOverlay';
+import { TheatricalCanvas } from '../components/theatrical/TheatricalCanvas';
+import { FileSystemService } from '../../../domain/services/FileSystemService';
 
 export interface VimScreenProps {
     filename: string;
@@ -18,17 +28,42 @@ export interface VimScreenProps {
 }
 
 export const VimScreen: React.FC<VimScreenProps> = ({ filename, onExit }) => {
+    const components = useThemeComponents();
+    const Layout = components.Layout;
+
+    const { fs } = useFileSystem();
+    const { gameManager } = useProcess();
+    const { isInputLocked } = useSystemState();
+    const { tutorShadow } = useTutorPersona();
+
+    const fsService = useMemo(() => new FileSystemService(fs), [fs]);
+    
     // -- Vim Logic --
-    // The `useVimEditor` hook encapsulates the complex editor state,
-    // input handling, and syntax highlighting.
-    const vim = useVimEditor(filename, onExit);
+    const vim = useVimEditor(
+        filename, 
+        onExit,
+        fsService,
+        gameManager.tutorEngine,
+        tutorShadow,
+        isInputLocked
+    );
+
+    const topContent = (
+        <View style={{ flex: 1 }}>
+            {vim.topContent}
+            <MainframeOverlay />
+            <TheatricalCanvas />
+        </View>
+    );
 
     return (
-        <ConsoleLayout
+        <Layout
             status={`EDITING: ${filename}`}
-            topContent={vim.topContent}
+            topContent={topContent}
             middleContent={vim.middleContent}
             bottomContent={vim.bottomContent}
+            tutorBarComponent={<GlobalTutorBar />}
+            economyBarComponent={<EconomyBar />}
         />
     );
 };

@@ -26,6 +26,7 @@ import { TerminalOutputLine, OutputControllerActions } from './OutputController'
 import { ShellPresenter } from '../presenters/ShellPresenter';
 import { IGameManager } from '../../domain/interfaces/IGameManager';
 import { GameEventObserver } from '../../domain/services/GameEventObserver';
+import { SimulationMediator } from '../../core/presentation/SimulationMediator';
 
 export interface ShellControllerDeps {
     commandExecutor: ExecuteCommand;
@@ -39,6 +40,7 @@ export interface ShellControllerDeps {
     setIsTransitioning: (val: boolean) => void;
     setActiveApp: (app: any) => void;
     setMissions: (missions: any[]) => void;
+    simulationMediator: SimulationMediator;
 }
 
 export class ShellController {
@@ -79,15 +81,13 @@ export class ShellController {
         );
         inputController.clearInput();
 
-        // Phase 2: The Access (Cinematic Delay)
-        // Simulate processing time for "feel". Can be 0 if desired.
-        await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 300));
-
-        // Phase 3: The Result (Execution)
-        // Delegate actual logic to the Domain Layer (CommandExecutor)
-        const response: CommandResponse = await commandExecutor.execute(cmdToRun, stateRef.current);
+        // Phase 2: The Access (Theatrical Orchestration)
+        // The Mediator handles the theatrical presentation and domain execution
+        const { simulationMediator } = this.deps;
+        const response: CommandResponse = await simulationMediator.executeWithTheatre(cmdToRun, stateRef.current);
         const { output: cmdOutput, newState, navigationAction, uiAction, exitCode, controlFlow } = response;
 
+        // Phase 3: The Result (State & Side Effects)
         // Synchronous State Update pattern
         if (newState) {
             const updated = { ...stateRef.current, ...newState };
@@ -133,7 +133,7 @@ export class ShellController {
         gameManager.onCommandExecuted(stateRef.current, response, prevFsContext);
 
         // Check for Procedural Events (Random NPC Messages)
-        const eventMsg = gameEventObserver.checkProceduralEvents(outputController.getLineCount());
+        const eventMsg = await gameEventObserver.checkProceduralEvents(outputController.getLineCount());
         if (eventMsg) {
             outputController.appendLine(
                 ShellPresenter.presentSystemMessage(eventMsg)

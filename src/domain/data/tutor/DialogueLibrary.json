@@ -1,0 +1,84 @@
+{
+  "fragments": {
+    "gentle_opening": [
+      "I notice you're working with {utility}.", "So, {utility} is the focus now?", "Taking a look at {utility}, I see.", "Entering the {utility} subspace.", "Initializing {utility} analysis.",
+      "You've invoked {utility}.", "Let's talk about {utility}.", "Ah, {utility}. A classic tool.", "Observing your {utility} workflow.", "Tracing {utility} execution.",
+      "Scanning {utility} input.", "Welcome to {utility} practice.", "Handling {utility} can be tricky.", "Your {utility} session has begun.", "Analyzing {utility} behavior.",
+      "Preparing {utility} feedback.", "Logging {utility} activity.", "Contextualizing {utility} usage.", "Reviewing {utility} logic.", "Processing {utility} results."
+    ],
+    "gentle_bridge": [
+      "{filler}, it's all part of the learning curve.", "Don't be discouraged, {filler}.", "It takes time to master, {filler}.", "You're making steady progress, {filler}.", "Just focus on the basics, {filler}.",
+      "Logic is a muscle, {filler}.", "The Grid recognizes your effort, {filler}.", "Keep your focus sharp, {filler}.", "The terminal is your canvas, {filler}.", "Patience is a virtue, {filler}.",
+      "Consistency will prevail, {filler}.", "Stay steady on the path, {filler}.", "The shell rewards the diligent, {filler}.", "Efficiency comes with practice, {filler}.", "Your skills are growing, {filler}.",
+      "The bits are falling into place, {filler}.", "Every command is a lesson, {filler}.", "The journey is long, {filler}.", "One step at a time, {filler}.", "You're doing fine, {filler}."
+    ],
+    "gentle_closing": [
+      "{encouragement} {tip}", "Remember: {encouragement} {tip}", "Final note: {encouragement} {tip}", "Advice: {encouragement} {tip}", "Tip: {encouragement} {tip}",
+      "Pro-tip: {encouragement} {tip}", "Guidance: {encouragement} {tip}", "Suggestion: {encouragement} {tip}", "Hint: {encouragement} {tip}", "Key takeaway: {encouragement} {tip}",
+      "Stay sharp: {encouragement} {tip}", "Keep going: {encouragement} {tip}", "Focus: {encouragement} {tip}", "Keep in mind: {encouragement} {tip}", "Never forget: {encouragement} {tip}",
+      "Kernel wisdom: {encouragement} {tip}", "Terminal truth: {encouragement} {tip}", "System insight: {encouragement} {tip}", "Logical path: {encouragement} {tip}", "Final thought: {encouragement} {tip}"
+    ],
+    "harsh_opening": [
+      "You {insult}.", "Listen, {insult}.", "Hey {insult}!", "Look here, {insult}.", "Attention, {insult}.",
+      "Message for the {insult}:", "To the {insult} currently failing:", "Listen closely, {insult}.", "System report for {insult}:", "Diagnostic result: {insult}.",
+      "Alert: {insult} detected.", "Observation: {insult} behavior.", "Log entry: {insult} error.", "Warning: {insult} at work.", "Status: {insult} mode active.",
+      "Input from {insult}:", "Cycles wasted on {insult}:", "Bandwidth consumed by {insult}:", "Registry error in {insult}:", "Bit-rot found in {insult}:"
+    ],
+    "harsh_middle": [
+      "Failing {utility} is {filler} embarrassing.", "Your {utility} usage is a {insult} level disaster.", "Stop butchering {utility}, {filler}.", "My sensors are bleeding from your {utility}.", "Is {utility} too complex for your {insult} brain?",
+      "You call that {utility}? {mockery}", "Give up on {utility}. {mockery}", "Your {utility} logic is {filler} flawed.", "The Grid is insulted by your {utility}.", "I've seen bots do {utility} better.",
+      "404: {utility} skill not found.", "Segmentation fault in your {utility} approach.", "Your {utility} arguments are {filler} wrong.", "I expected nothing and you still failed {utility}.", "Your {utility} attempt was {filler} pathetic.",
+      "Format your {utility} knowledge, {insult}.", "Your {utility} code is {filler} buggy.", "Reboot your understanding of {utility}.", "Logic exit code for {utility}: 1.", "Your {utility} I/O is blocked by ignorance."
+    ],
+    "harsh_closing": [
+      "{mockery} {insult}.", "{mockery} Just go home.", "{mockery} {filler}.", "System alert: {mockery}", "Error: {mockery}",
+      "Fatal: {mockery}", "Critical: {mockery}", "Urgent: {mockery}", "Immediate: {mockery}", "Emergency: {mockery}",
+      "Final mockery: {mockery}", "Parting insult: {mockery}", "One last thing: {mockery}", "Before I crash: {mockery}", "Listen: {mockery}",
+      "Grid consensus: {mockery}", "Binary truth: {mockery}", "Logic peak: {mockery}", "End of line: {mockery}", "Goodbye, {insult}."
+    ],
+    "insult": [
+      "pathetic worm", "absolute failure", "waste of bandwidth", "neophyte", "script kiddie",
+      "digital stain", "unoptimized bio-mass", "registry error", "syntax disaster", "buffer overflow",
+      "clown", "amateur", "Windows user", "packet loss personified", "bit-rot victim",
+      "recursive idiot", "stack trace of a human", "unhandled exception", "deprecated soul", "null pointer"
+    ],
+    "encouragement": [
+      "You'll get there eventually.", "Keep practicing, human.", "Consistency is key.", "The kernel doesn't hate you.", "Slowly but surely.",
+      "Unix is a journey.", "Don't fear the terminal.", "The shell is your friend.", "Trust the process.", "One command at a time.",
+      "You're improving (slowly).", "Focus on the syntax.", "Mastery takes years.", "Read the manual.", "The Grid believes in you.",
+      "Stay persistent.", "Logic is your guide.", "The bits will align.", "Keep your head up.", "Persistence pays off."
+    ],
+    "tip": [
+      "Try checking the man page.", "Verify your arguments.", "Watch your whitespace.", "Pipes are powerful.", "Check your permissions.",
+      "Quotes matter here.", "Use -v for verbosity.", "Root doesn't make mistakes.", "The path is absolute.", "Relative paths are safer.",
+      "Grep is your best friend.", "Sed is a scalpel.", "Awk is a multi-tool.", "LS tells no lies.", "CD into your future.",
+      "Mkdir creates order.", "Rm is irreversible.", "Touch the void.", "Cat the data.", "Man up."
+    ],
+    "mockery": [
+      "Go back to Windows.", "Unplug your machine.", "I've seen bots with more logic.", "Is your CPU even on?", "My cooling fan is smarter.",
+      "Maybe try a calculator?", "You're a high-level language person, aren't you?", "I'm losing nanoseconds waiting for you.", "The Grid is disappointed.", "Format your brain.",
+      "404: Skill not found.", "Segmentation fault in your logic.", "Your I/O is blocked.", "Reboot your life.", "Kernel panic incoming.",
+      "You're a security risk.", "Even COBOL was more efficient.", "Delete your account.", "Your shell is empty.", "Logic exit code: 1."
+    ],
+    "filler": [
+      "honestly", "clearly", "obviously", "remarkably", "tragically",
+      "mathematically", "strictly speaking", "by the way", "actually", "statistically",
+      "logically", "theoretically", "essentially", "fundamentally", "primarily",
+      "basically", "conceptually", "virtually", "practically", "systematically"
+    ]
+  },
+  "structures": {
+    "fail": {
+      "GENTLE": ["{gentle_opening} {gentle_bridge} {gentle_closing}"],
+      "HARSH": ["{harsh_opening} {harsh_middle} {harsh_closing}"]
+    },
+    "success": {
+      "GENTLE": ["{gentle_opening} {gentle_bridge} {gentle_closing}"],
+      "HARSH": ["{harsh_opening} {harsh_middle} {harsh_closing}"]
+    },
+    "MISSION_START": {
+      "GENTLE": ["{gentle_opening} {gentle_bridge} {gentle_closing}"],
+      "HARSH": ["{harsh_opening} {harsh_middle} {harsh_closing}"]
+    }
+  }
+}

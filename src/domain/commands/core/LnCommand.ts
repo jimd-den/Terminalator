@@ -10,29 +10,34 @@ import { getStdinAsString } from '../../entities/ProcessContext';
  *
  * Intent:
  * Allows the operator to create links between files.
+ * Refactored to implement IStructuredCommand for combinatorial scaling.
  */
 
-import { ICommand } from '../ICommand';
+import { CommandBase } from '../CommandBase';
+import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
 
 import { FileSystemService } from '../../services/FileSystemService';
 
-export class LnCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+export class LnCommand extends CommandBase {
+    public readonly capabilities = [CommandCapability.MODIFY];
+    public readonly utility = 'ln';
 
-    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = getStdinAsString(context);
-        let symbolic = false;
-        let force = false; // Not implementing -f yet, but good to know
-        const operands: string[] = [];
+    constructor(private fs: FileSystemService) { 
+        super();
+    }
 
-        for (const arg of args) {
-            if (arg === '-s') symbolic = true;
-            else if (arg === '-f') force = true;
-            else operands.push(arg);
-        }
+    protected async executeInternal(
+        rawArgs: string[],
+        flags: Set<string>,
+        operands: string[],
+        context: ProcessContext,
+        state: TerminalState
+    ): Promise<CommandResponse> {
+        const symbolic = flags.has('s');
+        const force = flags.has('f');
 
         if (operands.length < 2) {
             return {
@@ -42,35 +47,18 @@ export class LnCommand implements ICommand {
             };
         }
 
-        const target = operands[0]; // Source
-        const linkName = operands[1]; // Destination
-
-        // If linkName is a directory, append target name
-        // (Behavior check: `ln target dir/` -> links `dir/target`)
-        // Current FS primitive `link` expects full path?
-        // Let's resolve linkName and check if directory?
-        // But FileSystem commands usually handle path resolution internally if they take `cwd`.
-        // Our FS primitives take absolute paths mostly? Or relative to `cwd`.
-
-        // Let's normalize linkName logic here or let FS handle it?
-        // FS `link` and `symlink` expect exact path?
-        // My implementation of `link` did: "Correct parent resolution...".
-        // It didn't handle "linkName is existing directory".
+        const target = operands[0];
+        const linkName = operands[1];
 
         let finalLinkPath = linkName;
 
-        // Check if linkName exists and is a directory
-        // Resolve it first?
         let linkNode = this.fs.resolve(linkName.startsWith('/') ? linkName : (state.currentDirectory === '/' ? `/${linkName}` : `${state.currentDirectory}/${linkName}`));
 
         if (linkNode && this.fs.isDirectory(linkNode)) {
-            // Append target basename
             const targetBase = target.substring(target.lastIndexOf('/') + 1);
             finalLinkPath = linkName.endsWith('/') ? `${linkName}${targetBase}` : `${linkName}/${targetBase}`;
-            // Re-resolve to check conflicts handled by FS method
         }
 
-        // Determine absolute paths for FS call
         let absLinkPath = finalLinkPath;
         if (!finalLinkPath.startsWith('/')) {
             absLinkPath = state.currentDirectory === '/'
@@ -78,18 +66,9 @@ export class LnCommand implements ICommand {
                 : `${state.currentDirectory}/${finalLinkPath}`;
         }
 
-        // Target resolving:
-        // For Hard Link: Target MUST be resolved to check existence.
-        // For Symlink: Target String is stored literally.
-
-        // For Hard Link, we need absolute path to existing file if resolving via `cwd`?
-        // `link` takes `oldPath`, `newPath`, `cwd`.
-        // My `link` implementation resolves `oldPath` using `cwd`.
-
         try {
             if (symbolic) {
-                this.fs.symlink(target, absLinkPath, 1000, 1000, '/'); // using root cwd since absLinkPath is absolute
-                // target string provided as is (relative or absolute).
+                this.fs.symlink(target, absLinkPath, 1000, 1000, '/');
             } else {
                 let absTarget = target;
                 if (!target.startsWith('/')) {

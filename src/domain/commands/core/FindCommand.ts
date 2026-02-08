@@ -19,6 +19,7 @@ import { CommandResponse } from '../../entities/Command';
 
 import { FileSystemService } from '../../services/FileSystemService';
 import { Dentry, S_IFDIR, S_IFREG, S_IFLNK } from '../../entities/FileSystem';
+import { DirectoryNode } from '../../entities/filesystem/DirectoryNode';
 
 interface Predicate {
     evaluate(node: Dentry, path: string, fs: FileSystemService, context: ProcessContext, state: TerminalState, outputBuffer: string[]): Promise<boolean>;
@@ -211,8 +212,9 @@ export class FindCommand implements ICommand {
         if (pruned) return;
 
         if (this.fs.isDirectory(node) && currentDepth < maxDepth) {
+            const dirNode = node as DirectoryNode;
             // Sort children for deterministic output (optional but good for tests)
-            const children = Array.from(node.children.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+            const children = Array.from(dirNode.children.entries()).sort((a, b) => a[0].localeCompare(b[0]));
 
             for (const [name, child] of children) {
                 let childPath = currentPath.endsWith('/') ? `${currentPath}${name}` : `${currentPath}/${name}`;

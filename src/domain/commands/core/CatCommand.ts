@@ -10,53 +10,52 @@ import { getStdinAsString } from '../../entities/ProcessContext';
  *
  * Intent:
  * Allows the operator to view file contents.
+ * Refactored to implement IStructuredCommand for combinatorial scaling.
  */
 
-import { ICommand } from '../ICommand';
+import { CommandBase } from '../CommandBase';
+import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
 
 import { FileSystemService } from '../../services/FileSystemService';
+import { PathResolver } from '../../services/filesystem/PathResolver';
 
-export class CatCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+export class CatCommand extends CommandBase {
+    public readonly capabilities = [CommandCapability.READ];
+    public readonly utility = 'cat';
 
-    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+    constructor(private fs: FileSystemService) {
+        super();
+    }
+
+    protected async executeInternal(
+        rawArgs: string[],
+        flags: Set<string>,
+        operands: string[],
+        context: ProcessContext,
+        state: TerminalState
+    ): Promise<CommandResponse> {
         const fsService = context.fileSystemService || this.fs;
         const input = getStdinAsString(context);
-        const files: string[] = [];
-
-        // Manual arg parsing to handle '-' mixed with files
-        for (const arg of args) {
-            if (arg.startsWith('-') && arg !== '-') {
-                // Ignore flags for now (e.g. -u)
-            } else {
-                files.push(arg);
-            }
-        }
 
         let output = '';
 
-        if (files.length === 0) {
+        if (operands.length === 0) {
             if (input !== undefined) {
                 output = input;
             } else {
                 return { output: 'cat: missing input', newState: state, exitCode: 1 };
             }
         } else {
-            for (const filename of files) {
+            for (const filename of operands) {
                 if (filename === '-') {
                     output += input || '';
                     continue;
                 }
 
-                let path = filename;
-                if (!path.startsWith('/')) {
-                    path = state.currentDirectory === '/'
-                        ? `/${filename}`
-                        : `${state.currentDirectory}/${filename}`;
-                }
+                const path = PathResolver.resolveString(filename, state.currentDirectory, state.environment.HOME);
 
                 try {
                     const node = fsService.resolve(path);

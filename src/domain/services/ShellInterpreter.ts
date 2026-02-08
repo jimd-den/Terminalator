@@ -21,6 +21,7 @@ import { ControlFlowExecutor } from './shell/executors/ControlFlowExecutor';
 import { SubshellExecutor } from './shell/executors/SubshellExecutor';
 import { FunctionDefExecutor } from './shell/executors/FunctionDefExecutor';
 import { BlockExecutor } from './shell/executors/BlockExecutor';
+import { SimulationBus } from './SimulationBus';
 
 /**
  * ShellInterpreter - Core AST Traversal Engine (Refactored)
@@ -40,7 +41,8 @@ export class ShellInterpreter {
         private redirectionService: RedirectionService,
         private binaryRunner?: IBinaryRunner,
         private executorFactory?: () => IShellExecutor,
-        private networkMap?: NetworkMap
+        private networkMap?: NetworkMap,
+        private bus?: SimulationBus
     ) {
         this.initializeExecutors();
     }
@@ -54,6 +56,7 @@ export class ShellInterpreter {
             this.fsService,
             this.fs,
             this.redirectionService,
+            this.bus,
             this.binaryRunner,
             this.executorFactory,
             this.networkMap

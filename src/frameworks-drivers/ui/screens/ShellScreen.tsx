@@ -11,17 +11,21 @@
 import React, { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { THEME } from '../Theme';
-import { ConsoleLayout } from '../components/ConsoleLayout';
 import { CommsPane } from '../components/CommsPane';
 import { StatusBar } from '../components/StatusBar';
 import { useShellView } from '../components/ShellView';
+import { GlobalTutorBar } from '../components/GlobalTutorBar';
 import { useInput } from '../context/InputContext';
-import { useTheme } from '../context/ThemeContext';
+import { useTheme, useThemeComponents } from '../context/ThemeContext';
+import { useSystemState } from '../context/SystemStateProvider';
 import { TerminalStateDTO } from '../../../domain/dtos/TerminalStateDTO';
 import { MissionDTO } from '../../../domain/dtos/MissionDTO';
 import { BufferScreen } from './BufferScreen';
 import { BufferDTO } from '../../../domain/dtos/BufferDTO';
 import { FKeyBar, FKeyDef } from '../components/FKeyBar';
+import { MainframeOverlay } from '../components/MainframeOverlay';
+import { TheatricalCanvas } from '../components/theatrical/TheatricalCanvas';
+import { EconomyBar } from '../components/EconomyBar';
 
 export interface ShellScreenProps {
     // State
@@ -41,6 +45,8 @@ export interface ShellScreenProps {
     ircMissionId: string | null;
 
     // Actions
+    fKeys: FKeyDef[];
+    handleAction: (action: string) => void;
     markLineComplete: () => void;
     handleKeyPress: (key: string) => void;
     toggleCommsView: () => void;
@@ -55,49 +61,29 @@ export interface ShellScreenProps {
 
 export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
     const { theme } = useTheme();
+    const components = useThemeComponents();
+    const { isInputLocked } = useSystemState();
+    const Layout = components.Layout;
     const { setOnInput, setOnKeyPress, refocus } = useInput();
 
     // -- Input Handling --
     // Wire up the global InputContext to this screen's handler
     useEffect(() => {
         setOnInput((text) => {
+            if (isInputLocked) return;
             for (const char of text) {
                 props.handleKeyPress(char);
             }
         });
         setOnKeyPress((key) => {
+            if (isInputLocked) return;
             props.handleKeyPress(key);
         });
         // Ensure focus when mounting/switching back to shell
         // Timeout to allow layout to settle if transitioning
         const timer = setTimeout(refocus, 50);
         return () => clearTimeout(timer);
-    }, [props.handleKeyPress, setOnInput, setOnKeyPress, refocus]);
-
-    // -- F-Key Routing --
-    const handleFKeyAction = (action: string) => {
-        if (action === 'HELP') {
-            // Macro: "help\n"
-            // We dispatch individually to simulate typing or just call handler?
-            // The old code simulated typing. Let's stick to that for pure simulation.
-            ['h', 'e', 'l', 'p', 'ENTER'].forEach(k => props.handleKeyPress(k));
-        } else if (action === 'IRC') {
-            props.toggleCommsView();
-        } else if (action === 'BUFFERS') {
-            props.toggleBufferView();
-        }
-    };
-
-    // -- Derived View Content --
-    const keys: FKeyDef[] = [
-        { key: 'F1', label: 'HELP', action: () => handleFKeyAction('HELP') },
-        { key: 'F2', label: 'COMMS', action: () => handleFKeyAction('IRC') },
-        { key: 'F3', label: 'ARCHIVE', action: () => handleFKeyAction('BUFFERS') },
-        { key: 'TAB', label: 'AUTO', action: () => props.handleKeyPress('TAB') },
-        { key: '▲', label: 'UP', action: () => props.handleKeyPress('UP') },
-        { key: '▼', label: 'DOWN', action: () => props.handleKeyPress('DOWN') },
-        { key: 'ENT', label: 'EXEC', action: () => props.handleKeyPress('ENTER') },
-    ];
+    }, [props.handleKeyPress, setOnInput, setOnKeyPress, refocus, isInputLocked]);
 
     // -- View Composition --
     const shellView = useShellView({
@@ -113,7 +99,7 @@ export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
         contextualHint: props.contextualHint,
         onRefocus: refocus,
         onKeyPress: props.handleKeyPress,
-        onFKeyAction: handleFKeyAction,
+        onFKeyAction: props.handleAction,
         onSave: props.saveToArchive,
         onMinimize: props.toggleMinimize,
         onDelete: props.deleteGroup
@@ -128,6 +114,8 @@ export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
     const mainLayout = (
         <View style={{ flex: 1 }}>
             {shellView.topContent}
+            <MainframeOverlay />
+            <TheatricalCanvas />
         </View>
     );
 
@@ -141,12 +129,14 @@ export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
     );
 
     return (
-        <ConsoleLayout
+        <Layout
             headerComponent={statusBar}
             status={statusText}
             topContent={mainLayout}
-            middleContent={<FKeyBar keys={keys} />}
+            middleContent={<FKeyBar keys={props.fKeys} />}
             bottomContent={shellView.bottomContent}
+            tutorBarComponent={<GlobalTutorBar />}
+            economyBarComponent={<EconomyBar />}
         />
     );
 };

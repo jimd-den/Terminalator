@@ -4,59 +4,53 @@ import { getStdinAsString } from '../../entities/ProcessContext';
  *
  * Output the last part of files.
  *
- * Pillar: The Four-Fold Shield (Strict Architecture)
- * Pillar: The Swift Stream (Performance)
- * Pillar: The Storyteller’s Code (Literate Documentation)
+ * Pillar: THE FOUR-FOLD SHIELD (Strict Architecture)
+ * Pillar: THE Swift Stream (Performance)
+ * Pillar: THE Storyteller’s Code (Literate Documentation)
  *
  * Intent:
  * Allows the operator to view the end of files.
+ * Refactored to implement IStructuredCommand for combinatorial scaling.
  */
 
-import { ICommand } from '../ICommand';
+import { CommandBase } from '../CommandBase';
+import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
 
 import { FileSystemService } from '../../services/FileSystemService';
 
-export class TailCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+export class TailCommand extends CommandBase {
+    public readonly capabilities = [CommandCapability.READ, CommandCapability.FILTER];
+    public readonly utility = 'tail';
 
-    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+    constructor(private fs: FileSystemService) {
+        super();
+    }
+
+    protected override parseArgs(args: string[]) {
+        super.parseArgs(args, ['n', 'c']);
+    }
+
+    protected async executeInternal(
+        rawArgs: string[],
+        flags: Set<string>,
+        operands: string[],
+        context: ProcessContext,
+        state: TerminalState
+    ): Promise<CommandResponse> {
         const input = getStdinAsString(context);
+        const fsService = context.fileSystemService || this.fs;
+        
         let linesToPrint = 10;
         let bytesToPrint = -1;
 
-        const targets: string[] = [];
-        let skipNext = false;
+        const nOption = this.options.get('n');
+        if (nOption) linesToPrint = parseInt(nOption);
 
-        for (let i = 0; i < args.length; i++) {
-            if (skipNext) {
-                skipNext = false;
-                continue;
-            }
-
-            const arg = args[i];
-            if (arg === '-n') {
-                if (i + 1 < args.length) {
-                    linesToPrint = parseInt(args[i + 1]);
-                    skipNext = true;
-                } else {
-                    return { output: 'tail: option requires an argument -- n', newState: state, exitCode: 1 };
-                }
-            } else if (arg === '-c') {
-                if (i + 1 < args.length) {
-                    bytesToPrint = parseInt(args[i + 1]);
-                    skipNext = true;
-                } else {
-                    return { output: 'tail: option requires an argument -- c', newState: state, exitCode: 1 };
-                }
-            } else if (arg.startsWith('-') && arg !== '-') {
-                // ignore other flags
-            } else {
-                targets.push(arg);
-            }
-        }
+        const cOption = this.options.get('c');
+        if (cOption) bytesToPrint = parseInt(cOption);
 
         const getTail = (content: string): string => {
             if (bytesToPrint !== -1) {
@@ -79,7 +73,7 @@ export class TailCommand implements ICommand {
             return output;
         };
 
-        if (targets.length === 0 || (targets.length === 1 && targets[0] === '-')) {
+        if (operands.length === 0 || (operands.length === 1 && operands[0] === '-')) {
             if (input !== undefined) {
                 return { output: getTail(input), newState: state, exitCode: 0 };
             } else {
@@ -90,10 +84,10 @@ export class TailCommand implements ICommand {
         let output = '';
         let exitCode = 0;
 
-        for (let i = 0; i < targets.length; i++) {
-            const filename = targets[i];
+        for (let i = 0; i < operands.length; i++) {
+            const filename = operands[i];
 
-            if (targets.length > 1) {
+            if (operands.length > 1) {
                 if (i > 0) output += '\n';
                 output += `==> ${filename} <==\n`;
             }
@@ -104,7 +98,7 @@ export class TailCommand implements ICommand {
             }
 
             try {
-                const content = this.fs.readFile(path);
+                const content = fsService.readFile(path);
                 output += getTail(content);
             } catch (error: any) {
                 output += `tail: cannot open '${filename}' for reading: No such file or directory`;

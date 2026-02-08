@@ -10,20 +10,32 @@ import { getStdinAsString } from '../../entities/ProcessContext';
  *
  * Intent:
  * Helps the operator understand their current location in the file system.
+ * Refactored to implement IStructuredCommand for combinatorial scaling.
  */
 
-import { ICommand } from '../ICommand';
+import { CommandBase } from '../CommandBase';
+import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
 
 import { FileSystemService } from '../../services/FileSystemService';
 
-export class PwdCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+export class PwdCommand extends CommandBase {
+    public readonly capabilities = [CommandCapability.READ];
+    public readonly utility = 'pwd';
 
-    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = getStdinAsString(context);
+    constructor(private fs: FileSystemService) {
+        super();
+    }
+
+    protected async executeInternal(
+        rawArgs: string[],
+        flags: Set<string>,
+        operands: string[],
+        context: ProcessContext,
+        state: TerminalState
+    ): Promise<CommandResponse> {
         return {
             output: state.currentDirectory + '\n',
             newState: state,

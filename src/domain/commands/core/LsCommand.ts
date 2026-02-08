@@ -3,13 +3,14 @@ import { getStdinAsString } from '../../entities/ProcessContext';
  * LsCommand - Core Command
  *
  * Lists directory contents.
- * Supports -a (all) and -F (classify).
+ * Supports -a (all), -F (classify), -R (recursive), -l (long), -1 (single column).
  *
  * Pillar: The Swift Stream (Performance & Purity)
  * Pillar: The Balanced Scale (SOLID / KISS)
  */
 
 import { CommandBase } from '../CommandBase';
+import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
@@ -17,15 +18,18 @@ import { CommandResponse } from '../../entities/Command';
 import { FileSystemService } from '../../services/FileSystemService';
 
 export class LsCommand extends CommandBase {
+    public readonly capabilities = [CommandCapability.LIST];
+    public readonly utility = 'ls';
+
     constructor(private fsService: FileSystemService) { super(); }
 
     executeInternal(args: string[], flags: Set<string>, targets: string[], context: ProcessContext, state: TerminalState): CommandResponse {
         const fsService = context.fileSystemService || this.fsService;
-        const showHidden = this.hasFlag('a');
-        const classify = this.hasFlag('F');
-        const recursive = this.hasFlag('R');
-        const longFormat = this.hasFlag('l');
-        const onePerLine = this.hasFlag('1');
+        const showHidden = flags.has('a');
+        const classify = flags.has('F');
+        const recursive = flags.has('R');
+        const longFormat = flags.has('l');
+        const onePerLine = flags.has('1');
 
         let exitCode = 0;
         let outputParts: string[] = [];
@@ -33,7 +37,6 @@ export class LsCommand extends CommandBase {
 
         const pathsToProcess = targets.length > 0 ? targets : [''];
 
-        // Helper for recursive listing
         const listDirectory = (dirNode: any, dirPath: string, printHeader: boolean) => {
             if (printHeader) {
                 outputParts.push(`\n${dirPath}:`);
@@ -105,10 +108,7 @@ export class LsCommand extends CommandBase {
         };
 
         for (const targetPath of pathsToProcess) {
-            // Logic change: Handle empty string logic for CWD
             const pathToList = targetPath || state.currentDirectory;
-
-            // Resolve using absolute path
             const absPath = targetPath
                 ? fsService.resolveAbsolutePath(targetPath, state.currentDirectory)
                 : state.currentDirectory;
@@ -122,7 +122,6 @@ export class LsCommand extends CommandBase {
             }
 
             if (!fsService.isDirectory(node)) {
-                // It's a file
                 if (longFormat) {
                     const type = '-';
                     const perm = 'rw-r--r--';
@@ -139,11 +138,9 @@ export class LsCommand extends CommandBase {
                 continue;
             }
 
-            // Is directory
             let printInitialHeader = pathsToProcess.length > 1;
             let displayPath = targetPath;
             if (!displayPath) {
-                // If no args, we are listing CWD.
                 if (recursive) {
                     displayPath = '.';
                     printInitialHeader = true;

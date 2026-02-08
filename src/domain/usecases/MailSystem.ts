@@ -13,6 +13,7 @@ import { NPC } from '../entities/NPC';
 import { FileSystem, S_IFREG, Dentry } from '../entities/FileSystem';
 import { FileSystemService } from '../services/FileSystemService';
 import { TelemetryPort } from '../ports/TelemetryPort';
+import { DirectoryNode } from '../entities/filesystem/DirectoryNode';
 
 export interface MailMessage {
     id: string;
@@ -60,7 +61,7 @@ export class MailSystem {
                 const content = `From: ${npc.name}\nSubject: ${subject}\nDate: ${message.timestamp}\n\n${body}`;
 
                 // Write file (this handles creation and content)
-                targetFS.writeFile(mailPath, content, 'w', '/');
+                targetFS.writeFile(mailPath, content, 'w', 1000, 1000, '/');
                 // Set permissions to rw------- (600)
                 targetFS.chmod(mailPath, 0o600, '/');
 
@@ -96,7 +97,7 @@ export class MailSystem {
         const mailDirNode = this.fs.resolve('/home/operator/mail');
         if (mailDirNode && this.fs.isDirectory(mailDirNode)) {
             const lines: string[] = [];
-            mailDirNode.children.forEach((childNode: Dentry) => {
+            (mailDirNode as DirectoryNode).children.forEach((childNode: Dentry) => {
                 const inode = this.fs.getInode(childNode.inodeId);
                 if (inode && (inode.mode & 0o170000) === S_IFREG) {
                     // In a real mail command, we'd parse content. For now, list filenames/timestamps.

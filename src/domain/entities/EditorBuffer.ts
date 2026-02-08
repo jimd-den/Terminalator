@@ -13,13 +13,15 @@
  * It is designed to be easily testable and extensible for syntax highlighting.
  */
 
+import { IVimBuffer } from './vim/IVimBuffer';
+
 export interface EditorBufferState {
     lines: string[];
     filename: string;
     language: string;
 }
 
-export class EditorBuffer {
+export class EditorBuffer implements IVimBuffer {
     private state: EditorBufferState;
 
     constructor(filename: string, content: string = '', language: string = 'plaintext') {

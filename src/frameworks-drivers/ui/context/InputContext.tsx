@@ -17,6 +17,10 @@ export interface InputContextType {
     setOnInput: (handler: (text: string) => void) => void;
     // Register a handler for special keys (Backspace, Enter, arrows if captured)
     setOnKeyPress: (handler: (key: string) => void) => void;
+    // Global input lock state
+    isLocked: boolean;
+    // Set global input lock state
+    setInputLocked: (locked: boolean) => void;
 }
 
 const InputContext = createContext<InputContextType | undefined>(undefined);
@@ -26,6 +30,7 @@ export const InputProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     // Initialize with a space to detect backspace
     const [inputValue, setInputValue] = useState(' ');
     const lastValue = useRef(' ');
+    const [isLocked, setInputLocked] = useState(false);
 
     // Handlers
     const onInputRef = useRef<((text: string) => void) | null>(null);
@@ -56,6 +61,13 @@ export const InputProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }, [refocus]);
 
     const handleTextChange = (text: string) => {
+        if (isLocked) {
+            // Keep buffer stable if locked
+            lastValue.current = ' ';
+            setInputValue(' ');
+            return;
+        }
+
         const prev = lastValue.current;
 
         // 1. Handle Sentinel Deletion (Backspace on empty buffer)
@@ -104,6 +116,8 @@ export const InputProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     // Debounce Enter to avoid double-firing (onKeyPress + onSubmitEditing)
     const lastEnterTime = useRef(0);
     const fireEnter = () => {
+        if (isLocked) return;
+
         const now = Date.now();
         if (now - lastEnterTime.current < 50) return;
         lastEnterTime.current = now;
@@ -115,6 +129,8 @@ export const InputProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     };
 
     const handleKeyPressEvent = (e: any) => {
+        if (isLocked) return;
+
         const key = e.nativeEvent.key;
 
         // On Android, soft keyboard Backspace often only triggers onChangeText (deletion).
@@ -146,7 +162,7 @@ export const InputProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }, []);
 
     return (
-        <InputContext.Provider value={{ inputValue, refocus, setOnInput, setOnKeyPress }}>
+        <InputContext.Provider value={{ inputValue, refocus, setOnInput, setOnKeyPress, isLocked, setInputLocked }}>
             {/* The Hidden Global Input */}
             <TextInput
                 ref={inputRef}

@@ -9,9 +9,11 @@ import { getStdinAsString } from '../../entities/ProcessContext';
  *
  * Intent:
  * Filters adjacent matching lines from input.
+ * Refactored to implement IStructuredCommand for combinatorial scaling.
  */
 
-import { ICommand } from '../ICommand';
+import { CommandBase } from '../CommandBase';
+import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
@@ -29,49 +31,35 @@ interface UniqOptions {
     outputFile?: string;
 }
 
-export class UniqCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+export class UniqCommand extends CommandBase {
+    public readonly capabilities = [CommandCapability.FILTER];
+    public readonly utility = 'uniq';
 
-    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+    constructor(private fs: FileSystemService) { 
+        super();
+    }
+
+    protected override parseArgs(args: string[]) {
+        // uniq options that take arguments: -f, -s
+        super.parseArgs(args, ['f', 's']);
+    }
+
+    protected async executeInternal(
+        rawArgs: string[],
+        flags: Set<string>,
+        operands: string[],
+        context: ProcessContext,
+        state: TerminalState
+    ): Promise<CommandResponse> {
         const input = getStdinAsString(context);
         const options: UniqOptions = {
-            count: false,
-            repeated: false,
-            unique: false,
-            skipFields: 0,
-            skipChars: 0,
-            ignoreCase: false
+            count: flags.has('c'),
+            repeated: flags.has('d'),
+            unique: flags.has('u'),
+            ignoreCase: flags.has('i'),
+            skipFields: this.options.get('f') ? parseInt(this.options.get('f')!) : 0,
+            skipChars: this.options.get('s') ? parseInt(this.options.get('s')!) : 0
         };
-
-        const operands: string[] = [];
-        let skipNext = false;
-
-        for (let i = 0; i < args.length; i++) {
-            if (skipNext) {
-                skipNext = false;
-                continue;
-            }
-            const arg = args[i];
-            if (arg === '-c') options.count = true;
-            else if (arg === '-d') options.repeated = true;
-            else if (arg === '-u') options.unique = true;
-            else if (arg === '-i') options.ignoreCase = true;
-            else if (arg === '-f') {
-                if (i + 1 < args.length) {
-                    options.skipFields = parseInt(args[i + 1]) || 0;
-                    skipNext = true;
-                }
-            }
-            else if (arg === '-s') {
-                if (i + 1 < args.length) {
-                    options.skipChars = parseInt(args[i + 1]) || 0;
-                    skipNext = true;
-                }
-            }
-            else if (!arg.startsWith('-')) {
-                operands.push(arg);
-            }
-        }
 
         if (operands.length > 0) options.inputFile = operands[0];
         if (operands.length > 1) options.outputFile = operands[1];
@@ -95,7 +83,6 @@ export class UniqCommand implements ICommand {
         }
 
         const lines = content.split('\n');
-        // Handle trailing newline splitting resulting in empty string at end
         if (content.endsWith('\n') && lines[lines.length - 1] === '') {
             lines.pop();
         }
@@ -107,30 +94,16 @@ export class UniqCommand implements ICommand {
         const getCompareKey = (line: string): string => {
             let key = line;
             if (options.skipFields > 0) {
-                const parts = key.split(/\s+/);
-                // If line starts with spaces, split might have empty first element?
-                // Uniq fields are separated by whitespace.
-                // Standard uniq skips N fields.
-                // "field1   field2" -> split -> ["field1", "field2"] (if trimmed or split properly)
-                // We'll use a simpler approach: finding Nth whitespace sequence.
-                // Or simply removing first N whitespace-delimited words.
-
-                // Match field+space N times
-                // Regex for field: \S+\s+
-                // But uniq fields include the separator?
-                // "Skip N fields".
                 let remaining = line;
                 for (let f = 0; f < options.skipFields; f++) {
-                    // Skip leading whitespace?
                     remaining = remaining.trimStart();
                     const spaceIdx = remaining.search(/\s/);
                     if (spaceIdx === -1) {
-                        remaining = ""; // No more fields
+                        remaining = "";
                         break;
                     }
                     remaining = remaining.substring(spaceIdx);
                 }
-                // Also skip leading spaces after fields skipped?
                 key = remaining.trimStart();
             }
 
@@ -152,15 +125,6 @@ export class UniqCommand implements ICommand {
             if (previousLine !== null) {
                 const isRepeated = count > 1;
                 let shouldPrint = true;
-
-                // Logic:
-                // Default: Print everything (collapsed)
-                // -d: Only print repeated lines
-                // -u: Only print unique lines
-                // If both -d and -u? standard `uniq` prints nothing usually, or implementation defined.
-                // POSIX: "If -u and -d are both specified, output lines that are repeated ... and lines that are not repeated".
-                // Actually no, they are mutually exclusive filters usually.
-                // Let's stick to standard behavior: if flag present, filter IN.
 
                 if (options.repeated || options.unique) {
                     shouldPrint = false;

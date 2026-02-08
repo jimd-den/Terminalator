@@ -14,6 +14,7 @@ import { ProcessContext } from '../../../entities/ProcessContext';
 import { createStdinStream, createOutputStream } from '../../../entities/Stream';
 import { mergeState, fail } from '../../../utils/TerminalStateUtils';
 import { NetworkMap } from '../../NetworkMap';
+import { SimulationBus, GameEventType, CommandExecutedPayload } from '../../SimulationBus';
 
 export class CommandExecutor implements NodeExecutor {
     constructor(
@@ -23,6 +24,7 @@ export class CommandExecutor implements NodeExecutor {
         private fsService: FileSystemService,
         private fs: FileSystem,
         private redirectionService: RedirectionService,
+        private bus?: SimulationBus,
         private binaryRunner?: IBinaryRunner,
         private executorFactory?: () => IShellExecutor,
         private networkMap?: NetworkMap
@@ -52,7 +54,9 @@ export class CommandExecutor implements NodeExecutor {
 
         // 2. Function Check
         if (state.functions && state.functions.has(commandName)) {
-            return this.executeFunction(commandName, expandedArgs, state, visitor, stdin, cmdNode);
+            const res = await this.executeFunction(commandName, expandedArgs, state, visitor, stdin, cmdNode);
+            this.emitCommandExecuted(commandName, expandedArgs, res, state.currentDirectory);
+            return res;
         }
 
         // 3. Command Registry Check
@@ -80,18 +84,39 @@ export class CommandExecutor implements NodeExecutor {
                 };
 
                 const res = await command.execute(expandedArgs, context, state);
-                return this.redirectionService.handleRedirections(res, cmdNode.redirects, state);
+                const finalRes = this.redirectionService.handleRedirections(res, cmdNode.redirects, state);
+                this.emitCommandExecuted(commandName, expandedArgs, finalRes, state.currentDirectory);
+                return finalRes;
             } catch (error: any) {
-                return fail(state, `sh: ${commandName}: ${error.message}`);
+                const res = fail(state, `sh: ${commandName}: ${error.message}`);
+                this.emitCommandExecuted(commandName, expandedArgs, res, state.currentDirectory);
+                return res;
             }
         }
 
         // 4. File Execution
         if (commandName.startsWith('/') || commandName.startsWith('./') || commandName.startsWith('../')) {
-            return this.executeFile(commandName, expandedArgs, state, stdin);
+            const res = await this.executeFile(commandName, expandedArgs, state, stdin);
+            this.emitCommandExecuted(commandName, expandedArgs, res, state.currentDirectory);
+            return res;
         }
 
-        return fail(state, `sh: command not found: ${commandName}`, 127);
+        const finalFail = fail(state, `sh: command not found: ${commandName}`, 127);
+        this.emitCommandExecuted(commandName, expandedArgs, finalFail, state.currentDirectory);
+        return finalFail;
+    }
+
+    private emitCommandExecuted(command: string, args: string[], response: CommandResponse, cwd: string) {
+        if (this.bus) {
+            const payload: CommandExecutedPayload = {
+                command,
+                args,
+                exitCode: response.exitCode || 0,
+                output: response.output || '',
+                cwd
+            };
+            this.bus.emit(GameEventType.COMMAND_EXECUTED, payload);
+        }
     }
 
     private async executeFunction(

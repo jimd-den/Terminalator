@@ -9,6 +9,34 @@
 
 ---
 
+## 0. THE GOLDEN RULES (MANDATORY)
+
+Every agent working on this codebase MUST adhere to the following workflow without exception.
+
+### 0.1 Test-Driven Development (TDD) First
+**"If it isn't tested, it doesn't exist."**
+1.  **Write the Test:** Before modifying any logic, write a failing test case that defines the expected behavior.
+2.  **The "Primary Directive" Test:** For *any* change, you must verify the application still compiles and the UI starts.
+    *   *Verification Command:* `npm run test` (or project equivalent) + `npx tsc --noEmit`.
+3.  **Implement:** Write the minimum code necessary to pass the test.
+4.  **Refactor:** Clean up the code while keeping the test passing.
+
+### 0.2 The Developer's Litany
+For **every single file** you touch, you must explicitly ask and answer these questions:
+1.  **Is this SOLID?**
+    *   *SRP:* Does this module have one reason to change?
+    *   *OCP:* Is it open for extension, closed for modification?
+    *   *LSP:* Can derived classes be substituted without breaking behavior?
+    *   *ISP:* Are interfaces segregated?
+    *   *DIP:* Do high-level modules depend on abstractions, not details?
+2.  **Is this DRY Compliant?**
+    *   Are we repeating logic that should be centralized?
+3.  **Are we working in CLEAN Architecture?**
+    *   Does the dependency flow INWARD? (Domain <- Adapters <- Frameworks)
+    *   Are we leaking details (e.g., UI concepts) into the Domain?
+
+---
+
 ## 1. Architectural Philosophy: The Four-Fold Shield
 
 The codebase follows a strict **Clean Architecture** implementation, ensuring separation of concerns and testability. Dependencies always flow **inwards**.
@@ -17,297 +45,130 @@ The codebase follows a strict **Clean Architecture** implementation, ensuring se
 
 1.  **Entities (Domain)** (`src/domain/entities`)
     *   **Role:** Enterprise logic, pure data structures, and core business rules.
-    *   **Dependencies:** **NONE**. Strictly forbidden to import from outer layers or external libraries (except specific polyfills if absolutely necessary).
+    *   **Dependencies:** **NONE**. Strictly forbidden to import from outer layers or external libraries.
     *   **Key Files:** 
-        *   `FileSystem.ts`: The Inode/Dentry tree structure.
-        *   `TerminalState.ts`: State definition.
-        *   `ProcessContext.ts`: Execution context for commands.
+        *   `FileSystem.ts`: The Inode/Dentry structure.
+        *   `TerminalState.ts`: Global state wrapper.
+        *   `ProcessContext.ts`: Execution environment for commands.
+        *   `Mission.ts`: Game mission state.
+        *   `NPC.ts`: NPC character definitions.
+        *   `filesystem/`: Specialized Inode/Dentry node types.
 
 2.  **Domain Services** (`src/domain/services`)
-    *   **Role:** Domain logic that interacts with multiple entities or doesn't fit naturally into a single entity.
+    *   **Role:** Domain logic that interacts with multiple entities.
     *   **Dependencies:** Entities.
     *   **Key Files:**
-        *   `FileSystemService.ts`: Implements POSIX logic (mkdir, touch) using the `FileSystem` entity.
-        *   `ShellLexer.ts`: State-machine tokenizer (POSIX).
-        *   `ShellParser.ts`: Strategy-based Recursive Descent Parser.
-        *   `shell/`: Specialized grammar rule parsers (If, For, While, etc.).
-        *   `ShellExpansionService.ts`: Handles variable expansion, arithmetic, globbing, and quote removal.
+        *   `FileSystemService.ts`: **Facade Pattern**. Orchestrates specialized filesystem services.
+        *   `filesystem/`: Specialized services (`PermissionService`, `PathResolver`, `FileOperationService`).
+        *   `ShellParser.ts`: Recursive Descent Parser (Strategy Pattern).
+        *   `IdentityService.ts`: POSIX-compliant user/group management.
+        *   `TutorService.ts`: Context-aware hint generator (uses `StrategyRegistry`).
+        *   `mission-strategies/`: Mission evaluation strategies.
 
 3.  **Use Cases (Application)** (`src/domain/usecases`)
-    *   **Role:** Application logic. Orchestrates entities and domain services to achieve specific user goals.
+    *   **Role:** Application logic. Orchestrates entities and domain services.
     *   **Dependencies:** Entities, Domain Services, Repositories (Interfaces).
     *   **Key Files:**
-        *   `ExecuteCommand.ts`: Core dispatcher that interprets AST and runs commands.
+        *   `ExecuteCommand.ts`: Core dispatcher (Coordinator).
+        *   `SchemeEvaluator.ts`: Lisp-based scripting engine.
+        *   `asm/`: Assembly (RISC-V) simulation use cases.
 
 4.  **Interface Adapters** (`src/interface-adapters`)
-    *   **Role:** Adapts data between the Domain and the Frameworks. Implements the **Humble Object** pattern to strip logic from Views.
+    *   **Role:** Adapts data between Domain and Frameworks.
     *   **Dependencies:** Use Cases, Ports (Interfaces).
     *   **Key Files:**
-        *   `TerminalViewModel.ts`: Passive orchestration of specialized ViewModels and services.
+        *   `viewmodels/`: Decomposed ViewModels (`useShellViewModel.ts`, `useMissionViewModel.ts`).
         *   `GameManager.ts`: Coordinator Facade for game subsystems.
-        *   `LessonCoordinator.ts`: Bridges Tutor events to high-level game consequences.
-        *   `GameCommandExecutor.ts`: Interface for UI components to execute shell commands.
+        *   `VimSimulator.ts`: Adaptation of VimEngine to interactive shell.
 
 5.  **Frameworks & Drivers** (`src/frameworks-drivers`)
-    *   **Role:** UI Components, Database Implementations, System I/O.
+    *   **Role:** UI Components (React Native), WASM bridges.
     *   **Dependencies:** Interface Adapters.
-    *   **Key Files:**
-        *   `ui/screens/TerminalScreen.tsx`: The main View (Passive View).
-        *   `ui/components/ConsoleLayout.tsx`: Layout structure.
 
 ---
 
 ## 2. Core Systems & Patterns
 
-### The File System
-*   **Model:** In-memory POSIX-compliant Inode/Dentry system.
-*   **Separation:** Data is in `FileSystem` (Entity), Logic is in `FileSystemService` (Domain Service).
-*   **Usage:** Do **NOT** use Node.js `fs` module in client-side code. Use `FileSystemService`.
+### The File System Sub-system
+*   **Structure:** Decomposed into specialized services (`PermissionService`, `PathResolver`, `FileOperationService`).
+*   **Facade:** `FileSystemService` provides the unified API.
+*   **Identity:** `IdentityService` manages UIDs/GIDs and supplementary groups.
+*   **Permissions:** `PermissionService` enforces POSIX rwx bits with Root (UID 0) overrides.
 
-### The Command Pattern
-*   **Implementation:** `ICommand` interface in `src/domain/commands/ICommand.ts`.
-*   **Base Class:** `CommandBase` provides common argument parsing and help generation.
-*   **Registry:** `CommandRegistry` maps string names to `ICommand` instances.
-*   **Modules:** Commands are grouped into Modules (`CoreUtilsModule`, `SystemUtilsModule`) for bulk registration.
-*   **Execution:** `ExecuteCommand` use case resolves commands and invokes `execute()`.
-*   **Piping:** Commands receive `stdin` via the `input` argument (3rd arg) or `context.stdin`.
+### Mission & Tutor System
+*   **Strategy Pattern:** Missions are evaluated via `IMissionStrategy` implementations.
+*   **Registry:** `StrategyRegistry` maps mission types to strategies (OCP).
+*   **Data Provider:** `IMissionDataProvider` decouples mission loading (JSON/Procedural).
+*   **Tutor:** `TutorService` orchestrates evaluations to provide real-time hints and progression triggers.
 
-### Shell Pipeline Architecture
-1.  **Lexing/Parsing:** `ShellParser` produces an AST (Abstract Syntax Tree). It **DOES NOT** expand variables or strip quotes at this stage.
-2.  **Expansion (`ShellExpansionService`):**
-    *   **Variable Expansion:** `$VAR` -> value.
-    *   **Arithmetic Expansion:** `$(( 1 + 1 ))` -> `2`.
-    *   **Globbing:** `*.ts` -> `file1.ts file2.ts`.
-    *   **Quote Removal:** `"string"` -> `string` (strips syntactic quotes).
-3.  **Command Loading:** `ShellFactory` assembles the shell with all necessary modules.
-4.  **Execution:** `ExecuteCommand` invokes the resolved command with cleaned arguments.
+### Glass Box & Economy (The ZINC Protocol)
+*   **Observable Execution:** Removal of opaque WASM binaries in favor of RISC-V ASM simulation.
+*   **Proof of Rhythm:** `MiningSession` calculates ZINC (Ƶ) rewards based on keystroke precision relative to the mainframe clock (120 BPM).
+*   **Shadow Architecture:** `TutorShadow` acts as an input proxy, physically gating keystrokes to enforce "Golden Path" sequences.
+*   **Theatrical HUD:** `MainframeOverlay` projects high-contrast glyphs and theatrical "Verbs" over the terminal output.
 
-### The Humble Object (ViewModel)
-*   **Pattern:** Logic is moved out of React components (`TerminalScreen`) and into `TerminalViewModel`.
-*   **Benefit:** Allows the UI logic to be tested without rendering components.
-*   **Rule:** `TerminalScreen.tsx` should primarily contain JSX and layout/style logic. State management belongs in the ViewModel.
-*   **Split Views:** Distinct modes (Shell, Vim, IRC) MUST be separate components (`ShellView`, `VimView`, `CommsView`) managed by a parent container.
-
-### The Virtual Console (Mainframe Architecture)
-*   **Concept:** The terminal is a multiplexer connecting to multiple Virtual TTYs (Channels).
-*   **TTY Structure:**
-    *   `TTY1`: System Shell (Local/Remote)
-    *   `TTY2`: Secure Comm Link (IRC/Story)
-    *   `TTY3`: Telemetry/Status
-*   **Control:** Switching is handled via F-Keys (represented as a hardware status line).
-*   **Interrupts:** High-priority messages use `wall` behavior to inject directly into the active TTY stream.
-
-### The 8-Point GEMINI System (User Rules)
-1.  **Strict Architecture:** Respect the layers. No shortcuts.
-2.  **Literate Documentation:** "Pillar" headers in files explaining intent and context.
-3.  **Dependency Minimalism:** Avoid external dependencies. Use the standard library.
-4.  **Observability:** Implement granular logging/telemetry for traceability.
-5.  **Performance & Purity:** Prefer pure functions and O(1)/O(n) algorithms.
-6.  **Universal Readability:** Code should be readable by domain experts.
-7.  **Pragmatic Design Patterns:** Use patterns (Strategy, Factory) explicitly where they solve specific problems.
-8.  **SOLID / KISS Equilibrium:** Robustness without over-engineering.
+### Shell & Command Architecture
+*   **Parser:** Recursive descent with `IStatementParser` strategies (If, For, While).
+*   **Executor:** `ShellInterpreter` (Visitor Pattern) walks the AST.
+*   **Commands:** `ICommand` implementations extending `CommandBase` (robust flag parsing).
+*   **Expansion:** `ShellExpansionService` handles variable, arithmetic, and glob expansion.
+*   **Job Control:** `JobControlService` implements POSIX signal delivery and job table management.
 
 ---
 
-## 3. Development Workflow
+## 3. Development Roadmap: "Unix Edge Lord"
 
-### Testing
-*   **Primary Suite:** `scripts/posix_comprehensive_suite.ts`.
-*   **Running Tests:**
-    ```bash
-    npx tsx scripts/posix_comprehensive_suite.ts
-    ```
-*   **Process:**
-    1.  run existing tests to ensure baseline.
-    2.  Implement changes/features.
-    3.  Add new tests if necessary (look at `posix_comprehensive_suite.ts` for patterns).
-    4.  Verify compliance.
+**Current Phase:** Generative Narratives & Semantic Modeling.
 
-### Adding a New Command
-1.  **Create:** `src/domain/commands/core/MyCommand.ts`.
-2.  **Implement:** `ICommand` interface (extend `CommandBase`).
-3.  **Register:** Add to `CoreUtilsModule.ts` (or relevant module).
-4.  **Test:** Add to `posix_comprehensive_suite.ts`.
+### Completed Refactoring
+*   ✅ **Glass Box:** Full implementation of rhythmic mining and observable execution.
+*   ✅ **Economy:** ZINC (Ƶ) economy with wallet persistence.
+*   ✅ **Architecture Cleanup:** Resolved deep circular dependencies between ThemeContext, Registry, and Layout.
+*   ✅ **OCP (Strategies):** `StrategyRegistry` implemented.
+*   ✅ **DIP (Mission Data):** `IMissionDataProvider` and `JsonMissionDataProvider` implemented.
+*   ✅ **SRP (FileSystem):** `FileSystemService` refactored into specialized sub-services.
+*   ✅ **DIP (World Simulation):** `IWorldManager` interface implemented to decouple Domain from Adapters.
+*   ✅ **DI (GameManager):** `DependencyContainer` implemented to remove Composition Root anti-pattern.
 
----
+### Active Technical Debt & Violations
+1.  **SRP Violation in Strategies:** Strategies (e.g., `ExfiltrateStrategy.ts`) still mix state inspection, narrative text generation, and progression logic. (Partially addressed via `ComposableMissionStrategy` but needs rollout).
+2.  **Redirection:** Only `>` and `>>` are supported. `2>&1` and input redirection `<` are missing.
 
-## 4. Directory Structure Map
-
-```
-src/
-├── domain/                      # ENTITIES & LOGIC
-│   ├── commands/                # Command Implementations
-│   │   ├── core/                # StdLib (cp, ls, mv, rm, bg, fg, jobs, kill, wait...)
-│   │   ├── system/              # System (shutdown, reboot)
-│   │   ├── CommandBase.ts       # Abstract Base Class
-│   │   ├── CommandRegistry.ts   # Command Lookup Registry
-│   │   └── ICommand.ts          # Command Interface
-│   ├── entities/                # Pure Data Models
-│   │   ├── FileSystem.ts        # Inode/Dentry State
-│   │   ├── TerminalState.ts     # Global State Wrapper
-│   │   ├── ProcessContext.ts    # Environment Context (with jobControl)
-│   │   ├── Stream.ts            # IStream, StringStream, PipeStream
-│   │   ├── Job.ts               # Job entity for job control
-│   │   ├── Signal.ts            # POSIX signal definitions
-│   │   ├── Mission.ts           # Procedural Game Missions
-│   │   └── NPC.ts               # Non-Player Characters
-│   ├── factories/               # Object Creation
-│   │   └── ShellFactory.ts      # Assembles Shell Context
-│   ├── modules/                 # DI Modules
-│   │   ├── CoreUtilsModule.ts   # Registers Core Commands
-│   │   └── SystemUtilsModule.ts # Registers System Commands
-│   ├── ports/                   # Interfaces (Ports)
-    ├── services/                # DOMAIN SERVICES
-    │   ├── shell/               # Grammar Strategies
-    │   │   ├── IStatementParser.ts
-    │   │   ├── IfParser.ts
-    │   │   ├── ForParser.ts
-    │   │   ├── WhileParser.ts
-    │   │   ├── SubshellParser.ts
-    │   │   ├── BlockParser.ts
-    │   │   ├── FunctionDefParser.ts
-    │   │   └── SimpleCommandParser.ts
-    │   ├── FileSystemService.ts # POSIX Logic
-    │   ├── JobControlService.ts # Job table, signals, job ID resolution
-    │   ├── ShellExpansionService.ts # Globbing & Expansion
-    │   ├── ShellParser.ts       # Input Parser (Coordinator)
-    │   ├── HintService.ts       # Contextual Hint Logic
-    │   └── ArchiveService.ts    # Command/Buffer Archiving
-│   └── usecases/                # Application Logic
-│       └── ExecuteCommand.ts    # Main Command Dispatcher
-├── interface-adapters/          # ADAPTERS
-│   ├── commands/                # Adaptive Commands
-│   │   └── game/                # Game Mechanics (asm, scheme, tutor, mail)
-│   ├── viewmodels/              # MVVM ViewModels
-│   │   └── TerminalViewModel.ts # UI State Logic
-│   ├── vim/                     # Vim Simulation Logic
-│   ├── GameCommandExecutor.ts   # UI-Shell Bridge
-│   ├── GameManager.ts           # Game Subsystem Coordinator (Facade)
-│   └── LessonCoordinator.ts     # Tutor Event Bridge
-├── frameworks-drivers/          # INFRASTRUCTURE
-│   ├── ui/                      # React Native UI
-│   │   ├── screens/             # Top-level Views
-│   │   ├── components/          # Reusable UI Blocks
-│   │   │   └── IrcTab.tsx       # IRC Sidebar (Missions)
-│   │   └── context/             # React Context
-│   ├── telemetry/               # Logging/Tracing
-│   └── wasm/                    # WebAssembly Drivers
-├── infrastructure/              # SERVICES
-│   └── services/                # Implementation details (HostBinaryRunner)
-└── scripts/                     # TESTS & TOOLS
-    ├── posix_comprehensive_suite.ts # Main Test Suite (Run this!)
-    └── ...
-```
-
+### Future Architecture (Planned)
+1.  **World Graph:** Nodes (Rooms) and Edges (Connections) representing the physical world.
+2.  **Device Map:** Mapping `/dev/*` files to World Entities (e.g., `/dev/vent` controls airlock).
+3.  **Knuthian Constraints:** Simulation of Bandwidth and CPU cycles to enforce algorithmic efficiency.
 
 ---
 
-## 5. POSIX Gap Analysis
+## 4. POSIX Gap Analysis
 
-> [!NOTE]
-> The following sections document the status of POSIX subsystem implementations.
+### 4.1 Job Control ✅ IMPLEMENTED
+*   **Status:** Full POSIX compliance (Signals, Job IDs).
 
-### 5.1 Job Control & Process Management ✅ IMPLEMENTED
+### 4.2 Identity & Permissions ✅ IMPLEMENTED
+*   **Service:** `IdentityService.ts` and `PermissionService.ts`.
+*   **Status:** Full support for User/Group resolution and bitwise permission enforcement.
 
-*   **Commands:** `bg`, `fg`, `jobs`, `kill`, `wait` — **100% POSIX Compliance**
-*   **Architecture:**
-    *   `Job` entity (`src/domain/entities/Job.ts`) - Job states (Running/Stopped/Done/Terminated) and output formatting.
-    *   `Signal` entity (`src/domain/entities/Signal.ts`) - POSIX signal definitions and parsing.
-    *   `JobControlService` (`src/domain/services/JobControlService.ts`) - Job table management, signal delivery, job resolution (%1, %+, %-).
-    *   `ProcessContext.jobControl` - Reference injected into commands.
-*   **Key Features:**
-    *   Job ID notation: `%1`, `%+`, `%%`, `%-`, `%?string`, `%string`
-    *   Signal handling: SIGTERM, SIGKILL, SIGSTOP, SIGCONT, etc.
-    *   Output formats per POSIX: `[%d] %s\n` for bg, `%s\n` for fg, `[%d] %c %s %s\n` for jobs.
-
-### 5.2 Identity & Permissions Model
-
-*   **Affected Commands:** `id`, `chown`, `chgrp`, `chmod` (symbolic/sticky), `logname`, `newgrp`
-*   **Gap:** No `IdentityService` (simulating `/etc/passwd` & `/etc/group`). Permission enforcement (sticky bit, setuid) is incomplete in `FileSystemService`. `id` outputs `[object Object]` due to missing serialization.
-*   **Proposed Fix:** Add `User`/`Group` entities and an `IdentityService` to manage simulated user database. Update `FileSystemService` for full permission checks.
-
-### 5.3 Process Pipeline & I/O Streams ✅ PARTIALLY IMPLEMENTED
-
-*   **Commands:** `xargs` (100%), `comm`, `split`, `csplit`
-*   **Implemented:**
-    *   `IStream` interface (`src/domain/entities/Stream.ts`) - Abstraction for stdin/stdout/stderr.
-    *   `StringStream`, `PipeStream`, `NullStream` implementations.
-    *   `ProcessContext` uses `IStream` for I/O with backward compatibility via `getStdinAsString()`.
-*   **Remaining Gap:** Full FD redirection (2>&1, <&3) and large streaming data.
-
+### 4.3 Process Pipeline & I/O Streams ⚠️ PARTIAL
+*   **Implemented:** `IStream` abstraction, basic `>` and `>>` redirection.
+*   **Gap:** Full FD redirection (`2>&1`), heredocs (`<<`), and input redirection (`<`).
 
 ---
 
-## 6. Code Hygiene & Refactoring Standards
+## 5. Engineering Log
 
-### SOLID Compliance
-*   **SRP:** Large commands (like `MakeCommand`) MUST be split into Parser/Executor services if logic exceeds 200 lines or distinct phases.
-*   **OCP:** Use the Registry pattern for extending functionality (e.g., CommandRegistry). Avoid hardcoded dispatch switch/case blocks for extensible systems.
+### 2026-02-07: Glass Box & Architecture Cleanup
+*   **Glass Box:** Implemented rhythmic mining (ZINC), input gating (TutorShadow), and theatrical HUD (MainframeOverlay).
+*   **Decoupling:** Resolved major require cycles by refactoring `StandardLayout` to accept components via props.
+*   **Feedback:** Implemented event-driven "Perfect" hit indicators and multiplier pulses in the central overlay.
+*   **Observability:** Enabled `ECONOMY_UPDATE` events for real-time ZINC balance synchronization.
 
-### DRY (Don't Repeat Yourself)
-*   **Path Resolution:** Do NOT implement `resolvePath(path, state)` in commands. Use `fs.resolveAbsolutePath(path, cwd)` from `FileSystemService`.
-*   **Argument Parsing:** Commands MUST use `CommandBase.parseOptions` or `CommandBase.parseArgs`.
-*   **Traversals:** Use `FileSystemService` for recursive operations. Do not manually recurse directory structures in Commands.
+### 2026-02-02: "Unix Edge Lord" Refactoring (Phase 1)
+*   **Data Layer:** Implemented `IMissionDataProvider` to decouple `MissionRepository`.
+*   **Strategy Registry:** Implemented `StrategyRegistry` to enable OCP in `TutorService`.
+*   **Verification:** `mission_tester.ts` confirms data-driven progression works.
 
-### Known Violations (To Be Refactored)
-1. **Parsers:** ✅ REFACTORED. `ShellParser` now uses the Strategy Pattern for grammar rules.
-2. **UI God Components:** ✅ REFACTORED. `TerminalScreen.tsx` refactored into a passive router with sub-screens. `TerminalViewModel` decomposed into specialized service-backed logic.
-
-### UI Component Standards
-*   **No Inline Logic:** Components should receive data prop objects, not raw state.
-*   **Composition Over Configuration:** Use `children` props for layout wrappers like `ConsoleLayout`.
-*   **Memoization:** All list items (Output Lines) MUST be memoized to ensure O(1) performance during high-speed text streaming.
-
----
-
-## 7. Mission System Architecture ✅ REFACTORED
-
-### Overview
-Missions are implemented using a **State Machine** managed by `MissionService` (Domain) and a **Strategy Pattern** for rule evaluation. `GameManager` acts as an Interface Adapter facade that coordinates between the mission system, NPC generation, and system preparation.
-
-### Components
-1.  **Mission Entity** (`src/domain/entities/Mission.ts`):
-    *   Tracks `currentStep` using the `MissionStep` enum:
-        *   `PENDING`: Mission started, user needs to connect.
-        *   `CONNECTED`: SSH session established to target.
-        *   `LOCATED`: User has found the objective file.
-        *   `COMPLETED`: Objective accomplished (e.g., file exfiltrated/modified).
-
-2.  **IMissionStrategy** (`src/domain/services/mission-strategies/`):
-    *   `evaluate(mission, state, lastResponse)`: Evaluates the current state and return hints or progression triggers.
-    *   **ExfiltrateStrategy**: Rules for moving files from remote to local.
-    *   **ModifyStrategy**: Rules for altering remote files.
-
-3.  **Tutor Synchronization**:
-    *   Missions use the `MISSION_` lesson ID prefix.
-    *   `TerminalViewModel` skips directory context restoration for these lessons to persist SSH sessions.
-    *   `GameManager` uses a low-latency transition (200ms) between steps to prevent UI flicker.
-
----
-
-## 8. The 8-Point GEMINI System (User Rules)
-
-The user rules defined in section 2 are absolute.
-1.  **Strict Architecture**
-2.  **Literate Documentation**
-3.  **Dependency Minimalism**
-4.  **Observability**
-5.  **Performance & Purity**
-6.  **Universal Readability**
-7.  **Pragmatic Design Patterns**
-8.  **SOLID / KISS Equilibrium**
-
----
-
-## 9. Engineering Log
-
-### 2026-01-30: SRP & DRY Refactoring (Batch 1)
-*   **CommandBase Extension:** Upgraded `CommandBase.ts` with a robust argument parser (supports bundled flags, options with values).
-*   **ValCommand Refactor:** Converted `ValCommand.ts` to extend `CommandBase`, eliminating 50+ lines of manual parsing logic (DRY).
-*   **MakeCommand SRP:** Decoupled `MakeCommand.ts` by creating `MakefileParser.ts` and `MakeExecutor.ts` domain services.
-*   **Verification:** Zero regressions in `posix_comprehensive_suite.ts`.
-### 2026-01-31: UI Decomposition & Aesthetic Refinement (Batch 2)
-*   **TerminalScreen Decomposition:** Refactored the monolithic `TerminalScreen.tsx` into a high-level router. Created `ShellScreen.tsx` and `VimScreen.tsx` to encapsulate application-specific logic (SRP).
-*   **Aesthetic Overhaul:** Transitioned to a "future 80s mainframe" look. Removed box outlines and margins in favor of a raw CRT phosphor aesthetic.
-*   **Phosphor Glow:** Implemented text-shadow glows across the output log and input prompts using pure, composable style generator functions.
-*   **Verification:** Confirmed zero regressions in command logic with the POSIX suite.
+### 2026-01-30: POSIX Subsystem Foundation
+*   **Job Control:** Full implementation of `bg`, `fg`, `jobs`, `kill`.
+*   **Identity:** Implemented `IdentityService` and refactored `FileSystemService` into specialized services.

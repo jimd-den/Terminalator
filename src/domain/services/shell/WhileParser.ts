@@ -1,4 +1,4 @@
-import { ASTNode, NodeType, WhileNode } from '../ShellParser';
+import { ASTNode, NodeType, IfNode, ForNode, WhileNode, SubshellNode, BlockNode, FunctionDefNode, CommandNode, RedirectNode } from '../../interfaces/ShellAST';
 import { TokenType } from '../ShellLexer';
 import { IStatementParser } from './IStatementParser';
 import { IShellParserFacade } from './IShellParserFacade';

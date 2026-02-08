@@ -5,9 +5,6 @@ import { FileSystemService } from '../src/domain/services/FileSystemService';
 import { IdentityService } from '../src/domain/services/IdentityService';
 import { ExecuteCommand } from '../src/domain/usecases/ExecuteCommand';
 import { createInitialTerminalState, TerminalState } from '../src/domain/entities/TerminalState';
-import { HostCompilerService } from '../src/infrastructure/services/HostCompilerService';
-import { HostBinaryRunner } from '../src/infrastructure/services/HostBinaryRunner';
-import { C17Command } from '../src/domain/commands/core/C17Command';
 import { ShellFactory } from '../src/domain/factories/ShellFactory';
 import { CommandRegistry } from '../src/domain/commands/CommandRegistry';
 import { CoreUtilsModule } from '../src/domain/modules/CoreUtilsModule';
@@ -2934,26 +2931,9 @@ async function runSuite() {
             const service = new FileSystemService(testFs); // Keep this for setup() usage
             let testExecutor: ExecuteCommand;
 
-            if (suite.utility === 'c17') {
-                const compiler = new HostCompilerService();
-                const runner = new HostBinaryRunner();
+            const { executor } = ShellFactory.create(testFs);
+            testExecutor = executor;
 
-                // Initialize modules for C17 too? (If it uses other commands)
-                // For now, reconstruct manually but WITH modules if possible involved.
-                // Or better: Use ShellFactory, then Replace executor with one that has runner, reusing registry?
-
-                // Manual (Robust):
-                const registry = new CommandRegistry();
-                new CoreUtilsModule(testFs, new IdentityService()).register(registry);
-                new SystemUtilsModule(new FileSystemService(testFs)).register(registry);
-
-                registry.register('c17', new C17Command(compiler, service));
-                testExecutor = new ExecuteCommand(service, undefined, registry, runner);
-            } else {
-                // Use Factory for standard utilties
-                const { executor } = ShellFactory.create(testFs);
-                testExecutor = executor;
-            }
             const testState = createInitialTerminalState();
 
             // Initialize minimal FS structure to match State
