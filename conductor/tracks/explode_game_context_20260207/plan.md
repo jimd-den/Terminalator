@@ -36,7 +36,7 @@
     - [x] Create `useTutorPersona` hook.
 - [x] Task: Conductor - User Manual Verification 'Domain Provider Creation' (Protocol in workflow.md)
 
-## Phase 3: Migration & Integration
+## Phase 3: Migration & Integration [checkpoint: 7a3b1f8]
 *This phase involves updating the application to use the new providers and removing the old `GameContext`.*
 
 - [x] Task: Integrate Providers in `App.tsx`
