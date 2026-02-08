@@ -23,7 +23,7 @@
     - [x] Replace direct `commandExecutor.execute()` calls with `CommandCoordinator.execute()`.
 - [x] Task: Conductor - User Manual Verification 'Command Coordinator' (Protocol in workflow.md)
 
-## Phase 3: Theatrical Canvas Plugin (The Show)
+## Phase 3: Theatrical Canvas Plugin (The Show) [checkpoint: 73e5aff]
 *Goal: Move animation logic into a standalone, scrappable component.*
 
 - [x] Task: Create `TheatricalCanvas`
