@@ -12,29 +12,29 @@
 ## Phase 2: Domain Provider Creation
 *This phase creates granular Context Providers that wrap the `CoreEngine` services.*
 
-- [ ] Task: Create `FileSystemProvider`
-    - [ ] Implement `src/frameworks-drivers/ui/context/FileSystemProvider.tsx` consuming `CoreEngine.fileSystem`.
-    - [ ] Create `useFileSystem` hook.
-- [ ] Task: Create `EconomyProvider`
-    - [ ] Implement `src/frameworks-drivers/ui/context/EconomyProvider.tsx` consuming `CoreEngine.economyService`.
-    - [ ] Create `useEconomy` hook.
-- [ ] Task: Create `TutorMessagingProvider`
-    - [ ] Implement `src/frameworks-drivers/ui/context/TutorMessagingProvider.tsx` consuming `CoreEngine.tutorMessaging`.
-    - [ ] Move message queue processing logic from `GameContext` to this provider or a custom hook.
-    - [ ] Create `useTutorMessaging` hook.
-- [ ] Task: Create `MasteryProvider`
-    - [ ] Implement `src/frameworks-drivers/ui/context/MasteryProvider.tsx` consuming `CoreEngine.masteryTracker`.
-    - [ ] Create `useMastery` hook.
-- [ ] Task: Create `SystemStateProvider`
-    - [ ] Implement `src/frameworks-drivers/ui/context/SystemStateProvider.tsx` for UI-specific state (`isInputLocked`, `theme`).
-    - [ ] Create `useSystemState` hook.
-- [ ] Task: Create `ProcessProvider`
-    - [ ] Implement `src/frameworks-drivers/ui/context/ProcessProvider.tsx` consuming `CoreEngine.gameManager` and `CoreEngine.commandExecutor`.
-    - [ ] Create `useProcess` hook.
-- [ ] Task: Create `TutorPersonaProvider`
-    - [ ] Implement `src/frameworks-drivers/ui/context/TutorPersonaProvider.tsx` consuming `CoreEngine.tutorBrain`.
-    - [ ] Create `useTutorPersona` hook.
-- [ ] Task: Conductor - User Manual Verification 'Domain Provider Creation' (Protocol in workflow.md)
+- [x] Task: Create `FileSystemProvider`
+    - [x] Implement `src/frameworks-drivers/ui/context/FileSystemProvider.tsx` consuming `CoreEngine.fileSystem`.
+    - [x] Create `useFileSystem` hook.
+- [x] Task: Create `EconomyProvider`
+    - [x] Implement `src/frameworks-drivers/ui/context/EconomyProvider.tsx` consuming `CoreEngine.economyService`.
+    - [x] Create `useEconomy` hook.
+- [x] Task: Create `TutorMessagingProvider`
+    - [x] Implement `src/frameworks-drivers/ui/context/TutorMessagingProvider.tsx` consuming `CoreEngine.tutorMessaging`.
+    - [x] Move message queue processing logic from `GameContext` to this provider or a custom hook.
+    - [x] Create `useTutorMessaging` hook.
+- [x] Task: Create `MasteryProvider`
+    - [x] Implement `src/frameworks-drivers/ui/context/MasteryProvider.tsx` consuming `CoreEngine.masteryTracker`.
+    - [x] Create `useMastery` hook.
+- [x] Task: Create `SystemStateProvider`
+    - [x] Implement `src/frameworks-drivers/ui/context/SystemStateProvider.tsx` for UI-specific state (`isInputLocked`, `theme`).
+    - [x] Create `useSystemState` hook.
+- [x] Task: Create `ProcessProvider`
+    - [x] Implement `src/frameworks-drivers/ui/context/ProcessProvider.tsx` consuming `CoreEngine.gameManager` and `CoreEngine.commandExecutor`.
+    - [x] Create `useProcess` hook.
+- [x] Task: Create `TutorPersonaProvider`
+    - [x] Implement `src/frameworks-drivers/ui/context/TutorPersonaProvider.tsx` consuming `CoreEngine.tutorBrain`.
+    - [x] Create `useTutorPersona` hook.
+- [x] Task: Conductor - User Manual Verification 'Domain Provider Creation' (Protocol in workflow.md)
 
 ## Phase 3: Migration & Integration
 *This phase involves updating the application to use the new providers and removing the old `GameContext`.*
