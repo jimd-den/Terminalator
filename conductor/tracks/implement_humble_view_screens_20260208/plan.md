@@ -1,6 +1,6 @@
 # Implementation Plan: Implement Humble View Screens
 
-## Phase 1: Theatrical Input Proxy (The Lock)
+## Phase 1: Theatrical Input Proxy (The Lock) [checkpoint: 8988bd7]
 *Goal: Allow the system to seize control of input for animations without the UI knowing.*
 
 - [x] Task: Update `InputContext` to support locking
