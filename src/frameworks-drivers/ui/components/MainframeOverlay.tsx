@@ -1,8 +1,8 @@
 /**
  * MainframeOverlay - Presentation Layer
  * 
- * High-fidelity theatrical overlay for the Glass Box simulation.
- * Handles Phase IV (Theatrical Presentation) and Phase V (Projector HUD).
+ * High-fidelity Projector HUD for the Glass Box simulation.
+ * Handles Phase V (Projector HUD) feedback.
  * 
  * Pillar: THE STORYTELLER'S CODE (Visual Narrative)
  * Pillar: THESwift Stream (Performance Animations)
@@ -23,17 +23,15 @@ export const MainframeOverlay: React.FC = () => {
     // --- State ---
     const [activeVerb, setActiveVerb] = useState<string | null>(null);
     const [projectedGlyph, setProjectedGlyph] = useState<string | null>(null);
-    const [isCriticalError, setIsCriticalError] = useState(false);
     const [multiplier, setMultiplier] = useState(1.0);
     const [sessionReward, setSessionReward] = useState(0);
     const [showPerfect, setShowPerfect] = useState(false);
     
-    const isVisible = !!(activeVerb || projectedGlyph || isCriticalError);
+    const isVisible = !!(activeVerb || projectedGlyph);
 
     // --- Animations ---
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const scaleAnim = useRef(new Animated.Value(1.0)).current;
-    const shakeAnim = useRef(new Animated.Value(0)).current;
     const perfectAnim = useRef(new Animated.Value(0)).current;
 
     const useNativeDriver = Platform.OS !== 'web';
@@ -63,8 +61,6 @@ export const MainframeOverlay: React.FC = () => {
 
     // 1. Event Subscription Effect
     useEffect(() => {
-        console.log("[MainframeOverlay] Subscribing to bus events...");
-        
         const unsubTutor = bus.subscribe(GameEventType.TUTOR_EVENT, (event) => {
             const tutorEvent = event.payload;
             const { type, payload } = tutorEvent;
@@ -74,15 +70,6 @@ export const MainframeOverlay: React.FC = () => {
                 setActiveVerb(payload.verb);
             } else if (typeStr === 'PRESENTATION_END') {
                 setActiveVerb(null);
-            } else if (typeStr === 'MISTAKE' && payload.type === 'SHADOW_BLOCK') {
-                setIsCriticalError(true);
-                Animated.sequence([
-                    Animated.timing(shakeAnim, { toValue: 20, duration: 50, useNativeDriver }),
-                    Animated.timing(shakeAnim, { toValue: -20, duration: 50, useNativeDriver }),
-                    Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver })
-                ]).start(() => {
-                    setTimeout(() => setIsCriticalError(false), 500);
-                });
             }
         });
 
@@ -105,7 +92,7 @@ export const MainframeOverlay: React.FC = () => {
             unsubEconomy();
             unsubKeystroke();
         };
-    }, [bus, shakeAnim, perfectAnim, useNativeDriver]);
+    }, [bus, perfectAnim, useNativeDriver]);
 
     // 2. Glyph Update Logic (Event-Driven)
     useEffect(() => {
@@ -131,12 +118,10 @@ export const MainframeOverlay: React.FC = () => {
         updateGlyph();
 
         return unsubscribe;
-    }, [gameManager, bus, scaleAnim, useNativeDriver]);
+    }, [gameManager, bus]);
 
     // 3. Visibility Animation Sync
     useEffect(() => {
-        console.log(`[MainframeOverlay] Visibility Check: isVisible=${isVisible}, activeVerb=${activeVerb}, glyph=${projectedGlyph}, error=${isCriticalError}`);
-        
         if (isVisible) {
             Animated.timing(fadeAnim, { 
                 toValue: 1, 
@@ -155,7 +140,7 @@ export const MainframeOverlay: React.FC = () => {
     const dynamicStyles = StyleSheet.create({
         overlay: {
             ...StyleSheet.absoluteFillObject,
-            backgroundColor: isCriticalError ? colors.error : 'rgba(0,0,0,0.85)',
+            backgroundColor: 'rgba(0,0,0,0.85)',
             justifyContent: 'center',
             alignItems: 'center',
             zIndex: 5,
@@ -163,7 +148,7 @@ export const MainframeOverlay: React.FC = () => {
         verbText: {
             fontFamily: THEME.typography.fontFamily,
             fontSize: THEME.typography.fontSize.xl,
-            color: isCriticalError ? colors.background : colors.primary,
+            color: colors.primary,
             fontWeight: 'bold',
             textAlign: 'center',
             letterSpacing: 4,
@@ -209,7 +194,7 @@ export const MainframeOverlay: React.FC = () => {
     return (
         <Animated.View 
             pointerEvents={isVisible ? 'auto' : 'none'}
-            style={[dynamicStyles.overlay, { opacity: isVisible ? fadeAnim : 0, transform: [{ translateX: shakeAnim }] }]}
+            style={[dynamicStyles.overlay, { opacity: isVisible ? fadeAnim : 0 }]}
         >
             {showPerfect && (
                 <Animated.Text style={[dynamicStyles.perfectText, { opacity: perfectAnim, transform: [{ translateY: perfectAnim.interpolate({ inputRange: [0, 1], outputRange: [-20, 0] }) }] }]}>
