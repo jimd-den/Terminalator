@@ -25,6 +25,7 @@ import { InputProvider } from './src/frameworks-drivers/ui/context/InputContext'
 import { AppNavigator } from './src/frameworks-drivers/ui/navigation/AppNavigator';
 import { AppInitializer } from './src/frameworks-drivers/ui/components/AppInitializer';
 import { useTutorMessagingController } from './src/frameworks-drivers/ui/hooks/useTutorMessagingController';
+import { useTheatricalInputLock } from './src/frameworks-drivers/ui/hooks/useTheatricalInputLock';
 import { CoreEngine } from './src/core/CoreEngine';
 
 // Initialize CoreEngine outside the React tree
@@ -35,6 +36,7 @@ CoreEngine.getInstance().initialize();
  */
 function AppContent() {
   useTutorMessagingController();
+  useTheatricalInputLock();
   
   return (
     <NavigationContainer>
