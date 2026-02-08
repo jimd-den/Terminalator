@@ -176,4 +176,11 @@ export class TutorBrain {
             this.reactionListeners = this.reactionListeners.filter(l => l !== listener);
         };
     }
+
+    public dispose() {
+        if (this.idleTimer) {
+            clearInterval(this.idleTimer);
+            this.idleTimer = undefined;
+        }
+    }
 }
