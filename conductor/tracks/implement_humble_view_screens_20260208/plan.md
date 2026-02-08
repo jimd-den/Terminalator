@@ -12,7 +12,7 @@
     - [x] Wiring: This service should call `setInputLocked(true)` on start and `false` on end.
 - [x] Task: Conductor - User Manual Verification 'Theatrical Input Proxy' (Protocol in workflow.md)
 
-## Phase 2: Command Coordinator (The Brain)
+## Phase 2: Command Coordinator (The Brain) [checkpoint: 3a29397]
 *Goal: Centralize command execution flow to support theatrical triggers.*
 
 - [x] Task: Create `CommandCoordinator`
