@@ -11,7 +11,7 @@
  */
 
 import { FileSystem } from '../../domain/entities/FileSystem';
-import { IShellExecutor } from '../../domain/interfaces/IShellExecutor';
+import { CommandCoordinator } from '../controllers/CommandCoordinator';
 import { GameManager } from '../GameManager';
 import { TutorShadow } from '../../domain/services/tutor/TutorShadow';
 
@@ -23,11 +23,11 @@ export { TerminalOutputLine } from '../controllers/OutputController';
 
 export const useTerminalViewModel = (
     fs: FileSystem,
-    commandExecutor: IShellExecutor,
+    commandCoordinator: CommandCoordinator,
     gameManager: GameManager,
     tutorShadow: TutorShadow
 ) => {
     // All terminal logic and state is now managed by the headless hook.
     // This allows the UI to be swapped or themed without changing the core orchestration.
-    return useHeadlessTerminal(fs, commandExecutor as any, gameManager, tutorShadow);
+    return useHeadlessTerminal(fs, commandCoordinator, gameManager, tutorShadow);
 };

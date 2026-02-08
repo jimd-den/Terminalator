@@ -10,7 +10,7 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { FileSystem } from '../../domain/entities/FileSystem';
-import { ExecuteCommand } from '../../domain/usecases/ExecuteCommand';
+import { CommandCoordinator } from '../controllers/CommandCoordinator';
 import { GameManager } from '../GameManager';
 import { TutorShadow } from '../../domain/services/tutor/TutorShadow';
 import { ArchiveService, CapturedBuffer } from '../../domain/services/ArchiveService';
@@ -25,7 +25,7 @@ export type ActiveView = 'SHELL' | 'COMMS' | 'BUFFERS';
 
 export const useHeadlessTerminal = (
     fs: FileSystem,
-    commandExecutor: ExecuteCommand,
+    commandCoordinator: CommandCoordinator,
     gameManager: GameManager,
     tutorShadow: TutorShadow
 ) => {
@@ -36,7 +36,7 @@ export const useHeadlessTerminal = (
 
     // -- Sub-ViewModels --
     const missionVM = useMissionViewModel(gameManager);
-    const shellVM = useShellViewModel(fs, commandExecutor, gameManager, tutorShadow, missionVM.refreshMissions);
+    const shellVM = useShellViewModel(fs, commandCoordinator as any, gameManager, tutorShadow, missionVM.refreshMissions);
 
     const archiveService = useMemo(() => new ArchiveService(), []);
     const hintService = useMemo(() => new HintService(), []);

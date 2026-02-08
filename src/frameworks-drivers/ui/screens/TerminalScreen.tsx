@@ -42,14 +42,14 @@ const styles = StyleSheet.create({
 
 export const TerminalScreen: React.FC = () => {
     const { fs } = useFileSystem();
-    const { gameManager, commandExecutor } = useProcess();
+    const { gameManager, commandCoordinator } = useProcess();
     const { tutorShadow } = useTutorPersona();
     const { theme } = useTheme();
     const components = useThemeComponents();
     const Layout = components.Layout;
     const colors = theme.colors;
 
-    const viewModel = useTerminalViewModel(fs, commandExecutor, gameManager, tutorShadow);
+    const viewModel = useTerminalViewModel(fs, commandCoordinator, gameManager, tutorShadow);
 
     const crtStyle = {
         ...StyleSheet.absoluteFillObject,

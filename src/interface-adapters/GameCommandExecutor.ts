@@ -98,13 +98,6 @@ export class GameCommandExecutor implements IShellExecutor {
      * triggering game-specific events.
      */
     async execute(input: string, state: TerminalState): Promise<CommandResponse> {
-        // 0. Theatrical Presentation (Phase 4: Glass Box)
-        const parts = input.trim().split(/\s+/);
-        const cmd = parts[0];
-        if (cmd) {
-            await this.gameManager.getPresentationDirector().presentCommand(cmd, parts.slice(1));
-        }
-
         const response = await this.engine.execute(input, state);
 
         // 1. Connection established trigger: Ensure remote system is prepared with mission files

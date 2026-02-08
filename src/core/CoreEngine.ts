@@ -11,6 +11,7 @@ import { TutorShadow } from '../domain/services/tutor/TutorShadow';
 import { TutorBrain } from '../domain/entities/tutor/TutorBrain';
 import { MasteryTracker } from '../domain/services/tutor/MasteryTracker';
 import { SimulationBus } from '../domain/services/SimulationBus';
+import { CommandCoordinator } from '../interface-adapters/controllers/CommandCoordinator';
 
 /**
  * CoreEngine - Domain/Service Layer
@@ -37,6 +38,7 @@ export class CoreEngine {
     private gameManager!: GameManager;
     private commandExecutor!: GameCommandExecutor;
     private tutorShadow!: TutorShadow;
+    private commandCoordinator!: CommandCoordinator;
 
     private constructor() {}
 
@@ -80,6 +82,11 @@ export class CoreEngine {
             this.bus, 
             this.gameManager.getPresentationDirector()
         );
+
+        // 3. Controllers
+        this.commandCoordinator = new CommandCoordinator(this.commandExecutor, this.gameManager.getPresentationDirector());
+        console.log("CoreEngine: Controllers ready.");
+
         console.log("CoreEngine: Initialization complete.");
 
         this.initialized = true;
@@ -100,6 +107,7 @@ export class CoreEngine {
     public getGameManager(): GameManager { return this.gameManager; }
     public getCommandExecutor(): GameCommandExecutor { return this.commandExecutor; }
     public getTutorShadow(): TutorShadow { return this.tutorShadow; }
+    public getCommandCoordinator(): CommandCoordinator { return this.commandCoordinator; }
 
     public shutdown() {
         if (this.tutorBrain) {

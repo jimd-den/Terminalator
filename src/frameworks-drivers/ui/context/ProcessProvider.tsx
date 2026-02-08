@@ -13,10 +13,12 @@ import { GameCommandExecutor } from '../../../interface-adapters/GameCommandExec
 import { SimulationBus } from '../../../domain/services/SimulationBus';
 import { ConsoleTelemetryAdapter } from '../../../infrastructure/telemetry/ConsoleTelemetryAdapter';
 import { CoreEngine } from '../../../core/CoreEngine';
+import { CommandCoordinator } from '../../../../interface-adapters/controllers/CommandCoordinator';
 
 interface ProcessContextType {
     gameManager: GameManager;
     commandExecutor: GameCommandExecutor;
+    commandCoordinator: CommandCoordinator;
     bus: SimulationBus;
     telemetry: ConsoleTelemetryAdapter;
 }
@@ -28,11 +30,12 @@ export const ProcessProvider: React.FC<{ children: ReactNode }> = ({ children })
     
     const gameManager = engine.getGameManager();
     const commandExecutor = engine.getCommandExecutor();
+    const commandCoordinator = engine.getCommandCoordinator();
     const bus = engine.getSimulationBus();
     const telemetry = engine.getTelemetry();
 
     return (
-        <ProcessContext.Provider value={{ gameManager, commandExecutor, bus, telemetry }}>
+        <ProcessContext.Provider value={{ gameManager, commandExecutor, commandCoordinator, bus, telemetry }}>
             {children}
         </ProcessContext.Provider>
     );
