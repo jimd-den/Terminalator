@@ -13,7 +13,7 @@ import { GameCommandExecutor } from '../../../interface-adapters/GameCommandExec
 import { SimulationBus } from '../../../domain/services/SimulationBus';
 import { ConsoleTelemetryAdapter } from '../../../infrastructure/telemetry/ConsoleTelemetryAdapter';
 import { CoreEngine } from '../../../core/CoreEngine';
-import { CommandCoordinator } from '../../../../interface-adapters/controllers/CommandCoordinator';
+import { CommandCoordinator } from '../../../interface-adapters/controllers/CommandCoordinator';
 
 interface ProcessContextType {
     gameManager: GameManager;

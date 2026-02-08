@@ -32,25 +32,23 @@ interface VimEditorProps {
     onExit: () => void;
 }
 
-export const useVimEditor = (filename: string, onExit: () => void) => {
-    const { fs } = useFileSystem();
-    const { gameManager } = useProcess();
-    const { isInputLocked } = useSystemState();
-    const { tutorShadow } = useTutorPersona();
+export const useVimEditor = (
+    filename: string, 
+    onExit: () => void,
+    fsService: FileSystemService,
+    tutorEngine: any,
+    tutorShadow: any,
+    isInputLocked: boolean
+) => {
     const { theme, settings } = useTheme();
     const components = useThemeComponents();
     const { TextRenderer, Cursor } = components;
     const colors = theme.colors;
 
-    // -- Domain Services --
-    // We instantiate the service here to pass into the ViewModel
-    // Ideally this would come from a DI container, but for now we follow the existing pattern.
-    const fsService = useMemo(() => new FileSystemService(fs), [fs]);
-
     // -- Headless Logic --
     // All editor state and logic is now managed by this hook.
     // This component is merely a renderer.
-    const headless = useHeadlessVim(filename, fsService, gameManager.tutorEngine, tutorShadow, onExit);
+    const headless = useHeadlessVim(filename, fsService, tutorEngine, tutorShadow, onExit);
 
     // -- Mount State (Visual Only) --
     const [isMounting, setIsMounting] = React.useState(true);

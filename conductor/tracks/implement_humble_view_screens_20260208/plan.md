@@ -37,15 +37,15 @@
 ## Phase 4: Humble Screen Refactor (The Amputation)
 *Goal: Ensure UI components are pure and logic-free.*
 
-- [ ] Task: Refactor `TerminalScreen` & `ShellScreen`
-    - [ ] Audit `TerminalScreen.tsx` and `ShellScreen.tsx`.
-    - [ ] Move any remaining state calculation or side-effects to `TerminalViewModel`.
-    - [ ] Ensure they strictly consume props/hooks and render.
-- [ ] Task: Refactor `VimScreen` & `VimEditor`
-    - [ ] Audit `VimScreen.tsx` and `VimEditor.tsx`.
-    - [ ] Ensure input handling is delegated to `useHeadlessVim` (which should use `InputContext`).
-    - [ ] Remove any local buffering logic.
-- [ ] Task: Refactor `BufferScreen` & `CommsPane`
-    - [ ] Audit `BufferScreen.tsx` and `CommsPane.tsx`.
-    - [ ] Extract any inline filtering or data processing to their respective ViewModels.
-- [ ] Task: Conductor - User Manual Verification 'Humble Screen Refactor' (Protocol in workflow.md)
+- [x] Task: Refactor `TerminalScreen` & `ShellScreen`
+    - [x] Audit `TerminalScreen.tsx` and `ShellScreen.tsx`.
+    - [x] Move any remaining state calculation or side-effects to `TerminalViewModel`.
+    - [x] Ensure they strictly consume props/hooks and render.
+- [x] Task: Refactor `VimScreen` & `VimEditor`
+    - [x] Audit `VimScreen.tsx` and `VimEditor.tsx`.
+    - [x] Ensure input handling is delegated to `useHeadlessVim` (which should use `InputContext`).
+    - [x] Remove any local buffering logic.
+- [x] Task: Refactor `BufferScreen` & `CommsPane`
+    - [x] Audit `BufferScreen.tsx` and `CommsPane.tsx`.
+    - [x] Extract any inline filtering or data processing to their respective ViewModels.
+- [x] Task: Conductor - User Manual Verification 'Humble Screen Refactor' (Protocol in workflow.md)
