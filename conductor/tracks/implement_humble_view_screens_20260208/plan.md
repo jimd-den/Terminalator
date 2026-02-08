@@ -26,13 +26,13 @@
 ## Phase 3: Theatrical Canvas Plugin (The Show)
 *Goal: Move animation logic into a standalone, scrappable component.*
 
-- [ ] Task: Create `TheatricalCanvas`
-    - [ ] Implement `src/frameworks-drivers/ui/components/theatrical/TheatricalCanvas.tsx`.
-    - [ ] Implement internal `requestAnimationFrame` loop or Animated API logic driven ONLY by `SimulationBus` events.
-    - [ ] Move logic from `MainframeOverlay.tsx` into this new component.
-- [ ] Task: Clean up `MainframeOverlay`
-    - [ ] Remove animation logic from `MainframeOverlay`. It should now just be a container or basic HUD.
-- [ ] Task: Conductor - User Manual Verification 'Theatrical Canvas Plugin' (Protocol in workflow.md)
+- [x] Task: Create `TheatricalCanvas`
+    - [x] Implement `src/frameworks-drivers/ui/components/theatrical/TheatricalCanvas.tsx`.
+    - [x] Implement internal `requestAnimationFrame` loop or Animated API logic driven ONLY by `SimulationBus` events.
+    - [x] Move logic from `MainframeOverlay.tsx` into this new component.
+- [x] Task: Clean up `MainframeOverlay`
+    - [x] Remove animation logic from `MainframeOverlay`. It should now just be a container or basic HUD.
+- [x] Task: Conductor - User Manual Verification 'Theatrical Canvas Plugin' (Protocol in workflow.md)
 
 ## Phase 4: Humble Screen Refactor (The Amputation)
 *Goal: Ensure UI components are pure and logic-free.*
