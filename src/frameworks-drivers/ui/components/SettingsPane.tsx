@@ -70,7 +70,7 @@ export const SettingsPane: React.FC<SettingsPaneProps> = ({ onBack }) => {
         },
         activeOptionBlock: {
             borderLeftColor: colors.primary,
-            backgroundColor: 'rgba(0, 255, 65, 0.05)',
+            backgroundColor: `${colors.primary}1A`, // 0.1 opacity of primary color
         },
         headerRow: {
             flexDirection: 'row',
