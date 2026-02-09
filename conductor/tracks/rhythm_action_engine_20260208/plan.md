@@ -26,21 +26,22 @@
 
 - [x] Task: Refine `SimulationMediator`
     - [x] Implement the full lifecycle: Pre-anim -> Execute -> Post-anim -> Result Card.
-- [x] Task: Implement `ResultStackView` component
+- [x] Task: Implement `ResultStackView` component (Unified Console)
     - [x] Create `src/frameworks-drivers/ui/components/theatrical/ResultStackView.tsx`.
-    - [x] Handle vertical stacking of static "flexible square" cards.
-- [x] Task: Update `TheatricalCanvas`
-    - [x] Add support for `PRE_ANIMATION` (Scan) and `POST_ANIMATION` (OK/ERR) visual states.
-- [~] Task: Conductor - User Manual Verification 'Theatrical Execution' (Protocol in workflow.md)
+    - [x] Handle unified "Active" and "History" cards with solid 80s mainframe aesthetics.
+- [x] Task: Decommission `TheatricalCanvas`
+    - [x] Consolidate animation logic into `ResultStackView`.
+    - [x] Remove redundant component and references from screens.
+- [x] Task: Conductor - User Manual Verification 'Theatrical Execution' (Protocol in workflow.md)
 
 ## Phase 4: Core Command Porting
 *Goal: Integrate core commands into the new metadata strategy.*
 
-- [ ] Task: Implement `CommandMetadata` strategy
-    - [ ] Refine `Command` entities to return metadata.
-- [ ] Task: Port 10 core commands
-    - [ ] Update `ls`, `cat`, `grep`, `cd`, `pwd`, `mkdir`, `touch`, `rm`, `cp`, `mv`.
-- [ ] Task: Conductor - User Manual Verification 'Command Porting' (Protocol in workflow.md)
+- [x] Task: Implement `CommandMetadata` strategy
+    - [x] Refine `Command` entities to return metadata.
+- [x] Task: Port 10 core commands
+    - [x] Update `ls`, `cat`, `grep`, `cd`, `pwd`, `mkdir`, `touch`, `rm`, `cp`, `mv`.
+- [x] Task: Conductor - User Manual Verification 'Command Porting' (Protocol in workflow.md)
 
 ## Phase 5: Final Polishing & Performance
 *Goal: Ensure a smooth mobile experience.*
