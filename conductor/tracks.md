@@ -35,3 +35,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [x] **Track: Persistent Keyboard & Settings Refactor**
 *Link: [./tracks/persistent_keyboard_20260208/](./tracks/persistent_keyboard_20260208/)*
+
+---
+
+- [x] **Track: Hardcoded Asset Refactor**
+*Link: [./tracks/hardcoded_asset_refactor_20260208/](./tracks/hardcoded_asset_refactor_20260208/)*
