@@ -185,8 +185,8 @@ export const ResultStackView: React.FC = () => {
         const targetY = screenHeight * 0.35; // Adjust based on footer height
         
         Animated.parallel([
-            Animated.timing(moveAnim.y, { toValue: targetY, duration: 800, useNativeDriver }),
-            Animated.timing(scaleAnim, { toValue: 1, duration: 800, useNativeDriver }),
+            Animated.timing(moveAnim.y, { toValue: targetY, duration: 800, useNativeDriver: false }),
+            Animated.timing(scaleAnim, { toValue: 1, duration: 800, useNativeDriver: false }),
             Animated.timing(widthAnim, { toValue: Dimensions.get('window').width * 0.95, duration: 800, useNativeDriver: false })
         ]).start(() => {
             setActiveCard(current => {
