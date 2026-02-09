@@ -43,12 +43,12 @@
     - [x] Update `ls`, `cat`, `grep`, `cd`, `pwd`, `mkdir`, `touch`, `rm`, `cp`, `mv`.
 - [x] Task: Conductor - User Manual Verification 'Command Porting' (Protocol in workflow.md)
 
-## Phase 5: Final Polishing & Performance
+## Phase 5: Final Polishing & Performance [checkpoint: 306310d]
 *Goal: Ensure a smooth mobile experience.*
 
 - [x] Task: Verify mobile performance
     - [x] Check for frame drops and clock drift during heavy stacking.
     - [x] Resolved React key collisions and initialization leaks.
-- [~] Task: Final UI Polish
-    - [ ] Ensure clean transitions between Tutor and Execution modes.
-- [ ] Task: Conductor - User Manual Verification 'Final Polished Engine' (Protocol in workflow.md)
+- [x] Task: Final UI Polish
+    - [x] Ensure clean transitions between Tutor and Execution modes.
+- [x] Task: Conductor - User Manual Verification 'Final Polished Engine' (Protocol in workflow.md)
