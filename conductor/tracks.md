@@ -30,3 +30,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [x] **Track: Rhythm-Action Command Engine** (COMPLETE)
 *Link: [./tracks/rhythm_action_engine_20260208/](./tracks/rhythm_action_engine_20260208/)*
+
+---
+
+- [x] **Track: Persistent Keyboard & Settings Refactor**
+*Link: [./tracks/persistent_keyboard_20260208/](./tracks/persistent_keyboard_20260208/)*
