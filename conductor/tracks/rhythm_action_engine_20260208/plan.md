@@ -1,6 +1,6 @@
 # Implementation Plan: Rhythm-Action Command Engine
 
-## Phase 1: Rhythm Conductor & Shared Heartbeat
+## Phase 1: Rhythm Conductor & Shared Heartbeat [checkpoint: 3a55ad5]
 *Goal: Establish the central timing authority.*
 
 - [x] Task: Create `RhythmConductor` Service
