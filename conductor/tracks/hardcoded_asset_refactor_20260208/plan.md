@@ -28,10 +28,10 @@
     - [x] Update `src/frameworks-drivers/ui/themes/standard/` files (Standard fallback).
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Component Refactor - Complex Views' (Protocol in workflow.md)
 
-## Phase 4: Final Sweep & Font Standardization
-- [~] Task: Global Font Replacement
-    - [ ] Search for any remaining `'SpaceMono_400Regular'` and replace with `settings.fontFamily`.
-    - [ ] Search for `'#00FF41'` and other raw hexes to ensure 100% coverage.
-- [ ] Task: Verify Theme Switching
-    - [ ] Manual verification to ensure all new dynamic colors render correctly.
+## Phase 4: Final Sweep & Font Standardization [6b7888e]
+- [x] Task: Global Font Replacement [6b7888e]
+    - [x] Search for any remaining `'SpaceMono_400Regular'` and replace with `settings.fontFamily`.
+    - [x] Search for `'#00FF41'` and other raw hexes to ensure 100% coverage.
+- [x] Task: Verify Theme Switching [6b7888e]
+    - [x] Manual verification to ensure all new dynamic colors render correctly.
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: Final Sweep & Font Standardization' (Protocol in workflow.md)
