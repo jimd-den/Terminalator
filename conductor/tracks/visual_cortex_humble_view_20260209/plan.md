@@ -3,7 +3,7 @@
 ## Phase 1: Infrastructure & Core Logic
 - [x] Task: Install Dependencies (`zustand`, `react-native-reanimated`) and configure `babel.config.js`. [33254c4]
 - [x] Task: Create `VisualPriority` Enum definition. [eb4af5c]
-- [ ] Task: TDD `useVisualDirector` store (Zustand).
+- [x] Task: TDD `useVisualDirector` store (Zustand). [5530c95]
     - [ ] Create test: `tests/VisualDirector.test.ts` (Verify priority rules, locking, and lag reporting).
     - [ ] Implement: `src/interface-adapters/ui/VisualCortex/useVisualDirector.ts`.
 - [ ] Task: TDD `PerformanceMonitor` Service.
