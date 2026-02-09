@@ -7,16 +7,16 @@
     - [x] Update `THEMES` constant in `src/domain/entities/Theme.ts` to populate these new keys for Matrix, Amber, Nord, and Dracula themes.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Theme Entity Expansion' (Protocol in workflow.md)
 
-## Phase 2: Component Refactor - Core UI
-- [ ] Task: Refactor Basic UI Components
-    - [ ] Update `src/frameworks-drivers/ui/components/InputBar.tsx` (Colors).
-    - [ ] Update `src/frameworks-drivers/ui/components/Cursor.tsx` (Colors).
-    - [ ] Update `src/frameworks-drivers/ui/components/TutorBar.tsx` (Colors).
-    - [ ] Update `src/frameworks-drivers/ui/components/ConsoleLayout.tsx` (Colors & Fonts).
-- [ ] Task: Refactor "Theatrical" Components
-    - [ ] Update `src/frameworks-drivers/ui/components/theatrical/RhythmHUD.tsx` (Backgrounds, Borders).
-    - [ ] Update `src/frameworks-drivers/ui/components/theatrical/ResultStackView.tsx`.
-    - [ ] Update `src/frameworks-drivers/ui/components/theatrical/TutorOverlay.tsx`.
+## Phase 2: Component Refactor - Core UI [fa5ba88]
+- [x] Task: Refactor Basic UI Components [fa5ba88]
+    - [x] Update `src/frameworks-drivers/ui/components/InputBar.tsx` (Colors).
+    - [x] Update `src/frameworks-drivers/ui/components/Cursor.tsx` (Colors).
+    - [x] Update `src/frameworks-drivers/ui/components/TutorBar.tsx` (Colors).
+    - [x] Update `src/frameworks-drivers/ui/components/ConsoleLayout.tsx` (Colors & Fonts).
+- [x] Task: Refactor "Theatrical" Components [fa5ba88]
+    - [x] Update `src/frameworks-drivers/ui/components/theatrical/RhythmHUD.tsx` (Backgrounds, Borders).
+    - [x] Update `src/frameworks-drivers/ui/components/theatrical/ResultStackView.tsx`.
+    - [x] Update `src/frameworks-drivers/ui/components/theatrical/TutorOverlay.tsx`.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Component Refactor - Core UI' (Protocol in workflow.md)
 
 ## Phase 3: Component Refactor - Complex Views
