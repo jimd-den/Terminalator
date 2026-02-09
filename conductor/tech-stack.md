@@ -8,6 +8,7 @@
 ## Domain-Specific Engines
   - **Terminal Simulation:** 
     - `VimEngine`: State-pattern based Vim engine with persistent Undo/Redo capability.
+    - `InputProvider`: Global keyboard orchestration with "Always On" focus management.
     - `TutorEngine`: Context-aware pedagogical system capable of interpreting procedural mission intent.
     - `TutorBrain`: Persona orchestration engine.
     - `TutorSpy`: Performance analysis engine (WPM, Accuracy, Stalls).
@@ -34,7 +35,9 @@
     - `DiskCreditRepository`, `DiskMasteryRepository`: Port implementations for simulated persistence.
     - `useTutorMessagingController`: Humble Object wiring domain logic to UI.
     - `VimSimulator`: Orchestrator implementing `BufferPersistencePort`.
+    - `DiskSettingsRepository`: Persistent storage for user preferences (Theme, Typography, System).
   - **Frameworks & Drivers:** UI components and external service integrations.
+    - `SettingsPane`: High-density, multi-tabbed configuration interface.
 
 ## Infrastructure & Tools
 - **State Management:** React Context / Custom State DTOs.
