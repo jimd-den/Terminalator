@@ -56,7 +56,8 @@ export class LessonCoordinator {
                 break;
 
             case 'COMPLETE':
-                const { lesson, stats } = event.payload;
+                const payload = event.payload;
+                const lesson = payload?.lesson;
 
                 if (!lesson) return;
 
@@ -68,7 +69,7 @@ export class LessonCoordinator {
                 );
 
                 // 2. Mission Integration (if lesson is tied to a mission)
-                if (lesson && lesson.id && lesson.id.startsWith('MISSION_')) {
+                if (lesson.id && lesson.id.startsWith('MISSION_')) {
                     const missionId = lesson.id.replace('MISSION_', '');
                     const mission = this.missionService.getMissionById(missionId);
                     if (mission) {

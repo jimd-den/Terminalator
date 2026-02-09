@@ -74,7 +74,7 @@ export const useShellViewModel = (
     // Tutor Callbacks (Refactored logic)
     const tutorCallbacks: TutorControllerCallbacks = useMemo(() => ({
         onStart: (lesson: Lesson, targetCwd: string) => {
-            const isMission = lesson.isMission || lesson.id.startsWith('MISSION_');
+            const isMission = lesson.isMission || (lesson.id && lesson.id.startsWith('MISSION_'));
             if (isMission) return;
             setState(prev => ({ ...prev, currentDirectory: targetCwd }));
             outputController.appendLine(
@@ -103,7 +103,8 @@ export const useShellViewModel = (
             inputController.setInput(input);
             inputController.updateGhostText(ghostText);
         },
-        onComplete: (lesson: Lesson, originalCwd: string | null) => {
+        onComplete: (payload: { lesson: Lesson, stats: any }, originalCwd: string | null) => {
+            const { lesson, stats } = payload;
             inputController.setInput(lesson.text);
             inputController.updateGhostText('');
             if (handleCommandRef.current) {

@@ -27,3 +27,6 @@ This file tracks all major tracks for the project. Each track has its own detail
 *Link (Active): [./tracks/generative_mission_arch_20260206/](./tracks/generative_mission_arch_20260206/)*
 *Link (Active): [./tracks/dispositional_tutor_20260206/](./tracks/dispositional_tutor_20260206/)*
 *Link (Active): [./tracks/explode_game_context_20260207/](./tracks/explode_game_context_20260207/)*
+
+- [x] **Track: Rhythm-Action Command Engine** (COMPLETE)
+*Link: [./tracks/rhythm_action_engine_20260208/](./tracks/rhythm_action_engine_20260208/)*

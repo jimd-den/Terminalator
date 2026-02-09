@@ -55,6 +55,9 @@ export class TutorShadow {
     public intercept(key: string, mode: 'SHELL' | 'VIM' = 'SHELL'): boolean {
         // 0. Check Summary or Countdown Mode (Blocking)
         if (this.isSummaryActive || this.isCountdownActive) {
+            if (this.isSummaryActive && key === 'ENTER') {
+                this.bus.emit(GameEventType.TUTOR_EVENT, { type: 'SUMMARY_ENTER_PRESSED' });
+            }
             console.log(`[TutorShadow] Blocking input due to ${this.isSummaryActive ? 'SUMMARY' : 'COUNTDOWN'}_MODE`);
             return false; 
         }

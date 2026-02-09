@@ -16,7 +16,6 @@ export const RhythmHUD: React.FC = () => {
     const { bus, gameManager } = useProcess();
     const { theme } = useTheme();
     const colors = theme.colors;
-    const { setOnKeyPress } = useInput();
 
     // --- State ---
     const [isActive, setIsActive] = useState(false);
@@ -47,7 +46,6 @@ export const RhythmHUD: React.FC = () => {
             if (lesson) {
                 setIsActive(true);
                 setLessonText(lesson.text);
-                // We assume if resuming, countdown is over
                 setIsCountdown(false);
                 const stats = engine.getStats();
                 setBaseZinc(stats.totalZincMined);
@@ -94,7 +92,6 @@ export const RhythmHUD: React.FC = () => {
                 setProgressIndex(payload.index);
                 setStreak(payload.streak || 0);
                 
-                // Update target char based on NEW index
                 const nextChar = lessonText[payload.index] || '';
                 setTargetChar(nextChar);
 
@@ -179,11 +176,7 @@ export const RhythmHUD: React.FC = () => {
     if (!isActive) return null;
 
     const formattedZinc = ZincFormatter.format(displayZinc);
-    
-    // Determine the actual character to show:
-    // If we have an explicit targetChar from state (e.g. cleared on complete), use it.
-    // Otherwise, derive from lesson text.
-    const displayChar = (isActive && !summary && !isCountdown) ? (lessonText[progressIndex] || '') : '';
+    const displayChar = (isActive && !summary && !isCountdown && progressIndex < lessonText.length) ? (lessonText[progressIndex] || '') : '';
 
     return (
         <View style={styles.container} pointerEvents="box-none">
@@ -222,11 +215,11 @@ export const RhythmHUD: React.FC = () => {
                         {/* Central Glyph */}
                         <View style={styles.glyphContainer}>
                             <Animated.Text style={[styles.glyph, { color: colors.primary, opacity: glyphBlink }]}>
-                                {displayChar || '_'}
+                                {displayChar || ''}
                             </Animated.Text>
                         </View>
 
-                        {/* Feedback Layer (Top Level inside box) */}
+                        {/* Feedback Layer */}
                         {feedback !== 'NONE' && (
                             <Animated.View style={[styles.feedbackContainer, { opacity: feedbackAnim, transform: [{ scale: feedbackAnim.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1.5] }) }] }]}>
                                 <Text 
@@ -264,6 +257,7 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 0 },
         shadowOpacity: 0.8,
         shadowRadius: 20,
+        overflow: 'hidden',
     },
     header: {
         position: 'absolute',
@@ -310,15 +304,16 @@ const styles = StyleSheet.create({
         bottom: 0,
         justifyContent: 'center',
         alignItems: 'center',
-        zIndex: 50, // Higher than glyph
+        zIndex: 50,
     },
     feedbackText: {
-        fontSize: 60,
+        fontSize: 32, // Reduced to ensure it fits without truncation
         fontWeight: '900',
-        letterSpacing: 8,
+        letterSpacing: 4,
         textAlign: 'center',
-        backgroundColor: 'rgba(0,0,0,0.7)',
-        paddingHorizontal: 10,
+        backgroundColor: 'rgba(0,0,0,0.8)',
+        paddingHorizontal: 15,
+        paddingVertical: 5,
     },
     summaryContainer: {
         alignItems: 'center',

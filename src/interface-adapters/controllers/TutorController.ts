@@ -28,7 +28,7 @@ export interface TutorControllerCallbacks {
     onProgress: (input: string, ghostText: string) => void;
     onCorrection: (input: string, ghostText: string) => void;
     onMistake: (input: string, ghostText: string, droppedCount: number) => void;
-    onComplete: (lesson: Lesson, originalCwd: string | null) => void;
+    onComplete: (payload: { lesson: Lesson, stats: any }, originalCwd: string | null) => void;
 }
 
 /**
@@ -135,10 +135,10 @@ export const useTutorController = (
                 }
 
                 case 'COMPLETE': {
-                    const lesson = event.payload as Lesson;
+                    const payload = event.payload;
                     const original = preTutorCwdRef.current;
                     setIsActive(false);
-                    cb.onComplete(lesson, original);
+                    cb.onComplete(payload, original);
 
                     // Clear saved CWD after completion callback
                     if (original) {
