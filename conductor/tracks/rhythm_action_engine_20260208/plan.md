@@ -34,7 +34,7 @@
     - [x] Remove redundant component and references from screens.
 - [x] Task: Conductor - User Manual Verification 'Theatrical Execution' (Protocol in workflow.md)
 
-## Phase 4: Core Command Porting
+## Phase 4: Core Command Porting [checkpoint: 47a42d2]
 *Goal: Integrate core commands into the new metadata strategy.*
 
 - [x] Task: Implement `CommandMetadata` strategy
