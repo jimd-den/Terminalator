@@ -19,18 +19,17 @@
     - [x] Update `src/frameworks-drivers/ui/components/theatrical/TutorOverlay.tsx`.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Component Refactor - Core UI' (Protocol in workflow.md)
 
-## Phase 3: Component Refactor - Complex Views
-- [ ] Task: Refactor Vim & Terminal Views
-    - [ ] Update `src/frameworks-drivers/ui/components/vim/VimEditor.tsx` (Syntax Highlighting placeholder colors).
-    - [ ] Update `src/frameworks-drivers/ui/components/OutputContainer.tsx` (Press states).
-    - [ ] Update `src/frameworks-drivers/ui/screens/BufferScreen.tsx`.
-- [ ] Task: Refactor Mainframe & Screens
-    - [ ] Update `src/frameworks-drivers/ui/components/MainframeOverlay.tsx`.
-    - [ ] Update `src/frameworks-drivers/ui/screens/SettingsScreen.tsx` (if any residual hardcodes).
+## Phase 3: Component Refactor - Complex Views [checkpoint: 03f3779]
+- [x] Task: Refactor Terminal & Standard Views [fa5ba88, 39cf9a9, others]
+    - [x] Update `src/frameworks-drivers/ui/screens/BufferScreen.tsx` (Borders).
+    - [x] Update `src/frameworks-drivers/ui/components/EconomyBar.tsx` (Background).
+    - [x] Update `src/frameworks-drivers/ui/components/HashRateMonitor.tsx` (Text Color).
+    - [x] Update `src/frameworks-drivers/ui/components/TypingIndicator.tsx` (Dot Color).
+    - [x] Update `src/frameworks-drivers/ui/themes/standard/` files (Standard fallback).
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Component Refactor - Complex Views' (Protocol in workflow.md)
 
 ## Phase 4: Final Sweep & Font Standardization
-- [ ] Task: Global Font Replacement
+- [~] Task: Global Font Replacement
     - [ ] Search for any remaining `'SpaceMono_400Regular'` and replace with `settings.fontFamily`.
     - [ ] Search for `'#00FF41'` and other raw hexes to ensure 100% coverage.
 - [ ] Task: Verify Theme Switching
