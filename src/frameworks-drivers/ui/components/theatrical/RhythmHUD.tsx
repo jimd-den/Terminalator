@@ -6,7 +6,6 @@ import { THEME } from '../../Theme';
 import { useTheme } from '../../context/ThemeContext';
 import { ZincFormatter } from '../../../../domain/utils/ZincFormatter';
 import { RhythmGamePresenter, RhythmSummary } from '../../../../interface-adapters/presenters/RhythmGamePresenter';
-import { useInput } from '../../context/InputContext';
 
 /**
  * RhythmHUD - Refined 80s Mainframe Rhythm Experience
@@ -23,6 +22,7 @@ export const RhythmHUD: React.FC = () => {
     const [isActive, setIsActive] = useState(false);
     const [isCountdown, setIsCountdown] = useState(false);
     const [lessonText, setLessonText] = useState('');
+    const [targetChar, setTargetChar] = useState('');
     const [progressIndex, setProgressIndex] = useState(0);
     const [feedback, setFeedback] = useState<'PERFECT' | 'MISS' | 'NONE'>('NONE');
     const [streak, setStreak] = useState(0);
@@ -56,17 +56,6 @@ export const RhythmHUD: React.FC = () => {
             }
         }
     }, []);
-
-    // Handle "Press Enter to Continue" on Summary Screen
-    useEffect(() => {
-        if (summary) {
-            const handlePress = (key: string) => {
-                if (key === 'ENTER') dismissSummary();
-            };
-            setOnKeyPress(handlePress);
-            return () => setOnKeyPress(() => {}); 
-        }
-    }, [summary, setOnKeyPress]);
 
     const dismissSummary = () => {
         Animated.timing(boxScale, { toValue: 0, duration: 300, useNativeDriver }).start(() => {
@@ -120,6 +109,9 @@ export const RhythmHUD: React.FC = () => {
             else if (type === 'COMPLETE') {
                 setTargetChar('');
                 setSummary(RhythmGamePresenter.getSummary(payload.stats));
+            }
+            else if (type === 'SUMMARY_ENTER_PRESSED') {
+                dismissSummary();
             }
         });
 
@@ -187,7 +179,11 @@ export const RhythmHUD: React.FC = () => {
     if (!isActive) return null;
 
     const formattedZinc = ZincFormatter.format(displayZinc);
-    const targetChar = lessonText[progressIndex] || '';
+    
+    // Determine the actual character to show:
+    // If we have an explicit targetChar from state (e.g. cleared on complete), use it.
+    // Otherwise, derive from lesson text.
+    const displayChar = (isActive && !summary && !isCountdown) ? (lessonText[progressIndex] || '') : '';
 
     return (
         <View style={styles.container} pointerEvents="box-none">
@@ -208,7 +204,7 @@ export const RhythmHUD: React.FC = () => {
                         <Text style={[styles.statusText, { color: colors.secondary, marginTop: 20 }]}>BLOCKING INPUT...</Text>
                     </View>
                 ) : (
-                    <>
+                    <View style={{ flex: 1, width: '100%', justifyContent: 'center', alignItems: 'center' }}>
                         {/* Header Stats */}
                         <View style={styles.header}>
                             <View style={styles.coinContainer}>
@@ -226,13 +222,13 @@ export const RhythmHUD: React.FC = () => {
                         {/* Central Glyph */}
                         <View style={styles.glyphContainer}>
                             <Animated.Text style={[styles.glyph, { color: colors.primary, opacity: glyphBlink }]}>
-                                {targetChar || '_'}
+                                {displayChar || '_'}
                             </Animated.Text>
                         </View>
 
-                        {/* Feedback Layer */}
+                        {/* Feedback Layer (Top Level inside box) */}
                         {feedback !== 'NONE' && (
-                            <Animated.View style={[styles.feedbackContainer, { opacity: feedbackAnim, transform: [{ scale: feedbackAnim.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1.2] }) }] }]}>
+                            <Animated.View style={[styles.feedbackContainer, { opacity: feedbackAnim, transform: [{ scale: feedbackAnim.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1.5] }) }] }]}>
                                 <Text 
                                     adjustsFontSizeToFit 
                                     numberOfLines={1}
@@ -242,7 +238,7 @@ export const RhythmHUD: React.FC = () => {
                                 </Text>
                             </Animated.View>
                         )}
-                    </>
+                    </View>
                 )}
             </Animated.View>
         </View>
@@ -271,12 +267,13 @@ const styles = StyleSheet.create({
     },
     header: {
         position: 'absolute',
-        top: 20,
-        left: 20,
-        right: 20,
+        top: 10,
+        left: 10,
+        right: 10,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+        zIndex: 10,
     },
     coinContainer: {
         backgroundColor: 'rgba(255,255,255,0.05)',
@@ -298,6 +295,7 @@ const styles = StyleSheet.create({
     glyphContainer: {
         justifyContent: 'center',
         alignItems: 'center',
+        zIndex: 5,
     },
     glyph: {
         fontSize: 140,
@@ -306,16 +304,21 @@ const styles = StyleSheet.create({
     },
     feedbackContainer: {
         position: 'absolute',
-        bottom: 40,
-        width: '100%',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        justifyContent: 'center',
         alignItems: 'center',
+        zIndex: 50, // Higher than glyph
     },
     feedbackText: {
-        fontSize: 40,
+        fontSize: 60,
         fontWeight: '900',
         letterSpacing: 8,
         textAlign: 'center',
-        width: '100%',
+        backgroundColor: 'rgba(0,0,0,0.7)',
+        paddingHorizontal: 10,
     },
     summaryContainer: {
         alignItems: 'center',

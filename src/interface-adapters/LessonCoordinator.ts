@@ -56,7 +56,9 @@ export class LessonCoordinator {
                 break;
 
             case 'COMPLETE':
-                const lesson = event.payload as Lesson;
+                const { lesson, stats } = event.payload;
+
+                if (!lesson) return;
 
                 // 1. Send Lore Mail (Persistence / Narrative)
                 this.mailSystem.sendMail(
@@ -66,7 +68,7 @@ export class LessonCoordinator {
                 );
 
                 // 2. Mission Integration (if lesson is tied to a mission)
-                if (lesson.id.startsWith('MISSION_')) {
+                if (lesson && lesson.id && lesson.id.startsWith('MISSION_')) {
                     const missionId = lesson.id.replace('MISSION_', '');
                     const mission = this.missionService.getMissionById(missionId);
                     if (mission) {

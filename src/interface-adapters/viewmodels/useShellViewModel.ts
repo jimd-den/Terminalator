@@ -110,7 +110,7 @@ export const useShellViewModel = (
                 handleCommandRef.current(lesson.text);
                 inputController.clearInput();
             }
-            const isMission = lesson.isMission || lesson.id.startsWith('MISSION_');
+            const isMission = lesson.isMission || (lesson.id && lesson.id.startsWith('MISSION_'));
             const hasSwitchedContext = !!stateRef.current.fsContext;
             if (originalCwd && !isMission && !hasSwitchedContext) {
                 setTimeout(() => {
