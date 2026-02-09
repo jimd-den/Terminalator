@@ -10,10 +10,12 @@ export interface UserSettings {
     themeId: string;
     fontFamily: string;
     fontSize: number;
+    forceKeyboardOpen: boolean;
 }
 
 export const DEFAULT_SETTINGS: UserSettings = {
     themeId: 'matrix',
     fontFamily: 'SpaceMono_400Regular',
-    fontSize: 18
+    fontSize: 18,
+    forceKeyboardOpen: false
 };
