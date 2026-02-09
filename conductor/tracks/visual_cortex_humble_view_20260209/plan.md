@@ -6,7 +6,7 @@
 - [x] Task: TDD `useVisualDirector` store (Zustand). [5530c95]
     - [ ] Create test: `tests/VisualDirector.test.ts` (Verify priority rules, locking, and lag reporting).
     - [ ] Implement: `src/interface-adapters/ui/VisualCortex/useVisualDirector.ts`.
-- [ ] Task: TDD `PerformanceMonitor` Service.
+- [x] Task: TDD `PerformanceMonitor` Service. [1dbc53d]
     - [ ] Create test: `tests/PerformanceMonitor.test.ts`.
     - [ ] Implement: `src/frameworks-drivers/ui/VisualCortex/PerformanceMonitor.ts` (Frame rate tracking).
 - [ ] Task: Conductor - User Manual Verification 'Infrastructure & Core Logic' (Protocol in workflow.md).
