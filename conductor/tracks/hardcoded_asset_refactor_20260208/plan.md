@@ -1,6 +1,6 @@
 # Implementation Plan - Hardcoded Asset Refactor
 
-## Phase 1: Theme Entity Expansion
+## Phase 1: Theme Entity Expansion [checkpoint: 5bab2d4]
 - [x] Task: Update `ThemeColors` Interface [bbc687d]
     - [x] Modify `src/domain/entities/Theme.ts` to include opacity keys: `primary_05`, `primary_10`, `primary_20`, `error_15`, `error_20`, `background_80`, `surface_50`.
 - [x] Task: Update Theme Definitions [bbc687d]
