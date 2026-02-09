@@ -12,13 +12,14 @@
 ## Phase 2: Tutor Mode Enhancements (Rhythmic Guidance)
 *Goal: Use the heartbeat to guide user typing.*
 
-- [ ] Task: Update `TutorEngine` to be rhythm-aware
-    - [ ] Add properties for BPM and "Next Beat" expectation.
-- [ ] Task: Implement `TutorOverlay` (or update `MainframeOverlay`)
-    - [ ] Listen to `RHYTHM_TICK` and pulse the next character in the ghost text.
-- [ ] Task: Update reward logic
-    - [ ] Sync `MiningSession` rewards with the `RHYTHM_TICK` tolerance (e.g., 80ms window).
-- [ ] Task: Conductor - User Manual Verification 'Tutor Mode' (Protocol in workflow.md)
+- [x] Task: Update `TutorEngine` to be rhythm-aware
+    - [x] Add properties for BPM and "Next Beat" expectation.
+- [x] Task: Implement `TutorOverlay` (or update `MainframeOverlay`)
+    - [x] Create `src/frameworks-drivers/ui/components/theatrical/TutorOverlay.tsx`.
+    - [x] Listen to `RHYTHM_TICK` and pulse the next character in the ghost text.
+- [x] Task: Update reward logic
+    - [x] Sync `MiningSession` rewards with the `RHYTHM_TICK` tolerance (e.g., 80ms window).
+- [x] Task: Conductor - User Manual Verification 'Tutor Mode' (Protocol in workflow.md)
 
 ## Phase 3: Theatrical Execution & Result Stack
 *Goal: Implement the managed lifecycle for commands.*
