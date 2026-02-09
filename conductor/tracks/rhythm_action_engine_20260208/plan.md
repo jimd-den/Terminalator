@@ -9,7 +9,7 @@
     - [x] Emit `RHYTHM_TICK` on `SimulationBus`.
 - [x] Task: Conductor - User Manual Verification 'Rhythm Conductor' (Protocol in workflow.md)
 
-## Phase 2: Tutor Mode Enhancements (Rhythmic Guidance)
+## Phase 2: Tutor Mode Enhancements (Rhythmic Guidance) [checkpoint: 724a784]
 *Goal: Use the heartbeat to guide user typing.*
 
 - [x] Task: Update `TutorEngine` to be rhythm-aware
