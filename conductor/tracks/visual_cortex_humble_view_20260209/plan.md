@@ -1,6 +1,6 @@
 # VisualCortex & Humble View Implementation Plan
 
-## Phase 1: Infrastructure & Core Logic
+## Phase 1: Infrastructure & Core Logic [checkpoint: 5c30a73]
 - [x] Task: Install Dependencies (`zustand`, `react-native-reanimated`) and configure `babel.config.js`. [33254c4]
 - [x] Task: Create `VisualPriority` Enum definition. [eb4af5c]
 - [x] Task: TDD `useVisualDirector` store (Zustand). [5530c95]
