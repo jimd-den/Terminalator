@@ -79,20 +79,20 @@ export const SettingsPane: React.FC<SettingsPaneProps> = ({ onBack }) => {
         label: {
             color: colors.primary,
             fontFamily: settings.fontFamily,
-            fontSize: 10,
+            fontSize: 12,
             fontWeight: 'bold',
             marginRight: 8,
-            opacity: 0.7,
         },
         timestampLabel: {
             color: colors.text.dim,
             fontFamily: settings.fontFamily,
-            fontSize: 10,
+            fontSize: 12,
         },
         optionTitle: {
             color: colors.text.primary,
             fontFamily: settings.fontFamily,
             fontSize: 14,
+            lineHeight: 20,
         },
         activeOptionTitle: {
             color: colors.primary,
