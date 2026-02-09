@@ -7,6 +7,9 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [x] **Track: Architecture Cleanup & Error Resolution** (ARCHIVED)
 - [x] **Track: Glass Box Refactor** (ARCHIVED)
 - [x] **Track: Architectural Robustness & Path Unity** (ARCHIVED)
+- [x] **Track: Rhythm-Action Command Engine** (ARCHIVED)
+- [x] **Track: Persistent Keyboard & Settings Refactor** (ARCHIVED)
+- [x] **Track: Hardcoded Asset Refactor** (ARCHIVED)
 
 - [ ] **Track: Semantic Unix Model** (ACTIVE)
 - [ ] **Track: Generative Narrative** (ACTIVE)
@@ -21,22 +24,12 @@ This file tracks all major tracks for the project. Each track has its own detail
 *Link (Archived): [./archive/explode_game_context_20260207/](./archive/explode_game_context_20260207/)*
 *Link (Archived): [./archive/implement_humble_view_screens_20260208/](./archive/implement_humble_view_screens_20260208/)*
 *Link (Archived): [./archive/formalize_cns_humble_screens_20260208/](./archive/formalize_cns_humble_screens_20260208/)*
+*Link (Archived): [./archive/rhythm_action_engine_20260208/](./archive/rhythm_action_engine_20260208/)*
+*Link (Archived): [./archive/persistent_keyboard_20260208/](./archive/persistent_keyboard_20260208/)*
+*Link (Archived): [./archive/hardcoded_asset_refactor_20260208/](./archive/hardcoded_asset_refactor_20260208/)*
 
 *Link (Active): [./tracks/semantic_unix_model_20260206/](./tracks/semantic_unix_model_20260206/)*
 *Link (Active): [./tracks/generative_narrative_20260206/](./tracks/generative_narrative_20260206/)*
 *Link (Active): [./tracks/generative_mission_arch_20260206/](./tracks/generative_mission_arch_20260206/)*
 *Link (Active): [./tracks/dispositional_tutor_20260206/](./tracks/dispositional_tutor_20260206/)*
 *Link (Active): [./tracks/explode_game_context_20260207/](./tracks/explode_game_context_20260207/)*
-
-- [x] **Track: Rhythm-Action Command Engine** (COMPLETE)
-*Link: [./tracks/rhythm_action_engine_20260208/](./tracks/rhythm_action_engine_20260208/)*
-
----
-
-- [x] **Track: Persistent Keyboard & Settings Refactor**
-*Link: [./tracks/persistent_keyboard_20260208/](./tracks/persistent_keyboard_20260208/)*
-
----
-
-- [x] **Track: Hardcoded Asset Refactor**
-*Link: [./tracks/hardcoded_asset_refactor_20260208/](./tracks/hardcoded_asset_refactor_20260208/)*
