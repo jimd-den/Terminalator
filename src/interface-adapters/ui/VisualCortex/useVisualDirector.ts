@@ -15,7 +15,7 @@ interface VisualDirectorState {
 
 export const useVisualDirector = create<VisualDirectorState>((set, get) => ({
   focusOwner: null,
-  currentPriority: 0,
+  currentPriority: VisualPriority.NONE,
   reducedMotion: false,
 
   requestFocus: (id: string, priority: VisualPriority) => {
@@ -54,7 +54,7 @@ export const useVisualDirector = create<VisualDirectorState>((set, get) => ({
   releaseFocus: (id: string) => {
     const { focusOwner } = get();
     if (focusOwner === id) {
-      set({ focusOwner: null, currentPriority: 0 });
+      set({ focusOwner: null, currentPriority: VisualPriority.NONE });
     }
   },
 
@@ -67,7 +67,7 @@ export const useVisualDirector = create<VisualDirectorState>((set, get) => ({
       // Immediately kill current low priority focus if active
       const { currentPriority } = get();
       if (currentPriority <= VisualPriority.AMBIENT) {
-          set({ focusOwner: null, currentPriority: 0 });
+          set({ focusOwner: null, currentPriority: VisualPriority.NONE });
       }
   }
 }));

@@ -14,7 +14,7 @@ async function testVisualDirector() {
     const { getState, setState } = store;
 
     // Reset state
-    setState({ focusOwner: null, currentPriority: 0, reducedMotion: false });
+    setState({ focusOwner: null, currentPriority: VisualPriority.NONE, reducedMotion: false });
 
     // Test 1: Request Focus
     // requestFocus(id: string, priority: VisualPriority): boolean
@@ -46,7 +46,7 @@ async function testVisualDirector() {
     // releaseFocus(id: string)
     getState().releaseFocus('system');
     if (getState().focusOwner !== null) throw new Error("Focus should be null after release");
-    if (getState().currentPriority !== 0) throw new Error("Priority should reset to 0");
+    if (getState().currentPriority !== VisualPriority.NONE) throw new Error("Priority should reset to VisualPriority.NONE");
 
     // Test 6: Wrong owner release (should be ignored)
     getState().requestFocus('tutor', VisualPriority.FOCUS);

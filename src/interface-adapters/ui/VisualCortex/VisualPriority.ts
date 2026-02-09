@@ -11,4 +11,6 @@ export enum VisualPriority {
   CONTENT = 2,
   /** Background elements, particles, decoration. First to be sacrificed. */
   AMBIENT = 1,
+  /** No priority, idle. */
+  NONE = 0,
 }
