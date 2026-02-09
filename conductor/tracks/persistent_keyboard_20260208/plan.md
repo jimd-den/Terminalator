@@ -19,21 +19,21 @@
     - [ ] Create a small script `scripts/verify_keyboard_settings.ts` to check if the app state reflects the setting correctly.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Global Keyboard Management' (Protocol in workflow.md)
 
-## Phase 3: Settings Screen UI Refactor
-- [ ] Task: Create `SettingsPane` component (CommsPane style)
-    - [ ] Create `src/frameworks-drivers/ui/components/SettingsPane.tsx`.
-    - [ ] Implement "Frequency" style tabs for categories (Visual, Type, System).
-    - [ ] Implement compact option blocks.
-- [ ] Task: Integrate `SettingsPane` into `SettingsScreen`
-    - [ ] Replace existing `SettingsScreen` content with `SettingsPane`.
-    - [ ] Ensure `ConsoleLayout` is used correctly to wrap the new pane.
-- [ ] Task: Implement Adaptive Layout for Keyboard
-    - [ ] Add `KeyboardAvoidingView` or dimension listeners to `SettingsScreen`.
-    - [ ] Style the container to resize dynamically when the keyboard is up (Compact Mode).
+## Phase 3: Settings Screen UI Refactor [63ba40b]
+- [x] Task: Create `SettingsPane` component (CommsPane style) [63ba40b]
+    - [x] Create `src/frameworks-drivers/ui/components/SettingsPane.tsx`.
+    - [x] Implement "Frequency" style tabs for categories (Visual, Type, System).
+    - [x] Implement compact option blocks.
+- [x] Task: Integrate `SettingsPane` into `SettingsScreen` [63ba40b]
+    - [x] Replace existing `SettingsScreen` content with `SettingsPane`.
+    - [x] Ensure `ConsoleLayout` is used correctly to wrap the new pane.
+- [x] Task: Implement Adaptive Layout for Keyboard [63ba40b]
+    - [x] Add `KeyboardAvoidingView` or dimension listeners to `SettingsScreen`.
+    - [x] Style the container to resize dynamically when the keyboard is up (Compact Mode).
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Settings Screen UI Refactor' (Protocol in workflow.md)
 
 ## Phase 4: Final Integration & Polish
-- [ ] Task: Connect "Force Keyboard" Toggle
+- [~] Task: Connect "Force Keyboard" Toggle
     - [ ] Ensure the UI toggle in `SettingsPane` correctly calls the repository update.
     - [ ] Verify the system reacts immediately to the toggle change.
 - [ ] Task: Visual Consistency Audit
