@@ -10,10 +10,10 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Domain & Persistence Updates' (Protocol in workflow.md)
 
 ## Phase 2: Global Keyboard Management
-- [ ] Task: Implement Keyboard Management Logic
-    - [ ] Create a `KeyboardManager` component/hook that listens to the `Settings` state.
-    - [ ] Implement the `force_stay_open` logic (prevent dismissal, auto-refocus).
-    - [ ] Integrate this manager into the root `App.tsx` or main layout to ensure global coverage.
+- [x] Task: Implement Keyboard Management Logic [b143c71]
+    - [x] Create a `KeyboardManager` component/hook that listens to the `Settings` state.
+    - [x] Implement the `force_stay_open` logic (prevent dismissal, auto-refocus).
+    - [x] Integrate this manager into the root `App.tsx` or main layout to ensure global coverage.
 - [ ] Task: Verify Keyboard Persistence
     - [ ] Manual verification required (hard to unit test keyboard visibility in node).
     - [ ] Create a small script `scripts/verify_keyboard_settings.ts` to check if the app state reflects the setting correctly.
