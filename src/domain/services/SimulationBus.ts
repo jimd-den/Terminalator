@@ -165,6 +165,7 @@ export class SimulationBus {
                 try {
                     callback(event);
                 } catch (error) {
+                    console.error(`[SimulationBus] Listener Error for ${type}:`, error);
                     this.telemetry.error(`Error in SimulationBus listener for ${type}`, { error, event });
                 }
             });
