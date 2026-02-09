@@ -1,6 +1,6 @@
 # Implementation Plan - Persistent Keyboard & Settings Refactor
 
-## Phase 1: Domain & Persistence Updates
+## Phase 1: Domain & Persistence Updates [checkpoint: aa9b92b]
 - [x] Task: Add `forceKeyboardOpen` to `Settings` entity [2a60a20]
     - [x] Update `src/domain/entities/Settings.ts` interface and default values.
 - [x] Task: Update `SettingsRepository` for new field [ff21405]
