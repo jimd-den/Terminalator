@@ -13,7 +13,7 @@ import { UserSettings, DEFAULT_SETTINGS } from '../../../domain/entities/Setting
 import { useFileSystem } from './FileSystemProvider';
 import { DiskSettingsRepository } from '../../../interface-adapters/DiskSettingsRepository';
 import { FileSystemService } from '../../../domain/services/FileSystemService';
-import { ThemeComponentMap } from '../../../domain/entities/ThemeComponents';
+import { ThemeComponentMap, LayoutProps, TextRendererProps, CursorProps } from '../../../domain/entities/ThemeComponents';
 import { getComponentsForTheme } from '../themes/ThemeRegistry';
 
 interface ThemeContextType {

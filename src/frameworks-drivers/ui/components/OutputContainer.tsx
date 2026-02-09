@@ -133,7 +133,7 @@ const StatusIndicator = ({
                     onPress={onSave}
                     style={({ pressed }) => [
                         indicatorStyles.saveBtn,
-                        pressed && { backgroundColor: 'rgba(0, 255, 65, 0.2)' }
+                        pressed && { backgroundColor: colors.primary_20 }
                     ]}
                 >
                     <TextRenderer style={indicatorStyles.saveText} content="SAVE" />
@@ -142,7 +142,7 @@ const StatusIndicator = ({
                     onPress={onMinimize}
                     style={({ pressed }) => [
                         indicatorStyles.saveBtn,
-                        pressed && { backgroundColor: 'rgba(0, 255, 65, 0.2)' }
+                        pressed && { backgroundColor: colors.primary_20 }
                     ]}
                 >
                     <TextRenderer style={indicatorStyles.saveText} content={isMinimized ? 'MAX' : 'MIN'} />
@@ -151,7 +151,7 @@ const StatusIndicator = ({
                     onPress={onDelete}
                     style={({ pressed }) => [
                         indicatorStyles.deleteBtn,
-                        pressed && { backgroundColor: 'rgba(255, 0, 0, 0.2)' }
+                        pressed && { backgroundColor: colors.error_20 }
                     ]}
                 >
                     <TextRenderer type="error" style={indicatorStyles.deleteText} content="DEL" />
@@ -318,7 +318,8 @@ export const OutputContainer: React.FC<OutputContainerProps> = ({
             fontSize: THEME.typography.fontSize.md,
         },
         fileText: {
-            color: 'rgba(0, 255, 65, 0.7)',
+            color: colors.text.primary,
+            opacity: 0.7,
             fontFamily: settings.fontFamily,
             fontSize: THEME.typography.fontSize.md,
         },
@@ -342,7 +343,7 @@ export const OutputContainer: React.FC<OutputContainerProps> = ({
         },
         cardBody: {
             padding: THEME.spacing.md,
-            backgroundColor: 'rgba(0, 255, 65, 0.05)',
+            backgroundColor: colors.primary_05,
         },
     });
 
