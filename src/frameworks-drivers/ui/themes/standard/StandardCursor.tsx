@@ -14,7 +14,9 @@ export const StandardCursor: React.FC<CursorProps> = ({
     active,
     color,
     type = 'block',
-    metadata
+    metadata,
+    theme,
+    settings
 }) => {
     const { bus } = useProcess();
     const emotion = metadata?.emotion || TutorEmotion.NORMAL;
@@ -80,7 +82,7 @@ export const StandardCursor: React.FC<CursorProps> = ({
         }
     };
 
-    const finalColor = (emotion === TutorEmotion.MAD || emotion === TutorEmotion.CRASH_OUT) ? '#ff0000' : color;
+    const finalColor = (emotion === TutorEmotion.MAD || emotion === TutorEmotion.CRASH_OUT) ? theme.colors.error : color;
 
     return (
         <Animated.View

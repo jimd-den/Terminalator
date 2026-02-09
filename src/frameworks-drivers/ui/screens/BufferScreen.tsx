@@ -109,12 +109,12 @@ export const BufferScreen: React.FC<BufferScreenProps> = ({ buffers, onClose }) 
         detailView: {
             flex: 1,
             borderWidth: 1,
-            borderColor: 'rgba(0, 255, 65, 0.1)',
+            borderColor: colors.primary_10,
             padding: THEME.spacing.md,
         },
         detailHeader: {
             borderBottomWidth: 1,
-            borderBottomColor: 'rgba(0, 255, 65, 0.3)',
+            borderBottomColor: colors.primary_20,
             paddingBottom: THEME.spacing.sm,
             marginBottom: THEME.spacing.md,
         },

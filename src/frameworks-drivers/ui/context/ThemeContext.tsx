@@ -75,6 +75,12 @@ export const useTheme = () => {
 };
 
 export const useThemeComponents = (): ThemeComponentMap => {
-    const { theme } = useTheme();
-    return useMemo(() => getComponentsForTheme(theme.id), [theme.id]);
+    const { theme, settings } = useTheme();
+    const rawComponents = useMemo(() => getComponentsForTheme(theme.id), [theme.id]);
+
+    return useMemo(() => ({
+        Layout: (props: LayoutProps) => <rawComponents.Layout {...props} theme={theme} settings={settings} />,
+        TextRenderer: (props: TextRendererProps) => <rawComponents.TextRenderer {...props} theme={theme} settings={settings} />,
+        Cursor: (props: CursorProps) => <rawComponents.Cursor {...props} theme={theme} settings={settings} />,
+    }), [rawComponents, theme, settings]);
 };

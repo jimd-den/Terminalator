@@ -20,11 +20,13 @@ export const StandardLayout: React.FC<LayoutProps> = ({
     tutorBarComponent,
     economyBarComponent,
     style,
-    children
+    children,
+    theme,
+    settings
 }) => {
     // Note: We use global THEME or props. In a pure headless world,
     // colors would come from props or a non-circular context.
-    const colors = { primary: '#00FF41', background: '#000', surface: '#0a0a0a' };
+    const colors = theme.colors;
 
     const dynamicStyles = StyleSheet.create({
         container: {
@@ -54,12 +56,12 @@ export const StandardLayout: React.FC<LayoutProps> = ({
             alignItems: 'center',
             paddingVertical: THEME.spacing.md,
             borderBottomWidth: 1,
-            borderBottomColor: 'rgba(0, 255, 65, 0.1)',
+            borderBottomColor: colors.primary_10,
             zIndex: 10,
         },
         headerText: {
             color: colors.primary,
-            fontFamily: THEME.typography.fontFamily,
+            fontFamily: settings.fontFamily,
             fontSize: THEME.typography.fontSize.sm,
         },
         topBox: {

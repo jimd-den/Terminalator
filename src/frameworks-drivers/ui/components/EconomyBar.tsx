@@ -21,21 +21,46 @@ export const EconomyBar: React.FC = () => {
 
     const formatted = ZincFormatter.format(balance);
 
+    const dynamicStyles = StyleSheet.create({
+        container: {
+            flexDirection: 'row',
+            paddingVertical: 4,
+            paddingHorizontal: 12,
+            borderTopWidth: 1,
+            backgroundColor: theme.colors.background,
+            justifyContent: 'space-between',
+        },
+        section: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+        },
+        label: {
+            fontSize: 10,
+            fontWeight: 'bold',
+            letterSpacing: 1,
+        },
+        value: {
+            fontSize: 12,
+            fontWeight: 'bold',
+        }
+    });
+
     return (
-        <View style={[styles.container, { borderTopColor: theme.colors.border }]}>
-            <View style={styles.section}>
-                <Text style={[styles.label, { color: theme.colors.text.dim, fontFamily: settings.fontFamily }]}>
+        <View style={[dynamicStyles.container, { borderTopColor: theme.colors.border }]}>
+            <View style={dynamicStyles.section}>
+                <Text style={[dynamicStyles.label, { color: theme.colors.text.dim, fontFamily: settings.fontFamily }]}>
                     WALLET
                 </Text>
-                <Text style={[styles.value, { color: theme.colors.secondary, fontFamily: settings.fontFamily }]}>
+                <Text style={[dynamicStyles.value, { color: theme.colors.secondary, fontFamily: settings.fontFamily }]}>
                     {formatted.value} <Text style={{ fontSize: 10 }}>{formatted.unit}</Text>
                 </Text>
             </View>
-            <View style={styles.section}>
-                <Text style={[styles.label, { color: theme.colors.text.dim, fontFamily: settings.fontFamily }]}>
+            <View style={dynamicStyles.section}>
+                <Text style={[dynamicStyles.label, { color: theme.colors.text.dim, fontFamily: settings.fontFamily }]}>
                     HASHRATE
                 </Text>
-                <Text style={[styles.value, { color: theme.colors.primary, fontFamily: settings.fontFamily }]}>
+                <Text style={[dynamicStyles.value, { color: theme.colors.primary, fontFamily: settings.fontFamily }]}>
                     {hashRate.toFixed(2)} H/s
                 </Text>
             </View>
@@ -43,27 +68,4 @@ export const EconomyBar: React.FC = () => {
     );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        flexDirection: 'row',
-        paddingVertical: 4,
-        paddingHorizontal: 12,
-        borderTopWidth: 1,
-        backgroundColor: '#000',
-        justifyContent: 'space-between',
-    },
-    section: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    label: {
-        fontSize: 10,
-        fontWeight: 'bold',
-        letterSpacing: 1,
-    },
-    value: {
-        fontSize: 12,
-        fontWeight: 'bold',
-    }
-});
+// Remove static styles
