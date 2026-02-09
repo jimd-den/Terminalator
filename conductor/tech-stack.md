@@ -9,6 +9,7 @@
   - **Terminal Simulation:** 
     - `VimEngine`: State-pattern based Vim engine with persistent Undo/Redo capability.
     - `InputProvider`: Global keyboard orchestration with "Always On" focus management.
+    - `ThemeContext`: Dynamic provider for palette expansion and component context injection.
     - `TutorEngine`: Context-aware pedagogical system capable of interpreting procedural mission intent.
     - `TutorBrain`: Persona orchestration engine.
     - `TutorSpy`: Performance analysis engine (WPM, Accuracy, Stalls).
@@ -21,6 +22,7 @@
     - `CreditService`: Global state management for user rewards.
     - `LanguageExecutionService`: Mock execution environment for Scheme and Assembly.- **World Generation:** 
     - `IVimCommand`, `CommandHistory`: Entity and Use Case for undoable editor operations.
+    - `ThemeColors`: Expanded palette supporting opacity-based semantic variants (primary_10, etc.).
     - `IVimMode`: Strategy-based interface for Vim modes (Normal, Insert, Command).
   - `WorldManager`: Procedural generator for "The Grid" (Locations, Devices, Connections).
 
