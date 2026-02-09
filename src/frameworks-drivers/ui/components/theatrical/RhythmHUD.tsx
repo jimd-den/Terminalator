@@ -15,13 +15,15 @@ import { useInput } from '../../context/InputContext';
  */
 export const RhythmHUD: React.FC = () => {
     const { bus, gameManager } = useProcess();
-    const { theme, settings } = useTheme();
+    const { theme } = useTheme();
     const colors = theme.colors;
     const { setOnKeyPress } = useInput();
 
     // --- State ---
     const [isActive, setIsActive] = useState(false);
-    const [targetChar, setTargetChar] = useState('');
+    const [isCountdown, setIsCountdown] = useState(false);
+    const [lessonText, setLessonText] = useState('');
+    const [progressIndex, setProgressIndex] = useState(0);
     const [feedback, setFeedback] = useState<'PERFECT' | 'MISS' | 'NONE'>('NONE');
     const [streak, setStreak] = useState(0);
     const [summary, setSummary] = useState<RhythmSummary | null>(null);
@@ -41,19 +43,17 @@ export const RhythmHUD: React.FC = () => {
     useEffect(() => {
         const engine = gameManager.tutorEngine;
         if (engine.isActive()) {
-            setIsActive(true);
             const lesson = engine.getCurrentLesson();
-            const stats = engine.getStats();
-            
             if (lesson) {
-                const ghost = engine.getGhostText();
-                if (ghost.length > 0) setTargetChar(ghost[0]);
-                
+                setIsActive(true);
+                setLessonText(lesson.text);
+                // We assume if resuming, countdown is over
+                setIsCountdown(false);
+                const stats = engine.getStats();
                 setBaseZinc(stats.totalZincMined);
                 setDisplayZinc(stats.totalZincMined);
+                Animated.spring(boxScale, { toValue: 1, friction: 6, useNativeDriver }).start();
             }
-            
-            Animated.spring(boxScale, { toValue: 1, friction: 6, useNativeDriver }).start();
         }
     }, []);
 
@@ -61,13 +61,10 @@ export const RhythmHUD: React.FC = () => {
     useEffect(() => {
         if (summary) {
             const handlePress = (key: string) => {
-                if (key === 'ENTER') {
-                    dismissSummary();
-                }
+                if (key === 'ENTER') dismissSummary();
             };
-            // Override global input for this modal state
             setOnKeyPress(handlePress);
-            return () => setOnKeyPress(() => {}); // Cleanup
+            return () => setOnKeyPress(() => {}); 
         }
     }, [summary, setOnKeyPress]);
 
@@ -85,38 +82,50 @@ export const RhythmHUD: React.FC = () => {
 
             if (type === 'START') {
                 setIsActive(true);
+                setIsCountdown(true);
                 setSummary(null);
                 setStreak(0);
                 setBaseZinc(0);
                 setDisplayZinc(0);
+                setLessonText(payload.text || '');
+                setProgressIndex(0);
+                
                 Animated.spring(boxScale, { toValue: 1, friction: 6, useNativeDriver }).start();
+                
+                // Signal countdown start to block input
+                bus.emit(GameEventType.TUTOR_EVENT, { type: 'COUNTDOWN_START' });
+
+                // Start Sequence
+                setTimeout(() => {
+                    setIsCountdown(false);
+                    bus.emit(GameEventType.TUTOR_EVENT, { type: 'COUNTDOWN_COMPLETE' });
+                }, 1500);
             } 
             else if (type === 'PROGRESS') {
-                setTargetChar(payload.char || '');
+                setProgressIndex(payload.index);
                 setStreak(payload.streak || 0);
                 
-                if (payload.isOnBeat) {
-                    triggerFeedback('PERFECT');
-                }
-                
-                if (payload.streak > 1) {
-                    triggerMultiplierPop();
-                }
+                // Update target char based on NEW index
+                const nextChar = lessonText[payload.index] || '';
+                setTargetChar(nextChar);
+
+                if (payload.isOnBeat) triggerFeedback('PERFECT');
+                if (payload.streak > 1) triggerMultiplierPop();
             }
             else if (type === 'MISTAKE' || type === 'CORRECTION') {
                 triggerFeedback('MISS');
                 setStreak(0);
+                if (payload.stats) setProgressIndex(gameManager.tutorEngine.getCompletedText().length);
             }
             else if (type === 'COMPLETE') {
-                const stats = payload.stats;
-                setSummary(RhythmGamePresenter.getSummary(stats));
-                // Don't auto-close; wait for user input
+                setTargetChar('');
+                setSummary(RhythmGamePresenter.getSummary(payload.stats));
             }
         });
 
         const unsubEcon = bus.subscribe(GameEventType.ECONOMY_UPDATE, (event) => {
             if (isActive) {
-                setBaseZinc(event.payload.sessionReward); // The "truth" from backend
+                setBaseZinc(event.payload.sessionReward);
                 setHashRate(event.payload.hashRate);
             }
         });
@@ -125,31 +134,22 @@ export const RhythmHUD: React.FC = () => {
             unsub();
             unsubEcon();
         };
-    }, [bus, isActive]);
+    }, [bus, isActive, lessonText]);
 
     // Continuous Coin Interpolation Animation
     useEffect(() => {
         if (!isActive) return;
-        
         let lastTime = Date.now();
         const animate = () => {
             const now = Date.now();
             const dt = (now - lastTime) / 1000;
             lastTime = now;
-
-            // Visual extrapolation based on hashRate
             setDisplayZinc(prev => {
                 const target = baseZinc;
-                // If we are behind the server truth, catch up smoothly
-                // If we are predicting ahead, add based on hashrate
-                // Simple logic: Lerp towards baseZinc, but also add predicted earnings
                 const diff = target - prev;
                 const predictedGain = hashRate * dt; 
-                
-                // If diff is huge (server update), jump closer. If small, use prediction.
                 return prev + (diff * 0.1) + predictedGain; 
             });
-
             requestAnimationFrame(animate);
         };
         const id = requestAnimationFrame(animate);
@@ -158,8 +158,7 @@ export const RhythmHUD: React.FC = () => {
 
     // Blinking logic for target glyph
     useEffect(() => {
-        if (!isActive || summary) return; // Don't blink on summary
-        
+        if (!isActive || summary || isCountdown) return;
         const blink = Animated.loop(
             Animated.sequence([
                 Animated.timing(glyphBlink, { toValue: 0, duration: 150, useNativeDriver }),
@@ -169,7 +168,7 @@ export const RhythmHUD: React.FC = () => {
         );
         blink.start();
         return () => blink.stop();
-    }, [isActive, summary]);
+    }, [isActive, summary, isCountdown]);
 
     const triggerFeedback = (type: 'PERFECT' | 'MISS') => {
         setFeedback(type);
@@ -188,6 +187,7 @@ export const RhythmHUD: React.FC = () => {
     if (!isActive) return null;
 
     const formattedZinc = ZincFormatter.format(displayZinc);
+    const targetChar = lessonText[progressIndex] || '';
 
     return (
         <View style={styles.container} pointerEvents="box-none">
@@ -201,6 +201,11 @@ export const RhythmHUD: React.FC = () => {
                         <View style={styles.divider} />
                         <Text style={[styles.rewardText, { color: colors.secondary }]}>TOTAL MINED: {summary.totalMined}</Text>
                         <Text style={[styles.statusText, { color: colors.primary }]}>PRESS ENTER TO CONTINUE</Text>
+                    </View>
+                ) : isCountdown ? (
+                    <View style={styles.glyphContainer}>
+                        <Text style={[styles.statusText, { color: colors.primary, fontSize: 40 }]}>START</Text>
+                        <Text style={[styles.statusText, { color: colors.secondary, marginTop: 20 }]}>BLOCKING INPUT...</Text>
                     </View>
                 ) : (
                     <>

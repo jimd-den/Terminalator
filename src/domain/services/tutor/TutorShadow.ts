@@ -21,6 +21,7 @@ import { RhythmConductor } from '../RhythmConductor';
 export class TutorShadow {
     private currentBeatTime: number = 0;
     private isSummaryActive: boolean = false;
+    private isCountdownActive: boolean = false;
 
     constructor(
         private engine: TutorEngine,
@@ -37,6 +38,10 @@ export class TutorShadow {
                 this.isSummaryActive = true;
             } else if (data && data.type === 'SUMMARY_DISMISSED') {
                 this.isSummaryActive = false;
+            } else if (data && data.type === 'COUNTDOWN_START') {
+                this.isCountdownActive = true;
+            } else if (data && data.type === 'COUNTDOWN_COMPLETE') {
+                this.isCountdownActive = false;
             }
         });
     }
@@ -48,18 +53,9 @@ export class TutorShadow {
      * @returns true if the key is allowed through, false if it's consumed/blocked.
      */
     public intercept(key: string, mode: 'SHELL' | 'VIM' = 'SHELL'): boolean {
-        // 0. Check Summary Mode (Blocking)
-        if (this.isSummaryActive) {
-            // Only allow ENTER to pass (which will be caught by RhythmHUD via InputContext override, 
-            // but we need to ensure it doesn't leak to Shell if HUD doesn't catch it?)
-            // Actually, RhythmHUD uses useInput's setOnKeyPress which might be parallel to this?
-            // No, ShellScreen calls handleKeyPress which calls this.
-            
-            // If RhythmHUD is capturing input via setOnKeyPress, it might stop propagation?
-            // The Architecture uses ShellScreen -> handleKeyPress -> TutorShadow.
-            // If RhythmHUD sets a global listener, it might run INSTEAD or BEFORE.
-            // But let's be safe: Block everything here.
-            console.log("[TutorShadow] Blocking input due to SUMMARY_MODE");
+        // 0. Check Summary or Countdown Mode (Blocking)
+        if (this.isSummaryActive || this.isCountdownActive) {
+            console.log(`[TutorShadow] Blocking input due to ${this.isSummaryActive ? 'SUMMARY' : 'COUNTDOWN'}_MODE`);
             return false; 
         }
 
