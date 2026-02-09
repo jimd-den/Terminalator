@@ -16,14 +16,25 @@ import { TutorEngine, InputResult } from '../../entities/TutorEngine';
 import { EconomyService } from '../EconomyService';
 import { SimulationBus, GameEventType } from '../SimulationBus';
 import { PresentationDirector } from '../PresentationDirector';
+import { RhythmConductor } from '../RhythmConductor';
 
 export class TutorShadow {
+    private currentBeatTime: number = 0;
+
     constructor(
         private engine: TutorEngine,
         private economy: EconomyService,
         private bus: SimulationBus,
-        private director: PresentationDirector
-    ) {}
+        private director: PresentationDirector,
+        private conductor: RhythmConductor
+    ) {
+        this.bus.subscribe(GameEventType.TUTOR_EVENT, (event) => {
+            const data = event.payload;
+            if (data && data.type === 'RHYTHM_TICK') {
+                this.currentBeatTime = data.payload.timestamp;
+            }
+        });
+    }
 
     /**
      * Intercepts a keystroke.
@@ -32,7 +43,7 @@ export class TutorShadow {
      * @returns true if the key is allowed through, false if it's consumed/blocked.
      */
     public intercept(key: string, mode: 'SHELL' | 'VIM' = 'SHELL'): boolean {
-        console.log(`[TutorShadow] Intercepting key: "${key}" (mode: ${mode})`);
+        console.log(`[TutorShadow] Intercepting key: "${key}" (mode: ${mode}). Current Beat: ${this.currentBeatTime}`);
         // 1. Check if engine is active
         if (!this.engine.isActive()) {
             console.log("[TutorShadow] Engine NOT active. Pass through.");
@@ -70,7 +81,7 @@ export class TutorShadow {
         console.log(`[TutorShadow] Engine Result for ${key}: ${result}`);
 
         if (result === InputResult.ACCEPTED) {
-            this.economy.recordHit();
+            this.economy.recordHit(this.currentBeatTime);
             this.bus.emit(GameEventType.KEYSTROKE_ACCEPTED, { key });
             return true; 
         } else if (result === InputResult.REJECTED) {

@@ -20,6 +20,7 @@ import { useSystemState } from '../context/SystemStateProvider';
 import { useTutorPersona } from '../context/TutorPersonaProvider';
 import { MainframeOverlay } from '../components/MainframeOverlay';
 import { TheatricalCanvas } from '../components/theatrical/TheatricalCanvas';
+import { TutorOverlay } from '../components/theatrical/TutorOverlay';
 import { FileSystemService } from '../../../domain/services/FileSystemService';
 
 export interface VimScreenProps {
@@ -53,6 +54,7 @@ export const VimScreen: React.FC<VimScreenProps> = ({ filename, onExit }) => {
             {vim.topContent}
             <MainframeOverlay />
             <TheatricalCanvas />
+            <TutorOverlay />
         </View>
     );
 

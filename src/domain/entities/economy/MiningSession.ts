@@ -19,6 +19,7 @@ export class MiningSession {
     public totalZincMined: number = 0;
     public sessionZincMined: number = 0;
     public streak: number = 0;
+    public lastBeatTime: number = 0;
     
     private readonly BASE_REWARD = 0.00000000001; // 1e-11
     private readonly MAX_HASHRATE = 100.0;
@@ -32,14 +33,25 @@ export class MiningSession {
     /**
      * Processes a rhythmic hit.
      * @param timestamp - Current time in ms.
+     * @param nextBeatTime - Optional target time for the next beat from conductor.
      * @returns reward for this hit.
      */
-    public processHit(timestamp: number): number {
-        const beatOffset = timestamp % this.BEAT_MS;
-        const normalizedOffset = Math.min(beatOffset, this.BEAT_MS - beatOffset);
-        
-        // Precision check (within 80ms of any subdivision)
-        const isRhythmic = this.checkSubdivisions(normalizedOffset);
+    public processHit(timestamp: number, nextBeatTime?: number): number {
+        let isRhythmic = false;
+
+        if (nextBeatTime) {
+            // Precision check against conductor beat
+            const diff = Math.abs(timestamp - nextBeatTime);
+            console.log(`[MiningSession] Precision Check: diff=${diff}ms, timestamp=${timestamp}, target=${nextBeatTime}`);
+            
+            // Within 80ms of the beat
+            isRhythmic = diff < 80;
+        } else {
+            // Fallback to internal cycle
+            const beatOffset = timestamp % this.BEAT_MS;
+            const normalizedOffset = Math.min(beatOffset, this.BEAT_MS - beatOffset);
+            isRhythmic = this.checkSubdivisions(normalizedOffset);
+        }
 
         if (isRhythmic) {
             this.streak++;

@@ -25,6 +25,7 @@ import { BufferDTO } from '../../../domain/dtos/BufferDTO';
 import { FKeyBar, FKeyDef } from '../components/FKeyBar';
 import { MainframeOverlay } from '../components/MainframeOverlay';
 import { TheatricalCanvas } from '../components/theatrical/TheatricalCanvas';
+import { TutorOverlay } from '../components/theatrical/TutorOverlay';
 import { EconomyBar } from '../components/EconomyBar';
 
 export interface ShellScreenProps {
@@ -116,6 +117,7 @@ export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
             {shellView.topContent}
             <MainframeOverlay />
             <TheatricalCanvas />
+            <TutorOverlay />
         </View>
     );
 

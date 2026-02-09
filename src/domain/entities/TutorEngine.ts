@@ -51,6 +51,10 @@ export class TutorEngine {
     private currentLesson: Lesson | null = null;
     private progressIndex: number = 0;
 
+    // Rhythm Mode
+    private bpm: number = 120;
+    private nextBeatTime: number = 0;
+
     // Emotion & Patience
     private patience: number = 100;
     private currentEmotion: TutorEmotion = TutorEmotion.NORMAL;
@@ -77,11 +81,15 @@ export class TutorEngine {
         this.patience = 100;
         this.consecutiveMistakes = 0;
 
+        // Initialize Rhythm
+        this.bpm = 120; // Default or from lesson?
+        this.nextBeatTime = this.startTime + (60000 / this.bpm);
+
         // Note: Setup execution is now the responsibility of the caller (LessonService)
 
         this.updateEmotion();
 
-        this.emit({ type: 'START', payload: this.currentLesson });
+        this.emit({ type: 'START', payload: { ...this.currentLesson, bpm: this.bpm } });
         // Emit initial progress to show full ghost text
         this.emit({ type: 'PROGRESS', payload: { index: 0 } });
 
@@ -128,6 +136,11 @@ export class TutorEngine {
         const now = Date.now();
         this.trackSpeed(now);
 
+        // Rhythm Sync Check (Internal evaluation)
+        const beatInterval = 60000 / this.bpm;
+        const timeSinceBeat = (now - this.startTime) % beatInterval;
+        const isOnBeat = timeSinceBeat < 80 || timeSinceBeat > (beatInterval - 80);
+
         const targetChar = this.currentLesson.text[this.progressIndex];
 
         // 1. Check Exact Match
@@ -135,7 +148,14 @@ export class TutorEngine {
             this.progressIndex++;
             this.consecutiveMistakes = 0; // Reset streak
             this.recoverPatience(2); // Small recovery
-            this.emit({ type: 'PROGRESS', payload: { index: this.progressIndex } });
+            
+            this.emit({ 
+                type: 'PROGRESS', 
+                payload: { 
+                    index: this.progressIndex,
+                    isOnBeat 
+                } 
+            });
 
             // Check Complete
             if (this.progressIndex >= this.currentLesson.text.length) {

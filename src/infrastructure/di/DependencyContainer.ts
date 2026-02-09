@@ -40,6 +40,7 @@ import { DiskCreditRepository } from '../../interface-adapters/DiskCreditReposit
 import { MasteryTracker } from '../../domain/services/tutor/MasteryTracker';
 import { DiskMasteryRepository } from '../../interface-adapters/DiskMasteryRepository';
 import { IdentityService } from '../../domain/services/IdentityService';
+import { RhythmConductor } from '../../domain/services/RhythmConductor';
 
 // Scaling Engine Imports
 import { ConstraintMissionFactory } from '../../domain/usecases/mission/ConstraintMissionFactory';
@@ -77,9 +78,13 @@ import { RmdirCommand } from '../../domain/commands/core/RmdirCommand';
 
 export class DependencyContainer {
 
-    public static createEconomyService(fs: FileSystem, bus?: SimulationBus): EconomyService {
+    public static createRhythmConductor(bus: SimulationBus): RhythmConductor {
+        return new RhythmConductor(bus);
+    }
+
+    public static createEconomyService(fs: FileSystem, bus?: SimulationBus, conductor?: RhythmConductor): EconomyService {
         const fsService = new FileSystemService(fs);
-        return new EconomyService(fsService, bus);
+        return new EconomyService(fsService, bus, conductor);
     }
 
     public static createMasteryTracker(fs: FileSystem): MasteryTracker {
@@ -107,16 +112,18 @@ export class DependencyContainer {
         engine: TutorEngine, 
         economy: EconomyService, 
         bus: SimulationBus,
-        director: PresentationDirector
+        director: PresentationDirector,
+        conductor: RhythmConductor
     ): TutorShadow {
-        return new TutorShadow(engine, economy, bus, director);
+        return new TutorShadow(engine, economy, bus, director, conductor);
     }
 
     public static createGameManager(
         fs: FileSystem, 
         networkMap: NetworkMap, 
         telemetry: TelemetryPort,
-        bus: SimulationBus
+        bus: SimulationBus,
+        conductor: RhythmConductor
     ): GameManager {
         const fsService = new FileSystemService(fs);
         const identityService = new IdentityService();
@@ -125,7 +132,7 @@ export class DependencyContainer {
         const strategyRegistry = new StrategyRegistry();
         const tutorService = new TutorService(missionRepository, lessonRegistry, strategyRegistry);
         const masteryTracker = this.createMasteryTracker(fs);
-        const economyService = this.createEconomyService(fs, bus);
+        const economyService = this.createEconomyService(fs, bus, conductor);
         
         const worldManager = new WorldManager();
         worldManager.registerHost('terminalator', fsService);

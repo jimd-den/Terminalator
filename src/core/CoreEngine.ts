@@ -11,6 +11,7 @@ import { TutorShadow } from '../domain/services/tutor/TutorShadow';
 import { TutorBrain } from '../domain/entities/tutor/TutorBrain';
 import { MasteryTracker } from '../domain/services/tutor/MasteryTracker';
 import { SimulationBus } from '../domain/services/SimulationBus';
+import { RhythmConductor } from '../domain/services/RhythmConductor';
 import { CommandCoordinator } from '../interface-adapters/controllers/CommandCoordinator';
 import { SimulationMediator } from './presentation/SimulationMediator';
 
@@ -32,6 +33,7 @@ export class CoreEngine {
     private telemetry!: ConsoleTelemetryAdapter;
     private networkMap!: NetworkMap;
     private bus!: SimulationBus;
+    private conductor!: RhythmConductor;
     private tutorMessaging!: TutorMessagingService;
     private economyService!: EconomyService;
     private masteryTracker!: MasteryTracker;
@@ -60,12 +62,13 @@ export class CoreEngine {
         this.telemetry = new ConsoleTelemetryAdapter();
         this.networkMap = new NetworkMap();
         this.bus = new SimulationBus(this.telemetry);
+        this.conductor = new RhythmConductor(this.bus);
         this.tutorMessaging = new TutorMessagingService();
         console.log("CoreEngine: Infrastructure ready.");
 
         // 2. Dependent Services (using DependencyContainer)
         const fsService = new FileSystemService(this.fs);
-        this.economyService = DependencyContainer.createEconomyService(this.fs, this.bus);
+        this.economyService = DependencyContainer.createEconomyService(this.fs, this.bus, this.conductor);
         this.masteryTracker = DependencyContainer.createMasteryTracker(this.fs);
         this.tutorBrain = DependencyContainer.createTutorBrain(this.fs, this.bus);
         console.log("CoreEngine: Service instances created.");
@@ -74,7 +77,7 @@ export class CoreEngine {
         this.tutorBrain.setPersona(DependencyContainer.createPersona('standard', 'TUTOR'));
         console.log("CoreEngine: Persona set.");
 
-        this.gameManager = DependencyContainer.createGameManager(this.fs, this.networkMap, this.telemetry, this.bus);
+        this.gameManager = DependencyContainer.createGameManager(this.fs, this.networkMap, this.telemetry, this.bus, this.conductor);
         console.log("CoreEngine: GameManager ready.");
 
         this.commandExecutor = new GameCommandExecutor(fsService, this.gameManager, this.networkMap, this.telemetry);
@@ -82,7 +85,8 @@ export class CoreEngine {
             this.gameManager.tutorEngine, 
             this.economyService, 
             this.bus, 
-            this.gameManager.getPresentationDirector()
+            this.gameManager.getPresentationDirector(),
+            this.conductor
         );
 
         // 3. Controllers & Mediators
@@ -121,6 +125,7 @@ export class CoreEngine {
     public getTutorShadow(): TutorShadow { return this.tutorShadow; }
     public getCommandCoordinator(): CommandCoordinator { return this.commandCoordinator; }
     public getSimulationMediator(): SimulationMediator { return this.simulationMediator; }
+    public getConductor(): RhythmConductor { return this.conductor; }
 
     public shutdown() {
         if (this.tutorBrain) {

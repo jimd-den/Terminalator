@@ -11,6 +11,7 @@
 import { FileSystemService } from './FileSystemService';
 import { MiningSession } from '../entities/economy/MiningSession';
 import { SimulationBus, GameEventType } from './SimulationBus';
+import { RhythmConductor } from './RhythmConductor';
 
 export class EconomyService {
     private zincBalance: number = 0;
@@ -18,7 +19,11 @@ export class EconomyService {
     private session: MiningSession;
     private tickInterval: any = null;
 
-    constructor(private fsService: FileSystemService, private bus?: SimulationBus) {
+    constructor(
+        private fsService: FileSystemService, 
+        private bus?: SimulationBus,
+        private conductor?: RhythmConductor
+    ) {
         this.session = new MiningSession();
         this.loadWallet();
         this.startTicker();
@@ -51,8 +56,8 @@ export class EconomyService {
     /**
      * Record a rhythmic hit and update balance.
      */
-    public recordHit() {
-        const reward = this.session.processHit(Date.now());
+    public recordHit(nextBeatTime?: number) {
+        const reward = this.session.processHit(Date.now(), nextBeatTime);
         if (reward > 0) {
             this.zincBalance += reward;
             this.saveWallet();
