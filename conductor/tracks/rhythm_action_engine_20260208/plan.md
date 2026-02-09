@@ -21,7 +21,7 @@
     - [x] Sync `MiningSession` rewards with the `RHYTHM_TICK` tolerance (e.g., 80ms window).
 - [x] Task: Conductor - User Manual Verification 'Tutor Mode' (Protocol in workflow.md)
 
-## Phase 3: Theatrical Execution & Result Stack
+## Phase 3: Theatrical Execution & Result Stack [checkpoint: 615e021]
 *Goal: Implement the managed lifecycle for commands.*
 
 - [x] Task: Refine `SimulationMediator`
