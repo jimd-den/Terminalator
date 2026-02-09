@@ -7,8 +7,8 @@ function testSettingsHasForceKeyboard() {
     const settings: UserSettings = DEFAULT_SETTINGS;
     const value: boolean = settings.forceKeyboardOpen;
     
-    if (value !== false) {
-        throw new Error(`Expected default forceKeyboardOpen to be false, got ${value}`);
+    if (value !== true) {
+        throw new Error(`Expected default forceKeyboardOpen to be true, got ${value}`);
     }
 
     console.log("PASS");

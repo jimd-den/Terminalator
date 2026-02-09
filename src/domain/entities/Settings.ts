@@ -17,5 +17,5 @@ export const DEFAULT_SETTINGS: UserSettings = {
     themeId: 'matrix',
     fontFamily: 'SpaceMono_400Regular',
     fontSize: 18,
-    forceKeyboardOpen: false
+    forceKeyboardOpen: true
 };

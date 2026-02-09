@@ -11,20 +11,20 @@ async function testSettingsPersistence() {
     service.mkdir('/etc');
     const repo = new DiskSettingsRepository(service);
 
-    // 1. Initial load should have default (false)
+    // 1. Initial load should have default (true)
     const initial = await repo.loadSettings();
-    if (initial.forceKeyboardOpen !== false) {
-        throw new Error("Expected initial forceKeyboardOpen to be false");
+    if (initial.forceKeyboardOpen !== true) {
+        throw new Error("Expected initial forceKeyboardOpen to be true");
     }
 
-    // 2. Save with true
-    const updated: UserSettings = { ...initial, forceKeyboardOpen: true };
+    // 2. Save with false
+    const updated: UserSettings = { ...initial, forceKeyboardOpen: false };
     await repo.saveSettings(updated);
 
-    // 3. Load again, should be true
+    // 3. Load again, should be false
     const loaded = await repo.loadSettings();
-    if (loaded.forceKeyboardOpen !== true) {
-        throw new Error("Expected loaded forceKeyboardOpen to be true");
+    if (loaded.forceKeyboardOpen !== false) {
+        throw new Error("Expected loaded forceKeyboardOpen to be false");
     }
 
     console.log("PASS");
