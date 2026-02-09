@@ -14,10 +14,19 @@ import { getStdinAsString } from '../../entities/ProcessContext';
  */
 
 import { CommandBase } from '../CommandBase';
+
 import { CommandCapability } from '../IStructuredCommand';
+
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
+
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../entities/Command';
+
+import { CommandResponse, CommandMetadata } from '../../entities/Command';
+
+import { TheatricalVerb } from '../../services/PresentationDirector';
+
+
+
 import { FileSystemService } from '../../services/FileSystemService';
 import { DirectoryNode } from '../../entities/filesystem/DirectoryNode';
 
@@ -26,6 +35,13 @@ export class CpCommand extends CommandBase {
     public readonly utility = 'cp';
 
     constructor(private fsService: FileSystemService) { super(); }
+
+    public getMetadata(): CommandMetadata {
+        return {
+            verb: TheatricalVerb.SYNTHESIZE,
+            style: 'NORMAL'
+        };
+    }
 
     executeInternal(args: string[], flags: Set<string>, operands: string[], context: ProcessContext, state: TerminalState): CommandResponse {
         const fsService = context.fileSystemService || this.fsService;

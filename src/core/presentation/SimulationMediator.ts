@@ -31,39 +31,42 @@ export class SimulationMediator {
         }
 
         const parts = input.trim().split(/\s+/);
-        const verb = parts[0];
+        const cmdName = parts[0];
         const args = parts.slice(1);
 
-        console.log(`[SimulationMediator] Orchestrating execution for: ${verb}`);
+        // Fetch Metadata from Command Registry if possible
+        let verb = cmdName.toUpperCase();
+        const registry = (this.executor as any).getRegistry?.();
+        if (registry) {
+            const cmd = registry.get(cmdName);
+            if (cmd && cmd.getMetadata) {
+                const meta = cmd.getMetadata();
+                verb = meta.verb;
+            }
+        }
+
+        console.log(`[SimulationMediator] Orchestrating execution for: ${cmdName} using verb: ${verb}`);
 
         // 1. Lock Input
-        this.bus.emit(GameEventType.TUTOR_EVENT, { type: 'THEATRE_ACTIVE' as any, payload: { command: verb } });
+        this.bus.emit(GameEventType.TUTOR_EVENT, { type: 'THEATRE_ACTIVE' as any, payload: { command: cmdName } });
 
         // 2. Pre-Execution Animation
         const preAnimPromise = this.waitForEvent('ANIMATION_COMPLETE');
         this.bus.emit(GameEventType.TUTOR_EVENT, { 
             type: 'PRESENTATION_START' as any, 
-            payload: { verb, command: verb, args, stage: 'PRE' } 
+            payload: { 
+                verb: verb.toUpperCase(), 
+                command: input, 
+                args, 
+                stage: 'PRE' 
+            } 
         });
         await preAnimPromise;
 
         // 3. Domain Execution
         const response = await this.executor.execute(input, state);
 
-        // 4. Post-Execution Animation (Result)
-        const postAnimPromise = this.waitForEvent('ANIMATION_COMPLETE');
-        this.bus.emit(GameEventType.TUTOR_EVENT, { 
-            type: 'PRESENTATION_RESULT' as any, 
-            payload: { 
-                verb, 
-                command: verb, 
-                exitCode: response.exitCode,
-                stage: 'POST' 
-            } 
-        });
-        await postAnimPromise;
-
-        // 5. Push Result Card to Stack
+        // 4. Push Result Card data to UI (So it has it during POST-animation)
         this.bus.emit(GameEventType.TUTOR_EVENT, { 
             type: 'RESULT_CARD' as any, 
             payload: { 
@@ -76,8 +79,21 @@ export class SimulationMediator {
             } 
         });
 
+        // 5. Post-Execution Animation (Result)
+        const postAnimPromise = this.waitForEvent('ANIMATION_COMPLETE');
+        this.bus.emit(GameEventType.TUTOR_EVENT, { 
+            type: 'PRESENTATION_RESULT' as any, 
+            payload: { 
+                verb, 
+                command: verb, 
+                exitCode: response.exitCode,
+                stage: 'POST' 
+            } 
+        });
+        await postAnimPromise;
+
         // 6. Unlock Input
-        this.bus.emit(GameEventType.TUTOR_EVENT, { type: 'THEATRE_COMPLETE' as any, payload: { command: verb } });
+        this.bus.emit(GameEventType.TUTOR_EVENT, { type: 'THEATRE_COMPLETE' as any, payload: { command: cmdName } });
         
         return response;
     }

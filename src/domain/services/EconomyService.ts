@@ -31,6 +31,7 @@ export class EconomyService {
 
     private startTicker() {
         if (this.tickInterval) clearInterval(this.tickInterval);
+        console.log("[EconomyService] Starting ticker...");
         this.tickInterval = setInterval(() => {
             const passiveReward = this.session.decay();
             if (passiveReward > 0 || this.session.hashRate > 0) {

@@ -47,14 +47,18 @@ export class CoreEngine {
     private constructor() {}
 
     public static getInstance(): CoreEngine {
-        if (!CoreEngine.instance) {
-            CoreEngine.instance = new CoreEngine();
+        const globalRef = (global as any);
+        if (!globalRef.__CORE_ENGINE_INSTANCE__) {
+            globalRef.__CORE_ENGINE_INSTANCE__ = new CoreEngine();
         }
-        return CoreEngine.instance;
+        return globalRef.__CORE_ENGINE_INSTANCE__;
     }
 
     public async initialize(): Promise<void> {
-        if (this.initialized) return;
+        if (this.initialized) {
+            console.log("CoreEngine: Already initialized. Skipping.");
+            return;
+        }
         console.log("CoreEngine: Starting initialization...");
 
         // 1. Base Infrastructure

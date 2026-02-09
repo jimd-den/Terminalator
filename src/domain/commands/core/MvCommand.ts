@@ -14,17 +14,48 @@ import { getStdinAsString } from '../../entities/ProcessContext';
  */
 
 import { CommandBase } from '../CommandBase';
+
 import { CommandCapability } from '../IStructuredCommand';
+
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
+
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../entities/Command';
+
+import { CommandResponse, CommandMetadata } from '../../entities/Command';
+
+import { TheatricalVerb } from '../../services/PresentationDirector';
+
+
+
 import { FileSystemService } from '../../services/FileSystemService';
 
+
+
 export class MvCommand extends CommandBase {
+
     public readonly capabilities = [CommandCapability.MODIFY];
+
     public readonly utility = 'mv';
 
+
+
     constructor(private fsService: FileSystemService) { super(); }
+
+
+
+    public getMetadata(): CommandMetadata {
+
+        return {
+
+            verb: TheatricalVerb.UPLINK,
+
+            style: 'NORMAL'
+
+        };
+
+    }
+
+
 
     executeInternal(args: string[], flags: Set<string>, operands: string[], context: ProcessContext, state: TerminalState): CommandResponse {
         const fsService = context.fileSystemService || this.fsService;

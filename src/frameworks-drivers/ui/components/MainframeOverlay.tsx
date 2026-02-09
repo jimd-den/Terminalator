@@ -27,7 +27,7 @@ export const MainframeOverlay: React.FC = () => {
     const [sessionReward, setSessionReward] = useState(0);
     const [showPerfect, setShowPerfect] = useState(false);
     
-    const isVisible = !!(activeVerb || projectedGlyph);
+    const isVisible = !!(projectedGlyph || showPerfect);
 
     // --- Animations ---
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -143,7 +143,7 @@ export const MainframeOverlay: React.FC = () => {
     const dynamicStyles = StyleSheet.create({
         overlay: {
             ...StyleSheet.absoluteFillObject,
-            backgroundColor: 'rgba(0,0,0,0.85)',
+            backgroundColor: 'transparent', // Container is transparent
             justifyContent: 'center',
             alignItems: 'center',
             zIndex: 5,
@@ -155,12 +155,15 @@ export const MainframeOverlay: React.FC = () => {
             fontWeight: 'bold',
             textAlign: 'center',
             letterSpacing: 4,
+            backgroundColor: '#000', // Solid background for text
+            padding: 10,
         },
         glyphText: {
             fontFamily: THEME.typography.fontFamily,
             fontSize: 160,
             color: colors.secondary,
             fontWeight: '900',
+            backgroundColor: '#000', // Solid background
         },
         multiplierText: {
             fontFamily: THEME.typography.fontFamily,
@@ -191,6 +194,8 @@ export const MainframeOverlay: React.FC = () => {
             color: colors.secondary,
             fontWeight: 'bold',
             letterSpacing: 8,
+            backgroundColor: '#000',
+            padding: 10,
         }
     });
 
@@ -205,12 +210,8 @@ export const MainframeOverlay: React.FC = () => {
                 </Animated.Text>
             )}
 
-            {activeVerb && (
-                <View style={{ alignItems: 'center' }}>
-                    <Text style={dynamicStyles.verbText}>{activeVerb}</Text>
-                    <View style={{ height: 2, backgroundColor: colors.primary, marginTop: 10, width: 300 }} />
-                </View>
-            )}
+            {/* Glyph and Economy Stats handled here, Verbs handled by ResultStackView */}
+            
             {projectedGlyph && (
                 <View style={{ alignItems: 'center' }}>
                     <Animated.Text style={[dynamicStyles.glyphText, { transform: [{ scale: scaleAnim }] }]}>
