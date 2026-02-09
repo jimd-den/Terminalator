@@ -24,8 +24,7 @@ import { BufferScreen } from './BufferScreen';
 import { BufferDTO } from '../../../domain/dtos/BufferDTO';
 import { FKeyBar, FKeyDef } from '../components/FKeyBar';
 import { MainframeOverlay } from '../components/MainframeOverlay';
-import { TheatricalCanvas } from '../components/theatrical/TheatricalCanvas';
-import { TutorOverlay } from '../components/theatrical/TutorOverlay';
+import { RhythmHUD } from '../components/theatrical/RhythmHUD';
 import { ResultStackView } from '../components/theatrical/ResultStackView';
 import { EconomyBar } from '../components/EconomyBar';
 
@@ -118,8 +117,7 @@ export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
             {/* Legacy output removed in favor of ResultStackView */}
             <ResultStackView />
             <MainframeOverlay />
-            <TheatricalCanvas />
-            <TutorOverlay />
+            <RhythmHUD />
         </View>
     );
 

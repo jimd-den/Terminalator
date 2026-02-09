@@ -1,57 +1,69 @@
-/**
- * EconomyBar - Presentation Layer
- * 
- * A dedicated, centered bar for Economy metrics (ZINC and Hashrate).
- * Decoupled from the system status vitals.
- */
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
-import { useEconomy } from '../context/EconomyProvider';
-import { THEME } from '../Theme';
-import { HashRateMonitor } from './HashRateMonitor';
+import { useProcess } from '../context/ProcessProvider';
+import { GameEventType } from '../../../domain/services/SimulationBus';
+import { ZincFormatter } from '../../../domain/utils/ZincFormatter';
 
 export const EconomyBar: React.FC = () => {
     const { theme, settings } = useTheme();
-    const { zincBalance } = useEconomy();
-    const colors = theme.colors;
+    const { bus } = useProcess();
+    const [balance, setBalance] = useState(0);
+    const [hashRate, setHashRate] = useState(0);
 
-    const styles = StyleSheet.create({
-        container: {
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: '#000', // Black background for separation
-            paddingVertical: 6,
-            borderBottomWidth: 1,
-            borderBottomColor: 'rgba(0, 255, 65, 0.2)', // Subtle border
-            gap: 20,
-        },
-        section: {
-            flexDirection: 'row',
-            alignItems: 'center',
-        },
-        creditLabel: {
-            color: '#000',
-            backgroundColor: colors.secondary,
-            fontFamily: settings.fontFamily,
-            fontSize: 14,
-            fontWeight: 'bold',
-            paddingHorizontal: 10,
-            paddingVertical: 2,
-        }
-    });
+    useEffect(() => {
+        const unsub = bus.subscribe(GameEventType.ECONOMY_UPDATE, (event) => {
+            setBalance(event.payload.balance);
+            setHashRate(event.payload.hashRate);
+        });
+        return () => unsub();
+    }, [bus]);
+
+    const formatted = ZincFormatter.format(balance);
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { borderTopColor: theme.colors.border }]}>
             <View style={styles.section}>
-                <Text style={styles.creditLabel}>
-                    Ƶ {zincBalance.toFixed(12)}
+                <Text style={[styles.label, { color: theme.colors.text.dim, fontFamily: settings.fontFamily }]}>
+                    WALLET
+                </Text>
+                <Text style={[styles.value, { color: theme.colors.secondary, fontFamily: settings.fontFamily }]}>
+                    {formatted.value} <Text style={{ fontSize: 10 }}>{formatted.unit}</Text>
                 </Text>
             </View>
-
-            <HashRateMonitor />
+            <View style={styles.section}>
+                <Text style={[styles.label, { color: theme.colors.text.dim, fontFamily: settings.fontFamily }]}>
+                    HASHRATE
+                </Text>
+                <Text style={[styles.value, { color: theme.colors.primary, fontFamily: settings.fontFamily }]}>
+                    {hashRate.toFixed(2)} H/s
+                </Text>
+            </View>
         </View>
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        flexDirection: 'row',
+        paddingVertical: 4,
+        paddingHorizontal: 12,
+        borderTopWidth: 1,
+        backgroundColor: '#000',
+        justifyContent: 'space-between',
+    },
+    section: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    label: {
+        fontSize: 10,
+        fontWeight: 'bold',
+        letterSpacing: 1,
+    },
+    value: {
+        fontSize: 12,
+        fontWeight: 'bold',
+    }
+});

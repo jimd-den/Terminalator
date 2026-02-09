@@ -392,12 +392,18 @@ export class CoreUtilsModule implements CommandModule {
 
         // Clear (Simple inline)
         registry.register('clear', {
-            execute: (_args, _context, state) => ({
+            name: 'clear',
+            description: 'Clear the terminal screen',
+            execute: (_args: string[], _context: any, state: any) => ({
                 output: '',
                 newState: state,
                 exitCode: 0,
                 uiAction: 'CLEAR'
+            }),
+            getMetadata: () => ({
+                verb: 'PURGING CONSOLE' as any,
+                style: 'NORMAL'
             })
-        });
+        } as any);
     }
 }

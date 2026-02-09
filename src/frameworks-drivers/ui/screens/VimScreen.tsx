@@ -19,8 +19,7 @@ import { useProcess } from '../context/ProcessProvider';
 import { useSystemState } from '../context/SystemStateProvider';
 import { useTutorPersona } from '../context/TutorPersonaProvider';
 import { MainframeOverlay } from '../components/MainframeOverlay';
-import { TheatricalCanvas } from '../components/theatrical/TheatricalCanvas';
-import { TutorOverlay } from '../components/theatrical/TutorOverlay';
+import { RhythmHUD } from '../components/theatrical/RhythmHUD';
 import { ResultStackView } from '../components/theatrical/ResultStackView';
 import { FileSystemService } from '../../../domain/services/FileSystemService';
 
@@ -55,8 +54,7 @@ export const VimScreen: React.FC<VimScreenProps> = ({ filename, onExit }) => {
             {vim.topContent}
             <ResultStackView />
             <MainframeOverlay />
-            <TheatricalCanvas />
-            <TutorOverlay />
+            <RhythmHUD />
         </View>
     );
 

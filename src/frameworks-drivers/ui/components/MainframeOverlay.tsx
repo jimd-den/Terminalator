@@ -188,14 +188,17 @@ export const MainframeOverlay: React.FC = () => {
         },
         perfectText: {
             position: 'absolute',
-            top: '20%',
+            top: '25%',
             fontFamily: THEME.typography.fontFamily,
-            fontSize: 40,
+            fontSize: 56,
             color: colors.secondary,
-            fontWeight: 'bold',
-            letterSpacing: 8,
+            fontWeight: '900',
+            letterSpacing: 12,
             backgroundColor: '#000',
-            padding: 10,
+            paddingHorizontal: 20,
+            paddingVertical: 10,
+            borderWidth: 4,
+            borderColor: colors.secondary,
         }
     });
 

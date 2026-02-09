@@ -6,6 +6,7 @@ import { DependencyContainer } from '../src/infrastructure/di/DependencyContaine
 import { ConsoleTelemetryAdapter } from '../src/infrastructure/telemetry/ConsoleTelemetryAdapter';
 import { NetworkMap } from '../src/domain/services/NetworkMap';
 import { SimulationBus } from '../src/domain/services/SimulationBus';
+import { RhythmConductor } from '../src/domain/services/RhythmConductor';
 
 // Polyfill for React Native/Expo globals
 (global as any).__DEV__ = true;
@@ -33,7 +34,8 @@ async function runSimulation() {
     const networkMap = new NetworkMap();
     const telemetry = new ConsoleTelemetryAdapter();
     const bus = new SimulationBus(telemetry);
-    const gameManager = DependencyContainer.createGameManager(fs, networkMap, telemetry, bus);
+    const conductor = new RhythmConductor(bus);
+    const gameManager = DependencyContainer.createGameManager(fs, networkMap, telemetry, bus, conductor);
     const fsService = new FileSystemService(fs);
     
     const executor = new GameCommandExecutor(fsService, gameManager, networkMap, telemetry);

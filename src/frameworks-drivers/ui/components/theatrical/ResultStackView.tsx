@@ -64,11 +64,6 @@ const MorphingText: React.FC<{
     return <Text style={style}>{display}</Text>;
 };
 
-/**
- * TypewriterOutput - Implementation Layer
- * 
- * Reveals the command output character by character.
- */
 const TypewriterOutput: React.FC<{ text: string, style: any }> = ({ text, style }) => {
     const [display, setDisplay] = useState('');
     
@@ -79,12 +74,12 @@ const TypewriterOutput: React.FC<{ text: string, style: any }> = ({ text, style 
         }
         
         let cursor = 0;
-        const batchSize = 4; // Reveal speed
+        const batchSize = 4;
         const interval = setInterval(() => {
             cursor += batchSize;
             setDisplay(text.substring(0, cursor));
             if (cursor >= text.length) clearInterval(interval);
-        }, 16); // 60fps
+        }, 16);
 
         return () => clearInterval(interval);
     }, [text]);
@@ -92,6 +87,16 @@ const TypewriterOutput: React.FC<{ text: string, style: any }> = ({ text, style 
     return <Text style={style}>{display}</Text>;
 };
 
+/**
+ * ResultStackView - Refined Theatrical Console
+ * 
+ * Pillar: THE STORYTELLER'S CODE (Visual Narrative)
+ * 
+ * Features:
+ * 1. Bottom-docking animation (Stack shifts UP).
+ * 2. Clear animation (One-by-one sequential pop).
+ * 3. Bottom-weighted scrolling.
+ */
 export const ResultStackView: React.FC = () => {
     const { bus } = useProcess();
     const { theme, settings } = useTheme();
@@ -100,12 +105,24 @@ export const ResultStackView: React.FC = () => {
     const [history, setHistory] = useState<ResultCard[]>([]);
     const [activeCard, setActiveCard] = useState<ResultCard | null>(null);
     const [isSettling, setIsSettling] = useState(false);
+    
+    const scrollRef = useRef<ScrollView>(null);
+    const useNativeDriver = Platform.OS !== 'web';
 
     // --- Animation Values ---
     const moveAnim = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
     const scaleAnim = useRef(new Animated.Value(1)).current;
     const widthAnim = useRef(new Animated.Value(350)).current; 
-    const useNativeDriver = Platform.OS !== 'web';
+
+    // Handle "CLEAR" command specifically
+    const performClearAnimation = async () => {
+        // Pop them out one by one fast
+        const currentHistory = [...history];
+        for (let i = currentHistory.length - 1; i >= 0; i--) {
+            await new Promise(resolve => setTimeout(resolve, 50));
+            setHistory(prev => prev.slice(0, i));
+        }
+    };
 
     useEffect(() => {
         const unsub = bus.subscribe(GameEventType.TUTOR_EVENT, (event) => {
@@ -113,7 +130,7 @@ export const ResultStackView: React.FC = () => {
             
             if (type === 'PRESENTATION_START') {
                 setActiveCard({
-                    id: 'active',
+                    id: `card-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
                     command: payload.command,
                     verb: payload.verb || 'PROCESSING',
                     output: '',
@@ -132,7 +149,15 @@ export const ResultStackView: React.FC = () => {
 
             } else if (type === 'PRESENTATION_RESULT') {
                 setActiveCard(prev => prev ? { ...prev, exitCode: payload.exitCode } : null);
-                setTimeout(() => settleActiveCard(payload.command), 1000);
+                
+                // If it was a CLEAR command, trigger pop animation
+                if (payload.command.trim() === 'clear') {
+                    performClearAnimation().then(() => {
+                        setTimeout(() => settleActiveCard(payload.command), 200);
+                    });
+                } else {
+                    setTimeout(() => settleActiveCard(payload.command), 1000);
+                }
 
             } else if (type === 'RESULT_CARD') {
                 setActiveCard(prev => prev ? { ...prev, output: payload.output, hostname: payload.hostname } : null);
@@ -141,20 +166,33 @@ export const ResultStackView: React.FC = () => {
         });
 
         return () => unsub();
-    }, [bus]);
+    }, [bus, history]);
+
+    // Ensure scroll to bottom
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            scrollRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+        return () => clearTimeout(timer);
+    }, [history, activeCard, isSettling]);
 
     const settleActiveCard = (command: string) => {
         setIsSettling(true);
         
+        // Target: Dock at the bottom. 
+        // In this refined version, we animate to a "docking zone"
+        const screenHeight = Dimensions.get('window').height;
+        const targetY = screenHeight * 0.35; // Adjust based on footer height
+        
         Animated.parallel([
-            Animated.timing(moveAnim.y, { toValue: 280, duration: 800, useNativeDriver }),
+            Animated.timing(moveAnim.y, { toValue: targetY, duration: 800, useNativeDriver }),
             Animated.timing(scaleAnim, { toValue: 1, duration: 800, useNativeDriver }),
-            Animated.timing(widthAnim, { toValue: Dimensions.get('window').width * 0.9, duration: 800, useNativeDriver: false })
+            Animated.timing(widthAnim, { toValue: Dimensions.get('window').width * 0.95, duration: 800, useNativeDriver: false })
         ]).start(() => {
             setActiveCard(current => {
                 if (current) {
                     const finalCard = { ...current, isHistory: true };
-                    setHistory(prev => [...prev, finalCard].slice(-10));
+                    setHistory(prev => [...prev, finalCard].slice(-15));
                 }
                 return null;
             });
@@ -173,17 +211,16 @@ export const ResultStackView: React.FC = () => {
             zIndex: 100,
             alignSelf: 'center' as const,
             position: 'absolute' as const,
-            top: '20%'
+            top: 100 // Use numeric value instead of percentage string
         } : {
-            width: '90%',
+            width: '95%' as any, // Use any to allow percentage string in union type
             alignSelf: 'center' as const,
         };
 
-        // Determine when to show output: ONLY when it is history (docked)
-        const showOutput = card.isHistory && card.output;
+        const isPreExec = isCurrentlyActive && !isSettling;
 
         return (
-            <Animated.View key={isCurrentlyActive ? `active-${card.timestamp}` : card.id} style={[styles.card, { borderColor }, cardStyle]}>
+            <Animated.View key={card.id} style={[styles.card, { borderColor }, cardStyle]}>
                 <View style={styles.cardHeader}>
                     <Text style={[styles.cardTitle, { color: colors.text.dim }]}>
                         {card.hostname} // {new Date(card.timestamp).toLocaleTimeString()}
@@ -202,18 +239,18 @@ export const ResultStackView: React.FC = () => {
                         style={[
                             styles.contentStyle, 
                             { 
-                                color: (isCurrentlyActive && !isSettling) ? colors.primary : colors.secondary,
-                                fontSize: (isCurrentlyActive && !isSettling) ? 32 : 16,
-                                fontWeight: (isCurrentlyActive && !isSettling) ? '900' : 'bold',
-                                letterSpacing: (isCurrentlyActive && !isSettling) ? 8 : 1,
-                                textAlign: (isCurrentlyActive && !isSettling) ? 'center' : 'left',
+                                color: isPreExec ? colors.primary : colors.secondary,
+                                fontSize: isPreExec ? 32 : 16,
+                                fontWeight: isPreExec ? '900' : 'bold',
+                                letterSpacing: isPreExec ? 8 : 1,
+                                textAlign: isPreExec ? 'center' : 'left',
                                 width: '100%'
                             }
                         ]}
                     />
                 </View>
                 
-                {showOutput ? (
+                {card.isHistory && card.output ? (
                     <View style={styles.outputContainer}>
                         <TypewriterOutput 
                             text={card.output} 
@@ -228,8 +265,10 @@ export const ResultStackView: React.FC = () => {
     return (
         <View style={styles.container} pointerEvents="none">
             <ScrollView 
+                ref={scrollRef}
                 style={styles.scroll}
                 contentContainerStyle={styles.historyContent}
+                onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
             >
                 {history.map(c => renderCard(c, false))}
             </ScrollView>
@@ -250,43 +289,45 @@ const styles = StyleSheet.create({
     historyContent: {
         justifyContent: 'flex-end',
         minHeight: '100%',
-        paddingBottom: 140, 
-        gap: 20,
+        paddingBottom: 160, 
+        gap: 30,
     },
     card: {
         borderWidth: 2,
         backgroundColor: '#000',
-        padding: 15,
-        minHeight: 60,
+        padding: 20,
+        minHeight: 70,
     },
     cardHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 10,
+        marginBottom: 12,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255,255,255,0.15)',
-        paddingBottom: 6,
+        borderBottomColor: 'rgba(255,255,255,0.2)',
+        paddingBottom: 8,
     },
     cardTitle: {
-        fontSize: 10,
+        fontSize: 11,
         fontFamily: THEME.typography.fontFamily,
-        letterSpacing: 1,
+        letterSpacing: 2,
+        fontWeight: 'bold',
     },
     mainContent: {
         justifyContent: 'center',
-        paddingVertical: 10,
+        paddingVertical: 12,
     },
     contentStyle: {
         fontFamily: THEME.typography.fontFamily,
     },
     outputContainer: {
-        marginTop: 10,
-        paddingTop: 10,
+        marginTop: 12,
+        paddingTop: 12,
         borderTopWidth: 1,
         borderTopColor: 'rgba(255,255,255,0.1)',
     },
     cardOutput: {
-        fontSize: 12,
-        lineHeight: 18,
+        fontSize: 13,
+        lineHeight: 20,
+        letterSpacing: 0.5,
     }
 });
