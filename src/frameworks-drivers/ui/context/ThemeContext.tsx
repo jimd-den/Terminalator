@@ -21,6 +21,7 @@ interface ThemeContextType {
     settings: UserSettings;
     setTheme: (id: string) => void;
     setFont: (font: string) => void;
+    setForceKeyboardOpen: (open: boolean) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -52,8 +53,14 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         await settingsRepo.saveSettings(next);
     };
 
+    const setForceKeyboardOpen = async (open: boolean) => {
+        const next = { ...settings, forceKeyboardOpen: open };
+        setSettings(next);
+        await settingsRepo.saveSettings(next);
+    };
+
     return (
-        <ThemeContext.Provider value={{ theme, settings, setTheme, setFont }}>
+        <ThemeContext.Provider value={{ theme, settings, setTheme, setFont, setForceKeyboardOpen }}>
             {children}
         </ThemeContext.Provider>
     );

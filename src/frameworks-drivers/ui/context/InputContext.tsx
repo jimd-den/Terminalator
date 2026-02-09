@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useRef, useCallback, useEffect, ReactNode } from 'react';
 import { TextInput, AppState, AppStateStatus } from 'react-native';
+import { useTheme } from './ThemeContext';
 
 /**
  * InputContext - Presentation Layer
@@ -26,6 +27,7 @@ export interface InputContextType {
 const InputContext = createContext<InputContextType | undefined>(undefined);
 
 export const InputProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+    const { settings } = useTheme();
     const inputRef = useRef<TextInput>(null);
     // Initialize with a space to detect backspace
     const [inputValue, setInputValue] = useState(' ');
@@ -51,14 +53,27 @@ export const InputProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             }
         });
 
-        const interval = setInterval(refocus, 2000); // Heartbeat focus
+        // Dynamic heartbeat: fast when forced, slow otherwise
+        const intervalTime = settings.forceKeyboardOpen ? 500 : 2000;
+        const interval = setInterval(() => {
+            if (settings.forceKeyboardOpen) {
+                refocus();
+            }
+        }, intervalTime);
+
         refocus();
 
         return () => {
             subscription.remove();
             clearInterval(interval);
         };
-    }, [refocus]);
+    }, [refocus, settings.forceKeyboardOpen]);
+
+    const handleBlur = () => {
+        if (settings.forceKeyboardOpen) {
+            refocus();
+        }
+    };
 
     const handleTextChange = (text: string) => {
         if (isLocked) {
@@ -171,6 +186,7 @@ export const InputProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                 onChangeText={handleTextChange}
                 onKeyPress={handleKeyPressEvent}
                 onSubmitEditing={handleSubmitEditing}
+                onBlur={handleBlur}
                 autoCapitalize="none"
                 autoCorrect={false}
                 autoFocus={true}
