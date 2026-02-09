@@ -56,7 +56,7 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
             alignItems: 'center',
             paddingVertical: THEME.spacing.md,
             borderBottomWidth: 1,
-            borderBottomColor: 'rgba(0, 255, 65, 0.1)',
+            borderBottomColor: colors.primary_10,
         },
         headerText: {
             color: colors.primary,

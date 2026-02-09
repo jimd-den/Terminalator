@@ -17,7 +17,7 @@ import { GameEventType } from '../../../domain/services/SimulationBus';
 
 export const MainframeOverlay: React.FC = () => {
     const { gameManager, bus } = useProcess();
-    const { theme } = useTheme();
+    const { theme, settings } = useTheme();
     const colors = theme.colors;
 
     // --- State ---
@@ -149,26 +149,26 @@ export const MainframeOverlay: React.FC = () => {
             zIndex: 5,
         },
         verbText: {
-            fontFamily: THEME.typography.fontFamily,
+            fontFamily: settings.fontFamily,
             fontSize: THEME.typography.fontSize.xl,
             color: colors.primary,
             fontWeight: 'bold',
             textAlign: 'center',
             letterSpacing: 4,
-            backgroundColor: '#000', // Solid background for text
+            backgroundColor: colors.background, // Solid background for text
             padding: 10,
         },
         glyphText: {
-            fontFamily: THEME.typography.fontFamily,
+            fontFamily: settings.fontFamily,
             fontSize: 160,
             color: colors.secondary,
             fontWeight: '900',
-            backgroundColor: '#000', // Solid background
+            backgroundColor: colors.background, // Solid background
         },
         multiplierText: {
-            fontFamily: THEME.typography.fontFamily,
+            fontFamily: settings.fontFamily,
             fontSize: 24,
-            color: '#000',
+            color: colors.text.inverted,
             backgroundColor: colors.primary,
             paddingHorizontal: 12,
             paddingVertical: 4,
@@ -177,9 +177,9 @@ export const MainframeOverlay: React.FC = () => {
             fontWeight: 'bold',
         },
         rewardText: {
-            fontFamily: THEME.typography.fontFamily,
+            fontFamily: settings.fontFamily,
             fontSize: 16,
-            color: '#000',
+            color: colors.text.inverted,
             backgroundColor: colors.secondary,
             paddingHorizontal: 10,
             paddingVertical: 2,
@@ -189,12 +189,12 @@ export const MainframeOverlay: React.FC = () => {
         perfectText: {
             position: 'absolute',
             top: '25%',
-            fontFamily: THEME.typography.fontFamily,
+            fontFamily: settings.fontFamily,
             fontSize: 56,
             color: colors.secondary,
             fontWeight: '900',
             letterSpacing: 12,
-            backgroundColor: '#000',
+            backgroundColor: colors.background,
             paddingHorizontal: 20,
             paddingVertical: 10,
             borderWidth: 4,

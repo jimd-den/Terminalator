@@ -14,7 +14,7 @@ import { RhythmGamePresenter, RhythmSummary } from '../../../../interface-adapte
  */
 export const RhythmHUD: React.FC = () => {
     const { bus, gameManager } = useProcess();
-    const { theme } = useTheme();
+    const { theme, settings } = useTheme();
     const colors = theme.colors;
 
     // --- State ---
@@ -178,54 +178,173 @@ export const RhythmHUD: React.FC = () => {
     const formattedZinc = ZincFormatter.format(displayZinc);
     const displayChar = (isActive && !summary && !isCountdown && progressIndex < lessonText.length) ? (lessonText[progressIndex] || '') : '';
 
+    const dynamicStyles = StyleSheet.create({
+        container: {
+            ...StyleSheet.absoluteFillObject,
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000,
+        },
+        box: {
+            width: 320,
+            height: 320,
+            backgroundColor: colors.background,
+            borderWidth: 4,
+            padding: 20,
+            justifyContent: 'center',
+            alignItems: 'center',
+            shadowColor: colors.primary,
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.8,
+            shadowRadius: 20,
+            overflow: 'hidden',
+        },
+        header: {
+            position: 'absolute',
+            top: 10,
+            left: 10,
+            right: 10,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            zIndex: 10,
+        },
+        coinContainer: {
+            backgroundColor: colors.primary_05,
+            paddingHorizontal: 8,
+            paddingVertical: 2,
+        },
+        coinText: {
+            fontSize: 16,
+            fontWeight: '900',
+            letterSpacing: 1,
+            fontFamily: settings.fontFamily,
+        },
+        multiplierText: {
+            fontSize: 28,
+            fontWeight: '900',
+            fontStyle: 'italic',
+            letterSpacing: -2,
+            fontFamily: settings.fontFamily,
+        },
+        glyphContainer: {
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 5,
+        },
+        glyph: {
+            fontSize: 140,
+            fontWeight: '900',
+            fontFamily: settings.fontFamily,
+        },
+        feedbackContainer: {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 50,
+        },
+        feedbackText: {
+            fontSize: 32, // Reduced to ensure it fits without truncation
+            fontWeight: '900',
+            letterSpacing: 4,
+            textAlign: 'center',
+            backgroundColor: colors.background_80,
+            paddingHorizontal: 15,
+            paddingVertical: 5,
+            fontFamily: settings.fontFamily,
+        },
+        summaryContainer: {
+            alignItems: 'center',
+            gap: 12,
+            width: '100%',
+        },
+        gradeText: {
+            fontSize: 120,
+            fontWeight: '900',
+            marginBottom: 10,
+            fontStyle: 'italic',
+            fontFamily: settings.fontFamily,
+        },
+        statText: {
+            fontSize: 14,
+            fontWeight: 'bold',
+            letterSpacing: 2,
+            fontFamily: settings.fontFamily,
+        },
+        rewardText: {
+            fontSize: 20,
+            fontWeight: '900',
+            marginTop: 15,
+            fontFamily: settings.fontFamily,
+        },
+        statusText: {
+            fontSize: 12,
+            fontWeight: 'bold',
+            marginTop: 25,
+            letterSpacing: 6,
+            textAlign: 'center',
+            fontFamily: settings.fontFamily,
+        },
+        divider: {
+            width: 240,
+            height: 2,
+            backgroundColor: colors.primary_20,
+            marginVertical: 15,
+        }
+    });
+
     return (
-        <View style={styles.container} pointerEvents="box-none">
-            <Animated.View style={[styles.box, { borderColor: colors.primary, transform: [{ scale: boxScale }] }]}>
+        <View style={dynamicStyles.container} pointerEvents="box-none">
+            <Animated.View style={[dynamicStyles.box, { borderColor: colors.primary, transform: [{ scale: boxScale }] }]}>
                 {summary ? (
-                    <View style={styles.summaryContainer}>
-                        <Text style={[styles.gradeText, { color: colors.secondary }]}>{summary.grade}</Text>
-                        <Text style={[styles.statText, { color: colors.text.primary }]}>ACCURACY: {summary.accuracyPercentage}</Text>
-                        <Text style={[styles.statText, { color: colors.text.primary }]}>PERFECTS: {summary.perfectPercentage}</Text>
-                        <Text style={[styles.statText, { color: colors.text.primary }]}>MAX STREAK: {summary.maxStreak}</Text>
-                        <View style={styles.divider} />
-                        <Text style={[styles.rewardText, { color: colors.secondary }]}>TOTAL MINED: {summary.totalMined}</Text>
-                        <Text style={[styles.statusText, { color: colors.primary }]}>PRESS ENTER TO CONTINUE</Text>
+                    <View style={dynamicStyles.summaryContainer}>
+                        <Text style={[dynamicStyles.gradeText, { color: colors.secondary }]}>{summary.grade}</Text>
+                        <Text style={[dynamicStyles.statText, { color: colors.text.primary }]}>ACCURACY: {summary.accuracyPercentage}</Text>
+                        <Text style={[dynamicStyles.statText, { color: colors.text.primary }]}>PERFECTS: {summary.perfectPercentage}</Text>
+                        <Text style={[dynamicStyles.statText, { color: colors.text.primary }]}>MAX STREAK: {summary.maxStreak}</Text>
+                        <View style={dynamicStyles.divider} />
+                        <Text style={[dynamicStyles.rewardText, { color: colors.secondary }]}>TOTAL MINED: {summary.totalMined}</Text>
+                        <Text style={[dynamicStyles.statusText, { color: colors.primary }]}>PRESS ENTER TO CONTINUE</Text>
                     </View>
                 ) : isCountdown ? (
-                    <View style={styles.glyphContainer}>
-                        <Text style={[styles.statusText, { color: colors.primary, fontSize: 40 }]}>START</Text>
-                        <Text style={[styles.statusText, { color: colors.secondary, marginTop: 20 }]}>BLOCKING INPUT...</Text>
+                    <View style={dynamicStyles.glyphContainer}>
+                        <Text style={[dynamicStyles.statusText, { color: colors.primary, fontSize: 40 }]}>START</Text>
+                        <Text style={[dynamicStyles.statusText, { color: colors.secondary, marginTop: 20 }]}>BLOCKING INPUT...</Text>
                     </View>
                 ) : (
                     <View style={{ flex: 1, width: '100%', justifyContent: 'center', alignItems: 'center' }}>
                         {/* Header Stats */}
-                        <View style={styles.header}>
-                            <View style={styles.coinContainer}>
-                                <Text style={[styles.coinText, { color: colors.secondary }]}>
+                        <View style={dynamicStyles.header}>
+                            <View style={dynamicStyles.coinContainer}>
+                                <Text style={[dynamicStyles.coinText, { color: colors.secondary }]}>
                                     {formattedZinc.value} {formattedZinc.unit}
                                 </Text>
                             </View>
                             {streak > 1 && (
-                                <Animated.Text style={[styles.multiplierText, { color: colors.primary, transform: [{ scale: multiplierAnim }] }]}>
+                                <Animated.Text style={[dynamicStyles.multiplierText, { color: colors.primary, transform: [{ scale: multiplierAnim }] }]}>
                                     {Math.min(8, 1 + Math.floor(streak / 5))}X
                                 </Animated.Text>
                             )}
                         </View>
 
                         {/* Central Glyph */}
-                        <View style={styles.glyphContainer}>
-                            <Animated.Text style={[styles.glyph, { color: colors.primary, opacity: glyphBlink }]}>
+                        <View style={dynamicStyles.glyphContainer}>
+                            <Animated.Text style={[dynamicStyles.glyph, { color: colors.primary, opacity: glyphBlink }]}>
                                 {displayChar || ''}
                             </Animated.Text>
                         </View>
 
                         {/* Feedback Layer */}
                         {feedback !== 'NONE' && (
-                            <Animated.View style={[styles.feedbackContainer, { opacity: feedbackAnim, transform: [{ scale: feedbackAnim.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1.5] }) }] }]}>
+                            <Animated.View style={[dynamicStyles.feedbackContainer, { opacity: feedbackAnim, transform: [{ scale: feedbackAnim.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1.5] }) }] }]}>
                                 <Text 
                                     adjustsFontSizeToFit 
                                     numberOfLines={1}
-                                    style={[styles.feedbackText, { color: feedback === 'PERFECT' ? colors.secondary : colors.error }]}
+                                    style={[dynamicStyles.feedbackText, { color: feedback === 'PERFECT' ? colors.secondary : colors.error }]}
                                 >
                                     {feedback === 'PERFECT' ? 'PERFECT' : 'MISS'}
                                 </Text>
@@ -238,115 +357,4 @@ export const RhythmHUD: React.FC = () => {
     );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        ...StyleSheet.absoluteFillObject,
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 1000,
-    },
-    box: {
-        width: 320,
-        height: 320,
-        backgroundColor: '#000',
-        borderWidth: 4,
-        padding: 20,
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: THEME.colors.primary,
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.8,
-        shadowRadius: 20,
-        overflow: 'hidden',
-    },
-    header: {
-        position: 'absolute',
-        top: 10,
-        left: 10,
-        right: 10,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        zIndex: 10,
-    },
-    coinContainer: {
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-    },
-    coinText: {
-        fontSize: 16,
-        fontWeight: '900',
-        letterSpacing: 1,
-        fontFamily: THEME.typography.fontFamily,
-    },
-    multiplierText: {
-        fontSize: 28,
-        fontWeight: '900',
-        fontStyle: 'italic',
-        letterSpacing: -2,
-    },
-    glyphContainer: {
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 5,
-    },
-    glyph: {
-        fontSize: 140,
-        fontWeight: '900',
-        fontFamily: THEME.typography.fontFamily,
-    },
-    feedbackContainer: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 50,
-    },
-    feedbackText: {
-        fontSize: 32, // Reduced to ensure it fits without truncation
-        fontWeight: '900',
-        letterSpacing: 4,
-        textAlign: 'center',
-        backgroundColor: 'rgba(0,0,0,0.8)',
-        paddingHorizontal: 15,
-        paddingVertical: 5,
-    },
-    summaryContainer: {
-        alignItems: 'center',
-        gap: 12,
-        width: '100%',
-    },
-    gradeText: {
-        fontSize: 120,
-        fontWeight: '900',
-        marginBottom: 10,
-        fontStyle: 'italic',
-    },
-    statText: {
-        fontSize: 14,
-        fontWeight: 'bold',
-        letterSpacing: 2,
-    },
-    rewardText: {
-        fontSize: 20,
-        fontWeight: '900',
-        marginTop: 15,
-    },
-    statusText: {
-        fontSize: 12,
-        fontWeight: 'bold',
-        marginTop: 25,
-        letterSpacing: 6,
-        textAlign: 'center',
-    },
-    divider: {
-        width: 240,
-        height: 2,
-        backgroundColor: 'rgba(255,255,255,0.3)',
-        marginVertical: 15,
-    }
-});
+// Remove static styles

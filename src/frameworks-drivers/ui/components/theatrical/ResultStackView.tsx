@@ -201,6 +201,61 @@ export const ResultStackView: React.FC = () => {
         });
     };
 
+    const dynamicStyles = StyleSheet.create({
+        container: {
+            ...StyleSheet.absoluteFillObject,
+            zIndex: 1,
+        },
+        scroll: {
+            flex: 1,
+        },
+        historyContent: {
+            justifyContent: 'flex-end',
+            minHeight: '100%',
+            paddingBottom: 160, 
+            gap: 30,
+        },
+        card: {
+            borderWidth: 2,
+            backgroundColor: colors.background,
+            padding: 20,
+            minHeight: 70,
+        },
+        cardHeader: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            marginBottom: 12,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.primary_20,
+            paddingBottom: 8,
+        },
+        cardTitle: {
+            fontSize: 11,
+            fontFamily: settings.fontFamily,
+            letterSpacing: 2,
+            fontWeight: 'bold',
+        },
+        mainContent: {
+            justifyContent: 'center',
+            paddingVertical: 12,
+        },
+        contentStyle: {
+            fontFamily: settings.fontFamily,
+        },
+        outputContainer: {
+            marginTop: 12,
+            paddingTop: 12,
+            borderTopWidth: 1,
+            borderTopColor: colors.primary_10,
+        },
+        cardOutput: {
+            fontSize: 13,
+            lineHeight: 20,
+            letterSpacing: 0.5,
+            fontFamily: settings.fontFamily,
+        }
+    });
+
     const renderCard = (card: ResultCard, isCurrentlyActive: boolean) => {
         const isError = card.exitCode !== 0;
         const borderColor = isError ? colors.error : colors.primary;
@@ -220,24 +275,24 @@ export const ResultStackView: React.FC = () => {
         const isPreExec = isCurrentlyActive && !isSettling;
 
         return (
-            <Animated.View key={card.id} style={[styles.card, { borderColor }, cardStyle]}>
-                <View style={styles.cardHeader}>
-                    <Text style={[styles.cardTitle, { color: colors.text.dim }]}>
+            <Animated.View key={card.id} style={[dynamicStyles.card, { borderColor }, cardStyle]}>
+                <View style={dynamicStyles.cardHeader}>
+                    <Text style={[dynamicStyles.cardTitle, { color: colors.text.dim }]}>
                         {card.hostname} // {new Date(card.timestamp).toLocaleTimeString()}
                     </Text>
-                    <Text style={[styles.cardTitle, { color: borderColor }]}>
+                    <Text style={[dynamicStyles.cardTitle, { color: borderColor }]}>
                         {card.exitCode === 0 ? '[ OK ]' : '[ ERR ]'}
                     </Text>
                 </View>
                 
-                <View style={styles.mainContent}>
+                <View style={dynamicStyles.mainContent}>
                     <MorphingText 
                         from={card.verb} 
                         to={`$ ${card.command}`} 
                         isMorphing={isCurrentlyActive && isSettling}
                         isSettled={card.isHistory}
                         style={[
-                            styles.contentStyle, 
+                            dynamicStyles.contentStyle, 
                             { 
                                 color: isPreExec ? colors.primary : colors.secondary,
                                 fontSize: isPreExec ? 32 : 16,
@@ -251,10 +306,10 @@ export const ResultStackView: React.FC = () => {
                 </View>
                 
                 {card.isHistory && card.output ? (
-                    <View style={styles.outputContainer}>
+                    <View style={dynamicStyles.outputContainer}>
                         <TypewriterOutput 
                             text={card.output} 
-                            style={[styles.cardOutput, { color: colors.text.primary, fontFamily: settings.fontFamily }]}
+                            style={[dynamicStyles.cardOutput, { color: colors.text.primary, fontFamily: settings.fontFamily }]}
                         />
                     </View>
                 ) : null}
@@ -263,11 +318,11 @@ export const ResultStackView: React.FC = () => {
     };
 
     return (
-        <View style={styles.container} pointerEvents="none">
+        <View style={dynamicStyles.container} pointerEvents="none">
             <ScrollView 
                 ref={scrollRef}
-                style={styles.scroll}
-                contentContainerStyle={styles.historyContent}
+                style={dynamicStyles.scroll}
+                contentContainerStyle={dynamicStyles.historyContent}
                 onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
             >
                 {history.map(c => renderCard(c, false))}
@@ -278,56 +333,4 @@ export const ResultStackView: React.FC = () => {
     );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        ...StyleSheet.absoluteFillObject,
-        zIndex: 1,
-    },
-    scroll: {
-        flex: 1,
-    },
-    historyContent: {
-        justifyContent: 'flex-end',
-        minHeight: '100%',
-        paddingBottom: 160, 
-        gap: 30,
-    },
-    card: {
-        borderWidth: 2,
-        backgroundColor: '#000',
-        padding: 20,
-        minHeight: 70,
-    },
-    cardHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255,255,255,0.2)',
-        paddingBottom: 8,
-    },
-    cardTitle: {
-        fontSize: 11,
-        fontFamily: THEME.typography.fontFamily,
-        letterSpacing: 2,
-        fontWeight: 'bold',
-    },
-    mainContent: {
-        justifyContent: 'center',
-        paddingVertical: 12,
-    },
-    contentStyle: {
-        fontFamily: THEME.typography.fontFamily,
-    },
-    outputContainer: {
-        marginTop: 12,
-        paddingTop: 12,
-        borderTopWidth: 1,
-        borderTopColor: 'rgba(255,255,255,0.1)',
-    },
-    cardOutput: {
-        fontSize: 13,
-        lineHeight: 20,
-        letterSpacing: 0.5,
-    }
-});
+// Remove static styles

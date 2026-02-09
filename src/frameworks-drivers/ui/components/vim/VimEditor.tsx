@@ -106,7 +106,7 @@ export const useVimEditor = (
             lineHeight: 24,
         },
         errorLine: {
-            backgroundColor: 'rgba(255, 0, 0, 0.15)',
+            backgroundColor: colors.error_15,
             borderLeftWidth: 3,
             borderLeftColor: colors.error,
         },
@@ -160,7 +160,7 @@ export const useVimEditor = (
             borderColor: colors.border,
             paddingHorizontal: 8,
             paddingVertical: 4,
-            backgroundColor: 'rgba(0, 255, 65, 0.05)',
+            backgroundColor: colors.primary_05,
             alignItems: 'center',
             justifyContent: 'center',
             minWidth: 40,
@@ -179,7 +179,7 @@ export const useVimEditor = (
             top: 0,
             left: 0,
             right: 0,
-            backgroundColor: 'rgba(0,0,0,0.8)',
+            backgroundColor: colors.background_80,
             padding: 10,
             zIndex: 100,
             borderBottomWidth: 1,
@@ -191,10 +191,10 @@ export const useVimEditor = (
     const getTokenColor = (type: string) => {
         switch (type) {
             case 'keyword': return colors.secondary;
-            case 'string': return '#CE9178';
+            case 'string': return colors.secondary;
             case 'comment': return colors.text.dim;
-            case 'number': return '#B5CEA8';
-            case 'operator': return '#D4D4D4';
+            case 'number': return colors.primary;
+            case 'operator': return colors.text.primary;
             default: return colors.text.primary;
         }
     };
