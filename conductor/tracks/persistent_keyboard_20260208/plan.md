@@ -3,10 +3,10 @@
 ## Phase 1: Domain & Persistence Updates
 - [x] Task: Add `forceKeyboardOpen` to `Settings` entity [2a60a20]
     - [x] Update `src/domain/entities/Settings.ts` interface and default values.
-- [ ] Task: Update `SettingsRepository` for new field
-    - [ ] Update `src/interface-adapters/DiskSettingsRepository.ts` to handle the new field in read/write operations.
-- [ ] Task: Create specific test for Settings persistence
-    - [ ] Create `tests/settings_persistence_test.ts` to verify the boolean flag is saved and loaded correctly.
+- [x] Task: Update `SettingsRepository` for new field [ff21405]
+    - [x] Update `src/interface-adapters/DiskSettingsRepository.ts` to handle the new field in read/write operations.
+- [x] Task: Create specific test for Settings persistence [ff21405]
+    - [x] Create `tests/settings_persistence_test.ts` to verify the boolean flag is saved and loaded correctly.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Domain & Persistence Updates' (Protocol in workflow.md)
 
 ## Phase 2: Global Keyboard Management
