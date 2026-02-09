@@ -1,8 +1,0 @@
-{
-  "track_id": "persistent_keyboard_20260208",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-02-08T12:00:00Z",
-  "updated_at": "2026-02-08T12:00:00Z",
-  "description": "we need a clean architecture solution for the mobile keyboard to always stay on on every screen and refactor the settings screen to be like commstab, and fit, the keyboard frequently goes out of focus and the display frequently surpasses the mobile keyboard, and we need that keyboard on option to be in settings and the setting should be designed to fit above the keyboard too. the keyboard should never go off focus"
-}

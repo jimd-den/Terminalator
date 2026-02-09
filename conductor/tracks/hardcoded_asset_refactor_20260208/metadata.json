@@ -1,8 +1,0 @@
-{
-  "track_id": "hardcoded_asset_refactor_20260208",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-02-08T13:00:00Z",
-  "updated_at": "2026-02-08T13:00:00Z",
-  "description": "scan the hole codebase for hardcoded colors that are not set by the settings screen and hardcoded fonts"
-}
