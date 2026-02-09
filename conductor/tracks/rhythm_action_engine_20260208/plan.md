@@ -24,14 +24,14 @@
 ## Phase 3: Theatrical Execution & Result Stack
 *Goal: Implement the managed lifecycle for commands.*
 
-- [ ] Task: Refine `SimulationMediator`
-    - [ ] Implement the full lifecycle: Pre-anim -> Execute -> Post-anim -> Result Card.
-- [ ] Task: Implement `ResultStackView` component
-    - [ ] Create `src/frameworks-drivers/ui/components/theatrical/ResultStackView.tsx`.
-    - [ ] Handle vertical stacking of static "flexible square" cards.
-- [ ] Task: Update `TheatricalCanvas`
-    - [ ] Add support for `PRE_ANIMATION` (Scan) and `POST_ANIMATION` (OK/ERR) visual states.
-- [ ] Task: Conductor - User Manual Verification 'Theatrical Execution' (Protocol in workflow.md)
+- [x] Task: Refine `SimulationMediator`
+    - [x] Implement the full lifecycle: Pre-anim -> Execute -> Post-anim -> Result Card.
+- [x] Task: Implement `ResultStackView` component
+    - [x] Create `src/frameworks-drivers/ui/components/theatrical/ResultStackView.tsx`.
+    - [x] Handle vertical stacking of static "flexible square" cards.
+- [x] Task: Update `TheatricalCanvas`
+    - [x] Add support for `PRE_ANIMATION` (Scan) and `POST_ANIMATION` (OK/ERR) visual states.
+- [~] Task: Conductor - User Manual Verification 'Theatrical Execution' (Protocol in workflow.md)
 
 ## Phase 4: Core Command Porting
 *Goal: Integrate core commands into the new metadata strategy.*
