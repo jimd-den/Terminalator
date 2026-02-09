@@ -26,6 +26,7 @@ import { FKeyBar, FKeyDef } from '../components/FKeyBar';
 import { MainframeOverlay } from '../components/MainframeOverlay';
 import { TheatricalCanvas } from '../components/theatrical/TheatricalCanvas';
 import { TutorOverlay } from '../components/theatrical/TutorOverlay';
+import { ResultStackView } from '../components/theatrical/ResultStackView';
 import { EconomyBar } from '../components/EconomyBar';
 
 export interface ShellScreenProps {
@@ -114,7 +115,8 @@ export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
     // -- View Composition --
     const mainLayout = (
         <View style={{ flex: 1 }}>
-            {shellView.topContent}
+            {/* Legacy output removed in favor of ResultStackView */}
+            <ResultStackView />
             <MainframeOverlay />
             <TheatricalCanvas />
             <TutorOverlay />

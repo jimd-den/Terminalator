@@ -40,14 +40,7 @@ export class PresentationDirector {
      * Triggers a theatrical sequence for a command.
      */
     public async presentCommand(command: string, args: string[]): Promise<void> {
-        const verb = this.VERB_MAP[command] || TheatricalVerb.EXTRACT;
-        
-        // 1. Emit Start Event
-        // The SimulationMediator will await ANIMATION_COMPLETE
-        this.bus.emit(GameEventType.TUTOR_EVENT, {
-            type: 'PRESENTATION_START' as any,
-            payload: { verb, command, args }
-        });
+        // Now handled by SimulationMediator emitting to bus
     }
 
     /**

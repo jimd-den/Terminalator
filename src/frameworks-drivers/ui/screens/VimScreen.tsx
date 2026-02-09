@@ -21,6 +21,7 @@ import { useTutorPersona } from '../context/TutorPersonaProvider';
 import { MainframeOverlay } from '../components/MainframeOverlay';
 import { TheatricalCanvas } from '../components/theatrical/TheatricalCanvas';
 import { TutorOverlay } from '../components/theatrical/TutorOverlay';
+import { ResultStackView } from '../components/theatrical/ResultStackView';
 import { FileSystemService } from '../../../domain/services/FileSystemService';
 
 export interface VimScreenProps {
@@ -52,6 +53,7 @@ export const VimScreen: React.FC<VimScreenProps> = ({ filename, onExit }) => {
     const topContent = (
         <View style={{ flex: 1 }}>
             {vim.topContent}
+            <ResultStackView />
             <MainframeOverlay />
             <TheatricalCanvas />
             <TutorOverlay />
