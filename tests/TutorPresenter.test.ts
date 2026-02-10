@@ -7,8 +7,8 @@ async function testTutorPresenter() {
     console.log("Testing TutorPresenter...");
 
     // Mock SharedValue
-    const visibility = { value: 0 };
-    const opacity = { value: 0 };
+    const visibility: { value: number } = { value: 0 };
+    const opacity: { value: number } = { value: 0 };
     
     const presenter = new TutorPresenter(visibility, opacity);
 
@@ -27,7 +27,7 @@ async function testTutorPresenter() {
     // Test 2: Dismiss
     console.log("Test 2: Dismiss");
     presenter.dismiss();
-    if (visibility.value !== 0) throw new Error("Visibility should be 0 after dismissal");
+    if ((visibility.value as number) !== 0) throw new Error("Visibility should be 0 after dismissal");
 
     // Test 3: Throttling (Simulated)
     // If we call presentMessage multiple times fast, it should handle it.

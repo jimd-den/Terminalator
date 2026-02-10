@@ -10,6 +10,8 @@ import Animated, {
 import { useTutorMessaging } from '../../context/TutorMessagingProvider';
 import { TutorPresenter } from '../../../../interface-adapters/presenters/TutorPresenter';
 import { useTheme } from '../../context/ThemeContext';
+import { useVisualDirector } from '../../../../interface-adapters/ui/VisualCortex/useVisualDirector';
+import { VisualPriority } from '../../../../interface-adapters/ui/VisualCortex/VisualPriority';
 
 /**
  * TutorOverlay - Humble View (Presentation Layer)
@@ -21,6 +23,7 @@ export const TutorOverlay: React.FC = () => {
     const { theme, settings } = useTheme();
     const colors = theme.colors;
     const { activeTutorMessage } = useTutorMessaging();
+    const { requestFocus, releaseFocus } = useVisualDirector();
 
     // --- Humble State (Shared Values) ---
     const visibility = useSharedValue(0);
@@ -32,18 +35,22 @@ export const TutorOverlay: React.FC = () => {
 
     useEffect(() => {
         if (activeTutorMessage) {
-            presenter.presentMessage(activeTutorMessage);
-            // Reanimated timing/spring logic
-            visibility.value = withSpring(1);
-            opacity.value = withTiming(1, { duration: 300 });
-            translateY.value = withSpring(0);
+            const granted = requestFocus('tutor-overlay', VisualPriority.FOCUS);
+            if (granted) {
+                presenter.presentMessage(activeTutorMessage);
+                // Reanimated timing/spring logic
+                visibility.value = withSpring(1);
+                opacity.value = withTiming(1, { duration: 300 });
+                translateY.value = withSpring(0);
+            }
         } else {
             presenter.dismiss();
             visibility.value = withTiming(0, { duration: 300 });
             opacity.value = withTiming(0, { duration: 300 });
             translateY.value = withTiming(20, { duration: 300 });
+            releaseFocus('tutor-overlay');
         }
-    }, [activeTutorMessage, presenter]);
+    }, [activeTutorMessage, presenter, requestFocus, releaseFocus]);
 
     // --- Animated Styles ---
     const animatedStyle = useAnimatedStyle(() => {
