@@ -19,7 +19,7 @@
 - [ ] Task: Conductor - User Manual Verification 'Humble View - MainframeOverlay' (Protocol in workflow.md).
 
 ## Phase 3: Humble View - Rhythm & Theatrics
-- [ ] Task: Refactor `RhythmHUD` to use `react-native-reanimated`.
+- [x] Task: Refactor `RhythmHUD` to use `react-native-reanimated`. [bd34abd]
     - [ ] Isolate "Theatrical" animations from React Render cycle.
     - [ ] Implement `SharedValue` drivers for visual beats.
 - [ ] Task: Wire `RhythmHUD` and `GlyphSession` to `useVisualDirector`.
