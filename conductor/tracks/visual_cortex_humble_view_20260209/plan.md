@@ -12,7 +12,7 @@
 - [ ] Task: Conductor - User Manual Verification 'Infrastructure & Core Logic' (Protocol in workflow.md).
 
 ## Phase 2: Humble View - Tutor Refactor
-- [~] Task: Create `TutorPresenter` to decouple logic from view.
+- [x] Task: Create `TutorPresenter` to decouple logic from view. [e0927f4]
     - [ ] Create test: `tests/TutorPresenter.test.ts` (Verify throttling/debouncing).
     - [ ] Implement: `src/interface-adapters/presenters/TutorPresenter.ts`.
 - [ ] Task: Refactor `TutorOverlay` to use `react-native-reanimated`.
