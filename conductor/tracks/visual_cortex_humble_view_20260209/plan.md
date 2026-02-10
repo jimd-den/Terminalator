@@ -18,7 +18,7 @@
 - [x] Task: Refactor `TutorOverlay` to use `react-native-reanimated`. [8c6e9d2]
     - [ ] Write failing test/verification script for re-render counts.
     - [ ] Replace `useState`/`useEffect` animation logic with `SharedValue` and `useAnimatedStyle`.
-- [ ] Task: Wire `TutorOverlay` to `useVisualDirector`.
+- [x] Task: Wire `TutorOverlay` to `useVisualDirector`. [1243e40]
     - [ ] Add logic to request `VisualPriority.FOCUS` before animating.
 - [ ] Task: Conductor - User Manual Verification 'Humble View - Tutor Refactor' (Protocol in workflow.md).
 
