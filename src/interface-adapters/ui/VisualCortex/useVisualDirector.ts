@@ -41,6 +41,27 @@ export const useVisualDirector = create<VisualDirectorState>((set, get) => ({
        return true;
     }
 
+    // Co-existence Strategy:
+    // "FOCUS (Tutor) and CONTENT (Glyph Sessions) can animate simultaneously 
+    // only if the performance budget allows (e.g., FPS > 55)."
+    // For now, if current is CONTENT and new is FOCUS, we allow it.
+    // If current is FOCUS and new is CONTENT, we allow it.
+    const isCoexistent = (
+        (priority === VisualPriority.FOCUS && currentPriority === VisualPriority.CONTENT) ||
+        (priority === VisualPriority.CONTENT && currentPriority === VisualPriority.FOCUS)
+    );
+
+    if (isCoexistent && !reducedMotion) {
+        // We don't change the owner, but we allow the animation.
+        // Or we should support multiple owners? 
+        // Spec says "The Director grants or denies permission based on current focusOwner and priority."
+        // Let's allow it but keep the highest priority as current.
+        if (priority > currentPriority) {
+            set({ currentPriority: priority, focusOwner: id });
+        }
+        return true;
+    }
+
     // Priority Battle: Higher priority takes over
     if (priority > currentPriority) {
       set({ focusOwner: id, currentPriority: priority });
