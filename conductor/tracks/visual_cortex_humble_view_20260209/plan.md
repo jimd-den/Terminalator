@@ -27,7 +27,7 @@
     - [ ] Implement "Co-existence" logic (Check FPS or Director permission).
 - [ ] Task: Conductor - User Manual Verification 'Humble View - Rhythm & Theatrics' (Protocol in workflow.md).
 
-## Phase 4: The Circuit Breaker & Integration
+## Phase 4: The Circuit Breaker & Integration [checkpoint: d654163]
 - [x] Task: Connect `PerformanceMonitor` to `VisualDirector`. [2d998bb]
     - [ ] Trigger `reportLag()` when FPS drops below threshold (e.g., 30fps for 1s).
 - [x] Task: Implement Global "Reduced Motion" switch. [26c51a2]
