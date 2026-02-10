@@ -15,7 +15,7 @@
 - [x] Task: Create `TutorPresenter` to decouple logic from view. [e0927f4]
     - [ ] Create test: `tests/TutorPresenter.test.ts` (Verify throttling/debouncing).
     - [ ] Implement: `src/interface-adapters/presenters/TutorPresenter.ts`.
-- [ ] Task: Refactor `TutorOverlay` to use `react-native-reanimated`.
+- [x] Task: Refactor `TutorOverlay` to use `react-native-reanimated`. [8c6e9d2]
     - [ ] Write failing test/verification script for re-render counts.
     - [ ] Replace `useState`/`useEffect` animation logic with `SharedValue` and `useAnimatedStyle`.
 - [ ] Task: Wire `TutorOverlay` to `useVisualDirector`.
