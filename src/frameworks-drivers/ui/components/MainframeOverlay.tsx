@@ -1,24 +1,37 @@
 /**
- * MainframeOverlay - Presentation Layer
+ * MainframeOverlay - Humble View (Presentation Layer)
  * 
  * High-fidelity Projector HUD for the Glass Box simulation.
- * Handles Phase V (Projector HUD) feedback.
+ * Refactored to use react-native-reanimated for native thread performance.
  * 
  * Pillar: THE STORYTELLER'S CODE (Visual Narrative)
- * Pillar: THESwift Stream (Performance Animations)
+ * Pillar: Swift Stream (Performance Animations)
  */
 
-import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Platform } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import Animated, { 
+    useSharedValue, 
+    useAnimatedStyle, 
+    withTiming, 
+    withSpring,
+    withSequence,
+    withRepeat,
+    withDelay,
+    interpolate
+} from 'react-native-reanimated';
 import { useProcess } from '../context/ProcessProvider';
 import { useTheme } from '../context/ThemeContext';
 import { THEME } from '../Theme';
 import { GameEventType } from '../../../domain/services/SimulationBus';
+import { useVisualDirector } from '../../../interface-adapters/ui/VisualCortex/useVisualDirector';
+import { VisualPriority } from '../../../interface-adapters/ui/VisualCortex/VisualPriority';
 
 export const MainframeOverlay: React.FC = () => {
     const { gameManager, bus } = useProcess();
     const { theme, settings } = useTheme();
     const colors = theme.colors;
+    const { requestFocus, releaseFocus } = useVisualDirector();
 
     // --- State ---
     const [activeVerb, setActiveVerb] = useState<string | null>(null);
@@ -29,35 +42,47 @@ export const MainframeOverlay: React.FC = () => {
     
     const isVisible = !!(projectedGlyph || showPerfect);
 
-    // --- Animations ---
-    const fadeAnim = useRef(new Animated.Value(0)).current;
-    const scaleAnim = useRef(new Animated.Value(1.0)).current;
-    const perfectAnim = useRef(new Animated.Value(0)).current;
+    // --- Humble State (Shared Values) ---
+    const fadeVal = useSharedValue(0);
+    const scaleVal = useSharedValue(1.0);
+    const perfectVal = useSharedValue(0);
 
-    const useNativeDriver = Platform.OS !== 'web';
+    // --- Animated Styles ---
+    const overlayStyle = useAnimatedStyle(() => ({
+        opacity: fadeVal.value,
+    }));
 
-    // 0. Rhythmic Pulse (Continuous)
-    const pulseAnim = useRef<Animated.CompositeAnimation | null>(null);
+    const glyphStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: scaleVal.value }],
+    }));
+
+    const perfectStyle = useAnimatedStyle(() => ({
+        opacity: perfectVal.value,
+        transform: [{ translateY: interpolate(perfectVal.value, [0, 1], [-20, 0]) }],
+    }));
+
+    // 0. Rhythmic Pulse & Visibility Sync
     useEffect(() => {
         if (isVisible) {
-            const pulse = () => {
-                pulseAnim.current = Animated.sequence([
-                    Animated.timing(scaleAnim, { toValue: 1.15, duration: 250, useNativeDriver }),
-                    Animated.timing(scaleAnim, { toValue: 1.0, duration: 250, useNativeDriver })
-                ]);
-                pulseAnim.current.start(({ finished }) => {
-                    if (finished) pulse();
-                });
-            };
-            pulse();
+            const granted = requestFocus('mainframe-overlay', VisualPriority.FOCUS);
+            if (granted) {
+                fadeVal.value = withTiming(1, { duration: 300 });
+                // Continuous Pulse
+                scaleVal.value = withRepeat(
+                    withSequence(
+                        withTiming(1.15, { duration: 250 }),
+                        withTiming(1.0, { duration: 250 })
+                    ),
+                    -1, // Loop forever
+                    true // Reverse
+                );
+            }
         } else {
-            pulseAnim.current?.stop();
-            scaleAnim.setValue(1.0);
+            fadeVal.value = withTiming(0, { duration: 300 });
+            scaleVal.value = withTiming(1.0, { duration: 300 });
+            releaseFocus('mainframe-overlay');
         }
-        return () => {
-            pulseAnim.current?.stop();
-        };
-    }, [isVisible, scaleAnim, useNativeDriver]);
+    }, [isVisible, requestFocus, releaseFocus]);
 
     // 1. Event Subscription Effect
     useEffect(() => {
@@ -79,15 +104,17 @@ export const MainframeOverlay: React.FC = () => {
         });
 
         const unsubKeystroke = bus.subscribe(GameEventType.KEYSTROKE_ACCEPTED, () => {
-            // Only show "PERFECT" during an active tutor lesson
             if (!gameManager.tutorEngine.isActive()) return;
 
             // "PERFECT" Pop-up
             setShowPerfect(true);
-            perfectAnim.setValue(1);
-            Animated.parallel([
-                Animated.timing(perfectAnim, { toValue: 0, duration: 400, useNativeDriver }),
-            ]).start(() => setShowPerfect(false));
+            perfectVal.value = withSequence(
+                withTiming(1, { duration: 100 }),
+                withDelay(200, withTiming(0, { duration: 400 }))
+            );
+            
+            // Auto-hide flag after animation
+            setTimeout(() => setShowPerfect(false), 800);
         });
 
         return () => {
@@ -95,9 +122,9 @@ export const MainframeOverlay: React.FC = () => {
             unsubEconomy();
             unsubKeystroke();
         };
-    }, [bus, perfectAnim, useNativeDriver]);
+    }, [bus, gameManager]);
 
-    // 2. Glyph Update Logic (Event-Driven)
+    // 2. Glyph Update Logic
     useEffect(() => {
         const updateGlyph = () => {
             if (gameManager.tutorEngine.isActive()) {
@@ -112,58 +139,25 @@ export const MainframeOverlay: React.FC = () => {
             }
         };
 
-        // Subscribe to tutor events to update glyph
-        const unsubscribe = bus.subscribe(GameEventType.TUTOR_EVENT, () => {
-            updateGlyph();
-        });
-
-        // Initial check
+        const unsubscribe = bus.subscribe(GameEventType.TUTOR_EVENT, updateGlyph);
         updateGlyph();
-
         return unsubscribe;
     }, [gameManager, bus]);
-
-    // 3. Visibility Animation Sync
-    useEffect(() => {
-        if (isVisible) {
-            Animated.timing(fadeAnim, { 
-                toValue: 1, 
-                duration: 300, 
-                useNativeDriver 
-            }).start();
-        } else {
-            Animated.timing(fadeAnim, { 
-                toValue: 0, 
-                duration: 300, 
-                useNativeDriver 
-            }).start();
-        }
-    }, [isVisible, fadeAnim, useNativeDriver]);
 
     const dynamicStyles = StyleSheet.create({
         overlay: {
             ...StyleSheet.absoluteFillObject,
-            backgroundColor: 'transparent', // Container is transparent
+            backgroundColor: 'transparent',
             justifyContent: 'center',
             alignItems: 'center',
             zIndex: 5,
-        },
-        verbText: {
-            fontFamily: settings.fontFamily,
-            fontSize: THEME.typography.fontSize.xl,
-            color: colors.primary,
-            fontWeight: 'bold',
-            textAlign: 'center',
-            letterSpacing: 4,
-            backgroundColor: colors.background, // Solid background for text
-            padding: 10,
         },
         glyphText: {
             fontFamily: settings.fontFamily,
             fontSize: 160,
             color: colors.secondary,
             fontWeight: '900',
-            backgroundColor: colors.background, // Solid background
+            backgroundColor: colors.background,
         },
         multiplierText: {
             fontFamily: settings.fontFamily,
@@ -205,19 +199,17 @@ export const MainframeOverlay: React.FC = () => {
     return (
         <Animated.View 
             pointerEvents={isVisible ? 'auto' : 'none'}
-            style={[dynamicStyles.overlay, { opacity: isVisible ? fadeAnim : 0 }]}
+            style={[dynamicStyles.overlay, overlayStyle]}
         >
             {showPerfect && (
-                <Animated.Text style={[dynamicStyles.perfectText, { opacity: perfectAnim, transform: [{ translateY: perfectAnim.interpolate({ inputRange: [0, 1], outputRange: [-20, 0] }) }] }]}>
+                <Animated.Text style={[dynamicStyles.perfectText, perfectStyle]}>
                     PERFECT
                 </Animated.Text>
             )}
-
-            {/* Glyph and Economy Stats handled here, Verbs handled by ResultStackView */}
             
             {projectedGlyph && (
                 <View style={{ alignItems: 'center' }}>
-                    <Animated.Text style={[dynamicStyles.glyphText, { transform: [{ scale: scaleAnim }] }]}>
+                    <Animated.Text style={[dynamicStyles.glyphText, glyphStyle]}>
                         {projectedGlyph}
                     </Animated.Text>
                     <Text style={dynamicStyles.multiplierText}>{multiplier.toFixed(2)}x HASHRATE</Text>

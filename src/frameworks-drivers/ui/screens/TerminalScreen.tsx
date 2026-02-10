@@ -25,7 +25,6 @@ import { useTheme, useThemeComponents } from '../context/ThemeContext';
 import { CommsPane } from '../components/CommsPane';
 import { StatusBar } from '../components/StatusBar';
 import { MainframeOverlay } from '../components/MainframeOverlay';
-import { TutorOverlay } from '../components/theatrical/TutorOverlay';
 import { RhythmHUD } from '../components/theatrical/RhythmHUD';
 import { EconomyBar } from '../components/EconomyBar';
 
@@ -89,7 +88,6 @@ export const TerminalScreen: React.FC = () => {
                         onAbandonMission={viewModel.handleAbandonMission}
                     />
                     <MainframeOverlay />
-                    <TutorOverlay />
                 </View>
             }
             middleContent={<FKeyBar keys={[
@@ -120,7 +118,6 @@ export const TerminalScreen: React.FC = () => {
                         onClose={viewModel.toggleBufferView}
                     />
                     <MainframeOverlay />
-                    <TutorOverlay />
                 </View>
             }
             middleContent={<FKeyBar keys={[
