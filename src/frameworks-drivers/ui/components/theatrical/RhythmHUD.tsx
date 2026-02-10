@@ -1,14 +1,27 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Easing, Platform, Dimensions } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import Animated, { 
+    useSharedValue, 
+    useAnimatedStyle, 
+    withTiming, 
+    withSpring,
+    withSequence,
+    withRepeat,
+    withDelay,
+    interpolate
+} from 'react-native-reanimated';
 import { useProcess } from '../../context/ProcessProvider';
 import { GameEventType } from '../../../../domain/services/SimulationBus';
-import { THEME } from '../../Theme';
 import { useTheme } from '../../context/ThemeContext';
 import { ZincFormatter } from '../../../../domain/utils/ZincFormatter';
 import { RhythmGamePresenter, RhythmSummary } from '../../../../interface-adapters/presenters/RhythmGamePresenter';
+import { useVisualDirector } from '../../../../interface-adapters/ui/VisualCortex/useVisualDirector';
+import { VisualPriority } from '../../../../interface-adapters/ui/VisualCortex/VisualPriority';
 
 /**
  * RhythmHUD - Refined 80s Mainframe Rhythm Experience
+ * 
+ * Refactored to use react-native-reanimated for native thread performance.
  * 
  * Pillar: THE STORYTELLER'S CODE (Visual Narrative)
  */
@@ -16,27 +29,43 @@ export const RhythmHUD: React.FC = () => {
     const { bus, gameManager } = useProcess();
     const { theme, settings } = useTheme();
     const colors = theme.colors;
+    const { requestFocus, releaseFocus } = useVisualDirector();
 
     // --- State ---
     const [isActive, setIsActive] = useState(false);
     const [isCountdown, setIsCountdown] = useState(false);
     const [lessonText, setLessonText] = useState('');
-    const [targetChar, setTargetChar] = useState('');
     const [progressIndex, setProgressIndex] = useState(0);
     const [feedback, setFeedback] = useState<'PERFECT' | 'MISS' | 'NONE'>('NONE');
     const [streak, setStreak] = useState(0);
     const [summary, setSummary] = useState<RhythmSummary | null>(null);
-    const [baseZinc, setBaseZinc] = useState(0);
     const [displayZinc, setDisplayZinc] = useState(0);
+    const [baseZinc, setBaseZinc] = useState(0);
     const [hashRate, setHashRate] = useState(0);
 
-    // --- Animation Values ---
-    const boxScale = useRef(new Animated.Value(0)).current;
-    const glyphBlink = useRef(new Animated.Value(1)).current;
-    const feedbackAnim = useRef(new Animated.Value(0)).current;
-    const multiplierAnim = useRef(new Animated.Value(0)).current;
-    
-    const useNativeDriver = Platform.OS !== 'web';
+    // --- Humble State (Shared Values) ---
+    const boxScale = useSharedValue(0);
+    const glyphOpacity = useSharedValue(1);
+    const feedbackVal = useSharedValue(0);
+    const multiplierScale = useSharedValue(0);
+
+    // --- Animated Styles ---
+    const boxStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: boxScale.value }],
+    }));
+
+    const glyphStyle = useAnimatedStyle(() => ({
+        opacity: glyphOpacity.value,
+    }));
+
+    const feedbackStyle = useAnimatedStyle(() => ({
+        opacity: feedbackVal.value,
+        transform: [{ scale: interpolate(feedbackVal.value, [0, 1], [0.5, 1.5]) }],
+    }));
+
+    const multiplierStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: multiplierScale.value }],
+    }));
 
     // Hydrate state on mount
     useEffect(() => {
@@ -44,23 +73,36 @@ export const RhythmHUD: React.FC = () => {
         if (engine.isActive()) {
             const lesson = engine.getCurrentLesson();
             if (lesson) {
-                setIsActive(true);
-                setLessonText(lesson.text);
-                setIsCountdown(false);
-                const stats = engine.getStats();
-                setBaseZinc(stats.totalZincMined);
-                setDisplayZinc(stats.totalZincMined);
-                Animated.spring(boxScale, { toValue: 1, friction: 6, useNativeDriver }).start();
+                const granted = requestFocus('rhythm-hud', VisualPriority.CONTENT);
+                if (granted) {
+                    setIsActive(true);
+                    setLessonText(lesson.text);
+                    setIsCountdown(false);
+                    const stats = engine.getStats();
+                    setBaseZinc(stats.totalZincMined);
+                    setDisplayZinc(stats.totalZincMined);
+                    boxScale.value = withSpring(1, { damping: 12 });
+                }
             }
         }
-    }, []);
+    }, [gameManager, requestFocus]);
 
     const dismissSummary = () => {
-        Animated.timing(boxScale, { toValue: 0, duration: 300, useNativeDriver }).start(() => {
+        boxScale.value = withTiming(0, { duration: 300 }, (finished) => {
+            if (finished) {
+                // We need to use runOnJS because setIsActive is a JS function
+                // but this callback runs on the UI thread.
+                // However, for simplicity here, we'll use the sync from useEffect.
+            }
+        });
+        
+        // Use a timeout for state cleanup to match animation
+        setTimeout(() => {
             setIsActive(false);
             setSummary(null);
+            releaseFocus('rhythm-hud');
             bus.emit(GameEventType.TUTOR_EVENT, { type: 'SUMMARY_DISMISSED' });
-        });
+        }, 300);
     };
 
     useEffect(() => {
@@ -68,43 +110,54 @@ export const RhythmHUD: React.FC = () => {
             const { type, payload } = event.payload;
 
             if (type === 'START') {
-                setIsActive(true);
-                setIsCountdown(true);
-                setSummary(null);
-                setStreak(0);
-                setBaseZinc(0);
-                setDisplayZinc(0);
-                setLessonText(payload.text || '');
-                setProgressIndex(0);
-                
-                Animated.spring(boxScale, { toValue: 1, friction: 6, useNativeDriver }).start();
-                
-                // Signal countdown start to block input
-                bus.emit(GameEventType.TUTOR_EVENT, { type: 'COUNTDOWN_START' });
+                const granted = requestFocus('rhythm-hud', VisualPriority.CONTENT);
+                if (granted) {
+                    setIsActive(true);
+                    setIsCountdown(true);
+                    setSummary(null);
+                    setStreak(0);
+                    setBaseZinc(0);
+                    setDisplayZinc(0);
+                    setLessonText(payload.text || '');
+                    setProgressIndex(0);
+                    
+                    boxScale.value = withSpring(1, { damping: 12 });
+                    
+                    bus.emit(GameEventType.TUTOR_EVENT, { type: 'COUNTDOWN_START' });
 
-                // Start Sequence
-                setTimeout(() => {
-                    setIsCountdown(false);
-                    bus.emit(GameEventType.TUTOR_EVENT, { type: 'COUNTDOWN_COMPLETE' });
-                }, 1500);
+                    setTimeout(() => {
+                        setIsCountdown(false);
+                        bus.emit(GameEventType.TUTOR_EVENT, { type: 'COUNTDOWN_COMPLETE' });
+                    }, 1500);
+                }
             } 
             else if (type === 'PROGRESS') {
                 setProgressIndex(payload.index);
                 setStreak(payload.streak || 0);
-                
-                const nextChar = lessonText[payload.index] || '';
-                setTargetChar(nextChar);
 
-                if (payload.isOnBeat) triggerFeedback('PERFECT');
-                if (payload.streak > 1) triggerMultiplierPop();
+                if (payload.isOnBeat) {
+                    setFeedback('PERFECT');
+                    feedbackVal.value = withSequence(
+                        withTiming(1, { duration: 80 }),
+                        withDelay(150, withTiming(0, { duration: 300 }))
+                    );
+                }
+                
+                if (payload.streak > 1) {
+                    multiplierScale.value = 0;
+                    multiplierScale.value = withSpring(1, { damping: 8 });
+                }
             }
             else if (type === 'MISTAKE' || type === 'CORRECTION') {
-                triggerFeedback('MISS');
+                setFeedback('MISS');
+                feedbackVal.value = withSequence(
+                    withTiming(1, { duration: 80 }),
+                    withDelay(150, withTiming(0, { duration: 300 }))
+                );
                 setStreak(0);
                 if (payload.stats) setProgressIndex(gameManager.tutorEngine.getCompletedText().length);
             }
             else if (type === 'COMPLETE') {
-                setTargetChar('');
                 setSummary(RhythmGamePresenter.getSummary(payload.stats));
             }
             else if (type === 'SUMMARY_ENTER_PRESSED') {
@@ -123,7 +176,7 @@ export const RhythmHUD: React.FC = () => {
             unsub();
             unsubEcon();
         };
-    }, [bus, isActive, lessonText]);
+    }, [bus, isActive, lessonText, requestFocus]);
 
     // Continuous Coin Interpolation Animation
     useEffect(() => {
@@ -147,31 +200,25 @@ export const RhythmHUD: React.FC = () => {
 
     // Blinking logic for target glyph
     useEffect(() => {
-        if (!isActive || summary || isCountdown) return;
-        const blink = Animated.loop(
-            Animated.sequence([
-                Animated.timing(glyphBlink, { toValue: 0, duration: 150, useNativeDriver }),
-                Animated.timing(glyphBlink, { toValue: 1, duration: 150, useNativeDriver }),
-                Animated.delay(200)
-            ])
+        if (!isActive || summary || isCountdown) {
+            glyphOpacity.value = 1;
+            return;
+        }
+        
+        glyphOpacity.value = withRepeat(
+            withSequence(
+                withTiming(0, { duration: 150 }),
+                withTiming(1, { duration: 150 }),
+                withDelay(200, withTiming(1, { duration: 0 }))
+            ),
+            -1,
+            false
         );
-        blink.start();
-        return () => blink.stop();
+
+        return () => {
+            glyphOpacity.value = 1;
+        };
     }, [isActive, summary, isCountdown]);
-
-    const triggerFeedback = (type: 'PERFECT' | 'MISS') => {
-        setFeedback(type);
-        feedbackAnim.setValue(0);
-        Animated.sequence([
-            Animated.timing(feedbackAnim, { toValue: 1, duration: 80, useNativeDriver }),
-            Animated.timing(feedbackAnim, { toValue: 0, duration: 300, delay: 150, useNativeDriver })
-        ]).start(() => setFeedback('NONE'));
-    };
-
-    const triggerMultiplierPop = () => {
-        multiplierAnim.setValue(0);
-        Animated.spring(multiplierAnim, { toValue: 1, friction: 4, useNativeDriver }).start();
-    };
 
     if (!isActive) return null;
 
@@ -248,7 +295,7 @@ export const RhythmHUD: React.FC = () => {
             zIndex: 50,
         },
         feedbackText: {
-            fontSize: 32, // Reduced to ensure it fits without truncation
+            fontSize: 32,
             fontWeight: '900',
             letterSpacing: 4,
             textAlign: 'center',
@@ -299,7 +346,7 @@ export const RhythmHUD: React.FC = () => {
 
     return (
         <View style={dynamicStyles.container} pointerEvents="box-none">
-            <Animated.View style={[dynamicStyles.box, { borderColor: colors.primary, transform: [{ scale: boxScale }] }]}>
+            <Animated.View style={[dynamicStyles.box, { borderColor: colors.primary }, boxStyle]}>
                 {summary ? (
                     <View style={dynamicStyles.summaryContainer}>
                         <Text style={[dynamicStyles.gradeText, { color: colors.secondary }]}>{summary.grade}</Text>
@@ -325,7 +372,7 @@ export const RhythmHUD: React.FC = () => {
                                 </Text>
                             </View>
                             {streak > 1 && (
-                                <Animated.Text style={[dynamicStyles.multiplierText, { color: colors.primary, transform: [{ scale: multiplierAnim }] }]}>
+                                <Animated.Text style={[dynamicStyles.multiplierText, { color: colors.primary }, multiplierStyle]}>
                                     {Math.min(8, 1 + Math.floor(streak / 5))}X
                                 </Animated.Text>
                             )}
@@ -333,14 +380,14 @@ export const RhythmHUD: React.FC = () => {
 
                         {/* Central Glyph */}
                         <View style={dynamicStyles.glyphContainer}>
-                            <Animated.Text style={[dynamicStyles.glyph, { color: colors.primary, opacity: glyphBlink }]}>
+                            <Animated.Text style={[dynamicStyles.glyph, { color: colors.primary }, glyphStyle]}>
                                 {displayChar || ''}
                             </Animated.Text>
                         </View>
 
                         {/* Feedback Layer */}
                         {feedback !== 'NONE' && (
-                            <Animated.View style={[dynamicStyles.feedbackContainer, { opacity: feedbackAnim, transform: [{ scale: feedbackAnim.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1.5] }) }] }]}>
+                            <Animated.View style={[dynamicStyles.feedbackContainer, feedbackStyle]}>
                                 <Text 
                                     adjustsFontSizeToFit 
                                     numberOfLines={1}
@@ -356,5 +403,3 @@ export const RhythmHUD: React.FC = () => {
         </View>
     );
 };
-
-// Remove static styles
