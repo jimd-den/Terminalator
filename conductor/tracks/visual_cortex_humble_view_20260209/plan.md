@@ -30,6 +30,6 @@
 ## Phase 4: The Circuit Breaker & Integration
 - [x] Task: Connect `PerformanceMonitor` to `VisualDirector`. [2d998bb]
     - [ ] Trigger `reportLag()` when FPS drops below threshold (e.g., 30fps for 1s).
-- [ ] Task: Implement Global "Reduced Motion" switch.
+- [x] Task: Implement Global "Reduced Motion" switch. [26c51a2]
     - [ ] Ensure all "Humble Views" respect the `reducedMotion` flag from the Director.
 - [ ] Task: Conductor - User Manual Verification 'The Circuit Breaker & Integration' (Protocol in workflow.md).
