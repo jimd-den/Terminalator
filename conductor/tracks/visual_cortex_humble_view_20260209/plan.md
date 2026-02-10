@@ -28,7 +28,7 @@
 - [ ] Task: Conductor - User Manual Verification 'Humble View - Rhythm & Theatrics' (Protocol in workflow.md).
 
 ## Phase 4: The Circuit Breaker & Integration
-- [ ] Task: Connect `PerformanceMonitor` to `VisualDirector`.
+- [x] Task: Connect `PerformanceMonitor` to `VisualDirector`. [2d998bb]
     - [ ] Trigger `reportLag()` when FPS drops below threshold (e.g., 30fps for 1s).
 - [ ] Task: Implement Global "Reduced Motion" switch.
     - [ ] Ensure all "Humble Views" respect the `reducedMotion` flag from the Director.
