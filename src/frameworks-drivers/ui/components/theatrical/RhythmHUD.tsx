@@ -29,7 +29,7 @@ export const RhythmHUD: React.FC = () => {
     const { bus, gameManager } = useProcess();
     const { theme, settings } = useTheme();
     const colors = theme.colors;
-    const { requestFocus, releaseFocus } = useVisualDirector();
+    const { requestFocus, releaseFocus, reducedMotion } = useVisualDirector();
 
     // --- State ---
     const [isActive, setIsActive] = useState(false);
@@ -81,28 +81,34 @@ export const RhythmHUD: React.FC = () => {
                     const stats = engine.getStats();
                     setBaseZinc(stats.totalZincMined);
                     setDisplayZinc(stats.totalZincMined);
-                    boxScale.value = withSpring(1, { damping: 12 });
+                    boxScale.value = reducedMotion ? 1 : withSpring(1, { damping: 12 });
                 }
             }
         }
-    }, [gameManager, requestFocus]);
+    }, [gameManager, requestFocus, reducedMotion]);
 
     const dismissSummary = () => {
-        boxScale.value = withTiming(0, { duration: 300 }, (finished) => {
-            if (finished) {
-                // We need to use runOnJS because setIsActive is a JS function
-                // but this callback runs on the UI thread.
-                // However, for simplicity here, we'll use the sync from useEffect.
-            }
-        });
-        
-        // Use a timeout for state cleanup to match animation
-        setTimeout(() => {
-            setIsActive(false);
-            setSummary(null);
-            releaseFocus('rhythm-hud');
-            bus.emit(GameEventType.TUTOR_EVENT, { type: 'SUMMARY_DISMISSED' });
-        }, 300);
+        if (reducedMotion) {
+             boxScale.value = 0;
+             setIsActive(false);
+             setSummary(null);
+             releaseFocus('rhythm-hud');
+             bus.emit(GameEventType.TUTOR_EVENT, { type: 'SUMMARY_DISMISSED' });
+        } else {
+            boxScale.value = withTiming(0, { duration: 300 }, (finished) => {
+                if (finished) {
+                    // Logic handled in timeout
+                }
+            });
+            
+            // Use a timeout for state cleanup to match animation
+            setTimeout(() => {
+                setIsActive(false);
+                setSummary(null);
+                releaseFocus('rhythm-hud');
+                bus.emit(GameEventType.TUTOR_EVENT, { type: 'SUMMARY_DISMISSED' });
+            }, 300);
+        }
     };
 
     useEffect(() => {
@@ -121,7 +127,7 @@ export const RhythmHUD: React.FC = () => {
                     setLessonText(payload.text || '');
                     setProgressIndex(0);
                     
-                    boxScale.value = withSpring(1, { damping: 12 });
+                    boxScale.value = reducedMotion ? 1 : withSpring(1, { damping: 12 });
                     
                     bus.emit(GameEventType.TUTOR_EVENT, { type: 'COUNTDOWN_START' });
 
@@ -137,23 +143,33 @@ export const RhythmHUD: React.FC = () => {
 
                 if (payload.isOnBeat) {
                     setFeedback('PERFECT');
-                    feedbackVal.value = withSequence(
-                        withTiming(1, { duration: 80 }),
-                        withDelay(150, withTiming(0, { duration: 300 }))
-                    );
+                    if (reducedMotion) {
+                        feedbackVal.value = 1;
+                        setTimeout(() => { feedbackVal.value = 0; }, 230);
+                    } else {
+                        feedbackVal.value = withSequence(
+                            withTiming(1, { duration: 80 }),
+                            withDelay(150, withTiming(0, { duration: 300 }))
+                        );
+                    }
                 }
                 
-                if (payload.streak > 1) {
+                if (payload.streak > 1 && !reducedMotion) {
                     multiplierScale.value = 0;
                     multiplierScale.value = withSpring(1, { damping: 8 });
                 }
             }
             else if (type === 'MISTAKE' || type === 'CORRECTION') {
                 setFeedback('MISS');
-                feedbackVal.value = withSequence(
-                    withTiming(1, { duration: 80 }),
-                    withDelay(150, withTiming(0, { duration: 300 }))
-                );
+                if (reducedMotion) {
+                    feedbackVal.value = 1;
+                    setTimeout(() => { feedbackVal.value = 0; }, 230);
+                } else {
+                    feedbackVal.value = withSequence(
+                        withTiming(1, { duration: 80 }),
+                        withDelay(150, withTiming(0, { duration: 300 }))
+                    );
+                }
                 setStreak(0);
                 if (payload.stats) setProgressIndex(gameManager.tutorEngine.getCompletedText().length);
             }
@@ -176,7 +192,7 @@ export const RhythmHUD: React.FC = () => {
             unsub();
             unsubEcon();
         };
-    }, [bus, isActive, lessonText, requestFocus]);
+    }, [bus, isActive, lessonText, requestFocus, reducedMotion]);
 
     // Continuous Coin Interpolation Animation
     useEffect(() => {
@@ -205,20 +221,24 @@ export const RhythmHUD: React.FC = () => {
             return;
         }
         
-        glyphOpacity.value = withRepeat(
-            withSequence(
-                withTiming(0, { duration: 150 }),
-                withTiming(1, { duration: 150 }),
-                withDelay(200, withTiming(1, { duration: 0 }))
-            ),
-            -1,
-            false
-        );
+        if (reducedMotion) {
+            glyphOpacity.value = 1;
+        } else {
+            glyphOpacity.value = withRepeat(
+                withSequence(
+                    withTiming(0, { duration: 150 }),
+                    withTiming(1, { duration: 150 }),
+                    withDelay(200, withTiming(1, { duration: 0 }))
+                ),
+                -1,
+                false
+            );
+        }
 
         return () => {
             glyphOpacity.value = 1;
         };
-    }, [isActive, summary, isCountdown]);
+    }, [isActive, summary, isCountdown, reducedMotion]);
 
     if (!isActive) return null;
 
