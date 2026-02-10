@@ -31,7 +31,7 @@ export const MainframeOverlay: React.FC = () => {
     const { gameManager, bus } = useProcess();
     const { theme, settings } = useTheme();
     const colors = theme.colors;
-    const { requestFocus, releaseFocus } = useVisualDirector();
+    const { requestFocus, releaseFocus, reducedMotion } = useVisualDirector();
 
     // --- State ---
     const [activeVerb, setActiveVerb] = useState<string | null>(null);
@@ -67,22 +67,27 @@ export const MainframeOverlay: React.FC = () => {
             const granted = requestFocus('mainframe-overlay', VisualPriority.FOCUS);
             if (granted) {
                 fadeVal.value = withTiming(1, { duration: 300 });
-                // Continuous Pulse
-                scaleVal.value = withRepeat(
-                    withSequence(
-                        withTiming(1.15, { duration: 250 }),
-                        withTiming(1.0, { duration: 250 })
-                    ),
-                    -1, // Loop forever
-                    true // Reverse
-                );
+
+                if (!reducedMotion) {
+                    // Continuous Pulse
+                    scaleVal.value = withRepeat(
+                        withSequence(
+                            withTiming(1.15, { duration: 250 }),
+                            withTiming(1.0, { duration: 250 })
+                        ),
+                        -1, // Loop forever
+                        true // Reverse
+                    );
+                } else {
+                    scaleVal.value = withTiming(1.0, { duration: 300 });
+                }
             }
         } else {
             fadeVal.value = withTiming(0, { duration: 300 });
             scaleVal.value = withTiming(1.0, { duration: 300 });
             releaseFocus('mainframe-overlay');
         }
-    }, [isVisible, requestFocus, releaseFocus]);
+    }, [isVisible, requestFocus, releaseFocus, reducedMotion]);
 
     // 1. Event Subscription Effect
     useEffect(() => {
