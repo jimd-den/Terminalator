@@ -33,27 +33,16 @@ export class MiningSession {
     /**
      * Processes a rhythmic hit.
      * @param timestamp - Current time in ms.
-     * @param nextBeatTime - Optional target time for the next beat from conductor.
+     * @param _unused - Legacy beat time.
      * @returns reward for this hit.
      */
-    public processHit(timestamp: number, nextBeatTime?: number): number {
-        let isRhythmic = false;
+    public processHit(timestamp: number, _unused?: number): number {
+        // Use robust modulo arithmetic (same as TutorEngine)
+        // This allows hits slightly before OR after the beat.
+        const beatOffset = timestamp % this.BEAT_MS;
+        const isOnBeat = beatOffset < 80 || beatOffset > (this.BEAT_MS - 80);
 
-        if (nextBeatTime) {
-            // Precision check against conductor beat
-            const diff = Math.abs(timestamp - nextBeatTime);
-            console.log(`[MiningSession] Precision Check: diff=${diff}ms, timestamp=${timestamp}, target=${nextBeatTime}`);
-            
-            // Within 80ms of the beat
-            isRhythmic = diff < 80;
-        } else {
-            // Fallback to internal cycle
-            const beatOffset = timestamp % this.BEAT_MS;
-            const normalizedOffset = Math.min(beatOffset, this.BEAT_MS - beatOffset);
-            isRhythmic = this.checkSubdivisions(normalizedOffset);
-        }
-
-        if (isRhythmic) {
+        if (isOnBeat) {
             this.streak++;
             // Hashrate increases with streak
             this.hashRate = Math.min(this.MAX_HASHRATE, this.hashRate + this.STREAK_BOOST);

@@ -27,6 +27,8 @@ import { IWorldStateProvider } from '../domain/interfaces/IWorldStateProvider';
 
 import { SystemPreparationSpec } from '../domain/entities/world/SystemPreparationSpec';
 
+import { SimulationBus } from '../domain/services/SimulationBus';
+
 
 
 /**
@@ -95,6 +97,8 @@ export class GameManager implements IGameManager {
 
                 presentationDirector: PresentationDirector,
 
+                private bus: SimulationBus,
+
                 private telemetry?: TelemetryPort
 
             ) {
@@ -128,6 +132,10 @@ export class GameManager implements IGameManager {
             }
 
 
+
+        public getSimulationBus(): SimulationBus {
+            return this.bus;
+        }
 
         public getWorldManager(): IWorldManager & IWorldStateProvider {
 
@@ -275,7 +283,7 @@ export class GameManager implements IGameManager {
 
                 this.tutorEngine.startLesson(lesson);
 
-            }, 200);
+            }, 2500);
 
         }
 

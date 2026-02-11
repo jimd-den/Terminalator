@@ -43,16 +43,38 @@ export const RhythmHUD: React.FC = () => {
     const [baseZinc, setBaseZinc] = useState(0);
     const [hashRate, setHashRate] = useState(0);
 
+    const [containerHeight, setContainerHeight] = useState(0);
+    const [isInitialized, setIsInitialized] = useState(false);
+
     // --- Humble State (Shared Values) ---
     const boxScale = useSharedValue(0);
     const glyphOpacity = useSharedValue(1);
     const feedbackVal = useSharedValue(0);
     const multiplierScale = useSharedValue(0);
 
+    const cleanup = () => {
+        setIsActive(false);
+        setIsCountdown(false);
+        setSummary(null);
+        setStreak(0);
+        setDisplayZinc(0);
+        setBaseZinc(0);
+        setHashRate(0);
+        setLessonText('');
+        setProgressIndex(0);
+        setFeedback('NONE');
+        releaseFocus('rhythm-hud');
+    };
+
     // --- Animated Styles ---
-    const boxStyle = useAnimatedStyle(() => ({
-        transform: [{ scale: boxScale.value }],
-    }));
+    const boxStyle = useAnimatedStyle(() => {
+        const baseScale = boxScale.value;
+        const layoutScale = (containerHeight > 0 && containerHeight < 350) ? containerHeight / 400 : 1;
+        
+        return {
+            transform: [{ scale: baseScale * layoutScale }],
+        };
+    });
 
     const glyphStyle = useAnimatedStyle(() => ({
         opacity: glyphOpacity.value,
@@ -69,6 +91,8 @@ export const RhythmHUD: React.FC = () => {
 
     // Hydrate state on mount
     useEffect(() => {
+        if (isInitialized) return;
+        
         const engine = gameManager.tutorEngine;
         if (engine.isActive()) {
             const lesson = engine.getCurrentLesson();
@@ -82,30 +106,22 @@ export const RhythmHUD: React.FC = () => {
                     setBaseZinc(stats.totalZincMined);
                     setDisplayZinc(stats.totalZincMined);
                     boxScale.value = reducedMotion ? 1 : withSpring(1, { damping: 12 });
+                    setIsInitialized(true);
                 }
             }
         }
-    }, [gameManager, requestFocus, reducedMotion]);
+    }, [gameManager, requestFocus, reducedMotion, isInitialized]);
 
     const dismissSummary = () => {
         if (reducedMotion) {
              boxScale.value = 0;
-             setIsActive(false);
-             setSummary(null);
-             releaseFocus('rhythm-hud');
+             cleanup();
              bus.emit(GameEventType.TUTOR_EVENT, { type: 'SUMMARY_DISMISSED' });
         } else {
-            boxScale.value = withTiming(0, { duration: 300 }, (finished) => {
-                if (finished) {
-                    // Logic handled in timeout
-                }
-            });
+            boxScale.value = withTiming(0, { duration: 300 });
             
-            // Use a timeout for state cleanup to match animation
             setTimeout(() => {
-                setIsActive(false);
-                setSummary(null);
-                releaseFocus('rhythm-hud');
+                cleanup();
                 bus.emit(GameEventType.TUTOR_EVENT, { type: 'SUMMARY_DISMISSED' });
             }, 300);
         }
@@ -137,6 +153,9 @@ export const RhythmHUD: React.FC = () => {
                     }, 1500);
                 }
             } 
+            else if (type === 'STOP') {
+                dismissSummary();
+            }
             else if (type === 'PROGRESS') {
                 setProgressIndex(payload.index);
                 setStreak(payload.streak || 0);
@@ -253,11 +272,11 @@ export const RhythmHUD: React.FC = () => {
             zIndex: 1000,
         },
         box: {
-            width: 320,
-            height: 320,
+            width: 280,
+            height: 280,
             backgroundColor: colors.background,
             borderWidth: 4,
-            padding: 20,
+            padding: 15,
             justifyContent: 'center',
             alignItems: 'center',
             shadowColor: colors.primary,
@@ -300,7 +319,7 @@ export const RhythmHUD: React.FC = () => {
             zIndex: 5,
         },
         glyph: {
-            fontSize: 140,
+            fontSize: 120, // Reduced from 140
             fontWeight: '900',
             fontFamily: settings.fontFamily,
         },
@@ -326,56 +345,64 @@ export const RhythmHUD: React.FC = () => {
         },
         summaryContainer: {
             alignItems: 'center',
-            gap: 12,
+            gap: 8,
             width: '100%',
         },
         gradeText: {
-            fontSize: 120,
+            fontSize: 80, // Reduced from 120
             fontWeight: '900',
-            marginBottom: 10,
+            marginBottom: 5,
             fontStyle: 'italic',
             fontFamily: settings.fontFamily,
         },
         statText: {
-            fontSize: 14,
+            fontSize: 12, // Reduced from 14
             fontWeight: 'bold',
             letterSpacing: 2,
             fontFamily: settings.fontFamily,
         },
         rewardText: {
-            fontSize: 20,
+            fontSize: 16, // Reduced from 20
             fontWeight: '900',
-            marginTop: 15,
+            marginTop: 10,
             fontFamily: settings.fontFamily,
         },
         statusText: {
-            fontSize: 12,
+            fontSize: 10, // Reduced from 12
             fontWeight: 'bold',
-            marginTop: 25,
-            letterSpacing: 6,
+            marginTop: 15,
+            letterSpacing: 4,
             textAlign: 'center',
             fontFamily: settings.fontFamily,
         },
         divider: {
-            width: 240,
+            width: '80%',
             height: 2,
             backgroundColor: colors.primary_20,
-            marginVertical: 15,
+            marginVertical: 10,
         }
     });
 
     return (
-        <View style={dynamicStyles.container} pointerEvents="box-none">
-            <Animated.View style={[dynamicStyles.box, { borderColor: colors.primary }, boxStyle]}>
+        <View 
+            style={dynamicStyles.container} 
+            pointerEvents="box-none"
+            onLayout={(e) => setContainerHeight(e.nativeEvent.layout.height)}
+        >
+            <Animated.View style={[
+                dynamicStyles.box, 
+                { borderColor: colors.primary }, 
+                boxStyle
+            ]}>
                 {summary ? (
                     <View style={dynamicStyles.summaryContainer}>
-                        <Text style={[dynamicStyles.gradeText, { color: colors.secondary }]}>{summary.grade}</Text>
-                        <Text style={[dynamicStyles.statText, { color: colors.text.primary }]}>ACCURACY: {summary.accuracyPercentage}</Text>
-                        <Text style={[dynamicStyles.statText, { color: colors.text.primary }]}>PERFECTS: {summary.perfectPercentage}</Text>
-                        <Text style={[dynamicStyles.statText, { color: colors.text.primary }]}>MAX STREAK: {summary.maxStreak}</Text>
+                        <Text adjustsFontSizeToFit numberOfLines={1} style={[dynamicStyles.gradeText, { color: colors.secondary }]}>{summary.grade}</Text>
+                        <Text adjustsFontSizeToFit numberOfLines={1} style={[dynamicStyles.statText, { color: colors.text.primary }]}>ACCURACY: {summary.accuracyPercentage}</Text>
+                        <Text adjustsFontSizeToFit numberOfLines={1} style={[dynamicStyles.statText, { color: colors.text.primary }]}>PERFECTS: {summary.perfectPercentage}</Text>
+                        <Text adjustsFontSizeToFit numberOfLines={1} style={[dynamicStyles.statText, { color: colors.text.primary }]}>MAX STREAK: {summary.maxStreak}</Text>
                         <View style={dynamicStyles.divider} />
-                        <Text style={[dynamicStyles.rewardText, { color: colors.secondary }]}>TOTAL MINED: {summary.totalMined}</Text>
-                        <Text style={[dynamicStyles.statusText, { color: colors.primary }]}>PRESS ENTER TO CONTINUE</Text>
+                        <Text adjustsFontSizeToFit numberOfLines={1} style={[dynamicStyles.rewardText, { color: colors.secondary }]}>TOTAL MINED: {summary.totalMined}</Text>
+                        <Text adjustsFontSizeToFit numberOfLines={1} style={[dynamicStyles.statusText, { color: colors.primary }]}>PRESS ENTER TO CONTINUE</Text>
                     </View>
                 ) : isCountdown ? (
                     <View style={dynamicStyles.glyphContainer}>

@@ -206,6 +206,7 @@ export class DependencyContainer {
             worldManager,
             tutorEngine,
             presentationDirector,
+            bus,
             telemetry
         );
     }

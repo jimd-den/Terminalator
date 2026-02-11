@@ -401,7 +401,7 @@ export class CoreUtilsModule implements CommandModule {
                 uiAction: 'CLEAR'
             }),
             getMetadata: () => ({
-                verb: 'PURGING CONSOLE' as any,
+                verb: 'CLEAR' as any,
                 style: 'NORMAL'
             })
         } as any);

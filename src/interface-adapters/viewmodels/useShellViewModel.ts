@@ -28,6 +28,7 @@ import { ShellController } from '../controllers/ShellController';
 import { Lesson } from '../../domain/entities/TutorEngine';
 import { TutorShadow } from '../../domain/services/tutor/TutorShadow';
 import { SimulationMediator } from '../../core/presentation/SimulationMediator';
+import { GameEventType, GameEvent } from '../../domain/services/SimulationBus';
 
 export type ActiveApp = { type: 'SHELL' } | { type: 'VIM', filename: string };
 
@@ -70,6 +71,21 @@ export const useShellViewModel = (
 
     // Command Execution Ref for Tutor
     const handleCommandRef = useRef<((cmd?: string) => Promise<void>) | null>(null);
+    const pendingCommandRef = useRef<string | null>(null);
+
+    // Subscribe to Summary Dismissed to execute pending commands
+    useEffect(() => {
+        const unsub = gameManager.getSimulationBus().subscribe(GameEventType.TUTOR_EVENT, (event) => {
+            if (event.payload.type === 'SUMMARY_DISMISSED' && pendingCommandRef.current) {
+                const cmd = pendingCommandRef.current;
+                pendingCommandRef.current = null;
+                if (handleCommandRef.current) {
+                    handleCommandRef.current(cmd);
+                }
+            }
+        });
+        return unsub;
+    }, [gameManager]);
 
     // Tutor Callbacks (Refactored logic)
     const tutorCallbacks: TutorControllerCallbacks = useMemo(() => ({
@@ -107,10 +123,11 @@ export const useShellViewModel = (
             const { lesson, stats } = payload;
             inputController.setInput(lesson.text);
             inputController.updateGhostText('');
-            if (handleCommandRef.current) {
-                handleCommandRef.current(lesson.text);
-                inputController.clearInput();
-            }
+            
+            // Queue command for execution AFTER summary dismissal
+            pendingCommandRef.current = lesson.text;
+            inputController.clearInput();
+
             const isMission = lesson.isMission || (lesson.id && lesson.id.startsWith('MISSION_'));
             const hasSwitchedContext = !!stateRef.current.fsContext;
             if (originalCwd && !isMission && !hasSwitchedContext) {
@@ -124,7 +141,7 @@ export const useShellViewModel = (
                 }, 1000);
             }
         }
-    }), [inputController, outputController]);
+    }), [inputController, outputController, gameManager]);
 
     const tutorController = useTutorController(
         gameManager.tutorEngine,

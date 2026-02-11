@@ -23,7 +23,6 @@ import { MissionDTO } from '../../../domain/dtos/MissionDTO';
 import { BufferScreen } from './BufferScreen';
 import { BufferDTO } from '../../../domain/dtos/BufferDTO';
 import { FKeyBar, FKeyDef } from '../components/FKeyBar';
-import { MainframeOverlay } from '../components/MainframeOverlay';
 import { RhythmHUD } from '../components/theatrical/RhythmHUD';
 import { ResultStackView } from '../components/theatrical/ResultStackView';
 import { EconomyBar } from '../components/EconomyBar';
@@ -116,7 +115,6 @@ export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
         <View style={{ flex: 1 }}>
             {/* Legacy output removed in favor of ResultStackView */}
             <ResultStackView />
-            <MainframeOverlay />
             <RhythmHUD />
         </View>
     );

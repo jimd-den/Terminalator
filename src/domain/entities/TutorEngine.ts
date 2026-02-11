@@ -29,7 +29,7 @@ export enum TutorEmotion {
     CRASH_OUT = 'CRASH_OUT'
 }
 
-export type TutorEventType = 'START' | 'STOP' | 'PROGRESS' | 'MISTAKE' | 'COMPLETE' | 'SPEED_WARNING' | 'EMOTION_CHANGE' | 'CORRECTION';
+export type TutorEventType = 'START' | 'STOP' | 'PROGRESS' | 'MISTAKE' | 'COMPLETE' | 'SPEED_WARNING' | 'EMOTION_CHANGE' | 'CORRECTION' | 'RHYTHM_START' | 'RHYTHM_STOP';
 
 export interface TutorEvent {
     type: TutorEventType;
@@ -118,6 +118,9 @@ export class TutorEngine {
         this.emit({ type: 'START', payload: { ...this.currentLesson, bpm: this.bpm } });
         this.emit({ type: 'PROGRESS', payload: { index: 0, stats: this.stats } });
 
+        // Signal conductor start if enabled
+        this.emit({ type: 'RHYTHM_START', payload: { bpm: this.bpm } });
+
         return true;
     }
 
@@ -127,6 +130,8 @@ export class TutorEngine {
         this.patience = 100;
         this.consecutiveMistakes = 0;
         this.updateEmotion();
+        this.emit({ type: 'STOP' });
+        this.emit({ type: 'RHYTHM_STOP' });
     }
 
     public isActive(): boolean {
@@ -253,14 +258,19 @@ export class TutorEngine {
         }
     }
 
+    public setSessionZinc(amount: number) {
+        this.stats.totalZincMined = amount;
+    }
+
     private completeLesson() {
         this.active = false;
         this.patience = 100;
         this.consecutiveMistakes = 0;
         this.updateEmotion();
 
-        this.emit({ type: 'COMPLETE', payload: { lesson: this.currentLesson, stats: this.stats } });
+        const lesson = this.currentLesson;
         this.currentLesson = null;
+        this.emit({ type: 'COMPLETE', payload: { lesson, stats: this.stats } });
     }
 
     public subscribe(listener: (event: TutorEvent) => void): () => void {

@@ -18,7 +18,6 @@ import { useFileSystem } from '../context/FileSystemProvider';
 import { useProcess } from '../context/ProcessProvider';
 import { useSystemState } from '../context/SystemStateProvider';
 import { useTutorPersona } from '../context/TutorPersonaProvider';
-import { MainframeOverlay } from '../components/MainframeOverlay';
 import { RhythmHUD } from '../components/theatrical/RhythmHUD';
 import { ResultStackView } from '../components/theatrical/ResultStackView';
 import { FileSystemService } from '../../../domain/services/FileSystemService';
@@ -53,7 +52,6 @@ export const VimScreen: React.FC<VimScreenProps> = ({ filename, onExit }) => {
         <View style={{ flex: 1 }}>
             {vim.topContent}
             <ResultStackView />
-            <MainframeOverlay />
             <RhythmHUD />
         </View>
     );

@@ -10,8 +10,11 @@ import { CommandResponse } from '../entities/Command';
 import { TutorEngine, Lesson } from '../entities/TutorEngine';
 import { NPC } from '../entities/NPC';
 
+import { SimulationBus } from '../services/SimulationBus';
+
 export interface IGameManager {
     tutorEngine: TutorEngine;
+    getSimulationBus(): SimulationBus;
     spawnNPCEvent(): Promise<Mission | null> | Mission | null;
     getActiveMissions(): Mission[];
     getActiveNPCs(): NPC[];

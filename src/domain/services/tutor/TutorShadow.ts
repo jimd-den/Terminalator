@@ -34,8 +34,13 @@ export class TutorShadow {
             const data = event.payload;
             if (data && data.type === 'RHYTHM_TICK') {
                 this.currentBeatTime = data.payload.timestamp;
+            } else if (data && data.type === 'RHYTHM_START') {
+                this.conductor.start(data.payload.bpm);
+            } else if (data && data.type === 'RHYTHM_STOP') {
+                this.conductor.stop();
             } else if (data && data.type === 'COMPLETE') {
                 this.isSummaryActive = true;
+                this.conductor.stop();
             } else if (data && data.type === 'SUMMARY_DISMISSED') {
                 this.isSummaryActive = false;
             } else if (data && data.type === 'COUNTDOWN_START') {
@@ -101,6 +106,8 @@ export class TutorShadow {
 
         if (result === InputResult.ACCEPTED) {
             this.economy.recordHit(this.currentBeatTime);
+            // Sync session reward back to engine so summary reflects it
+            this.engine.setSessionZinc(this.economy.getSession().sessionZincMined);
             this.bus.emit(GameEventType.KEYSTROKE_ACCEPTED, { key });
             return true; 
         } else if (result === InputResult.REJECTED) {

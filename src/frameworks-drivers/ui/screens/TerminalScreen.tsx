@@ -24,7 +24,6 @@ import { useTerminalViewModel } from '../../../interface-adapters/viewmodels/Ter
 import { useTheme, useThemeComponents } from '../context/ThemeContext';
 import { CommsPane } from '../components/CommsPane';
 import { StatusBar } from '../components/StatusBar';
-import { MainframeOverlay } from '../components/MainframeOverlay';
 import { RhythmHUD } from '../components/theatrical/RhythmHUD';
 import { EconomyBar } from '../components/EconomyBar';
 
@@ -87,7 +86,6 @@ export const TerminalScreen: React.FC = () => {
                         onStartMission={viewModel.handleStartMission}
                         onAbandonMission={viewModel.handleAbandonMission}
                     />
-                    <MainframeOverlay />
                 </View>
             }
             middleContent={<FKeyBar keys={[
@@ -117,7 +115,6 @@ export const TerminalScreen: React.FC = () => {
                         buffers={viewModel.buffers}
                         onClose={viewModel.toggleBufferView}
                     />
-                    <MainframeOverlay />
                 </View>
             }
             middleContent={<FKeyBar keys={[

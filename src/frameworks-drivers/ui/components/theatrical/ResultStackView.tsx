@@ -106,6 +106,7 @@ export const ResultStackView: React.FC = () => {
     const [activeCard, setActiveCard] = useState<ResultCard | null>(null);
     const [isSettling, setIsSettling] = useState(false);
     
+    const [containerHeight, setContainerHeight] = useState(0);
     const scrollRef = useRef<ScrollView>(null);
     const useNativeDriver = Platform.OS !== 'web';
 
@@ -122,6 +123,8 @@ export const ResultStackView: React.FC = () => {
             await new Promise(resolve => setTimeout(resolve, 50));
             setHistory(prev => prev.slice(0, i));
         }
+        // Ensure it's fully empty at the end
+        setHistory([]);
     };
 
     useEffect(() => {
@@ -143,6 +146,12 @@ export const ResultStackView: React.FC = () => {
                 scaleAnim.setValue(1.1);
                 widthAnim.setValue(350);
                 
+                // Trigger entry animation
+                Animated.parallel([
+                    Animated.spring(scaleAnim, { toValue: 1.1, friction: 4, useNativeDriver: false }),
+                    Animated.timing(widthAnim, { toValue: 350, duration: 200, useNativeDriver: false })
+                ]).start();
+                
                 setTimeout(() => {
                     bus.emit(GameEventType.TUTOR_EVENT, { type: 'ANIMATION_COMPLETE', payload: { command: payload.command } });
                 }, 600);
@@ -151,7 +160,9 @@ export const ResultStackView: React.FC = () => {
                 setActiveCard(prev => prev ? { ...prev, exitCode: payload.exitCode } : null);
                 
                 // If it was a CLEAR command, trigger pop animation
-                if (payload.command.trim() === 'clear') {
+                const isClear = payload.command && payload.command.trim().toUpperCase() === 'CLEAR';
+
+                if (isClear) {
                     performClearAnimation().then(() => {
                         setTimeout(() => settleActiveCard(payload.command), 200);
                     });
@@ -166,7 +177,7 @@ export const ResultStackView: React.FC = () => {
         });
 
         return () => unsub();
-    }, [bus, history]);
+    }, [bus, history, containerHeight]); // Re-subscribe if height changes
 
     // Ensure scroll to bottom
     useEffect(() => {
@@ -180,9 +191,8 @@ export const ResultStackView: React.FC = () => {
         setIsSettling(true);
         
         // Target: Dock at the bottom. 
-        // In this refined version, we animate to a "docking zone"
-        const screenHeight = Dimensions.get('window').height;
-        const targetY = screenHeight * 0.35; // Adjust based on footer height
+        // Use containerHeight to ensure it doesn't go below the IRC chat
+        const targetY = containerHeight > 0 ? containerHeight * 0.4 : 300; 
         
         Animated.parallel([
             Animated.timing(moveAnim.y, { toValue: targetY, duration: 800, useNativeDriver: false }),
@@ -212,7 +222,7 @@ export const ResultStackView: React.FC = () => {
         historyContent: {
             justifyContent: 'flex-end',
             minHeight: '100%',
-            paddingBottom: 160, 
+            paddingBottom: 40, // Reduced padding
             gap: 30,
         },
         card: {
@@ -266,7 +276,7 @@ export const ResultStackView: React.FC = () => {
             zIndex: 100,
             alignSelf: 'center' as const,
             position: 'absolute' as const,
-            top: 100 // Use numeric value instead of percentage string
+            top: 20 // Move from 100 to 20 to stay within top box
         } : {
             width: '95%' as any, // Use any to allow percentage string in union type
             alignSelf: 'center' as const,
@@ -318,7 +328,11 @@ export const ResultStackView: React.FC = () => {
     };
 
     return (
-        <View style={dynamicStyles.container} pointerEvents="none">
+        <View 
+            style={dynamicStyles.container} 
+            pointerEvents="none"
+            onLayout={(e) => setContainerHeight(e.nativeEvent.layout.height)}
+        >
             <ScrollView 
                 ref={scrollRef}
                 style={dynamicStyles.scroll}

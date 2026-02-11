@@ -1,14 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { THEME } from '../../Theme';
 import { LayoutProps } from '../../../../domain/entities/ThemeComponents';
 
 /**
  * StandardLayout - The default "Console" layout for Terminalator.
- * 
- * Refactored: Removed useTheme hook and direct GlobalTutorBar import to break circular dependency.
- * Receives theme context via props or assumes reasonable defaults.
  */
 export const StandardLayout: React.FC<LayoutProps> = ({
     status = "OPERATIONAL",
@@ -24,9 +21,8 @@ export const StandardLayout: React.FC<LayoutProps> = ({
     theme,
     settings
 }) => {
-    // Note: We use global THEME or props. In a pure headless world,
-    // colors would come from props or a non-circular context.
     const colors = theme.colors;
+    const { height: windowHeight } = useWindowDimensions();
 
     const dynamicStyles = StyleSheet.create({
         container: {
@@ -39,6 +35,7 @@ export const StandardLayout: React.FC<LayoutProps> = ({
         mainRow: {
             flex: 1,
             flexDirection: 'row',
+            overflow: 'hidden',
         },
         leftColumn: {
             flex: 1,
@@ -65,7 +62,7 @@ export const StandardLayout: React.FC<LayoutProps> = ({
             fontSize: THEME.typography.fontSize.sm,
         },
         topBox: {
-            flex: 1,
+            flex: 1, // Let topBox grow to fill available space
             paddingHorizontal: THEME.spacing.xl,
             paddingTop: THEME.spacing.xl,
             backgroundColor: 'transparent',
@@ -84,10 +81,9 @@ export const StandardLayout: React.FC<LayoutProps> = ({
     return (
         <SafeAreaView style={[dynamicStyles.container, style]}>
             <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 style={dynamicStyles.flex}
             >
-
                 {headerComponent ? (
                     <View style={dynamicStyles.header}>
                         {headerComponent}
@@ -111,11 +107,11 @@ export const StandardLayout: React.FC<LayoutProps> = ({
                         </View>
 
                         {/* TUTOR BAR AREA */}
-                        <View style={{ zIndex: 10 }}>
+                        <View style={{ zIndex: 12 }}>
                             {tutorBarComponent}
                         </View>
 
-                        <View style={{ zIndex: 10 }}>
+                        <View style={{ zIndex: 11 }}>
                             {middleContent}
                         </View>
 
@@ -130,7 +126,6 @@ export const StandardLayout: React.FC<LayoutProps> = ({
                         </View>
                     )}
                 </View>
-
             </KeyboardAvoidingView>
             {children}
         </SafeAreaView>
