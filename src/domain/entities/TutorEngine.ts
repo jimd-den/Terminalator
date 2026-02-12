@@ -41,6 +41,7 @@ export interface Lesson {
     text: string;
     type: 'SHELL' | 'VIM_INSERT' | 'VIM_COMMAND';
     instructions: string;
+    tutorIntent?: string; // [NEW] Semantic intent for proactive instructions
     isMission?: boolean; // [NEW] Distinguish from training context
     setup?: (fs: FileSystem) => void;
 }

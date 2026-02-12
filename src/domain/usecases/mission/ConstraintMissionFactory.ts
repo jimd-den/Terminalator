@@ -89,6 +89,7 @@ export class ConstraintMissionFactory {
             id: 'step1',
             stepType: 'CONNECT',
             description: `Connect to ${problem.targetSystem}`,
+            tutorIntent: 'INSTRUCT_SSH',
             lessonText: `ssh admin@${problem.targetSystem}`,
             commandMatcher: { type: GameEventType.COMMAND_EXECUTED, target: 'ssh', ruleKey: 'SUCCESS_EXIT' },
             onComplete: { nextStepId: 'step2', tutorIntent: 'LINK_ESTABLISHED' }
@@ -99,6 +100,7 @@ export class ConstraintMissionFactory {
             id: 'step2',
             stepType: 'LOCATE',
             description: `Navigate to /var/data`,
+            tutorIntent: 'INSTRUCT_CD',
             lessonText: `cd /var/data`,
             commandMatcher: { type: GameEventType.COMMAND_EXECUTED, target: 'cd', ruleKey: 'DIR_MATCH' },
             onComplete: { nextStepId: 'step3', tutorIntent: 'FILE_LOCATED' }
@@ -114,6 +116,7 @@ export class ConstraintMissionFactory {
             id: 'step3',
             stepType: 'MODIFY', // Generic action
             description: `Execute: ${cmdString}`,
+            tutorIntent: 'INSTRUCT_ACTION',
             lessonText: cmdString,
             cwdPattern: '/var/data',
             commandMatcher: {

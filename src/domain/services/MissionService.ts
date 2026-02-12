@@ -89,10 +89,22 @@ export class MissionService {
             mission
         );
 
+        const connectionMsg = this.adaptiveEngine.generateAdvice(
+            TutorIntent.SYSTEM_CONNECTING,
+            TutorToneProfile.SYSTEM_CORE,
+            mission
+        );
+
+        const rewardMsg = this.adaptiveEngine.generateAdvice(
+            TutorIntent.SYSTEM_REWARD_ESCROW,
+            TutorToneProfile.SYSTEM_CORE,
+            mission
+        );
+
         mission.chatHistory = [
-            { sender: 'SYSTEM', message: `CONNECTING TO SECURE CHANNEL ${mission.id}...`, timestamp: Date.now() },
+            { sender: 'SYSTEM', message: connectionMsg.message, timestamp: Date.now() },
             { sender: npc.name, message: briefing.message, timestamp: Date.now() },
-            { sender: 'SYSTEM', message: `REWARD ESCROW: ${mission.reward}`, timestamp: Date.now() },
+            { sender: 'SYSTEM', message: rewardMsg.message, timestamp: Date.now() },
         ];
     }
 

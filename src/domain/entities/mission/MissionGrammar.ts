@@ -60,6 +60,11 @@ export interface StepRule {
      * Human-readable objective for this specific step.
      */
     description: string;
+
+    /**
+     * The semantic intent for the Tutor to proactively describe this step.
+     */
+    tutorIntent?: string;
     
     /**
      * Optional regex for the required current working directory to validate this step.

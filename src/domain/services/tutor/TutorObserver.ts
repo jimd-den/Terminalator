@@ -63,9 +63,20 @@ export class TutorObserver {
                 } as any
             );
             if (legacyHint) {
-                this.emitReaction(legacyHint);
-                // If legacy hint handled it, we might want to skip generative logic
-                // But for now we allow both or prioritize legacy.
+                if (legacyHint.intent) {
+                    // Use generative engine for legacy intent!
+                    const context = ContextBuilder.buildFromEvent(event);
+                    const generativeAction = CombinatorialUtteranceEngine.generate(
+                        legacyHint.intent as any,
+                        this.psychAdapter.getActiveTone(),
+                        context,
+                        INITIAL_TEMPLATE_CATALOG,
+                        this.activeMission.id
+                    );
+                    this.emitReaction(generativeAction);
+                } else {
+                    this.emitReaction(legacyHint);
+                }
                 return;
             }
         }
@@ -74,13 +85,21 @@ export class TutorObserver {
         const intent = this.determineIntent(event);
         if (!intent) return;
 
-        // 3. Probabilistic Filtering (Moved from Brain to Observer)
+        // 4. Probabilistic Filtering (Moved from Brain to Observer)
         if (this.shouldSilence(event, intent)) return;
 
-        // 4. Build Context
+        // 5. Build Context
         const context = ContextBuilder.buildFromEvent(event);
+        if (event.type === GameEventType.TUTOR_EVENT && event.payload.type === 'START') {
+            context.lessonText = event.payload.text;
+            context.target = this.activeMission?.targetSystem || 'unknown';
+        }
 
-        // 5. Generate Utterance
+        if (event.type === GameEventType.PERSONA_SWITCHED) {
+            context.personaName = event.payload.name;
+        }
+
+        // 6. Generate Utterance
         const action = CombinatorialUtteranceEngine.generate(
             intent,
             this.psychAdapter.getActiveTone(),
@@ -120,8 +139,16 @@ export class TutorObserver {
             case GameEventType.MISSION_PROGRESS:
                 return TutorIntent.CELEBRATE_SUCCESS;
             
+            case GameEventType.SYSTEM_BOOT:
+                return TutorIntent.SYSTEM_BOOT;
+            
+            case GameEventType.PERSONA_SWITCHED:
+                return TutorIntent.PERSONA_INITIALIZED;
+            
             case GameEventType.TUTOR_EVENT:
-                if (event.payload.type === 'START') return TutorIntent.NUDGE_PROGRESSION;
+                if (event.payload.type === 'START') {
+                    return (event.payload.tutorIntent as TutorIntent) || TutorIntent.NUDGE_PROGRESSION;
+                }
                 if (event.payload.type === 'COMPLETE') return TutorIntent.CELEBRATE_SUCCESS;
                 return null;
             

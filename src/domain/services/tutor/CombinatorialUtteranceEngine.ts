@@ -13,18 +13,11 @@ import { TutorIntent } from '../../entities/tutor/TutorIntent';
 import { TutorToneProfile } from '../../entities/tutor/TutorToneProfile';
 import { TutorTemplate, UtteranceContext } from '../../entities/tutor/TutorTemplate';
 import { TutorAction } from '../../interfaces/ITutorService';
+import { Lexicon, PartOfSpeech } from '../../entities/tutor/Lexicon';
+import { CORE_LEXICON } from '../../data/tutor/LexiconData';
 
 export class CombinatorialUtteranceEngine {
     
-    // Vocabulary Pools
-    private static vocab: Record<string, string[]> = {
-        'greeting': ['Hello', 'Greetings', 'Salutations', 'Attention', 'System ready'],
-        'affirmative': ['Correct', 'Affirmative', 'Indeed', 'Precisely', 'Confirmed'],
-        'negative': ['Incorrect', 'Negative', 'False', 'Error', 'Denied'],
-        'connector': ['and', 'additionally', 'furthermore', 'plus', 'also'],
-        'emphasis': ['critical', 'vital', 'essential', 'important', 'mandatory']
-    };
-
     /**
      * Generates a unique utterance by filling a structural template with randomized vocabulary.
      */
@@ -54,7 +47,7 @@ export class CombinatorialUtteranceEngine {
         const selected = eligible[Math.floor(rng() * eligible.length)];
 
         // 3. Combinatorial Expansion
-        const message = this.expand(selected.text, context, rng);
+        const message = this.expand(selected.text, context, tone, rng);
 
         return {
             missionId,
@@ -65,15 +58,29 @@ export class CombinatorialUtteranceEngine {
         };
     }
 
-    private static expand(template: string, context: UtteranceContext, rng: () => number): string {
-        // Replace {vocab:key} with random word from pool
-        let result = template.replace(/{vocab:(\w+)}/g, (match, key) => {
-            const pool = this.vocab[key];
-            if (!pool) return match;
-            return pool[Math.floor(rng() * pool.length)];
+    private static expand(template: string, context: UtteranceContext, tone: TutorToneProfile, rng: () => number): string {
+        // 1. Replace {vocab:pos} with random word from Lexicon matching PartOfSpeech and Tone
+        let result = template.replace(/{vocab:(\w+)}/g, (match, posKey) => {
+            const pos = posKey.toUpperCase() as PartOfSpeech;
+            const pool = CORE_LEXICON.entries.filter(e => {
+                if (e.pos !== pos) return false;
+                if (e.tones && e.tones.length > 0 && !e.tones.includes(tone)) return false;
+                return true;
+            });
+
+            if (pool.length === 0) return match;
+            return pool[Math.floor(rng() * pool.length)].word;
         });
 
-        // Standard Context Interpolation
+        // 2. Replace {verb}, {noun}, etc (Legacy or shorthands)
+        result = result.replace(/{(verb|noun|adjective|adverb)}/g, (match, posKey) => {
+            const pos = posKey.toUpperCase() as PartOfSpeech;
+            const pool = CORE_LEXICON.entries.filter(e => e.pos === pos);
+            if (pool.length === 0) return match;
+            return pool[Math.floor(rng() * pool.length)].word;
+        });
+
+        // 3. Standard Context Interpolation
         result = result.replace(/{(\w+)}/g, (match, key) => {
             return String(context[key] ?? match);
         });

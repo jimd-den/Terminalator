@@ -101,6 +101,7 @@ export class GameManager implements IGameManager {
                         type: 'SHELL',
                         text: result.text || 'ls -la',
                         instructions: result.instructions || `CONNECTION ESTABLISHED. SCAN SYSTEM FOR ${objective}`,
+                        tutorIntent: result.tutorIntent,
                         isMission: result.isMission || true
                     };
                     this.tutorEngine.startLesson(lesson);
@@ -609,7 +610,7 @@ export class GameManager implements IGameManager {
 
 
 
-                                            // Determine lesson from grammar
+                                                        // Determine lesson from grammar
 
 
 
@@ -617,7 +618,7 @@ export class GameManager implements IGameManager {
 
 
 
-                                            let lessonText = `ssh admin@${mission.targetSystem}`;
+                                
 
 
 
@@ -625,7 +626,7 @@ export class GameManager implements IGameManager {
 
 
 
-                                            let instructions = `INITIATE SATLINK // CONNECT TO ${mission.targetSystem}`;
+                                                        let lessonText = `ssh admin@${mission.targetSystem}`;
 
 
 
@@ -633,31 +634,7 @@ export class GameManager implements IGameManager {
 
 
 
-                if (mission.grammar) {
-
-
-
-                    const step = mission.grammar.steps.find(s => s.id === mission.currentStepId);
-
-
-
-                    if (step && step.lessonText) {
-
-
-
-                        lessonText = step.lessonText;
-
-
-
-                        instructions = step.description;
-
-
-
-                    }
-
-
-
-                }
+                                
 
 
 
@@ -665,31 +642,327 @@ export class GameManager implements IGameManager {
 
 
 
-                const lesson: Lesson = {
+                                                        let instructions = `INITIATE SATLINK // CONNECT TO ${mission.targetSystem}`;
 
 
 
-                    id: `MISSION_${mission.id}`,
+    
 
 
 
-                    type: 'SHELL' as const,
+                                
 
 
 
-                    text: lessonText,
+    
 
 
 
-                    instructions: instructions,
+                                                        let tutorIntent = 'INSTRUCT_SSH';
 
 
 
-                    isMission: true
+    
 
 
 
-                };
+                                
+
+
+
+    
+
+
+
+                                            
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                        if (mission.grammar) {
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                            const step = mission.grammar.steps.find(s => s.id === mission.currentStepId);
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                            if (step && step.lessonText) {
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                                lessonText = step.lessonText;
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                                instructions = step.description;
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                                tutorIntent = step.tutorIntent || 'NUDGE_PROGRESSION';
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                            }
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                        }
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                            
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                        const lesson: Lesson = {
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                            id: `MISSION_${mission.id}`,
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                            type: 'SHELL' as const,
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                            text: lessonText,
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                            instructions: instructions,
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                            tutorIntent: tutorIntent,
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                            isMission: true
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                        };
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                            
 
 
 
