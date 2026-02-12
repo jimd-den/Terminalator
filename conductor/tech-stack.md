@@ -10,6 +10,8 @@
     - `VimEngine`: State-pattern based Vim engine with persistent Undo/Redo capability.
     - `InputProvider`: Global keyboard orchestration with "Always On" focus management.
     - `ThemeContext`: Dynamic provider for palette expansion and component context injection.
+    - `SimulationBus`: Central nervous system for Event-Driven Architecture (EDA), broadcasting domain events.
+    - `TutorObserver`: Reactive bridge that translates low-level system events into semantic tutor actions.
     - `TutorEngine`: Context-aware pedagogical system capable of interpreting procedural mission intent.
     - `TutorBrain`: Persona orchestration engine.
     - `TutorSpy`: Performance analysis engine (WPM, Accuracy, Stalls).
@@ -28,6 +30,7 @@
 
 ## Architectural Patterns
 - **Paradigm:** Clean Architecture
+- **Communication:** Event-Driven Architecture (EDA) via the Observer Pattern.
 - **Layers:**
   - **Entities:** Pure business logic (e.g., `Command.ts`, `FileSystem.ts`, `IVimCommand.ts`).
     - *Constraint:* MUST NOT depend on Use Cases or outer layers.

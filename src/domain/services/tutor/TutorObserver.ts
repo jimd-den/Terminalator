@@ -18,17 +18,25 @@ import { ContextBuilder } from './ContextBuilder';
 import { INITIAL_TEMPLATE_CATALOG } from '../../data/tutor/TemplateCatalog';
 import { TutorIntent } from '../../entities/tutor/TutorIntent';
 import { TutorAction } from '../../interfaces/ITutorService';
+import { Mission } from '../../entities/Mission';
+import { TutorService } from '../TutorService';
 
 export type TutorReactionCallback = (action: TutorAction) => void;
 
 export class TutorObserver {
     private reactionListeners: TutorReactionCallback[] = [];
+    private activeMission: Mission | null = null;
 
     constructor(
         private bus: SimulationBus,
-        private psychAdapter: PsychAdapter
+        private psychAdapter: PsychAdapter,
+        private tutorService: TutorService
     ) {
         this.initialize();
+    }
+
+    public setActiveMission(mission: Mission | null): void {
+        this.activeMission = mission;
     }
 
     private initialize(): void {
@@ -42,24 +50,56 @@ export class TutorObserver {
             this.psychAdapter.recordEvent(success ? 'SUCCESS' : 'ERROR');
         }
 
-        // 2. Determine Intent based on Event
+        // 2. Legacy Hint Check (for archetypal missions)
+        if (event.type === GameEventType.COMMAND_EXECUTED && this.activeMission && this.activeMission.type !== 'generative') {
+            const legacyHint = this.tutorService.analyzeGameState(
+                this.activeMission,
+                event.payload.state,
+                { 
+                    output: event.payload.output, 
+                    exitCode: event.payload.exitCode,
+                    utility: event.payload.command,
+                    newState: event.payload.state
+                } as any
+            );
+            if (legacyHint) {
+                this.emitReaction(legacyHint);
+                // If legacy hint handled it, we might want to skip generative logic
+                // But for now we allow both or prioritize legacy.
+                return;
+            }
+        }
+
+        // 3. Determine Intent based on Event (Generative Flow)
         const intent = this.determineIntent(event);
         if (!intent) return;
 
-        // 3. Build Context
+        // 3. Probabilistic Filtering (Moved from Brain to Observer)
+        if (this.shouldSilence(event, intent)) return;
+
+        // 4. Build Context
         const context = ContextBuilder.buildFromEvent(event);
 
-        // 4. Generate Utterance
+        // 5. Generate Utterance
         const action = CombinatorialUtteranceEngine.generate(
             intent,
             this.psychAdapter.getActiveTone(),
             context,
             INITIAL_TEMPLATE_CATALOG,
-            'current-mission' // Fallback or dynamic lookup
+            this.activeMission?.id || 'system-context'
         );
 
-        // 5. Notify Listeners (UI/Brain)
-        this.reactionListeners.forEach(l => l(action));
+        // 6. Notify Listeners (UI/Brain)
+        this.emitReaction(action);
+    }
+
+    private shouldSilence(event: GameEvent, intent: TutorIntent): boolean {
+        // High priority events always pass
+        if (event.type === GameEventType.COMMAND_EXECUTED && event.payload.exitCode !== 0) return false;
+        if (intent === TutorIntent.CELEBRATE_SUCCESS) return false;
+
+        // Otherwise 50% chance to be quiet to avoid annoyance
+        return Math.random() > 0.5;
     }
 
     private determineIntent(event: GameEvent): TutorIntent | null {
@@ -80,12 +120,24 @@ export class TutorObserver {
             case GameEventType.MISSION_PROGRESS:
                 return TutorIntent.CELEBRATE_SUCCESS;
             
+            case GameEventType.TUTOR_EVENT:
+                if (event.payload.type === 'START') return TutorIntent.NUDGE_PROGRESSION;
+                if (event.payload.type === 'COMPLETE') return TutorIntent.CELEBRATE_SUCCESS;
+                return null;
+            
             default:
                 return null;
         }
     }
 
-    public onReaction(callback: TutorReactionCallback): void {
+    private emitReaction(action: TutorAction): void {
+        this.reactionListeners.forEach(l => l(action));
+    }
+
+    public onReaction(callback: TutorReactionCallback): () => void {
         this.reactionListeners.push(callback);
+        return () => {
+            this.reactionListeners = this.reactionListeners.filter(l => l !== callback);
+        };
     }
 }

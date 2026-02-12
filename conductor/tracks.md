@@ -15,7 +15,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [ ] **Track: Semantic Unix Model** (ACTIVE)
 - [ ] **Track: Generative Narrative** (ACTIVE)
 - [ ] **Track: Generative Mission Arch** (ACTIVE)
-- [ ] **Track: Dispositional Tutor** (ACTIVE)
+- [x] **Track: Dispositional Tutor** (ACTIVE)
 
 ---
 

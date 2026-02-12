@@ -16,6 +16,7 @@ import { TerminalState } from '../entities/TerminalState';
 import { CommandResponse } from '../entities/Command';
 import { TutorService, TutorProgressionResult } from './TutorService';
 import { MissionRepository } from './MissionRepository';
+import { SimulationBus, GameEventType } from './SimulationBus';
 import { generateHostname, generateObjectiveFilename } from '../utils/NameGenerator';
 import { IWorldStateProvider } from '../interfaces/IWorldStateProvider';
 import { ProceduralMissionFactory } from '../factories/ProceduralMissionFactory';
@@ -41,6 +42,7 @@ export class MissionService {
     constructor(
         private missionRepository: MissionRepository,
         private tutorService: TutorService,
+        private bus: SimulationBus, // [NEW]
         private worldState?: IWorldStateProvider,
         private proceduralFactory?: ProceduralMissionFactory,
         private constraintValidator?: ConstraintValidator,
@@ -67,6 +69,13 @@ export class MissionService {
         
         this.setupMissionChat(mission, npc);
         this.activeMissions.push(mission);
+
+        this.bus.emit(GameEventType.MISSION_PROGRESS, {
+            missionId: mission.id,
+            status: mission.status,
+            type: 'CREATED'
+        });
+
         return mission;
     }
 
@@ -90,46 +99,35 @@ export class MissionService {
     /**
      * Updates mission state based on command execution results.
      */
-    public updateMissions(state: TerminalState, response: CommandResponse): { hints: { missionId: string, sender: string, message: string, type: string }[], progression: { result: TutorProgressionResult | null, missionId: string } | null } {
-        const hints: { missionId: string, sender: string, message: string, type: string }[] = [];
+    public updateMissions(state: TerminalState, response: CommandResponse): { hints: any[], progression: { result: TutorProgressionResult | null, missionId: string } | null } {
+        const hints: any[] = [];
         const progression = this.tutorService.checkMissionProgression(state, this.activeMissions, response);
 
-        for (const mission of this.activeMissions) {
-            const hint = this.tutorService.analyzeGameState(mission, state, response);
-            if (hint) {
-                const alreadySent = mission.chatHistory.some(m => m.message === hint.message);
-                if (!alreadySent) {
-                    const sender = hint.type === 'CONGRATS' ? 'SYSTEM' : 'TutorBot';
+        if (progression && progression.result) {
+            this.bus.emit(GameEventType.MISSION_PROGRESS, {
+                missionId: progression.missionId,
+                result: progression.result,
+                type: progression.result.type === 'MISSION_COMPLETE' ? 'COMPLETED' : 'PROGRESSION'
+            });
 
-                    mission.chatHistory.push({
-                        sender,
-                        message: hint.message,
-                        timestamp: Date.now()
-                    });
-
-                    if (hint.type === 'CONGRATS') {
-                        mission.status = 'completed';
-                        mission.currentStep = MissionStep.COMPLETED;
-                    }
-
-                    hints.push({ missionId: mission.id, sender, message: hint.message, type: hint.type });
-                }
-            }
-        }
-
-        if (progression && progression.result && progression.result.nextStep) {
             const mission = this.activeMissions.find(m => m.id === progression.missionId);
             if (mission) {
-                if (this.constraintValidator && response.executionStats && mission.constraints) {
-                    const validation = this.constraintValidator.validate(mission, response.executionStats);
-                    if (!validation.valid) {
-                        const rejectionMsg = `CONSTRAINT VIOLATION: ${validation.reason}`;
-                        mission.chatHistory.push({ sender: 'SYSTEM', message: rejectionMsg, timestamp: Date.now() });
-                        hints.push({ missionId: mission.id, sender: 'SYSTEM', message: rejectionMsg, type: 'WARNING' });
-                        return { hints, progression: null };
+                if (progression.result.type === 'MISSION_COMPLETE') {
+                    mission.status = 'completed';
+                    mission.currentStep = MissionStep.COMPLETED;
+                } else if (progression.result.nextStep) {
+                    // Constraint validation (Legacy logic kept for now)
+                    if (this.constraintValidator && response.executionStats && mission.constraints) {
+                        const validation = this.constraintValidator.validate(mission, response.executionStats);
+                        if (!validation.valid) {
+                            const rejectionMsg = `CONSTRAINT VIOLATION: ${validation.reason}`;
+                            mission.chatHistory.push({ sender: 'SYSTEM', message: rejectionMsg, timestamp: Date.now() });
+                            this.bus.emit(GameEventType.TUTOR_EVENT, { type: 'MISTAKE', message: rejectionMsg });
+                            return { hints, progression: null };
+                        }
                     }
+                    mission.currentStep = progression.result.nextStep;
                 }
-                mission.currentStep = progression.result.nextStep;
             }
         }
 

@@ -52,6 +52,8 @@ import { PersonaLoader } from '../../domain/services/tutor/PersonaLoader';
 import * as dialogueLibrary from '../../domain/data/tutor/DialogueLibrary.json';
 import { TutorBrain } from '../../domain/entities/tutor/TutorBrain';
 import { TutorShadow } from '../../domain/services/tutor/TutorShadow';
+import { TutorObserver } from '../../domain/services/tutor/TutorObserver';
+import { PsychAdapter } from '../../domain/services/tutor/PsychAdapter';
 import { IStructuredCommand } from '../../domain/commands/IStructuredCommand';
 
 // Structured Commands
@@ -106,6 +108,11 @@ export class DependencyContainer {
         const intensityCalculator = new IntensityCalculator(masteryTracker);
         const intentInterpreter = new MissionIntentInterpreter();
         return new TutorBrain(intensityCalculator, intentInterpreter, bus);
+    }
+
+    public static createTutorObserver(bus: SimulationBus, tutorService: TutorService): TutorObserver {
+        const psychAdapter = new PsychAdapter();
+        return new TutorObserver(bus, psychAdapter, tutorService);
     }
 
     public static createTutorShadow(
@@ -177,6 +184,7 @@ export class DependencyContainer {
         const missionService = new MissionService(
             missionRepository, 
             tutorService, 
+            bus,
             worldManager, 
             proceduralFactory, 
             constraintValidator,
@@ -191,6 +199,8 @@ export class DependencyContainer {
         const lessonService = new LessonService();
 
         const lessonCoordinator = new LessonCoordinator(tutorEngine, mailSystem, missionService, economyService);
+
+        const tutorObserver = this.createTutorObserver(bus, tutorService);
 
         worldPatchService.initializeRootFileSystem(fs);
 
@@ -207,6 +217,7 @@ export class DependencyContainer {
             tutorEngine,
             presentationDirector,
             bus,
+            tutorObserver,
             telemetry
         );
     }

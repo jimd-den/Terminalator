@@ -26,114 +26,94 @@ import { IWorldManager } from '../domain/interfaces/IWorldManager';
 import { IWorldStateProvider } from '../domain/interfaces/IWorldStateProvider';
 
 import { SystemPreparationSpec } from '../domain/entities/world/SystemPreparationSpec';
-
 import { SimulationBus } from '../domain/services/SimulationBus';
-
-
+import { TutorObserver } from '../domain/services/tutor/TutorObserver';
 
 /**
-
  * GameManager - Interface Adapter layer
-
- * 
-
- * Acts as a Facade/Coordinator for the game's various subsystems.
-
- * Upgraded to support Scaling Engines.
-
- *
-
- * Pillar: The Four-Fold Shield (Strict Architecture)
-
- * Pillar: The Balanced Scale (SOLID / KISS)
-
  */
-
 export class GameManager implements IGameManager {
-
     private missionService: MissionService;
-
     private npcService: NPCService;
-
     private worldPatchService: WorldPatchService;
-
     private lessonCoordinator: LessonCoordinator;
-
     private mailSystem: MailSystem;
+    private lessonService: LessonService;
+    private worldManager: IWorldManager & IWorldStateProvider;
+    private presentationDirector: PresentationDirector;
+    private tutorObserver: TutorObserver;
 
-        private lessonService: LessonService;
-
-        private worldManager: IWorldManager & IWorldStateProvider;
-
-        private presentationDirector: PresentationDirector;
-
-    
-
-        public readonly tutorEngine: TutorEngine;
-
-
+    public readonly tutorEngine: TutorEngine;
 
     constructor(
-
         private fs: FileSystem,
-
         private networkMap: NetworkMap,
-
         missionService: MissionService,
-
         npcService: NPCService,
-
         worldPatchService: WorldPatchService,
-
         lessonCoordinator: LessonCoordinator,
-
         mailSystem: MailSystem,
-
         lessonService: LessonService,
+        worldManager: IWorldManager & IWorldStateProvider,
+        tutorEngine: TutorEngine,
+        presentationDirector: PresentationDirector,
+        private bus: SimulationBus,
+        tutorObserver: TutorObserver,
+        private telemetry?: TelemetryPort
+    ) {
+        if (!this.fs) {
+            throw new Error("GameManager initialized without FileSystem! Critical Error.");
+        }
 
-                worldManager: IWorldManager & IWorldStateProvider,
+        this.missionService = missionService;
+        this.npcService = npcService;
+        this.worldPatchService = worldPatchService;
+        this.lessonCoordinator = lessonCoordinator;
+        this.mailSystem = mailSystem;
+        this.lessonService = lessonService;
+        this.worldManager = worldManager;
+        this.tutorEngine = tutorEngine;
+        this.presentationDirector = presentationDirector;
+        this.tutorObserver = tutorObserver;
 
-                tutorEngine: TutorEngine,
+        this.initializeReactiveListeners();
+    }
 
-                presentationDirector: PresentationDirector,
-
-                private bus: SimulationBus,
-
-                private telemetry?: TelemetryPort
-
-            ) {
-
-                if (!this.fs) {
-
-                    throw new Error("GameManager initialized without FileSystem! Critical Error.");
-
+    private initializeReactiveListeners(): void {
+        this.bus.subscribe(GameEventType.MISSION_PROGRESS, (event) => {
+            if (event.payload.type === 'COMPLETED') {
+                const mission = this.missionService.getMissionById(event.payload.missionId);
+                if (mission) {
+                    this.mailSystem.sendMail(
+                        { id: 'bank', name: 'Bank', origin: '', career: '', goal: '', status: 'active', traits: [], loadout: [] },
+                        'PAYMENT RECEIVED',
+                        `Escrow released for Mission ${mission.id}. ${mission.reward} transferred.`
+                    );
                 }
+            } else if (event.payload.type === 'PROGRESSION' && event.payload.result?.type === 'START_LESSON') {
+                const result = event.payload.result;
+                const lessonId = result.lessonId || 'DUMMY_LESSON';
+                const objective = result.objectiveTarget || 'TARGET';
 
-        
-
-                this.missionService = missionService;
-
-                this.npcService = npcService;
-
-                this.worldPatchService = worldPatchService;
-
-                this.lessonCoordinator = lessonCoordinator;
-
-                this.mailSystem = mailSystem;
-
-                this.lessonService = lessonService;
-
-                this.worldManager = worldManager;
-
-                this.tutorEngine = tutorEngine;
-
-                this.presentationDirector = presentationDirector;
-
+                setTimeout(() => {
+                    const lesson: Lesson = {
+                        id: lessonId,
+                        type: 'SHELL',
+                        text: result.text || 'ls -la',
+                        instructions: result.instructions || `CONNECTION ESTABLISHED. SCAN SYSTEM FOR ${objective}`,
+                        isMission: result.isMission || true
+                    };
+                    this.tutorEngine.startLesson(lesson);
+                }, 2500);
             }
+        });
+    }
 
+    public getTutorObserver(): TutorObserver {
+        return this.tutorObserver;
+    }
 
-
-        public getSimulationBus(): SimulationBus {
+    public getSimulationBus(): SimulationBus {
             return this.bus;
         }
 
@@ -192,102 +172,32 @@ export class GameManager implements IGameManager {
 
 
     /**
-
      * Called after every command execution to update game state.
-
      */
-
     public onCommandExecuted(state: TerminalState, response: CommandResponse, _prevFsContext?: string) {
+        // Pillar: THE BALANCED SCALE (Observer Pattern)
+        // Emit for TutorObserver and other reactive listeners
+        this.bus.emit(GameEventType.COMMAND_EXECUTED, { 
+            command: response.utility || 'unknown',
+            args: [], // Ideally parsed from the shell
+            exitCode: response.exitCode,
+            output: response.output,
+            cwd: state.cwd,
+            state: state 
+        });
 
-                // Emit for TutorBrain observation (includes exitCode and utility)
+        // Legacy: Internal listeners
+        this.emitEvent('COMMAND_EXECUTED', { 
+            output: response.output, 
+            exitCode: response.exitCode,
+            utility: response.utility || 'unknown'
+        });
 
-                this.emitEvent('COMMAND_EXECUTED', { 
-
-                    output: response.output, 
-
-                    exitCode: response.exitCode,
-
-                    utility: response.utility || 'unknown'
-
-                });
-
-
-
-        const { hints, progression } = this.missionService.updateMissions(state, response);
-
-
-
-        hints.filter(h => h.type === 'CONGRATS').forEach(h => {
-
-            const mission = this.missionService.getMissionById(h.missionId);
-
-            if (mission) {
-
-                this.mailSystem.sendMail(
-
-                    { id: 'bank', name: 'Bank', origin: '', career: '', goal: '', status: 'active', traits: [], loadout: [] },
-
-                    'PAYMENT RECEIVED',
-
-                    `Escrow released for Mission ${mission.id}. ${mission.reward} transferred.`
-
-                );
+                const { hints, progression } = this.missionService.updateMissions(state, response);
 
             }
 
-        });
-
-
-
-                if (progression && progression.result && progression.result.type === 'START_LESSON') {
-
-
-
-                    const result = progression.result;
-
-
-
-                    const lessonId = result.lessonId || 'DUMMY_LESSON';
-
-
-
-                    const objective = result.objectiveTarget || 'TARGET';
-
-
-
         
-
-
-
-                    setTimeout(() => {
-
-
-
-                        const lesson: Lesson = {
-
-
-
-                            id: lessonId,
-
-
-
-                            type: 'SHELL',
-
-                    text: result.text || 'ls -la',
-
-                    instructions: result.instructions || `CONNECTION ESTABLISHED. SCAN SYSTEM FOR ${objective}`,
-
-                    isMission: result.isMission || true
-
-                };
-
-                this.tutorEngine.startLesson(lesson);
-
-            }, 2500);
-
-        }
-
-    }
 
 
 
