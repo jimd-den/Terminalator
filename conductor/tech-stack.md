@@ -10,13 +10,15 @@
     - `VimEngine`: State-pattern based Vim engine with persistent Undo/Redo capability.
     - `InputProvider`: Global keyboard orchestration with "Always On" focus management.
     - `ThemeContext`: Dynamic provider for palette expansion and component context injection.
-    - `SimulationBus`: Central nervous system for Event-Driven Architecture (EDA), broadcasting domain events.
-    - `TutorObserver`: Reactive bridge that translates low-level system events into semantic tutor actions.
+    - `SimulationBus`: Central nervous system for Event-Driven Architecture (EDA), broadcasting domain events (COMMAND_EXECUTED, SYSTEM_BOOT, PERSONA_SWITCHED, etc.).
+    - `TutorObserver`: Autonomous "nervous system" bridge translating system events into semantic `TutorIntent` for the generative engines.
     - `TutorEngine`: Context-aware pedagogical system capable of interpreting procedural mission intent.
     - `TutorBrain`: Persona orchestration engine.
     - `TutorSpy`: Performance analysis engine (WPM, Accuracy, Stalls).
     - `MasteryTracker`: Command-level skill tracking algorithm.
     - `TutorMessagingService`: Serialized message delivery system with UI synchronization.
+    - `CombinatorialUtteranceEngine`: Pure functional sentence factory capable of generating millions of unique dialogue permutations using a structural grammar and lexicon.
+    - `AdaptiveTutorEngine`: Contextual advisor bridging knowledge base capabilities with the combinatorial engine for deep technical coaching.
   - **System Simulation:** 
     - `FileSystem`: A custom, in-memory/persistent POSIX-compliant file system abstraction.
     - `ProcessManager`: Simulation of process life cycles, signals, and job control.
