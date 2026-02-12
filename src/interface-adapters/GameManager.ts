@@ -26,7 +26,7 @@ import { IWorldManager } from '../domain/interfaces/IWorldManager';
 import { IWorldStateProvider } from '../domain/interfaces/IWorldStateProvider';
 
 import { SystemPreparationSpec } from '../domain/entities/world/SystemPreparationSpec';
-import { SimulationBus } from '../domain/services/SimulationBus';
+import { SimulationBus, GameEventType } from '../domain/services/SimulationBus';
 import { TutorObserver } from '../domain/services/tutor/TutorObserver';
 
 /**
@@ -182,7 +182,7 @@ export class GameManager implements IGameManager {
             args: [], // Ideally parsed from the shell
             exitCode: response.exitCode,
             output: response.output,
-            cwd: state.cwd,
+            cwd: state.currentDirectory,
             state: state 
         });
 
