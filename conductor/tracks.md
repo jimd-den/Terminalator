@@ -11,11 +11,11 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [x] **Track: Rhythm-Action Command Engine** (ARCHIVED)
 - [x] **Track: Persistent Keyboard & Settings Refactor** (ARCHIVED)
 - [x] **Track: Hardcoded Asset Refactor** (ARCHIVED)
+- [x] **Track: Dispositional Tutor** (ARCHIVED)
 
 - [ ] **Track: Semantic Unix Model** (ACTIVE)
 - [ ] **Track: Generative Narrative** (ACTIVE)
 - [ ] **Track: Generative Mission Arch** (ACTIVE)
-- [x] **Track: Dispositional Tutor** (ACTIVE)
 
 ---
 
@@ -29,9 +29,9 @@ This file tracks all major tracks for the project. Each track has its own detail
 *Link (Archived): [./archive/rhythm_action_engine_20260208/](./archive/rhythm_action_engine_20260208/)*
 *Link (Archived): [./archive/persistent_keyboard_20260208/](./archive/persistent_keyboard_20260208/)*
 *Link (Archived): [./archive/hardcoded_asset_refactor_20260208/](./archive/hardcoded_asset_refactor_20260208/)*
+*Link (Archived): [./archive/dispositional_tutor_20260206/](./archive/dispositional_tutor_20260206/)*
 
 *Link (Active): [./tracks/semantic_unix_model_20260206/](./tracks/semantic_unix_model_20260206/)*
 *Link (Active): [./tracks/generative_narrative_20260206/](./tracks/generative_narrative_20260206/)*
 *Link (Active): [./tracks/generative_mission_arch_20260206/](./tracks/generative_mission_arch_20260206/)*
-*Link (Active): [./tracks/dispositional_tutor_20260206/](./tracks/dispositional_tutor_20260206/)*
 *Link (Active): [./tracks/explode_game_context_20260207/](./tracks/explode_game_context_20260207/)*
