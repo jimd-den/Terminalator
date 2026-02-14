@@ -7,7 +7,7 @@
 - [x] Task: Type Check: `npx tsc --noEmit`
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Knowledge Isolation' (Protocol in workflow.md)
 
-## Phase 2: GOAP Brain (Planning Engine)
+## Phase 2: GOAP Brain (Planning Engine) [checkpoint: 1fc69e8]
 - [x] Task: Define `IPlannerAction` interface (Preconditions, Effects, Cost).
 - [x] Task: Implement a lightweight `AStar` pathfinder for action chains.
 - [x] Task: TDD: Create `GOAPPlanner.test.ts` to verify resolving a 3-step chain (e.g., Scan -> Identify -> Cat).
