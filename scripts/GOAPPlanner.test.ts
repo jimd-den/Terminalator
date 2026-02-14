@@ -32,7 +32,8 @@ class MockAction implements IPlannerAction {
         this.prov.forEach(t => nextTypes.add(t));
         return {
             knownTypes: nextTypes,
-            knownValues: new Set(state.knownValues)
+            knownValues: new Set(state.knownValues),
+            knownTools: new Set(state.knownTools)
         };
     }
 }
@@ -42,11 +43,13 @@ describe("GOAPPlanner", () => {
         const planner = new GOAPPlanner();
         const start: PlannerState = { 
             knownTypes: new Set(), 
-            knownValues: new Set() 
+            knownValues: new Set(),
+            knownTools: new Set()
         };
         const goal: PlannerState = { 
             knownTypes: new Set([KnowledgeType.IP]), 
-            knownValues: new Set() 
+            knownValues: new Set(),
+            knownTools: new Set()
         };
         
         const scanAction = new MockAction("Scan", 1, [], [KnowledgeType.IP]);
@@ -62,12 +65,14 @@ describe("GOAPPlanner", () => {
         const planner = new GOAPPlanner();
         const start: PlannerState = { 
             knownTypes: new Set(), 
-            knownValues: new Set() 
+            knownValues: new Set(),
+            knownTools: new Set()
         };
         const goal: PlannerState = { 
             // METADATA represents the "content" of the goal file
             knownTypes: new Set([KnowledgeType.METADATA]), 
-            knownValues: new Set() 
+            knownValues: new Set(),
+            knownTools: new Set()
         };
 
         const actions = [
@@ -89,8 +94,8 @@ describe("GOAPPlanner", () => {
 
     test("should return null if no path exists", () => {
         const planner = new GOAPPlanner();
-        const start: PlannerState = { knownTypes: new Set(), knownValues: new Set() };
-        const goal: PlannerState = { knownTypes: new Set([KnowledgeType.USER]), knownValues: new Set() };
+        const start: PlannerState = { knownTypes: new Set(), knownValues: new Set(), knownTools: new Set() };
+        const goal: PlannerState = { knownTypes: new Set([KnowledgeType.USER]), knownValues: new Set(), knownTools: new Set() };
         
         const action = new MockAction("Useless", 1, [], [KnowledgeType.IP]);
         
@@ -101,8 +106,8 @@ describe("GOAPPlanner", () => {
 
     test("should prefer lower cost paths", () => {
         const planner = new GOAPPlanner();
-        const start: PlannerState = { knownTypes: new Set(), knownValues: new Set() };
-        const goal: PlannerState = { knownTypes: new Set([KnowledgeType.PATH]), knownValues: new Set() };
+        const start: PlannerState = { knownTypes: new Set(), knownValues: new Set(), knownTools: new Set() };
+        const goal: PlannerState = { knownTypes: new Set([KnowledgeType.PATH]), knownValues: new Set(), knownTools: new Set() };
 
         const actions = [
             // Option A: 1 step, high cost

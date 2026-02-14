@@ -16,6 +16,11 @@ import { TutorKnowledgeBase } from '../../../entities/knowledge/TutorKnowledgeBa
 
 export interface ICommandStrategy extends IPlannerAction {
     /**
+     * Optional list of tools required to execute this strategy.
+     */
+    readonly requiredTools?: string[];
+
+    /**
      * Generates the actual shell command string to be executed or suggested.
      * 
      * @param kb The Tutor's current knowledge base to pull parameters from.

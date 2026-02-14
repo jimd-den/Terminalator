@@ -26,8 +26,8 @@ export class ReadFileStrategy implements ICommandStrategy {
         const nextTypes = new Set(state.knownTypes);
         nextTypes.add(KnowledgeType.METADATA);
         return {
-            knownTypes: nextTypes,
-            knownValues: new Set(state.knownValues)
+            ...state,
+            knownTypes: nextTypes
         };
     }
 
@@ -55,8 +55,8 @@ export class GrepContentStrategy implements ICommandStrategy {
         nextTypes.add(KnowledgeType.METADATA);
         nextTypes.add(KnowledgeType.CREDENTIAL);
         return {
-            knownTypes: nextTypes,
-            knownValues: new Set(state.knownValues)
+            ...state,
+            knownTypes: nextTypes
         };
     }
 

@@ -24,7 +24,8 @@ async function testTutorReactivity() {
 
     const bus = new SimulationBus(mockTelemetry);
     const psychAdapter = new PsychAdapter();
-    const observer = new TutorObserver(bus, psychAdapter, mockTutorService);
+    const mockFsService = { resolve: () => null } as any;
+    const observer = new TutorObserver(bus, psychAdapter, mockTutorService, mockFsService);
 
     let reactionReceived = false;
     observer.onReaction((action) => {

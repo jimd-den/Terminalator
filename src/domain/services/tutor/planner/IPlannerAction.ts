@@ -27,6 +27,11 @@ export interface PlannerState {
      * Used for more granular planning when types alone are insufficient.
      */
     readonly knownValues: Set<string>;
+
+    /**
+     * Tools the user has in their inventory (/bin).
+     */
+    readonly knownTools: Set<string>;
 }
 
 export interface IPlannerAction {

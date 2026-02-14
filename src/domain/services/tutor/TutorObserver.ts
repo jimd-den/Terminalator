@@ -21,7 +21,15 @@ import { TutorAction } from '../../interfaces/ITutorService';
 import { Mission } from '../../entities/Mission';
 import { TutorService } from '../TutorService';
 import { OutputInterpreter } from '../../interpreters/tutor/OutputInterpreter';
+import { FileSystemService } from '../FileSystemService';
 import { TutorKnowledgeBase } from '../../entities/knowledge/TutorKnowledgeBase';
+import { GOAPPlanner } from './planner/GOAPPlanner';
+import { ICommandStrategy } from './planner/ICommandStrategy';
+import { NetworkScanStrategy, FindFileStrategy } from './planner/strategies/ReconStrategies';
+import { ReadFileStrategy, GrepContentStrategy } from './planner/strategies/ExfilStrategies';
+import { BuyToolStrategy } from './planner/strategies/EconomyStrategies';
+import { AutoPwnStrategy } from './planner/strategies/ExploitStrategies';
+import { KnowledgeType } from '../../entities/knowledge/KnowledgeEntity';
 
 export type TutorReactionCallback = (action: TutorAction) => void;
 
@@ -30,11 +38,22 @@ export class TutorObserver {
     private activeMission: Mission | null = null;
     private knowledgeBase: TutorKnowledgeBase = new TutorKnowledgeBase();
     private interpreter: OutputInterpreter = new OutputInterpreter();
+    private planner: GOAPPlanner = new GOAPPlanner();
+    private strategies: ICommandStrategy[] = [
+        new NetworkScanStrategy(),
+        new FindFileStrategy(),
+        new ReadFileStrategy(),
+        new GrepContentStrategy(),
+        new BuyToolStrategy('autopwn.sh'),
+        new BuyToolStrategy('decrypter.bin'),
+        new AutoPwnStrategy()
+    ];
 
     constructor(
         private bus: SimulationBus,
         private psychAdapter: PsychAdapter,
-        private tutorService: TutorService
+        private tutorService: TutorService,
+        private fsService: FileSystemService
     ) {
         this.initialize();
     }
@@ -44,6 +63,61 @@ export class TutorObserver {
      */
     public getKnowledgeBase(): TutorKnowledgeBase {
         return this.knowledgeBase;
+    }
+
+    /**
+     * Runs the GOAP planner to find the next optimal step towards the mission goal.
+     */
+    public triggerPlanning(): void {
+        if (!this.activeMission) return;
+
+        // 1. Build Current State
+        const knownTypes = new Set<KnowledgeType>(this.knowledgeBase.getAll().map(e => e.type));
+        const knownValues = new Set<string>(this.knowledgeBase.getAll().map(e => e.value));
+        const knownTools = this.getToolsInBin();
+
+        const start = { knownTypes, knownValues, knownTools };
+
+        // 2. Build Goal State (Derived from mission objective)
+        // For now, mapping all missions to "We need a CREDENTIAL (secret)"
+        const goal = {
+            knownTypes: new Set([KnowledgeType.CREDENTIAL]),
+            knownValues: new Set<string>(),
+            knownTools: new Set<string>()
+        };
+
+        // 3. Resolve Plan
+        const plan = this.planner.plan(start, goal, this.strategies);
+
+        if (plan && plan.length > 0) {
+            const nextStep = plan[0] as ICommandStrategy;
+            const command = nextStep.generateCommand(this.knowledgeBase);
+
+            console.log(`[TutorObserver] New Plan Resolved. Next step: ${nextStep.name}. Command: ${command}`);
+
+            // 4. Emit special event for RhythmHUD or TutorBrain to suggest this
+            this.bus.emit(GameEventType.TUTOR_EVENT, {
+                type: 'PLAN_UPDATED',
+                payload: {
+                    plan: plan.map(s => s.name),
+                    nextCommand: command,
+                    instructions: `I've calculated our next move. Use this: ${command}`
+                }
+            });
+        }
+    }
+
+    private getToolsInBin(): Set<string> {
+        const tools = new Set<string>();
+        try {
+            const binDir = this.fsService.resolve('/bin') as any;
+            if (binDir && binDir.children) {
+                binDir.children.forEach((node: any, name: string) => {
+                    tools.add(name);
+                });
+            }
+        } catch (e) {}
+        return tools;
     }
 
     public setActiveMission(mission: Mission | null): void {

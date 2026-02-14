@@ -27,8 +27,8 @@ export class NetworkScanStrategy implements ICommandStrategy {
         const nextTypes = new Set(state.knownTypes);
         nextTypes.add(KnowledgeType.IP);
         return {
-            knownTypes: nextTypes,
-            knownValues: new Set(state.knownValues)
+            ...state,
+            knownTypes: nextTypes
         };
     }
 
@@ -53,8 +53,8 @@ export class FindFileStrategy implements ICommandStrategy {
         const nextTypes = new Set(state.knownTypes);
         nextTypes.add(KnowledgeType.PATH);
         return {
-            knownTypes: nextTypes,
-            knownValues: new Set(state.knownValues)
+            ...state,
+            knownTypes: nextTypes
         };
     }
 

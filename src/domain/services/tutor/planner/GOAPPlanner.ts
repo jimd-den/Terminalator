@@ -108,6 +108,12 @@ export class GOAPPlanner {
         for (const value of goal.knownValues) {
             if (!current.knownValues.has(value)) return false;
         }
+        // Tools can also be required
+        if (goal.knownTools) {
+            for (const tool of goal.knownTools) {
+                if (!current.knownTools || !current.knownTools.has(tool)) return false;
+            }
+        }
         return true;
     }
 
@@ -128,7 +134,8 @@ export class GOAPPlanner {
     private serializeState(state: PlannerState): string {
         const types = Array.from(state.knownTypes).sort().join(',');
         const values = Array.from(state.knownValues).sort().join(',');
-        return `T:[${types}]|V:[${values}]`;
+        const tools = Array.from(state.knownTools || []).sort().join(',');
+        return `T:[${types}]|V:[${values}]|K:[${tools}]`;
     }
 
     /**

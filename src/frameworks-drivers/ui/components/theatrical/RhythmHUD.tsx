@@ -35,6 +35,8 @@ export const RhythmHUD: React.FC = () => {
     const [isActive, setIsActive] = useState(false);
     const [isCountdown, setIsCountdown] = useState(false);
     const [lessonText, setLessonText] = useState('');
+    const [activePlan, setPlan] = useState<string[]>([]);
+    const [nextCommand, setNextCommand] = useState('');
     const [progressIndex, setProgressIndex] = useState(0);
     const [feedback, setFeedback] = useState<'PERFECT' | 'MISS' | 'NONE'>('NONE');
     const [streak, setStreak] = useState(0);
@@ -197,6 +199,10 @@ export const RhythmHUD: React.FC = () => {
             }
             else if (type === 'SUMMARY_ENTER_PRESSED') {
                 dismissSummary();
+            }
+            else if (type === 'PLAN_UPDATED') {
+                setPlan(payload.plan || []);
+                setNextCommand(payload.nextCommand || '');
             }
         });
 
@@ -431,6 +437,15 @@ export const RhythmHUD: React.FC = () => {
                                 {displayChar || ''}
                             </Animated.Text>
                         </View>
+
+                        {/* Tactical Plan Overlay */}
+                        {activePlan.length > 0 && (
+                            <View style={{ position: 'absolute', bottom: 10, left: 10, right: 10 }}>
+                                <Text style={[dynamicStyles.statusText, { color: colors.secondary, textAlign: 'left' }]}>
+                                    TACTICAL PLAN: {activePlan.join(' > ')}
+                                </Text>
+                            </View>
+                        )}
 
                         {/* Feedback Layer */}
                         {feedback !== 'NONE' && (

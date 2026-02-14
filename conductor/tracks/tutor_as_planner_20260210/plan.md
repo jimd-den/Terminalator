@@ -63,9 +63,9 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 8: Economy' (Protocol in workflow.md)
 
 ## Phase 9: Integration - The Heist Loop
-- [ ] Task: Update `GOAPPlanner.ts` to handle Tool preconditions and buy-actions.
-- [ ] Task: Refactor `TutorEngine.ts` to run the Planning Loop (Analyze -> Plan -> Suggest).
-- [ ] Task: Implement `WorldVerifier.ts` to prove Start -> Goal solvability via information discovery.
-- [ ] Task: Integrate `RhythmHUD.tsx` to display the active Planner chain (The "Plan").
-- [ ] Task: Type Check: `npx tsc --noEmit`
+- [x] Task: Update `GOAPPlanner.ts` to handle Tool preconditions and buy-actions.
+- [x] Task: Refactor `TutorEngine.ts` to run the Planning Loop (Analyze -> Plan -> Suggest).
+- [x] Task: Implement `WorldVerifier.ts` to prove Start -> Goal solvability via information discovery.
+- [x] Task: Integrate `RhythmHUD.tsx` to display the active Planner chain (The "Plan").
+- [x] Task: Type Check: `npx tsc --noEmit`
 - [ ] Task: Conductor - User Manual Verification 'Phase 9: Integration' (Protocol in workflow.md)

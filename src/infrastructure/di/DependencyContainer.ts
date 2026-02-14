@@ -111,9 +111,9 @@ export class DependencyContainer {
         return new TutorBrain(intensityCalculator, intentInterpreter, bus);
     }
 
-    public static createTutorObserver(bus: SimulationBus, tutorService: TutorService): TutorObserver {
+    public static createTutorObserver(bus: SimulationBus, tutorService: TutorService, fsService: FileSystemService): TutorObserver {
         const psychAdapter = new PsychAdapter();
-        return new TutorObserver(bus, psychAdapter, tutorService);
+        return new TutorObserver(bus, psychAdapter, tutorService, fsService);
     }
 
     public static createTutorShadow(
@@ -202,7 +202,7 @@ export class DependencyContainer {
 
         const lessonCoordinator = new LessonCoordinator(tutorEngine, mailSystem, missionService, economyService);
 
-        const tutorObserver = this.createTutorObserver(bus, tutorService);
+        const tutorObserver = this.createTutorObserver(bus, tutorService, fsService);
 
         worldPatchService.initializeRootFileSystem(fs);
 
