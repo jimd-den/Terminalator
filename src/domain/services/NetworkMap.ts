@@ -50,10 +50,13 @@ export class NetworkMap {
     }
 
     registerSystem(hostname: string, fs: FileSystem) {
+        console.log(`[NetworkMap] Registering system: ${hostname}`);
         this.systems.set(hostname, fs);
     }
 
     public getAllHosts(): string[] {
-        return Array.from(this.systems.keys());
+        const hosts = Array.from(this.systems.keys());
+        console.log(`[NetworkMap] getAllHosts returning: ${hosts.join(', ')}`);
+        return hosts;
     }
 }

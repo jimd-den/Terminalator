@@ -20,11 +20,11 @@ export class OutputInterpreter {
             case 'check-comms':
                 entities.push(...this.parseCheckComms(output));
                 break;
-            case 'ifconfig':
-                entities.push(...this.parseIfconfig(output));
+            case 'net-conf':
+                entities.push(...this.parseNetConf(output));
                 break;
-            case 'nmap':
-                entities.push(...this.parseNmap(output));
+            case 'net-scan':
+                entities.push(...this.parseNetScan(output));
                 break;
             case 'grep':
                 entities.push(...this.parseGrep(output));
@@ -85,7 +85,7 @@ export class OutputInterpreter {
         return entities;
     }
 
-    private parseIfconfig(output: string): KnowledgeEntity[] {
+    private parseNetConf(output: string): KnowledgeEntity[] {
         const entities: KnowledgeEntity[] = [];
         const lines = output.split('\n');
         for (const line of lines) {
@@ -96,7 +96,7 @@ export class OutputInterpreter {
                         type: KnowledgeType.IP,
                         value: match[1],
                         discoveredAt: Date.now(),
-                        source: 'ifconfig',
+                        source: 'net-conf',
                         isBelief: false
                     });
                 }
@@ -105,22 +105,17 @@ export class OutputInterpreter {
         return entities;
     }
 
-    private parseNmap(output: string): KnowledgeEntity[] {
+    private parseNetScan(output: string): KnowledgeEntity[] {
         const entities: KnowledgeEntity[] = [];
-        // Extract "Nmap scan report for 10.0.0.1"
-        const ipRegex = /Nmap scan report for ([^\s]+)/g;
+        // Extract "Node detected: SYNERGY-COM-336 (LAT:[123])"
+        const nodeRegex = /Node detected: ([^\s]+)/g;
         let match;
-        while ((match = ipRegex.exec(output)) !== null) {
-            const val = match[1];
-            // If it's a hostname with IP in parens, extract IP
-            const parenMatch = /\(([^)]+)\)/.exec(val);
-            const ip = parenMatch ? parenMatch[1] : val;
-            
+        while ((match = nodeRegex.exec(output)) !== null) {
             entities.push({
-                type: KnowledgeType.IP,
-                value: ip,
+                type: KnowledgeType.HOSTNAME,
+                value: match[1],
                 discoveredAt: Date.now(),
-                source: 'nmap',
+                source: 'net-scan',
                 isBelief: false
             });
         }

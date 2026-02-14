@@ -85,7 +85,7 @@ export class TutorShadow {
             return true;
         }
 
-        console.log(`[TutorShadow] Lesson active: ${lesson.id}. Target: ${lesson.text[this.engine.getCompletedText().length]}`);
+        console.log(`[TutorShadow] Lesson active: ${lesson.id}. Target: ${lesson.text?.[this.engine.getCompletedText().length] || 'NONE'}`);
 
         // 2. Strict Gating (Rail Shooter Mechanic)
         // Control keys might be blocked or allowed based on lesson type

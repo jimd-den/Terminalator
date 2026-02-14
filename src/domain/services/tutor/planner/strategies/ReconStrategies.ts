@@ -35,7 +35,7 @@ export class NetworkScanStrategy implements ICommandStrategy {
 
     public generateCommand(kb: TutorKnowledgeBase): string {
         // In a real scenario, this might pull the current subnet from the KB
-        return "nmap -sn 10.0.0.0/24";
+        return "net-scan";
     }
 }
 
@@ -93,12 +93,12 @@ export class SSHStrategy implements ICommandStrategy {
     public generateCommand(kb: TutorKnowledgeBase): string {
         const hostnames = kb.recall(KnowledgeType.HOSTNAME);
         if (hostnames.length > 0) {
-            return `ssh admin@${hostnames[hostnames.length - 1].value}`;
+            return `net-link admin@${hostnames[hostnames.length - 1].value}`;
         }
 
         const ips = kb.recall(KnowledgeType.IP);
         // Find an IP we haven't connected to yet or just pick the latest
         const target = ips.length > 0 ? ips[ips.length - 1].value : "10.0.0.1";
-        return `ssh admin@${target}`;
+        return `net-link admin@${target}`;
     }
 }

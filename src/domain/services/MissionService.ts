@@ -35,7 +35,6 @@ export class MissionService {
     private adaptiveEngine: AdaptiveTutorEngine;
 
     constructor(
-        private missionRepository: MissionRepository,
         private tutorService: TutorService,
         private bus: SimulationBus,
         private worldState?: IWorldStateProvider,

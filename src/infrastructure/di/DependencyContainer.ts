@@ -30,9 +30,7 @@ import { LessonService } from '../../domain/services/LessonService';
 import { LessonCoordinator } from '../../interface-adapters/LessonCoordinator';
 import { GameManager } from '../../interface-adapters/GameManager';
 
-import { CreditService } from '../../domain/services/gamification/CreditService';
 import { EconomyService } from '../../domain/services/EconomyService';
-import { DiskCreditRepository } from '../../interface-adapters/DiskCreditRepository';
 import { MasteryTracker } from '../../domain/services/tutor/MasteryTracker';
 import { DiskMasteryRepository } from '../../interface-adapters/DiskMasteryRepository';
 import { IdentityService } from '../../domain/services/IdentityService';
@@ -56,8 +54,8 @@ import { IStructuredCommand } from '../../domain/commands/IStructuredCommand';
 import { GrepCommand } from '../../domain/commands/core/GrepCommand';
 import { SedCommand } from '../../domain/commands/core/SedCommand';
 import { AwkCommand } from '../../domain/commands/core/AwkCommand';
-import { LsCommand } from '../../domain/commands/core/LsCommand';
 import { CdCommand } from '../../domain/commands/core/CdCommand';
+import { LsCommand } from '../../domain/commands/core/LsCommand';
 import { MkdirCommand } from '../../domain/commands/core/MkdirCommand';
 import { CatCommand } from '../../domain/commands/core/CatCommand';
 import { TouchCommand } from '../../domain/commands/core/TouchCommand';
@@ -74,9 +72,10 @@ import { ChownCommand } from '../../domain/commands/core/ChownCommand';
 import { LnCommand } from '../../domain/commands/core/LnCommand';
 import { RmdirCommand } from '../../domain/commands/core/RmdirCommand';
 import { TransferCommand } from '../../domain/commands/core/TransferCommand';
-import { NmapCommand } from '../../domain/commands/core/NmapCommand';
-import { SshCommand } from '../../domain/commands/core/SshCommand';
-import { AutopwnCommand } from '../../domain/commands/core/AutopwnCommand';
+import { NetScanCommand } from '../../domain/commands/core/NetScanCommand';
+import { NetLinkCommand } from '../../domain/commands/core/NetLinkCommand';
+import { BypassCommand } from '../../domain/commands/core/BypassCommand';
+import { NetConfCommand } from '../../domain/commands/core/NetConfCommand';
 
 export class DependencyContainer {
 
@@ -141,7 +140,7 @@ export class DependencyContainer {
         const masteryTracker = this.createMasteryTracker(fs);
         const economyService = this.createEconomyService(fs, bus, conductor);
         
-        const worldManager = new WorldManager();
+        const worldManager = new WorldManager(networkMap);
         worldManager.registerHost('terminalator', fsService);
 
         // --- Scaling Engine Wiring ---
@@ -167,9 +166,10 @@ export class DependencyContainer {
             new LnCommand(fsService),
             new RmdirCommand(fsService),
             new TransferCommand(),
-            new NmapCommand(),
-            new SshCommand(),
-            new AutopwnCommand()
+            new NetScanCommand(),
+            new NetLinkCommand(),
+            new BypassCommand(),
+            new NetConfCommand()
         ];
 
         const missionPopulator = new MissionPopulator(worldManager);
@@ -181,7 +181,6 @@ export class DependencyContainer {
         const tutorProgression = new TutorLedProgression(combinatorialFactory as any, masteryTracker);
 
         const missionService = new MissionService(
-            missionRepository, 
             tutorService, 
             bus,
             worldManager, 

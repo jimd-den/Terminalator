@@ -144,13 +144,15 @@ export class TutorEngine {
     }
 
     public getGhostText(): string {
-        if (!this.currentLesson || !this.currentLesson.text) return '';
-        return this.currentLesson.text.substring(this.progressIndex);
+        const text = this.currentLesson?.text;
+        if (!text) return '';
+        return text.substring(this.progressIndex);
     }
 
     public getCompletedText(): string {
-        if (!this.currentLesson || !this.currentLesson.text) return '';
-        return this.currentLesson.text.substring(0, this.progressIndex);
+        const text = this.currentLesson?.text;
+        if (!text) return '';
+        return text.substring(0, this.progressIndex);
     }
 
     public getEmotion(): TutorEmotion {

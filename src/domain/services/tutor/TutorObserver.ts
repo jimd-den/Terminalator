@@ -46,7 +46,7 @@ export class TutorObserver {
         new SSHStrategy(),
         new ReadFileStrategy(),
         new GrepContentStrategy(),
-        new BuyToolStrategy('autopwn.sh'),
+        new BuyToolStrategy('bypass.sh'),
         new BuyToolStrategy('decrypter.bin'),
         new AutoPwnStrategy()
     ];

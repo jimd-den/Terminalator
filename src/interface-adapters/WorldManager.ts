@@ -8,6 +8,7 @@ import { Device } from '../domain/entities/world/Device';
 import { WorldEffectDispatcher } from '../domain/services/world/WorldEffectDispatcher';
 import { FileSystemObserver } from '../domain/services/world/FileSystemObserver';
 import { StateProjector } from '../domain/services/world/StateProjector';
+import { NetworkMap } from '../domain/services/NetworkMap';
 
 /**
  * WorldManager - Interface Adapter
@@ -27,7 +28,7 @@ export class WorldManager implements IWorldStateProvider, IWorldManager {
     private projector: StateProjector;
     private generator: WorldGenerator;
 
-    constructor() {
+    constructor(private networkMap?: NetworkMap) {
         this.generator = new WorldGenerator();
         this.dispatcher = new WorldEffectDispatcher(this.devices, this.locations);
         this.observer = new FileSystemObserver(this.dispatcher);
@@ -41,9 +42,15 @@ export class WorldManager implements IWorldStateProvider, IWorldManager {
      * Registers a host (Local or Remote) with the simulation loop.
      */
     public registerHost(hostname: string, service: FileSystemService): void {
+        console.log(`[WorldManager] Registering host: ${hostname}. Has NetworkMap: ${!!this.networkMap}`);
         this.hostFileSystems.set(hostname, service);
         this.observer.observe(hostname, service);
         this.projector.project(hostname, service);
+        
+        // Synchronize with NetworkMap (Phase 10 integration)
+        if (this.networkMap) {
+            this.networkMap.registerSystem(hostname, service.fileSystem);
+        }
     }
 
     /**

@@ -1,11 +1,11 @@
 /**
- * SshCommand.ts - Core Command
+ * NetLinkCommand.ts - Core Command
  * 
  * ═══════════════════════════════════════════════════════════════════════════════
- * Secure Shell (ssh)
+ * Secure Net-Link (net-link)
  * ═══════════════════════════════════════════════════════════════════════════════
  * 
- * Simulated SSH command that switches the terminal's FS context.
+ * Simulated link command that switches the terminal's FS context.
  */
 
 import { CommandBase } from '../CommandBase';
@@ -15,9 +15,9 @@ import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
 import { mergeState } from '../../utils/TerminalStateUtils';
 
-export class SshCommand extends CommandBase {
+export class NetLinkCommand extends CommandBase {
     public readonly capabilities = [CommandCapability.MODIFY];
-    public readonly utility = 'ssh';
+    public readonly utility = 'net-link';
 
     protected async executeInternal(
         rawArgs: string[],
@@ -27,7 +27,7 @@ export class SshCommand extends CommandBase {
         state: TerminalState
     ): Promise<CommandResponse> {
         if (operands.length === 0) {
-            return { output: 'usage: ssh [user@]hostname', exitCode: 1, newState: state };
+            return { output: 'usage: net-link [user@]hostname', exitCode: 1, newState: state };
         }
 
         let target = operands[0];
@@ -40,24 +40,22 @@ export class SshCommand extends CommandBase {
         }
 
         if (!context.networkMap) {
-            return { output: 'ssh: network service unavailable', exitCode: 1, newState: state };
+            return { output: 'net-link: network service unavailable', exitCode: 1, newState: state };
         }
 
-        // Try to find the system by hostname or mock IP
         const system = context.networkMap.getSystem(target);
         if (!system) {
-            return { output: `ssh: connect to host ${target} port 22: Connection refused`, exitCode: 1, newState: state };
+            return { output: `net-link: connect to host ${target} failed: Link refused`, exitCode: 1, newState: state };
         }
 
-        // Update Terminal State to the new FS context
         const newState = mergeState(state, {
             fsContext: target,
-            currentDirectory: '/home/admin' // Default login dir
+            currentDirectory: '/home/admin'
         });
 
         return {
-            output: `Connected to ${target}.
-Welcome to ${target} (GNU/Linux).`,
+            output: `LINK ESTABLISHED to ${target}.
+Welcome to ${target} node cluster.`,
             exitCode: 0,
             newState
         };

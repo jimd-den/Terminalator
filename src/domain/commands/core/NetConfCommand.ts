@@ -1,8 +1,8 @@
 /**
- * AutopwnCommand.ts - Specialized Tool
+ * NetConfCommand.ts - Core Command
  * 
  * ═══════════════════════════════════════════════════════════════════════════════
- * AutoPwn privilege escalation script.
+ * Network Configuration Utility (net-conf)
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 
@@ -12,9 +12,9 @@ import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
 
-export class AutopwnCommand extends CommandBase {
-    public readonly capabilities = [CommandCapability.MODIFY];
-    public readonly utility = 'autopwn.sh';
+export class NetConfCommand extends CommandBase {
+    public readonly capabilities = [CommandCapability.LIST];
+    public readonly utility = 'net-conf';
 
     protected async executeInternal(
         rawArgs: string[],
@@ -23,27 +23,24 @@ export class AutopwnCommand extends CommandBase {
         context: ProcessContext,
         state: TerminalState
     ): Promise<CommandResponse> {
-        const target = this.options.get('target');
-        if (!target) {
-            return { output: 'usage: ./autopwn.sh --target <ip>', exitCode: 1, newState: state };
-        }
+        // Mock output similar to ifconfig
+        const output = `
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 10.0.2.15  netmask 255.255.255.0  broadcast 10.0.2.255
+        inet6 fe80::a00:27ff:fe4e:66a1  prefixlen 64  scopeid 0x20<link>
+        ether 08:00:27:4e:66:a1  txqueuelen 1000  (Ethernet)
+        RX packets 1234  bytes 123456 (1.2 KB)
+        TX packets 5678  bytes 654321 (6.5 KB)
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        loop  txqueuelen 1000  (Local Loopback)
+`.trim();
 
         return {
-            output: `
-[+] Starting Autopwn on ${target}...
-[+] Searching for vulnerabilities...
-[+] Found: CVE-2024-XXXX (Local Privilege Escalation)
-[+] Exploiting...
-[+] Success! Gained root credentials.
-[+] CREDENTIAL: ${Math.random().toString(36).substring(2, 10).toUpperCase()}
-`.trim(),
+            output,
             exitCode: 0,
             newState: state
         };
-    }
-
-    public override async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        this.parseArgs(args, ['target']);
-        return this.executeInternal(args, this.flags, this.operands, context, state);
     }
 }

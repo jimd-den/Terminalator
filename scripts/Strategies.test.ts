@@ -14,11 +14,11 @@ import { NetworkScanStrategy, FindFileStrategy } from "../src/domain/services/tu
 import { ReadFileStrategy, GrepContentStrategy } from "../src/domain/services/tutor/planner/strategies/ExfilStrategies";
 
 describe("Tutor Strategies", () => {
-    test("NetworkScanStrategy should generate valid nmap command", () => {
+    test("NetworkScanStrategy should generate valid net-scan command", () => {
         const kb = new TutorKnowledgeBase();
         const strategy = new NetworkScanStrategy();
         const cmd = strategy.generateCommand(kb);
-        expect(cmd).toContain("nmap");
+        expect(cmd).toContain("net-scan");
         expect(cmd).toContain("-sn");
     });
 

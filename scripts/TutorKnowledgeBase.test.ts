@@ -40,7 +40,7 @@ describe("TutorKnowledgeBase", () => {
             type: KnowledgeType.IP,
             value: "10.0.0.1",
             discoveredAt: 100,
-            source: "nmap",
+            source: "net-scan",
             isBelief: true
         };
         const e2: KnowledgeEntity = {
