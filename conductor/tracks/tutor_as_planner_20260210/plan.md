@@ -38,11 +38,11 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 5: World Gen - Foundation' (Protocol in workflow.md)
 
 ## Phase 6: World Gen - Topology & Population
-- [ ] Task: Implement `NetworkGraphGenerator.ts` (Star, Mesh, Ring topologies).
-- [ ] Task: Implement `NPCPopulator.ts` to assign `Actors` to specific `Nodes`.
-- [ ] Task: Add `isVendor` and `inventory` components to the Node data structure.
-- [ ] Task: TDD: Verify graph connectivity and vendor placement.
-- [ ] Task: Type Check: `npx tsc --noEmit`
+- [x] Task: Implement `NetworkGraphGenerator.ts` (Star, Mesh, Ring topologies).
+- [x] Task: Implement `NPCPopulator.ts` to assign `Actors` to specific `Nodes`.
+- [x] Task: Add `isVendor` and `inventory` components to the Node data structure.
+- [x] Task: TDD: Verify graph connectivity and vendor placement.
+- [x] Task: Type Check: `npx tsc --noEmit`
 - [ ] Task: Conductor - User Manual Verification 'Phase 6: World Gen - Topology' (Protocol in workflow.md)
 
 ## Phase 7: World Gen - Hydration & Artifacts
