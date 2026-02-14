@@ -27,7 +27,7 @@
 - [x] Task: TDD: Verify `ls -la` output adds multiple `KnowledgeEntity` items to the Blackboard.
 - [x] Task: Wire `TutorObserver` to feed simulation `stdout` into the `OutputInterpreter`.
 - [x] Task: Type Check: `npx tsc --noEmit`
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Sensory Input' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Sensory Input' (Protocol in workflow.md)
 
 ## Phase 5: Refactor Planning Loop (Integration)
 - [ ] Task: Refactor `TutorEngine.ts` to replace the linear mission tracker with the GOAP Loop.
