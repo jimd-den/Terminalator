@@ -4,6 +4,7 @@ import { IShellExecutor } from '../interfaces/IShellExecutor';
 import { IStream } from './Stream';
 import { JobControlService } from '../services/JobControlService';
 import { NetworkMap } from '../services/NetworkMap';
+import { EconomyService } from '../services/EconomyService';
 
 /**
  * ProcessContext Entity - Domain Layer
@@ -76,6 +77,11 @@ export interface ProcessContext {
      * Network Map for cross-system operations (e.g., scp)
      */
     networkMap?: NetworkMap;
+
+    /**
+     * Economy Service for transactions (e.g., buy, mine)
+     */
+    economy?: EconomyService;
 }
 
 

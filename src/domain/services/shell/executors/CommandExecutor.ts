@@ -15,6 +15,7 @@ import { createStdinStream, createOutputStream } from '../../../entities/Stream'
 import { mergeState, fail } from '../../../utils/TerminalStateUtils';
 import { NetworkMap } from '../../NetworkMap';
 import { SimulationBus, GameEventType, CommandExecutedPayload } from '../../SimulationBus';
+import { EconomyService } from '../../EconomyService';
 
 export class CommandExecutor implements NodeExecutor {
     constructor(
@@ -27,7 +28,8 @@ export class CommandExecutor implements NodeExecutor {
         private bus?: SimulationBus,
         private binaryRunner?: IBinaryRunner,
         private executorFactory?: () => IShellExecutor,
-        private networkMap?: NetworkMap
+        private networkMap?: NetworkMap,
+        private economy?: EconomyService
     ) { }
 
     async execute(
@@ -80,7 +82,8 @@ export class CommandExecutor implements NodeExecutor {
                         getRegistry: () => this.registry
                     } as IShellExecutor,
                     jobControl: this.jobControl,
-                    networkMap: this.networkMap
+                    networkMap: this.networkMap,
+                    economy: this.economy
                 };
 
                 const res = await command.execute(expandedArgs, context, state);

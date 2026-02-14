@@ -74,7 +74,22 @@ export abstract class CommandBase implements IStructuredCommand {
                 break;
             }
 
-            if (arg.startsWith('-') && arg !== '-') {
+            if (arg.startsWith('--')) {
+                const optName = arg.substring(2);
+                let found = false;
+                for (const def of optionDefinitions) {
+                    if (optName === def) {
+                        if (i + 1 < args.length) {
+                            this.options.set(def, args[++i]);
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+                if (!found) {
+                    this.operands.push(arg);
+                }
+            } else if (arg.startsWith('-') && arg !== '-') {
                 const flagStr = arg.substring(1);
 
                 let handled = false;

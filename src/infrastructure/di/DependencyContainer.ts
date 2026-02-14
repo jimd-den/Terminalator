@@ -77,6 +77,7 @@ import { ChgrpCommand } from '../../domain/commands/core/ChgrpCommand';
 import { ChownCommand } from '../../domain/commands/core/ChownCommand';
 import { LnCommand } from '../../domain/commands/core/LnCommand';
 import { RmdirCommand } from '../../domain/commands/core/RmdirCommand';
+import { TransferCommand } from '../../domain/commands/core/TransferCommand';
 
 export class DependencyContainer {
 
@@ -165,7 +166,8 @@ export class DependencyContainer {
             new ChgrpCommand(fsService, identityService),
             new ChownCommand(fsService, identityService),
             new LnCommand(fsService),
-            new RmdirCommand(fsService)
+            new RmdirCommand(fsService),
+            new TransferCommand()
         ];
 
         const missionPopulator = new MissionPopulator(worldManager);

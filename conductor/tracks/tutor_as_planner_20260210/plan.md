@@ -54,12 +54,12 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 7: World Gen - Artifacts' (Protocol in workflow.md)
 
 ## Phase 8: Economy - Money as a Process
-- [ ] Task: Create `src/domain/entities/economy/Wallet.ts`.
-- [ ] Task: Implement `TransferCommand.ts` in `src/domain/commands/core/`.
-- [ ] Task: Refactor `EconomyService.ts` to calculate passive ZCoins based on captured node CPU stats.
-- [ ] Task: Implement `ToolRegistry.ts` for buyable capabilities (e.g., `autopwn.sh`).
-- [ ] Task: TDD: Verify `transfer` command deducts funds and "downloads" tools to `/bin`.
-- [ ] Task: Type Check: `npx tsc --noEmit`
+- [x] Task: Create `src/domain/entities/economy/Wallet.ts`.
+- [x] Task: Implement `TransferCommand.ts` in `src/domain/commands/core/`.
+- [x] Task: Refactor `EconomyService.ts` to calculate passive ZCoins based on captured node CPU stats.
+- [x] Task: Implement `ToolRegistry.ts` for buyable capabilities (e.g., `autopwn.sh`).
+- [x] Task: TDD: Verify `transfer` command deducts funds and "downloads" tools to `/bin`.
+- [x] Task: Type Check: `npx tsc --noEmit`
 - [ ] Task: Conductor - User Manual Verification 'Phase 8: Economy' (Protocol in workflow.md)
 
 ## Phase 9: Integration - The Heist Loop
