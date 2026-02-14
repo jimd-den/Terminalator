@@ -108,6 +108,23 @@ export class GameManager implements IGameManager {
                 }, 2500);
             }
         });
+
+        this.bus.subscribe(GameEventType.TUTOR_EVENT, (event) => {
+            if (event.payload.type === 'PLAN_UPDATED') {
+                const { nextCommand, instructions } = event.payload;
+                const lesson: Lesson = {
+                    id: `PLAN_STEP_${Date.now()}`,
+                    type: 'SHELL',
+                    text: nextCommand,
+                    instructions: instructions,
+                    isMission: true
+                };
+                
+                // For activation, we start the lesson immediately when the plan updates
+                console.log(`[GameManager] Auto-starting Planner Command: ${nextCommand}`);
+                this.tutorEngine.startLesson(lesson);
+            }
+        });
     }
 
     public getTutorObserver(): TutorObserver {
@@ -514,39 +531,75 @@ export class GameManager implements IGameManager {
 
 
 
-            if (mission && mission.status === 'pending') {
+                        if (mission && mission.status === 'pending') {
 
 
 
-                mission.status = 'active';
+                            mission.status = 'active';
 
 
 
-                mission.chatHistory.push({
+                            mission.chatHistory.push({
 
 
 
-                    sender: 'SYSTEM',
+                                sender: 'SYSTEM',
 
 
 
-                    message: `MISSION STARTED. TARGET: ${mission.targetSystem}`,
+                                message: `MISSION STARTED. TARGET: ${mission.targetSystem}`,
 
 
 
-                    timestamp: Date.now()
+                                timestamp: Date.now()
 
 
 
-                });
+                            });
 
 
 
-    
+            
 
 
 
-                                                        if (currentState && currentState.fsContext === mission.targetSystem) {
+                            // Activation: Link TutorObserver to the active mission (Phase 10)
+
+
+
+                            this.tutorObserver.setActiveMission(mission);
+
+
+
+            
+
+
+
+                            if (mission.type === 'generative') {
+
+
+
+                                console.log(`[GameManager] Starting Generative Mission: ${mission.id}`);
+
+
+
+                                this.tutorObserver.triggerPlanning();
+
+
+
+                                return;
+
+
+
+                            }
+
+
+
+                
+
+
+
+                                                                    if (currentState && currentState.fsContext === mission.targetSystem) {
 
 
 

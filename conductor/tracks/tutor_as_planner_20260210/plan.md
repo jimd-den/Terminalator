@@ -62,10 +62,18 @@
 - [x] Task: Type Check: `npx tsc --noEmit`
 - [ ] Task: Conductor - User Manual Verification 'Phase 8: Economy' (Protocol in workflow.md)
 
-## Phase 9: Integration - The Heist Loop
+## Phase 9: Integration - The Heist Loop [checkpoint: 91efadd]
 - [x] Task: Update `GOAPPlanner.ts` to handle Tool preconditions and buy-actions.
 - [x] Task: Refactor `TutorEngine.ts` to run the Planning Loop (Analyze -> Plan -> Suggest).
 - [x] Task: Implement `WorldVerifier.ts` to prove Start -> Goal solvability via information discovery.
 - [x] Task: Integrate `RhythmHUD.tsx` to display the active Planner chain (The "Plan").
 - [x] Task: Type Check: `npx tsc --noEmit`
-- [ ] Task: Conductor - User Manual Verification 'Phase 9: Integration' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 9: Integration' (Protocol in workflow.md)
+
+## Phase 10: Heist Loop Activation
+- [x] Task: Wire `TutorObserver.ts` to automatically call `triggerPlanning()` after successful command execution.
+- [x] Task: Update `GameManager.ts` to use Planner-suggested commands for dynamic mission progression.
+- [x] Task: Implement `TutorAction` generation from `PLAN_UPDATED` events to show IRC-style hints.
+- [x] Task: TDD: Verify that executing `ls` triggers a new plan suggestion in the UI.
+- [x] Task: Type Check: `npx tsc --noEmit`
+- [ ] Task: Conductor - User Manual Verification 'Phase 10: Heist Loop Activation' (Protocol in workflow.md)

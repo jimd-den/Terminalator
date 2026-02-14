@@ -104,6 +104,16 @@ export class TutorObserver {
                     instructions: `I've calculated our next move. Use this: ${command}`
                 }
             });
+
+            // 5. Generate TutorAction for IRC (Phase 10)
+            const reaction: TutorAction = {
+                message: `NEXT STEP: ${nextStep.name}. Execute: ${command}`,
+                type: 'HINT',
+                intent: TutorIntent.NUDGE_PROGRESSION,
+                missionId: this.activeMission.id,
+                confidence: 1.0
+            };
+            this.emitReaction(reaction);
         }
     }
 
@@ -145,6 +155,7 @@ export class TutorObserver {
                 // If new knowledge was found, we might want to log it or trigger a specific reaction later
                 if (discoveries.length > 0) {
                     console.log(`[TutorObserver] Discovered ${discoveries.length} new knowledge entities.`);
+                    this.triggerPlanning(); // Activation (Phase 10)
                 }
             }
         }
