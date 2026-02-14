@@ -1,6 +1,6 @@
 # Implementation Plan: Tutor-as-Planner (GOAP Architecture)
 
-## Phase 1: Knowledge Isolation (Blackboard Pattern)
+## Phase 1: Knowledge Isolation (Blackboard Pattern) [checkpoint: b9b880b]
 - [x] Task: Define `KnowledgeEntity` types (IP, Path, PID, User) and `TutorKnowledgeBase` entity.
 - [x] Task: TDD: Create `TutorKnowledgeBase.test.ts` to verify discovery, recall, and heuristic storage.
 - [x] Task: Implement `TutorKnowledgeBase` with literate programming comments explaining the "Truth vs Perception" boundary.
