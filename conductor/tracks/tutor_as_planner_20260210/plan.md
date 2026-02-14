@@ -22,7 +22,7 @@
 - [x] Task: Type Check: `npx tsc --noEmit`
 - [x] Task: Conductor - User Manual Verification 'Phase 3: Strategy Library' (Protocol in workflow.md)
 
-## Phase 4: Sensory Input (The Interpreter)
+## Phase 4: Sensory Input (The Interpreter) [checkpoint: a865aec]
 - [x] Task: Implement `OutputInterpreter` using the Interpreter Pattern to parse `ls`, `ifconfig`, and `grep` outputs.
 - [x] Task: TDD: Verify `ls -la` output adds multiple `KnowledgeEntity` items to the Blackboard.
 - [x] Task: Wire `TutorObserver` to feed simulation `stdout` into the `OutputInterpreter`.
