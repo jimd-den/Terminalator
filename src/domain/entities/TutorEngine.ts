@@ -144,12 +144,12 @@ export class TutorEngine {
     }
 
     public getGhostText(): string {
-        if (!this.currentLesson) return '';
+        if (!this.currentLesson || !this.currentLesson.text) return '';
         return this.currentLesson.text.substring(this.progressIndex);
     }
 
     public getCompletedText(): string {
-        if (!this.currentLesson) return '';
+        if (!this.currentLesson || !this.currentLesson.text) return '';
         return this.currentLesson.text.substring(0, this.progressIndex);
     }
 

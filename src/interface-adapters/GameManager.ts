@@ -90,28 +90,18 @@ export class GameManager implements IGameManager {
                         `Escrow released for Mission ${mission.id}. ${mission.reward} transferred.`
                     );
                 }
-            } else if (event.payload.type === 'PROGRESSION' && event.payload.result?.type === 'START_LESSON') {
-                const result = event.payload.result;
-                const lessonId = result.lessonId || 'DUMMY_LESSON';
-                const objective = result.objectiveTarget || 'TARGET';
-
-                setTimeout(() => {
-                    const lesson: Lesson = {
-                        id: lessonId,
-                        type: 'SHELL',
-                        text: result.text || 'ls -la',
-                        instructions: result.instructions || `CONNECTION ESTABLISHED. SCAN SYSTEM FOR ${objective}`,
-                        tutorIntent: result.tutorIntent,
-                        isMission: result.isMission || true
-                    };
-                    this.tutorEngine.startLesson(lesson);
-                }, 2500);
             }
         });
 
         this.bus.subscribe(GameEventType.TUTOR_EVENT, (event) => {
             if (event.payload.type === 'PLAN_UPDATED') {
-                const { nextCommand, instructions } = event.payload;
+                const { nextCommand, instructions } = event.payload.payload;
+                
+                if (!nextCommand) {
+                    console.warn(`[GameManager] Received PLAN_UPDATED with empty command. Ignoring.`);
+                    return;
+                }
+
                 const lesson: Lesson = {
                     id: `PLAN_STEP_${Date.now()}`,
                     type: 'SHELL',

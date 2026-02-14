@@ -22,6 +22,8 @@
 export enum KnowledgeType {
     /** IP Address of a remote or local host. */
     IP = 'IP',
+    /** Hostname of a system. */
+    HOSTNAME = 'HOSTNAME',
     /** Absolute or relative file system path. */
     PATH = 'PATH',
     /** Process Identifier. */

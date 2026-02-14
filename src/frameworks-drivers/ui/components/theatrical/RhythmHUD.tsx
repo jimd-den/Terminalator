@@ -102,7 +102,7 @@ export const RhythmHUD: React.FC = () => {
                 const granted = requestFocus('rhythm-hud', VisualPriority.CONTENT);
                 if (granted) {
                     setIsActive(true);
-                    setLessonText(lesson.text);
+                    setLessonText(lesson.text || '');
                     setIsCountdown(false);
                     const stats = engine.getStats();
                     setBaseZinc(stats.totalZincMined);
@@ -134,6 +134,10 @@ export const RhythmHUD: React.FC = () => {
             const { type, payload } = event.payload;
 
             if (type === 'START') {
+                if (!payload.text) {
+                    console.warn("[RhythmHUD] Received START event with empty text. Ignoring.");
+                    return;
+                }
                 const granted = requestFocus('rhythm-hud', VisualPriority.CONTENT);
                 if (granted) {
                     setIsActive(true);
@@ -265,10 +269,10 @@ export const RhythmHUD: React.FC = () => {
         };
     }, [isActive, summary, isCountdown, reducedMotion]);
 
-    if (!isActive) return null;
+    if (!isActive || !lessonText) return null;
 
     const formattedZinc = ZincFormatter.format(displayZinc);
-    const displayChar = (isActive && !summary && !isCountdown && progressIndex < lessonText.length) ? (lessonText[progressIndex] || '') : '';
+    const displayChar = (isActive && !summary && !isCountdown && lessonText && progressIndex < lessonText.length) ? (lessonText[progressIndex] || '') : '';
 
     const dynamicStyles = StyleSheet.create({
         container: {

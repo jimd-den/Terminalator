@@ -80,8 +80,8 @@ export class TutorShadow {
         }
 
         const lesson = this.engine.getCurrentLesson();
-        if (!lesson) {
-            console.log("[TutorShadow] Engine active but no lesson? Pass through.");
+        if (!lesson || !lesson.text) {
+            console.log("[TutorShadow] Engine active but no valid lesson text? Pass through.");
             return true;
         }
 

@@ -17,14 +17,9 @@ import { CommandResponse } from '../entities/Command';
 import { TutorService, TutorProgressionResult } from './TutorService';
 import { MissionRepository } from './MissionRepository';
 import { SimulationBus, GameEventType } from './SimulationBus';
-import { generateHostname, generateObjectiveFilename } from '../utils/NameGenerator';
+import { generateHostname } from '../utils/NameGenerator';
 import { IWorldStateProvider } from '../interfaces/IWorldStateProvider';
-import { ProceduralMissionFactory } from '../factories/ProceduralMissionFactory';
-import { ConstraintValidator } from './constraints/ConstraintValidator';
-import { ComplexityEstimator } from './constraints/ComplexityEstimator';
 import { OrganizationGenerator } from './generation/OrganizationGenerator';
-import { KnuthianMissionFactory } from '../factories/KnuthianMissionFactory';
-import { Organization } from '../entities/world/Organization';
 import { MissionPopulator } from './MissionPopulator';
 
 // Scaling Engine
@@ -42,13 +37,10 @@ export class MissionService {
     constructor(
         private missionRepository: MissionRepository,
         private tutorService: TutorService,
-        private bus: SimulationBus, // [NEW]
+        private bus: SimulationBus,
         private worldState?: IWorldStateProvider,
-        private proceduralFactory?: ProceduralMissionFactory,
-        private constraintValidator?: ConstraintValidator,
-        private knuthianFactory?: KnuthianMissionFactory,
         private missionPopulator?: MissionPopulator,
-        private tutorProgression?: TutorLedProgression // [NEW]
+        private tutorProgression?: TutorLedProgression
     ) { 
         this.adaptiveEngine = new AdaptiveTutorEngine(new UnixKnowledgeBase());
     }
@@ -128,16 +120,6 @@ export class MissionService {
                     mission.status = 'completed';
                     mission.currentStep = MissionStep.COMPLETED;
                 } else if (progression.result.nextStep) {
-                    // Constraint validation (Legacy logic kept for now)
-                    if (this.constraintValidator && response.executionStats && mission.constraints) {
-                        const validation = this.constraintValidator.validate(mission, response.executionStats);
-                        if (!validation.valid) {
-                            const rejectionMsg = `CONSTRAINT VIOLATION: ${validation.reason}`;
-                            mission.chatHistory.push({ sender: 'SYSTEM', message: rejectionMsg, timestamp: Date.now() });
-                            this.bus.emit(GameEventType.TUTOR_EVENT, { type: 'MISTAKE', message: rejectionMsg });
-                            return { hints, progression: null };
-                        }
-                    }
                     mission.currentStep = progression.result.nextStep;
                 }
             }

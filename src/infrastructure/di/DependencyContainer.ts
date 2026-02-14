@@ -18,10 +18,6 @@ import { LessonRegistry } from '../../domain/services/LessonRegistry';
 import { StrategyRegistry } from '../../domain/services/mission-strategies/StrategyRegistry';
 import { TutorService } from '../../domain/services/TutorService';
 import { WorldManager } from '../../interface-adapters/WorldManager';
-import { ProceduralMissionFactory } from '../../domain/factories/ProceduralMissionFactory';
-import { KnuthianMissionFactory } from '../../domain/factories/KnuthianMissionFactory';
-import { ComplexityEstimator } from '../../domain/services/constraints/ComplexityEstimator';
-import { ConstraintValidator } from '../../domain/services/constraints/ConstraintValidator';
 import { MissionPopulator } from '../../domain/services/MissionPopulator';
 import { MissionService } from '../../domain/services/MissionService';
 import { NPCService } from '../../domain/services/NPCService';
@@ -178,19 +174,11 @@ export class DependencyContainer {
         const combinatorialFactory = new ConstraintMissionFactory(new UnixKnowledgeBase(), worldPatchService);
         const tutorProgression = new TutorLedProgression(combinatorialFactory as any, masteryTracker);
 
-        const proceduralFactory = new ProceduralMissionFactory(worldManager);
-        const knuthianFactory = new KnuthianMissionFactory();
-        const complexityEstimator = new ComplexityEstimator();
-        const constraintValidator = new ConstraintValidator(complexityEstimator);
-
         const missionService = new MissionService(
             missionRepository, 
             tutorService, 
             bus,
             worldManager, 
-            proceduralFactory, 
-            constraintValidator,
-            knuthianFactory,
             missionPopulator,
             tutorProgression
         );

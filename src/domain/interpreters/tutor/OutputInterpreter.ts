@@ -17,6 +17,9 @@ export class OutputInterpreter {
             case 'ls':
                 entities.push(...this.parseLs(output, command));
                 break;
+            case 'check-comms':
+                entities.push(...this.parseCheckComms(output));
+                break;
             case 'ifconfig':
                 entities.push(...this.parseIfconfig(output));
                 break;
@@ -57,6 +60,26 @@ export class OutputInterpreter {
                     source: command,
                     isBelief: false
                 });
+            }
+        }
+        return entities;
+    }
+
+    private parseCheckComms(output: string): KnowledgeEntity[] {
+        const entities: KnowledgeEntity[] = [];
+        const lines = output.split('\n');
+        for (const line of lines) {
+            if (line.startsWith('Target:')) {
+                const hostname = line.split(':')[1].trim();
+                if (hostname) {
+                    entities.push({
+                        type: KnowledgeType.HOSTNAME,
+                        value: hostname,
+                        discoveredAt: Date.now(),
+                        source: 'check-comms',
+                        isBelief: false
+                    });
+                }
             }
         }
         return entities;

@@ -172,37 +172,6 @@ export class TutorObserver {
             }
         }
 
-        // 2. Legacy Hint Check (for archetypal missions)
-        if (event.type === GameEventType.COMMAND_EXECUTED && this.activeMission && this.activeMission.type !== 'generative') {
-            const legacyHint = this.tutorService.analyzeGameState(
-                this.activeMission,
-                event.payload.state,
-                { 
-                    output: event.payload.output, 
-                    exitCode: event.payload.exitCode,
-                    utility: event.payload.command,
-                    newState: event.payload.state
-                } as any
-            );
-            if (legacyHint) {
-                if (legacyHint.intent) {
-                    // Use generative engine for legacy intent!
-                    const context = ContextBuilder.buildFromEvent(event);
-                    const generativeAction = CombinatorialUtteranceEngine.generate(
-                        legacyHint.intent as any,
-                        this.psychAdapter.getActiveTone(),
-                        context,
-                        INITIAL_TEMPLATE_CATALOG,
-                        this.activeMission.id
-                    );
-                    this.emitReaction(generativeAction);
-                } else {
-                    this.emitReaction(legacyHint);
-                }
-                return;
-            }
-        }
-
         // 3. Determine Intent based on Event (Generative Flow)
         const intent = this.determineIntent(event);
         if (!intent) return;

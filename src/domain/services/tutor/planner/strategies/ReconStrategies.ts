@@ -47,7 +47,7 @@ export class FindFileStrategy implements ICommandStrategy {
     public readonly cost = 5;
 
     public isSatisfiedBy(state: PlannerState): boolean {
-        return state.knownTypes.has(KnowledgeType.IP);
+        return state.knownTypes.has(KnowledgeType.METADATA);
     }
 
     public applyEffects(state: PlannerState): PlannerState {
@@ -74,8 +74,8 @@ export class SSHStrategy implements ICommandStrategy {
     public readonly cost = 2;
 
     public isSatisfiedBy(state: PlannerState): boolean {
-        // Need an IP to SSH into
-        return state.knownTypes.has(KnowledgeType.IP);
+        // Need an IP or Hostname to SSH into
+        return state.knownTypes.has(KnowledgeType.IP) || state.knownTypes.has(KnowledgeType.HOSTNAME);
     }
 
     public applyEffects(state: PlannerState): PlannerState {
@@ -91,6 +91,11 @@ export class SSHStrategy implements ICommandStrategy {
     }
 
     public generateCommand(kb: TutorKnowledgeBase): string {
+        const hostnames = kb.recall(KnowledgeType.HOSTNAME);
+        if (hostnames.length > 0) {
+            return `ssh admin@${hostnames[hostnames.length - 1].value}`;
+        }
+
         const ips = kb.recall(KnowledgeType.IP);
         // Find an IP we haven't connected to yet or just pick the latest
         const target = ips.length > 0 ? ips[ips.length - 1].value : "10.0.0.1";
