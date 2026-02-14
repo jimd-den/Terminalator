@@ -5,7 +5,7 @@
 - [x] Task: TDD: Create `TutorKnowledgeBase.test.ts` to verify discovery, recall, and heuristic storage.
 - [x] Task: Implement `TutorKnowledgeBase` with literate programming comments explaining the "Truth vs Perception" boundary.
 - [x] Task: Type Check: `npx tsc --noEmit`
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Knowledge Isolation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Knowledge Isolation' (Protocol in workflow.md)
 
 ## Phase 2: GOAP Brain (Planning Engine)
 - [ ] Task: Define `IPlannerAction` interface (Preconditions, Effects, Cost).
