@@ -1,4 +1,4 @@
-# Implementation Plan: Tutor-as-Planner (GOAP Architecture)
+# Implementation Plan: Tutor-as-Planner (GOAP Architecture) & The Neo-Retro Lattice
 
 ## Phase 1: Knowledge Isolation (Blackboard Pattern) [checkpoint: b9b880b]
 - [x] Task: Define `KnowledgeEntity` types (IP, Path, PID, User) and `TutorKnowledgeBase` entity.
@@ -29,9 +29,43 @@
 - [x] Task: Type Check: `npx tsc --noEmit`
 - [x] Task: Conductor - User Manual Verification 'Phase 4: Sensory Input' (Protocol in workflow.md)
 
-## Phase 5: Refactor Planning Loop (Integration)
-- [ ] Task: Refactor `TutorEngine.ts` to replace the linear mission tracker with the GOAP Loop.
-- [ ] Task: Integrate `RhythmHUD` to pull the "Current Step" from the Planner's active chain.
-- [ ] Task: Audit and Refactor for SOLID/DRY: Ensure strategies are decoupled from the core Planner.
-- [ ] Task: Religious Final Type Check: `npx tsc --noEmit`
-- [ ] Task: Conductor - User Manual Verification 'Phase 5: Planning Loop' (Protocol in workflow.md)
+## Phase 5: World Gen - Foundation (Seed & History)
+- [x] Task: Implement `WorldSeed` service in `src/domain/services/world/generation/WorldSeed.ts`.
+- [x] Task: TDD: Verify deterministic output from `WorldSeed` using Bun.
+- [x] Task: Implement `HistorySimulator` in `src/domain/services/world/generation/HistorySimulator.ts` (Factions, Conflicts).
+- [x] Task: TDD: Verify consistent history generation from same seed.
+- [x] Task: Type Check: `npx tsc --noEmit`
+- [ ] Task: Conductor - User Manual Verification 'Phase 5: World Gen - Foundation' (Protocol in workflow.md)
+
+## Phase 6: World Gen - Topology & Population
+- [ ] Task: Implement `NetworkGraphGenerator.ts` (Star, Mesh, Ring topologies).
+- [ ] Task: Implement `NPCPopulator.ts` to assign `Actors` to specific `Nodes`.
+- [ ] Task: Add `isVendor` and `inventory` components to the Node data structure.
+- [ ] Task: TDD: Verify graph connectivity and vendor placement.
+- [ ] Task: Type Check: `npx tsc --noEmit`
+- [ ] Task: Conductor - User Manual Verification 'Phase 6: World Gen - Topology' (Protocol in workflow.md)
+
+## Phase 7: World Gen - Hydration & Artifacts
+- [ ] Task: Implement `FileSystemHydrator.ts` to convert abstract Graph Nodes into `FileSystem` entities.
+- [ ] Task: Implement `ArtifactSynthesizer.ts` (Markov/Templates) to generate files with embedded "Hyperlinks".
+- [ ] Task: Refactor `WorldGenerator.ts` to orchestrate the new Pipeline (Seed -> History -> Topology -> Hydration).
+- [ ] Task: TDD: Verify "Hyperlinks" (IPs/Paths) are correctly embedded in generated text files.
+- [ ] Task: Type Check: `npx tsc --noEmit`
+- [ ] Task: Conductor - User Manual Verification 'Phase 7: World Gen - Artifacts' (Protocol in workflow.md)
+
+## Phase 8: Economy - Money as a Process
+- [ ] Task: Create `src/domain/entities/economy/Wallet.ts`.
+- [ ] Task: Implement `TransferCommand.ts` in `src/domain/commands/core/`.
+- [ ] Task: Refactor `EconomyService.ts` to calculate passive ZCoins based on captured node CPU stats.
+- [ ] Task: Implement `ToolRegistry.ts` for buyable capabilities (e.g., `autopwn.sh`).
+- [ ] Task: TDD: Verify `transfer` command deducts funds and "downloads" tools to `/bin`.
+- [ ] Task: Type Check: `npx tsc --noEmit`
+- [ ] Task: Conductor - User Manual Verification 'Phase 8: Economy' (Protocol in workflow.md)
+
+## Phase 9: Integration - The Heist Loop
+- [ ] Task: Update `GOAPPlanner.ts` to handle Tool preconditions and buy-actions.
+- [ ] Task: Refactor `TutorEngine.ts` to run the Planning Loop (Analyze -> Plan -> Suggest).
+- [ ] Task: Implement `WorldVerifier.ts` to prove Start -> Goal solvability via information discovery.
+- [ ] Task: Integrate `RhythmHUD.tsx` to display the active Planner chain (The "Plan").
+- [ ] Task: Type Check: `npx tsc --noEmit`
+- [ ] Task: Conductor - User Manual Verification 'Phase 9: Integration' (Protocol in workflow.md)
