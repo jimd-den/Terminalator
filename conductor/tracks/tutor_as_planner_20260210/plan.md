@@ -13,7 +13,7 @@
 - [x] Task: TDD: Create `GOAPPlanner.test.ts` to verify resolving a 3-step chain (e.g., Scan -> Identify -> Cat).
 - [x] Task: Implement `GOAPPlanner` using small, composable functions for node expansion and state comparison.
 - [x] Task: Type Check: `npx tsc --noEmit`
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: GOAP Brain' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: GOAP Brain' (Protocol in workflow.md)
 
 ## Phase 3: Strategy Library (Recon & Exfil)
 - [ ] Task: Implement `ReconStrategies` (FindFile, NetworkScan) that generate Unix command strings from knowledge.
