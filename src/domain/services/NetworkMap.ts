@@ -52,4 +52,8 @@ export class NetworkMap {
     registerSystem(hostname: string, fs: FileSystem) {
         this.systems.set(hostname, fs);
     }
+
+    public getAllHosts(): string[] {
+        return Array.from(this.systems.keys());
+    }
 }

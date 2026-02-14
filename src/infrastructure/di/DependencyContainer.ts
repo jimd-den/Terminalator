@@ -74,6 +74,9 @@ import { ChownCommand } from '../../domain/commands/core/ChownCommand';
 import { LnCommand } from '../../domain/commands/core/LnCommand';
 import { RmdirCommand } from '../../domain/commands/core/RmdirCommand';
 import { TransferCommand } from '../../domain/commands/core/TransferCommand';
+import { NmapCommand } from '../../domain/commands/core/NmapCommand';
+import { SshCommand } from '../../domain/commands/core/SshCommand';
+import { AutopwnCommand } from '../../domain/commands/core/AutopwnCommand';
 
 export class DependencyContainer {
 
@@ -163,7 +166,10 @@ export class DependencyContainer {
             new ChownCommand(fsService, identityService),
             new LnCommand(fsService),
             new RmdirCommand(fsService),
-            new TransferCommand()
+            new TransferCommand(),
+            new NmapCommand(),
+            new SshCommand(),
+            new AutopwnCommand()
         ];
 
         const missionPopulator = new MissionPopulator(worldManager);
