@@ -23,10 +23,10 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 3: Strategy Library' (Protocol in workflow.md)
 
 ## Phase 4: Sensory Input (The Interpreter)
-- [ ] Task: Implement `OutputInterpreter` using the Interpreter Pattern to parse `ls`, `ifconfig`, and `grep` outputs.
-- [ ] Task: TDD: Verify `ls -la` output adds multiple `KnowledgeEntity` items to the Blackboard.
-- [ ] Task: Wire `TutorObserver` to feed simulation `stdout` into the `OutputInterpreter`.
-- [ ] Task: Type Check: `npx tsc --noEmit`
+- [x] Task: Implement `OutputInterpreter` using the Interpreter Pattern to parse `ls`, `ifconfig`, and `grep` outputs.
+- [x] Task: TDD: Verify `ls -la` output adds multiple `KnowledgeEntity` items to the Blackboard.
+- [x] Task: Wire `TutorObserver` to feed simulation `stdout` into the `OutputInterpreter`.
+- [x] Task: Type Check: `npx tsc --noEmit`
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: Sensory Input' (Protocol in workflow.md)
 
 ## Phase 5: Refactor Planning Loop (Integration)

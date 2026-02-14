@@ -20,12 +20,16 @@ import { TutorIntent } from '../../entities/tutor/TutorIntent';
 import { TutorAction } from '../../interfaces/ITutorService';
 import { Mission } from '../../entities/Mission';
 import { TutorService } from '../TutorService';
+import { OutputInterpreter } from '../../interpreters/tutor/OutputInterpreter';
+import { TutorKnowledgeBase } from '../../entities/knowledge/TutorKnowledgeBase';
 
 export type TutorReactionCallback = (action: TutorAction) => void;
 
 export class TutorObserver {
     private reactionListeners: TutorReactionCallback[] = [];
     private activeMission: Mission | null = null;
+    private knowledgeBase: TutorKnowledgeBase = new TutorKnowledgeBase();
+    private interpreter: OutputInterpreter = new OutputInterpreter();
 
     constructor(
         private bus: SimulationBus,
@@ -33,6 +37,13 @@ export class TutorObserver {
         private tutorService: TutorService
     ) {
         this.initialize();
+    }
+
+    /**
+     * Accessor for the Tutor's current perception of the world.
+     */
+    public getKnowledgeBase(): TutorKnowledgeBase {
+        return this.knowledgeBase;
     }
 
     public setActiveMission(mission: Mission | null): void {
@@ -48,6 +59,20 @@ export class TutorObserver {
         if (event.type === GameEventType.COMMAND_EXECUTED) {
             const success = event.payload.exitCode === 0;
             this.psychAdapter.recordEvent(success ? 'SUCCESS' : 'ERROR');
+
+            // --- SENSORY INPUT PROCESSING (Phase 4) ---
+            if (success && event.payload.output) {
+                const discoveries = this.interpreter.interpret(
+                    event.payload.command, 
+                    event.payload.output
+                );
+                discoveries.forEach(entity => this.knowledgeBase.learn(entity));
+                
+                // If new knowledge was found, we might want to log it or trigger a specific reaction later
+                if (discoveries.length > 0) {
+                    console.log(`[TutorObserver] Discovered ${discoveries.length} new knowledge entities.`);
+                }
+            }
         }
 
         // 2. Legacy Hint Check (for archetypal missions)
