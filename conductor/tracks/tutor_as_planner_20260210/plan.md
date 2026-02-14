@@ -15,7 +15,7 @@
 - [x] Task: Type Check: `npx tsc --noEmit`
 - [x] Task: Conductor - User Manual Verification 'Phase 2: GOAP Brain' (Protocol in workflow.md)
 
-## Phase 3: Strategy Library (Recon & Exfil)
+## Phase 3: Strategy Library (Recon & Exfil) [checkpoint: 99bbd13]
 - [x] Task: Implement `ReconStrategies` (FindFile, NetworkScan) that generate Unix command strings from knowledge.
 - [x] Task: Implement `ExfilStrategies` (GrepContent, ReadFile).
 - [x] Task: TDD: Verify strategies output valid, idiomatic shell strings using `sh-parse` logic or simple regex checks.
