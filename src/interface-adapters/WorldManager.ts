@@ -89,29 +89,23 @@ export class WorldManager implements IWorldStateProvider, IWorldManager {
         world.devices.forEach(d => this.devices.set(d.id, d));
         
         // 2. Create FileSystems for new Hosts
-        // Group devices by host
         const hosts = new Set(world.devices.map(d => d.hostId));
         
         hosts.forEach(hostname => {
-            if (hostname === 'terminalator') return; // Don't overwrite local
+            if (hostname === 'terminalator') return;
 
             const fs = new FileSystem();
             const service = new FileSystemService(fs);
-            
-            // Basic OS scaffolding for remote host
-            service.mkdirp('/bin');
-            service.mkdirp('/home/admin');
-            service.mkdirp('/var/log');
-            service.mkdirp('/dev');
-            service.writeFile('/var/log/syslog', 'System initialized...\n');
-
             this.registerHost(hostname, service);
         });
 
-        // 3. Update Projector with new devices
+        // 3. Hydrate World (Phase 7)
+        this.generator.hydrateWorld(seed, world, (hostname) => this.getHostFileSystem(hostname)!);
+
+        // 4. Update Projector with new devices
         this.projector = new StateProjector(Array.from(this.devices.values()));
         
-        // 4. Initial Projection
+        // 5. Initial Projection
         hosts.forEach(h => {
             const fs = this.hostFileSystems.get(h);
             if (fs) this.projector.project(h, fs);

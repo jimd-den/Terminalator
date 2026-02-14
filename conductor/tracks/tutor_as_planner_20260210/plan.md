@@ -46,11 +46,11 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 6: World Gen - Topology' (Protocol in workflow.md)
 
 ## Phase 7: World Gen - Hydration & Artifacts
-- [ ] Task: Implement `FileSystemHydrator.ts` to convert abstract Graph Nodes into `FileSystem` entities.
-- [ ] Task: Implement `ArtifactSynthesizer.ts` (Markov/Templates) to generate files with embedded "Hyperlinks".
-- [ ] Task: Refactor `WorldGenerator.ts` to orchestrate the new Pipeline (Seed -> History -> Topology -> Hydration).
-- [ ] Task: TDD: Verify "Hyperlinks" (IPs/Paths) are correctly embedded in generated text files.
-- [ ] Task: Type Check: `npx tsc --noEmit`
+- [x] Task: Implement `FileSystemHydrator.ts` to convert abstract Graph Nodes into `FileSystem` entities.
+- [x] Task: Implement `ArtifactSynthesizer.ts` (Markov/Templates) to generate files with embedded "Hyperlinks".
+- [x] Task: Refactor `WorldGenerator.ts` to orchestrate the new Pipeline (Seed -> History -> Topology -> Hydration).
+- [x] Task: TDD: Verify "Hyperlinks" (IPs/Paths) are correctly embedded in generated text files.
+- [x] Task: Type Check: `npx tsc --noEmit`
 - [ ] Task: Conductor - User Manual Verification 'Phase 7: World Gen - Artifacts' (Protocol in workflow.md)
 
 ## Phase 8: Economy - Money as a Process
