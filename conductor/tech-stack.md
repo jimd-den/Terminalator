@@ -12,6 +12,10 @@
     - `ThemeContext`: Dynamic provider for palette expansion and component context injection.
     - `SimulationBus`: Central nervous system for Event-Driven Architecture (EDA), broadcasting domain events (COMMAND_EXECUTED, SYSTEM_BOOT, PERSONA_SWITCHED, etc.).
     - `TutorObserver`: Autonomous "nervous system" bridge translating system events into semantic `TutorIntent` for the generative engines.
+    - `GOAPPlanner`: Goal-Oriented Action Planning engine for autonomous Tutor strategy and heist-loop resolution.
+    - `OutputInterpreter`: Sensory input parser using the Interpreter Pattern to translate stdout into knowledge.
+    - `EconomyService`: High-fidelity resource engine managing ZINC (Ƶ), passive mining, and Black Market transactions.
+    - `ToolRegistry`: Capability-gating system mapping buyable binaries to Tutor strategies.
     - `TutorEngine`: Context-aware pedagogical system capable of interpreting procedural mission intent.
     - `TutorBrain`: Persona orchestration engine.
     - `TutorSpy`: Performance analysis engine (WPM, Accuracy, Stalls).
@@ -28,7 +32,10 @@
     - `IVimCommand`, `CommandHistory`: Entity and Use Case for undoable editor operations.
     - `ThemeColors`: Expanded palette supporting opacity-based semantic variants (primary_10, etc.).
     - `IVimMode`: Strategy-based interface for Vim modes (Normal, Insert, Command).
-  - `WorldManager`: Procedural generator for "The Grid" (Locations, Devices, Connections).
+  - `WorldManager`: Orchestrator for the "Multiverse" of isolated host file systems.
+  - `HistorySimulator`: Macro-simulation engine generating digital history, factions, and conflicts.
+  - `NetworkGraphGenerator`: The Lattice engine generating graph topologies (Star, Mesh, Ring).
+  - `FileSystemHydrator`: ECS-to-Entity conversion engine that populates nodes with artifact files.
 
 ## Architectural Patterns
 - **Paradigm:** Clean Architecture

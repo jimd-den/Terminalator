@@ -9,11 +9,13 @@ Terminalator is a Trojan horse of technical enlightenment. On the surface, it pr
 - **The Edge Lords:** Power users who appreciate the high-fidelity simulation and the challenge of navigating a complex, procedurally generated technocratic landscape.
 
 # Key Features
-- **The Grid:** A procedural world generation engine that creates a sprawling network of locations, devices, and connections inhabited by simulated entities.
+- **The Neo-Retro Lattice:** A procedural world generation engine based on "Digital History" simulation. Creates a deterministic graph of isolated servers connected by "Hyperlinks" found in artifacts (logs, emails).
 - **POSIX Fidelity:** A deep simulation of a Unix-like environment, featuring a combinatorial mission engine that generates 10,000+ reality-based scenarios covering the full POSIX utility landscape.
 - **The "Horror" Narrative:** A thematic focus on the dehumanizing effects of excessive technical complexity, delivered through mission logs and world interaction.
+- **The Economy of Computation:** A system resource loop where users mine ZCoins (Ƶ) from captured nodes and spend them on the Black Market for advanced hacking tools (scripts/binaries).
 - **Subliminal Mastery (Assembly Typing):** A tutor engine that guides users through writing assembly code under the guise of a typing accuracy and speed game. Users become proficient in low-level logic while they believe they are merely mastering their keyboard.
 - **The Sinister Tutor:** A proactive, event-driven AI entity that monitors typing speed, accuracy, and command patterns in real-time. Driven by an internal Event-Driven Architecture (EDA), it reacts viscerally and autonomously to both technical errors and user triumphs. It employs a "Cold Kawaii" persona to coach, mock, and guide the user through an IRC-style interface. Supports swappable personas (Standard, Rogue).
+- **Tutor-as-Planner:** An autonomous GOAP-based planning engine where the Tutor reasons about the world lattice to guide the user through complex multi-step "Heists".
 - **High-Fidelity Language Simulation:** Native support for Scheme (Lisp) and RISC-V Assembly, including syntax highlighting, linting, and simulated execution.
 - **Global Credit System:** A persistent gamification layer where users earn credits for mastery and mission completion, visible on the dashboard.
 - **Stealth Learning:** A tutor engine disguised as system prompts and mainframe interactions that guides users from typing games to complex systems administration.
