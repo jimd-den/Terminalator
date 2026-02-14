@@ -8,11 +8,11 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Knowledge Isolation' (Protocol in workflow.md)
 
 ## Phase 2: GOAP Brain (Planning Engine)
-- [ ] Task: Define `IPlannerAction` interface (Preconditions, Effects, Cost).
-- [ ] Task: Implement a lightweight `AStar` pathfinder for action chains.
-- [ ] Task: TDD: Create `GOAPPlanner.test.ts` to verify resolving a 3-step chain (e.g., Scan -> Identify -> Cat).
-- [ ] Task: Implement `GOAPPlanner` using small, composable functions for node expansion and state comparison.
-- [ ] Task: Type Check: `npx tsc --noEmit`
+- [x] Task: Define `IPlannerAction` interface (Preconditions, Effects, Cost).
+- [x] Task: Implement a lightweight `AStar` pathfinder for action chains.
+- [x] Task: TDD: Create `GOAPPlanner.test.ts` to verify resolving a 3-step chain (e.g., Scan -> Identify -> Cat).
+- [x] Task: Implement `GOAPPlanner` using small, composable functions for node expansion and state comparison.
+- [x] Task: Type Check: `npx tsc --noEmit`
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: GOAP Brain' (Protocol in workflow.md)
 
 ## Phase 3: Strategy Library (Recon & Exfil)
