@@ -20,7 +20,7 @@
 - [x] Task: Implement `ExfilStrategies` (GrepContent, ReadFile).
 - [x] Task: TDD: Verify strategies output valid, idiomatic shell strings using `sh-parse` logic or simple regex checks.
 - [x] Task: Type Check: `npx tsc --noEmit`
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Strategy Library' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Strategy Library' (Protocol in workflow.md)
 
 ## Phase 4: Sensory Input (The Interpreter)
 - [ ] Task: Implement `OutputInterpreter` using the Interpreter Pattern to parse `ls`, `ifconfig`, and `grep` outputs.
