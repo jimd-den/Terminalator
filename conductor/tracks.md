@@ -16,6 +16,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [ ] **Track: Semantic Unix Model** (ACTIVE)
 - [ ] **Track: Generative Narrative** (ACTIVE)
 - [ ] **Track: Generative Mission Arch** (ACTIVE)
+- [x] **Track: Tutor-as-Planner** (ARCHIVED)
 
 ---
 
@@ -30,6 +31,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 *Link (Archived): [./archive/persistent_keyboard_20260208/](./archive/persistent_keyboard_20260208/)*
 *Link (Archived): [./archive/hardcoded_asset_refactor_20260208/](./archive/hardcoded_asset_refactor_20260208/)*
 *Link (Archived): [./archive/dispositional_tutor_20260206/](./archive/dispositional_tutor_20260206/)*
+*Link (Archived): [./tracks/tutor_as_planner_20260210/](./tracks/tutor_as_planner_20260210/)*
 
 *Link (Active): [./tracks/semantic_unix_model_20260206/](./tracks/semantic_unix_model_20260206/)*
 *Link (Active): [./tracks/generative_narrative_20260206/](./tracks/generative_narrative_20260206/)*
