@@ -28,7 +28,8 @@ export class NetworkScanStrategy implements ICommandStrategy {
         nextTypes.add(KnowledgeType.IP);
         return {
             ...state,
-            knownTypes: nextTypes
+            knownTypes: nextTypes,
+            currentHost: state.currentHost
         };
     }
 
@@ -54,12 +55,45 @@ export class FindFileStrategy implements ICommandStrategy {
         nextTypes.add(KnowledgeType.PATH);
         return {
             ...state,
-            knownTypes: nextTypes
+            knownTypes: nextTypes,
+            currentHost: state.currentHost
         };
     }
 
     public generateCommand(kb: TutorKnowledgeBase): string {
         // Potential heuristic: search for common sensitive filenames
         return "find / -name '*.log' -o -name '*.txt' 2>/dev/null";
+    }
+}
+
+/**
+ * Strategy to connect to a remote host.
+ */
+export class SSHStrategy implements ICommandStrategy {
+    public readonly name = "SSH";
+    public readonly cost = 2;
+
+    public isSatisfiedBy(state: PlannerState): boolean {
+        // Need an IP to SSH into
+        return state.knownTypes.has(KnowledgeType.IP);
+    }
+
+    public applyEffects(state: PlannerState): PlannerState {
+        // Effectively "refreshes" knowledge potential on a new node
+        // In the planner, we might represent this as gaining access to a new scope
+        const nextTypes = new Set(state.knownTypes);
+        nextTypes.add(KnowledgeType.METADATA); // "Connected" state
+        return {
+            ...state,
+            knownTypes: nextTypes,
+            currentHost: state.currentHost
+        };
+    }
+
+    public generateCommand(kb: TutorKnowledgeBase): string {
+        const ips = kb.recall(KnowledgeType.IP);
+        // Find an IP we haven't connected to yet or just pick the latest
+        const target = ips.length > 0 ? ips[ips.length - 1].value : "10.0.0.1";
+        return `ssh admin@${target}`;
     }
 }

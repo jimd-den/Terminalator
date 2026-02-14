@@ -32,6 +32,11 @@ export interface PlannerState {
      * Tools the user has in their inventory (/bin).
      */
     readonly knownTools: Set<string>;
+
+    /**
+     * The hostname of the system the user is currently logged into.
+     */
+    readonly currentHost: string;
 }
 
 export interface IPlannerAction {

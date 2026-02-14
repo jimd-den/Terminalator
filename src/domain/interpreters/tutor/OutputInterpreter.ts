@@ -20,6 +20,9 @@ export class OutputInterpreter {
             case 'ifconfig':
                 entities.push(...this.parseIfconfig(output));
                 break;
+            case 'nmap':
+                entities.push(...this.parseNmap(output));
+                break;
             case 'grep':
                 entities.push(...this.parseGrep(output));
                 break;
@@ -75,6 +78,28 @@ export class OutputInterpreter {
                     });
                 }
             }
+        }
+        return entities;
+    }
+
+    private parseNmap(output: string): KnowledgeEntity[] {
+        const entities: KnowledgeEntity[] = [];
+        // Extract "Nmap scan report for 10.0.0.1"
+        const ipRegex = /Nmap scan report for ([^\s]+)/g;
+        let match;
+        while ((match = ipRegex.exec(output)) !== null) {
+            const val = match[1];
+            // If it's a hostname with IP in parens, extract IP
+            const parenMatch = /\(([^)]+)\)/.exec(val);
+            const ip = parenMatch ? parenMatch[1] : val;
+            
+            entities.push({
+                type: KnowledgeType.IP,
+                value: ip,
+                discoveredAt: Date.now(),
+                source: 'nmap',
+                isBelief: false
+            });
         }
         return entities;
     }

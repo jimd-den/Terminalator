@@ -25,7 +25,7 @@ import { FileSystemService } from '../FileSystemService';
 import { TutorKnowledgeBase } from '../../entities/knowledge/TutorKnowledgeBase';
 import { GOAPPlanner } from './planner/GOAPPlanner';
 import { ICommandStrategy } from './planner/ICommandStrategy';
-import { NetworkScanStrategy, FindFileStrategy } from './planner/strategies/ReconStrategies';
+import { NetworkScanStrategy, FindFileStrategy, SSHStrategy } from './planner/strategies/ReconStrategies';
 import { ReadFileStrategy, GrepContentStrategy } from './planner/strategies/ExfilStrategies';
 import { BuyToolStrategy } from './planner/strategies/EconomyStrategies';
 import { AutoPwnStrategy } from './planner/strategies/ExploitStrategies';
@@ -39,9 +39,11 @@ export class TutorObserver {
     private knowledgeBase: TutorKnowledgeBase = new TutorKnowledgeBase();
     private interpreter: OutputInterpreter = new OutputInterpreter();
     private planner: GOAPPlanner = new GOAPPlanner();
+    private currentHost: string = 'terminalator';
     private strategies: ICommandStrategy[] = [
         new NetworkScanStrategy(),
         new FindFileStrategy(),
+        new SSHStrategy(),
         new ReadFileStrategy(),
         new GrepContentStrategy(),
         new BuyToolStrategy('autopwn.sh'),
@@ -76,14 +78,15 @@ export class TutorObserver {
         const knownValues = new Set<string>(this.knowledgeBase.getAll().map(e => e.value));
         const knownTools = this.getToolsInBin();
 
-        const start = { knownTypes, knownValues, knownTools };
+        const start = { knownTypes, knownValues, knownTools, currentHost: this.currentHost };
 
         // 2. Build Goal State (Derived from mission objective)
         // For now, mapping all missions to "We need a CREDENTIAL (secret)"
         const goal = {
             knownTypes: new Set([KnowledgeType.CREDENTIAL]),
             knownValues: new Set<string>(),
-            knownTools: new Set<string>()
+            knownTools: new Set<string>(),
+            currentHost: 'any' // Simplified for now
         };
 
         // 3. Resolve Plan
@@ -92,6 +95,11 @@ export class TutorObserver {
         if (plan && plan.length > 0) {
             const nextStep = plan[0] as ICommandStrategy;
             const command = nextStep.generateCommand(this.knowledgeBase);
+
+            if (!command) {
+                console.warn(`[TutorObserver] Strategy ${nextStep.name} generated an empty command.`);
+                return;
+            }
 
             console.log(`[TutorObserver] New Plan Resolved. Next step: ${nextStep.name}. Command: ${command}`);
 
@@ -143,6 +151,10 @@ export class TutorObserver {
         if (event.type === GameEventType.COMMAND_EXECUTED) {
             const success = event.payload.exitCode === 0;
             this.psychAdapter.recordEvent(success ? 'SUCCESS' : 'ERROR');
+
+            if (event.payload.state) {
+                this.currentHost = event.payload.state.fsContext || 'terminalator';
+            }
 
             // --- SENSORY INPUT PROCESSING (Phase 4) ---
             if (success && event.payload.output) {

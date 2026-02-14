@@ -39,7 +39,8 @@ export class BuyToolStrategy implements ICommandStrategy {
         nextTools.add(this.toolBinary);
         return {
             ...state,
-            knownTools: nextTools
+            knownTools: nextTools,
+            currentHost: state.currentHost
         };
     }
 

@@ -19,7 +19,7 @@ export class ReadFileStrategy implements ICommandStrategy {
     public readonly cost = 2;
 
     public isSatisfiedBy(state: PlannerState): boolean {
-        return state.knownTypes.has(KnowledgeType.PATH);
+        return state.knownTypes.has(KnowledgeType.PATH) && state.knownTypes.has(KnowledgeType.METADATA);
     }
 
     public applyEffects(state: PlannerState): PlannerState {
@@ -27,7 +27,8 @@ export class ReadFileStrategy implements ICommandStrategy {
         nextTypes.add(KnowledgeType.METADATA);
         return {
             ...state,
-            knownTypes: nextTypes
+            knownTypes: nextTypes,
+            currentHost: state.currentHost
         };
     }
 
@@ -47,7 +48,7 @@ export class GrepContentStrategy implements ICommandStrategy {
     public readonly cost = 3;
 
     public isSatisfiedBy(state: PlannerState): boolean {
-        return state.knownTypes.has(KnowledgeType.PATH);
+        return state.knownTypes.has(KnowledgeType.PATH) && state.knownTypes.has(KnowledgeType.METADATA);
     }
 
     public applyEffects(state: PlannerState): PlannerState {
@@ -56,7 +57,8 @@ export class GrepContentStrategy implements ICommandStrategy {
         nextTypes.add(KnowledgeType.CREDENTIAL);
         return {
             ...state,
-            knownTypes: nextTypes
+            knownTypes: nextTypes,
+            currentHost: state.currentHost
         };
     }
 

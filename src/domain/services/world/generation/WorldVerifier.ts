@@ -37,13 +37,15 @@ export class WorldVerifier {
         const start = {
             knownTypes: new Set<KnowledgeType>(),
             knownValues: new Set<string>(),
-            knownTools: new Set<string>(['autopwn.sh']) // Assume tools for verification
+            knownTools: new Set<string>(['autopwn.sh']), // Assume tools for verification
+            currentHost: 'terminalator'
         };
 
         const goal = {
             knownTypes: new Set([goalType]),
             knownValues: new Set<string>(),
-            knownTools: new Set<string>()
+            knownTools: new Set<string>(),
+            currentHost: 'any'
         };
 
         const plan = this.planner.plan(start, goal, this.strategies);

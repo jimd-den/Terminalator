@@ -135,7 +135,7 @@ export class GOAPPlanner {
         const types = Array.from(state.knownTypes).sort().join(',');
         const values = Array.from(state.knownValues).sort().join(',');
         const tools = Array.from(state.knownTools || []).sort().join(',');
-        return `T:[${types}]|V:[${values}]|K:[${tools}]`;
+        return `T:[${types}]|V:[${values}]|K:[${tools}]|H:${state.currentHost}`;
     }
 
     /**
