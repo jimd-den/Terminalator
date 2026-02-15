@@ -104,9 +104,9 @@ export const RhythmHUD: React.FC = () => {
                     setIsActive(true);
                     setLessonText(lesson.text || '');
                     setIsCountdown(false);
-                    const stats = engine.getStats();
-                    setBaseZinc(stats.totalZincMined);
-                    setDisplayZinc(stats.totalZincMined);
+                    const initialBalance = gameManager.getEconomyService().getBalance();
+                    setBaseZinc(initialBalance);
+                    setDisplayZinc(initialBalance);
                     boxScale.value = reducedMotion ? 1 : withSpring(1, { damping: 12 });
                     setIsInitialized(true);
                 }
@@ -144,8 +144,9 @@ export const RhythmHUD: React.FC = () => {
                     setIsCountdown(true);
                     setSummary(null);
                     setStreak(0);
-                    setBaseZinc(0);
-                    setDisplayZinc(0);
+                    const initialBalance = gameManager.getEconomyService().getBalance();
+                    setBaseZinc(initialBalance);
+                    setDisplayZinc(initialBalance);
                     setLessonText(payload.text || '');
                     setProgressIndex(0);
                     
@@ -212,7 +213,7 @@ export const RhythmHUD: React.FC = () => {
 
         const unsubEcon = bus.subscribe(GameEventType.ECONOMY_UPDATE, (event) => {
             if (isActive) {
-                setBaseZinc(event.payload.sessionReward);
+                setBaseZinc(event.payload.balance);
                 setHashRate(event.payload.hashRate);
             }
         });
@@ -411,7 +412,8 @@ export const RhythmHUD: React.FC = () => {
                         <Text adjustsFontSizeToFit numberOfLines={1} style={[dynamicStyles.statText, { color: colors.text.primary }]}>PERFECTS: {summary.perfectPercentage}</Text>
                         <Text adjustsFontSizeToFit numberOfLines={1} style={[dynamicStyles.statText, { color: colors.text.primary }]}>MAX STREAK: {summary.maxStreak}</Text>
                         <View style={dynamicStyles.divider} />
-                        <Text adjustsFontSizeToFit numberOfLines={1} style={[dynamicStyles.rewardText, { color: colors.secondary }]}>TOTAL MINED: {summary.totalMined}</Text>
+                        <Text adjustsFontSizeToFit numberOfLines={1} style={[dynamicStyles.statText, { color: colors.text.primary, letterSpacing: 1 }]}>SESSION MINED: {summary.totalMined}</Text>
+                        <Text adjustsFontSizeToFit numberOfLines={1} style={[dynamicStyles.rewardText, { color: colors.secondary }]}>WALLET TOTAL: {summary.totalWallet}</Text>
                         <Text adjustsFontSizeToFit numberOfLines={1} style={[dynamicStyles.statusText, { color: colors.primary }]}>PRESS ENTER TO CONTINUE</Text>
                     </View>
                 ) : isCountdown ? (

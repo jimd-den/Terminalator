@@ -28,6 +28,7 @@ import { IWorldStateProvider } from '../domain/interfaces/IWorldStateProvider';
 import { SystemPreparationSpec } from '../domain/entities/world/SystemPreparationSpec';
 import { SimulationBus, GameEventType } from '../domain/services/SimulationBus';
 import { TutorObserver } from '../domain/services/tutor/TutorObserver';
+import { EconomyService } from '../domain/services/EconomyService';
 
 /**
  * GameManager - Interface Adapter layer
@@ -42,6 +43,7 @@ export class GameManager implements IGameManager {
     private worldManager: IWorldManager & IWorldStateProvider;
     private presentationDirector: PresentationDirector;
     private tutorObserver: TutorObserver;
+    private activeMissionId: string | null = null;
 
     public readonly tutorEngine: TutorEngine;
 
@@ -80,10 +82,14 @@ export class GameManager implements IGameManager {
     }
 
     private initializeReactiveListeners(): void {
-        this.bus.subscribe(GameEventType.MISSION_PROGRESS, (event) => {
+        this.bus.subscribe(GameEventType.MISSION_PROGRESS, async (event) => {
             if (event.payload.type === 'COMPLETED') {
                 const mission = this.missionService.getMissionById(event.payload.missionId);
                 if (mission) {
+                    // CREDIT WALLET (Phase 10 fix: Link Mission rewards to Economy)
+                    const reward = mission.rewardValue || parseInt(mission.reward) || 0;
+                    await this.getEconomyService().credit(reward, `MISSION COMPLETE: ${mission.id}`);
+
                     this.mailSystem.sendMail(
                         { id: 'bank', name: 'Bank', origin: '', career: '', goal: '', status: 'active', traits: [], loadout: [] },
                         'PAYMENT RECEIVED',
@@ -95,9 +101,10 @@ export class GameManager implements IGameManager {
 
         this.bus.subscribe(GameEventType.TUTOR_EVENT, (event) => {
             if (event.payload.type === 'PLAN_UPDATED') {
-                const { nextCommand, instructions } = event.payload.payload;
+                const { nextCommand, suggestedCommand, instructions } = event.payload.payload;
+                const command = suggestedCommand || nextCommand;
                 
-                if (!nextCommand) {
+                if (!command) {
                     console.warn(`[GameManager] Received PLAN_UPDATED with empty command. Ignoring.`);
                     return;
                 }
@@ -105,8 +112,9 @@ export class GameManager implements IGameManager {
                 const lesson: Lesson = {
                     id: `PLAN_STEP_${Date.now()}`,
                     type: 'SHELL',
-                    text: nextCommand,
+                    text: command,
                     instructions: instructions,
+                    suggestedCommand: command,
                     isMission: true
                 };
                 
@@ -119,6 +127,10 @@ export class GameManager implements IGameManager {
 
     public getTutorObserver(): TutorObserver {
         return this.tutorObserver;
+    }
+
+    public getEconomyService(): EconomyService {
+        return this.lessonCoordinator.getEconomyService();
     }
 
     public getSimulationBus(): SimulationBus {
@@ -185,14 +197,40 @@ export class GameManager implements IGameManager {
     public onCommandExecuted(state: TerminalState, response: CommandResponse, _prevFsContext?: string) {
         // Pillar: THE BALANCED SCALE (Observer Pattern)
         // Emit for TutorObserver and other reactive listeners
-        this.bus.emit(GameEventType.COMMAND_EXECUTED, { 
-            command: response.utility || 'unknown',
-            args: [], // Ideally parsed from the shell
-            exitCode: response.exitCode,
-            output: response.output,
+        const payload: any = { 
+            command: response.utility || response.command || 'unknown',
+            args: [], 
+            exitCode: response.exitCode || 0,
+            output: response.output || '',
             cwd: state.currentDirectory,
-            state: state 
-        });
+            state: {
+                ...state,
+                fsContext: state.fsContext || 'terminalator'
+            }
+        };
+
+        this.bus.emit(GameEventType.COMMAND_EXECUTED, payload);
+
+        // --- Objective-Based Completion Check (Phase 10) ---
+        if (this.activeMissionId) {
+            const kb = this.tutorObserver.getKnowledgeBase();
+            const acquired = kb.recall('MISSION_OBJECTIVE' as any)
+                .some(e => e.value === 'MISSION_DATA_ACQUIRED');
+
+            if (acquired) {
+                if (this.telemetry) {
+                    this.telemetry.info(`[GameManager] Objective Met for Mission ${this.activeMissionId}. Completing.`);
+                }
+                this.bus.emit(GameEventType.MISSION_PROGRESS, {
+                    missionId: this.activeMissionId,
+                    type: 'COMPLETED',
+                    status: 'completed',
+                    result: { type: 'MISSION_COMPLETE' }
+                });
+                this.activeMissionId = null;
+                return;
+            }
+        }
 
         // Legacy: Internal listeners
         this.emitEvent('COMMAND_EXECUTED', { 
@@ -201,9 +239,8 @@ export class GameManager implements IGameManager {
             utility: response.utility || 'unknown'
         });
 
-                const { hints, progression } = this.missionService.updateMissions(state, response);
-
-            }
+        const { hints, progression } = this.missionService.updateMissions(state, response);
+    }
 
         
 
@@ -229,11 +266,11 @@ export class GameManager implements IGameManager {
 
             const npc = this.npcService.spawnNPC();
 
-            const mission = await this.missionService.createMission(npc);
+                        const mission = await this.missionService.createMission(npc);
 
+            
 
-
-            this.prepareSystem(mission.targetSystem, [mission]);
+                        this.prepareSystem(mission.targetSystem, [mission]);
 
 
 
@@ -513,7 +550,7 @@ export class GameManager implements IGameManager {
 
 
 
-        public startMission(missionId: string, currentState?: TerminalState) {
+        public async startMission(missionId: string, currentState?: TerminalState) {
 
 
 
@@ -525,11 +562,29 @@ export class GameManager implements IGameManager {
 
 
 
-                            mission.status = 'active';
+                                                        mission.status = 'active';
+
+                                                        this.activeMissionId = mission.id;
 
 
 
-                            mission.chatHistory.push({
+                            
+
+
+
+                                                        // AWARD SIGNING BONUS (Phase 10 fix: Ensure funds for tools)
+
+
+
+                                                        await this.getEconomyService().credit(500, `MISSION START ADVANCE: ${mission.id}`);
+
+
+
+                            
+
+
+
+                                                        mission.chatHistory.push({
 
 
 

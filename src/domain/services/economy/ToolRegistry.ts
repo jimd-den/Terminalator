@@ -17,11 +17,11 @@ export interface Tool {
 export class ToolRegistry {
     private static readonly TOOLS: Tool[] = [
         {
-            id: 'autopwn',
-            name: 'AutoPwn Script',
+            id: 'bypass',
+            name: 'Bypass Script',
             cost: 500,
             description: 'Automates privilege escalation on known vulnerabilities.',
-            binaryName: 'autopwn.sh'
+            binaryName: 'bypass.sh'
         },
         {
             id: 'decrypter',

@@ -49,6 +49,33 @@ export class NetworkGraphGenerator {
         return { nodes, edges };
     }
 
+    /**
+     * Deterministically derives node details from a hostname and seed.
+     * Essential for the "Millions of Universes" goal.
+     */
+    public findNodeByHostname(seed: WorldSeed, hostname: string): LatticeNode | undefined {
+        // This is a simplified implementation. In a true coordinate-based system,
+        // we'd hash the hostname to determine which faction/subnet it belongs to.
+        // For now, we'll use a consistent mapping if the hostname follows our patterns.
+        
+        const isSrv = hostname.startsWith('srv-');
+        const isPeer = hostname.startsWith('peer-');
+        const isWork = hostname.startsWith('work-');
+
+        if (!isSrv && !isPeer && !isWork && hostname !== 'terminalator') {
+             // Gateway logic
+             return this.createNode(seed, 'faction_gen', NodeType.ROUTER, '10.255.255.1', hostname);
+        }
+
+        return this.createNode(
+            seed, 
+            'faction_gen', 
+            isSrv ? NodeType.SERVER : NodeType.WORKSTATION, 
+            '10.x.x.x', // Placeholder for lazy derivation
+            hostname
+        );
+    }
+
     private generateFactionSubGraph(seed: WorldSeed, faction: any, factionIndex: number): NetworkTopology {
         const nodes: LatticeNode[] = [];
         const edges: LatticeEdge[] = [];

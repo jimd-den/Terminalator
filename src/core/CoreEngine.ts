@@ -62,50 +62,72 @@ export class CoreEngine {
         this.initPromise = (async () => {
             console.log("CoreEngine: Starting initialization...");
 
-            // 1. Base Infrastructure
-            this.fs = new FileSystem();
-            this.telemetry = new ConsoleTelemetryAdapter();
-            this.networkMap = new NetworkMap();
-            this.bus = new SimulationBus(this.telemetry);
-            this.conductor = new RhythmConductor(this.bus);
-            this.tutorMessaging = new TutorMessagingService();
+            // 1. Base Infrastructure (Persistent across re-init if needed)
+            if (!this.fs) this.fs = new FileSystem();
+            if (!this.telemetry) this.telemetry = new ConsoleTelemetryAdapter();
+            if (!this.networkMap) this.networkMap = new NetworkMap();
+            if (!this.bus) this.bus = new SimulationBus(this.telemetry);
+            if (!this.conductor) this.conductor = new RhythmConductor(this.bus);
+            if (!this.tutorMessaging) this.tutorMessaging = new TutorMessagingService();
             console.log("CoreEngine: Infrastructure ready.");
 
             // 2. Dependent Services (using DependencyContainer)
-            const fsService = new FileSystemService(this.fs);
-            this.economyService = DependencyContainer.createEconomyService(this.fs, this.bus, this.conductor);
-            this.masteryTracker = DependencyContainer.createMasteryTracker(this.fs);
-            this.tutorBrain = DependencyContainer.createTutorBrain(this.fs, this.bus);
-            console.log("CoreEngine: Service instances created.");
+            const fsService = DependencyContainer.createFileSystemService(this.fs);
             
-            // Default Persona
-            this.tutorBrain.setPersona(DependencyContainer.createPersona('standard', 'TUTOR'));
-            console.log("CoreEngine: Persona set.");
+            if (!this.economyService) {
+                this.economyService = DependencyContainer.createEconomyService(this.bus, this.conductor);
+            }
+            if (!this.masteryTracker) {
+                this.masteryTracker = DependencyContainer.createMasteryTracker(this.fs);
+            }
+            if (!this.tutorBrain) {
+                this.tutorBrain = DependencyContainer.createTutorBrain(this.fs, this.bus);
+                // Default Persona
+                this.tutorBrain.setPersona(DependencyContainer.createPersona('standard', 'TUTOR'));
+            }
+            
+            console.log("CoreEngine: Service instances ready.");
 
-            this.gameManager = DependencyContainer.createGameManager(this.fs, this.networkMap, this.telemetry, this.bus, this.conductor);
+            // GameManager might need to be fresh if it tracks transient UI state, 
+            // but usually it should also be singleton-like in CoreEngine.
+            if (!this.gameManager) {
+                this.gameManager = DependencyContainer.createGameManager(
+                    this.fs, 
+                    this.networkMap, 
+                    this.telemetry, 
+                    this.bus, 
+                    this.conductor,
+                    this.economyService,
+                    this.masteryTracker
+                );
+            }
             console.log("CoreEngine: GameManager ready.");
 
-            this.commandExecutor = new GameCommandExecutor(fsService, this.gameManager, this.networkMap, this.telemetry);
-            this.tutorShadow = DependencyContainer.createTutorShadow(
-                this.gameManager.tutorEngine, 
-                this.economyService, 
-                this.bus, 
-                this.gameManager.getPresentationDirector(),
-                this.conductor
-            );
+            if (!this.commandExecutor) {
+                this.commandExecutor = new GameCommandExecutor(fsService, this.gameManager, this.networkMap, this.economyService, this.telemetry);
+            }
+            if (!this.tutorShadow) {
+                this.tutorShadow = DependencyContainer.createTutorShadow(
+                    this.gameManager.tutorEngine, 
+                    this.economyService, 
+                    this.bus, 
+                    this.gameManager.getPresentationDirector(),
+                    this.conductor
+                );
+            }
 
             // 3. Controllers & Mediators
-            this.simulationMediator = new SimulationMediator(
-                this.bus,
-                this.gameManager.getPresentationDirector(),
-                this.commandExecutor
-            );
+            if (!this.simulationMediator) {
+                this.simulationMediator = new SimulationMediator(
+                    this.bus,
+                    this.gameManager.getPresentationDirector(),
+                    this.commandExecutor
+                );
+            }
             
-            // CommandCoordinator now delegates to the Mediator? 
-            // Or ViewModel delegates to Mediator?
-            // For now, let's keep CommandCoordinator as the controller that might use Mediator later,
-            // or effectively redundant.
-            this.commandCoordinator = new CommandCoordinator(this.commandExecutor, this.gameManager.getPresentationDirector());
+            if (!this.commandCoordinator) {
+                this.commandCoordinator = new CommandCoordinator(this.commandExecutor, this.gameManager.getPresentationDirector());
+            }
             console.log("CoreEngine: Controllers ready.");
 
             console.log("CoreEngine: Initialization complete.");

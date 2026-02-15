@@ -38,12 +38,9 @@ export const SettingsScreen: React.FC = () => {
     });
 
     const content = (
-        <KeyboardAvoidingView 
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={styles.container}
-        >
+        <View style={styles.container}>
             <SettingsPane onBack={() => navigation.goBack()} />
-        </KeyboardAvoidingView>
+        </View>
     );
 
     return (

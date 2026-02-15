@@ -4,12 +4,22 @@ import { useTheme } from '../context/ThemeContext';
 import { useProcess } from '../context/ProcessProvider';
 import { GameEventType } from '../../../domain/services/SimulationBus';
 import { ZincFormatter } from '../../../domain/utils/ZincFormatter';
+import { CoreEngine } from '../../../core/CoreEngine';
 
 export const EconomyBar: React.FC = () => {
     const { theme, settings } = useTheme();
     const { bus } = useProcess();
-    const [balance, setBalance] = useState(0);
-    const [hashRate, setHashRate] = useState(0);
+    
+    // Pillar: THE BALANCED SCALE (Initial State Hydration)
+    // Hydrate immediately from the singleton service to prevent 0-flicker on navigation
+    const engine = CoreEngine.getInstance();
+    const economyService = engine.getEconomyService();
+    
+    const [balance, setBalance] = useState(() => economyService.getBalance());
+    const [hashRate, setHashRate] = useState(() => {
+        const session = economyService.getSession();
+        return session.hashRate; 
+    });
 
     useEffect(() => {
         const unsub = bus.subscribe(GameEventType.ECONOMY_UPDATE, (event) => {

@@ -23,7 +23,7 @@ describe("Economy and Transfer", () => {
     beforeEach(() => {
         fs = new FileSystem();
         fsService = new FileSystemService(fs);
-        economy = new EconomyService(fsService);
+        economy = new EconomyService();
     });
 
     test("should accumulate passive income from captured nodes", async () => {
@@ -42,7 +42,7 @@ describe("Economy and Transfer", () => {
 
         // Setup vendor node (mocking current FS as vendor)
         fsService.mkdirp('/public/tools');
-        fsService.writeFile('/public/tools/autopwn.sh', 'dummy');
+        fsService.writeFile('/public/tools/bypass.sh', 'dummy');
 
         const context: ProcessContext = {
             fs,
@@ -66,18 +66,18 @@ describe("Economy and Transfer", () => {
             functions: new Map()
         } as any;
 
-        const res = await cmd.execute(['--amount', '500', '--tool', 'autopwn.sh'], context, state);
+        const res = await cmd.execute(['--amount', '500', '--tool', 'bypass.sh'], context, state);
 
         expect(res.exitCode).toBe(0);
         expect(economy.getBalance()).toBe(500);
-        expect(fsService.resolve('/bin/autopwn.sh')).toBeDefined();
+        expect(fsService.resolve('/bin/bypass.sh')).toBeDefined();
     });
 
     test("TransferCommand should fail if insufficient funds", async () => {
         const cmd = new TransferCommand();
         economy.credit(100, "Small Deposit");
         fsService.mkdirp('/public/tools');
-        fsService.writeFile('/public/tools/autopwn.sh', 'dummy');
+        fsService.writeFile('/public/tools/bypass.sh', 'dummy');
 
         const context: ProcessContext = {
             fs,
@@ -101,7 +101,7 @@ describe("Economy and Transfer", () => {
             functions: new Map()
         } as any;
 
-        const res = await cmd.execute(['--amount', '500', '--tool', 'autopwn.sh'], context, state);
+        const res = await cmd.execute(['--amount', '500', '--tool', 'bypass.sh'], context, state);
 
         expect(res.exitCode).toBe(1);
         expect(res.output).toContain('check balance');

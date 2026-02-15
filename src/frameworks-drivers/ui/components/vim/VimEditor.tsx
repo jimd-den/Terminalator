@@ -80,8 +80,6 @@ export const useVimEditor = (
     // Force focus when mounting
     useEffect(() => {
         refocus();
-        const interval = setInterval(refocus, 2000);
-        return () => clearInterval(interval);
     }, [refocus]);
 
     // -- Dynamic Styles --

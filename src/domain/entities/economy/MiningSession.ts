@@ -21,7 +21,7 @@ export class MiningSession {
     public streak: number = 0;
     public lastBeatTime: number = 0;
     
-    private readonly BASE_REWARD = 0.00000000001; // 1e-11
+    private readonly BASE_REWARD = 1.0; // [REBALANCED] 1 Hit ≈ 1 ZCoin (at base hashrate)
     private readonly MAX_HASHRATE = 100.0;
     private readonly STREAK_BOOST = 0.1;
     private readonly PASSIVE_DECAY = 0.02; // Per tick
@@ -33,14 +33,14 @@ export class MiningSession {
     /**
      * Processes a rhythmic hit.
      * @param timestamp - Current time in ms.
-     * @param _unused - Legacy beat time.
+     * @param forceOnBeat - Optional override for rhythm check.
      * @returns reward for this hit.
      */
-    public processHit(timestamp: number, _unused?: number): number {
+    public processHit(timestamp: number, forceOnBeat?: boolean): number {
         // Use robust modulo arithmetic (same as TutorEngine)
         // This allows hits slightly before OR after the beat.
         const beatOffset = timestamp % this.BEAT_MS;
-        const isOnBeat = beatOffset < 80 || beatOffset > (this.BEAT_MS - 80);
+        const isOnBeat = forceOnBeat !== undefined ? forceOnBeat : (beatOffset < 80 || beatOffset > (this.BEAT_MS - 80));
 
         if (isOnBeat) {
             this.streak++;

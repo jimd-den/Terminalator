@@ -22,3 +22,11 @@
 - [x] Task: Build one full mission (e.g., "Breach Server") using: Scheme DSL -> Grammar Data -> Generic Strategy -> Simulation Bus.
 - [x] Task: Verify that the mission completes successfully upon correct event sequence.
 - [x] Task: Conductor - User Manual Verification 'Phase 4: Vertical Slice Prototype'
+
+## Phase 5: Infinite Scaling & Cleanup (High Priority)
+- [ ] Task: Fix Regression: Restore Tutor pushing `net-scan` to `RhythmHUD` in `TutorObserver.ts`.
+- [ ] Task: Cleanup: Delete dead code `ProceduralMissionFactory.ts`.
+- [ ] Task: Refactor: Virtualize `WorldGenerator.ts` to use lazy generation (Behavior instead of State).
+- [ ] Task: Evolution: Map `ConstraintMissionFactory` solved steps directly to `MissionGrammar`.
+- [ ] Task: Verify: Run `test_world_gen.ts` and `WorldGenerationPipeline.test.ts`.
+

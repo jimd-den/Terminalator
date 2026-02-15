@@ -88,7 +88,14 @@ export class SystemGenerator {
             { name: 'net-scan', desc: 'Lattice Node Scanner' },
             { name: 'net-link', desc: 'Secure Net-Link Client' },
             { name: 'transfer', desc: 'ZINC Transaction Utility' },
-            { name: 'check-comms', desc: 'Secure Channel Synchronizer' }
+            { name: 'check-comms', desc: 'Secure Channel Synchronizer' },
+            { name: 'ls', desc: 'List directory contents' },
+            { name: 'cat', desc: 'Concatenate and print files' },
+            { name: 'grep', desc: 'Search for patterns in files' },
+            { name: 'awk', desc: 'Pattern scanning and processing language' },
+            { name: 'sed', desc: 'Stream editor for filtering and transforming text' },
+            { name: 'cd', desc: 'Change the working directory' },
+            { name: 'pwd', desc: 'Print name of current/working directory' }
         ];
 
         tools.forEach(tool => {

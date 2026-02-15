@@ -11,7 +11,7 @@ import { GOAPPlanner } from "../src/domain/services/tutor/planner/GOAPPlanner";
 import { ICommandStrategy } from "../src/domain/services/tutor/planner/ICommandStrategy";
 import { NetworkScanStrategy, FindFileStrategy, SSHStrategy } from "../src/domain/services/tutor/planner/strategies/ReconStrategies";
 import { ReadFileStrategy, GrepContentStrategy } from "../src/domain/services/tutor/planner/strategies/ExfilStrategies";
-import { AutoPwnStrategy } from "../src/domain/services/tutor/planner/strategies/ExploitStrategies";
+import { BypassStrategy } from "../src/domain/services/tutor/planner/strategies/ExploitStrategies";
 import { KnowledgeType } from "../src/domain/entities/knowledge/KnowledgeEntity";
 
 async function verifyCompleteness() {
@@ -25,7 +25,7 @@ async function verifyCompleteness() {
         new SSHStrategy(),
         new ReadFileStrategy(),
         new GrepContentStrategy(),
-        new AutoPwnStrategy()
+        new BypassStrategy()
     ];
 
     const seed = "CompletenessTest_" + Date.now();
@@ -58,7 +58,7 @@ async function verifyCompleteness() {
         plan.forEach(s => {
             const cmd = (s as any).generateCommand(kb);
             console.log(`Strategy ${s.name} -> Command: ${cmd}`);
-            if (cmd.includes('nmap') || cmd.includes('ssh') || cmd.includes('autopwn')) {
+            if (cmd.includes('nmap') || cmd.includes('ssh') || cmd.includes('bypass')) {
                 throw new Error(`Licensed name found in command: ${cmd}`);
             }
         });

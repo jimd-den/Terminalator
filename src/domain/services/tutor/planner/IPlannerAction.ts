@@ -37,6 +37,11 @@ export interface PlannerState {
      * The hostname of the system the user is currently logged into.
      */
     readonly currentHost: string;
+
+    /**
+     * The eventual destination host (optional).
+     */
+    readonly targetHost?: string;
 }
 
 export interface IPlannerAction {

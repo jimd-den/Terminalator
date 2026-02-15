@@ -23,12 +23,51 @@ import { Connection, ConnectionType } from '../../entities/world/Connection';
 import { NPC } from '../../entities/NPC';
 import { FileSystemService } from '../FileSystemService';
 
+import { FileSystem } from '../../entities/FileSystem';
+import { IUniverseStrategy } from '../../interfaces/IUniverseStrategy';
+
 export interface GeneratedWorld {
     locations: Location[];
     devices: Device[];
     connections: Connection[];
     topology: NetworkTopology;
     npcs: NPC[];
+}
+
+/**
+ * DeterministicUniverseStrategy
+ * 
+ * Implements lazy, behavior-based world generation.
+ */
+class DeterministicUniverseStrategy implements IUniverseStrategy {
+    constructor(
+        private seed: WorldSeed,
+        private seedString: string,
+        private graphGenerator: NetworkGraphGenerator,
+        private hydrator: FileSystemHydrator,
+        private npcPopulator: NPCPopulator
+    ) {}
+
+    public getNodeDetails(hostname: string): LatticeNode | undefined {
+        return this.graphGenerator.findNodeByHostname(this.seed, hostname);
+    }
+
+    public mountFilesystem(hostname: string): FileSystem {
+        const fs = new FileSystem();
+        const node = this.getNodeDetails(hostname);
+        if (node) {
+            // Lazy Hydration
+            const fsService = new FileSystemService(fs);
+            // We provide empty topology/npcs for lazy hydration unless we want to generate neighbors
+            this.hydrator.hydrate(this.seed, node, fsService, { nodes: [node], edges: [] }, []);
+        }
+        return fs;
+    }
+
+    public getInitialHosts(): string[] {
+        // Return a set of "starting" hosts that are always available
+        return ['terminalator', 'gateway-alpha', 'research-srv-1'];
+    }
 }
 
 export class WorldGenerator {
@@ -38,7 +77,23 @@ export class WorldGenerator {
     private hydrator = new FileSystemHydrator();
 
     /**
+     * Creates a lazy Universe Strategy.
+     * Pillar: THE MASTER'S TOOL (Stateless Factory)
+     */
+    public createUniverse(seedString: string): IUniverseStrategy {
+        const seed = new WorldSeed(seedString);
+        return new DeterministicUniverseStrategy(
+            seed,
+            seedString,
+            this.graphGenerator,
+            this.hydrator,
+            this.npcPopulator
+        );
+    }
+
+    /**
      * Generates a complete world lattice based on a seed.
+     * @deprecated Use createUniverse for infinite scaling.
      */
     public generateWorld(seedString: string): GeneratedWorld {
         const seed = new WorldSeed(seedString);

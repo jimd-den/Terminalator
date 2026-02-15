@@ -5,38 +5,48 @@
  * The Economy of Computation (Ƶ)
  * ═══════════════════════════════════════════════════════════════════════════════
  * 
- * Manages the ZINC economy (Ƶ).
- * Handles passive mining from captured nodes and active mining from typing.
- * 
- * Pillar: THE FOUR-FOLD SHIELD (Clean Architecture)
+ * Orchestrates meta-game wealth (Ƶ) using a pure ledger-based persistence model.
+ * Adheres to Clean Architecture by interacting only with the ILedgerRepository.
  */
 
-import { FileSystemService } from './FileSystemService';
 import { MiningSession } from '../entities/economy/MiningSession';
 import { SimulationBus, GameEventType } from './SimulationBus';
 import { RhythmConductor } from './RhythmConductor';
-import { Wallet, Transaction } from '../entities/economy/Wallet';
+import { Transaction } from '../entities/economy/Wallet';
+import { ILedgerRepository } from '../interfaces/ILedgerRepository';
+import { DependencyContainer } from '../../infrastructure/di/DependencyContainer';
 
 export class EconomyService {
-    private wallet: Wallet = { balance: 0, transactions: [], lastUpdated: Date.now() };
-    private readonly WALLET_PATH = '/home/operator/.wallet';
     private session: MiningSession;
     private tickInterval: any = null;
     private capturedNodes: Map<string, number> = new Map(); // hostname -> cpuPower
+    
+    // Pillar: THE BALANCED SCALE (Ledger as Source of Truth)
+    private repository: ILedgerRepository;
+    private cachedBalance: number = 0;
 
     constructor(
-        private fsService: FileSystemService, 
         private bus?: SimulationBus,
         private conductor?: RhythmConductor
     ) {
+        console.log(`[EconomyService] INITIALIZING WITH PERSISTENT LEDGER`);
         this.session = new MiningSession();
-        this.loadWallet();
+        this.repository = DependencyContainer.createLedgerRepository();
+        
+        // Initial balance sync
+        this.syncCachedBalance();
         this.startTicker();
+    }
+
+    private async syncCachedBalance() {
+        this.cachedBalance = await this.repository.getBalance();
+        console.log(`[EconomyService] Initial Balance Synced: ${this.cachedBalance} Ƶ`);
+        this.emitUpdate();
     }
 
     private startTicker() {
         if (this.tickInterval) clearInterval(this.tickInterval);
-        this.tickInterval = setInterval(() => {
+        this.tickInterval = setInterval(async () => {
             let totalPassive = this.session.decay();
             
             // Add passive income from captured nodes
@@ -45,19 +55,19 @@ export class EconomyService {
             });
 
             if (totalPassive > 0) {
-                this.wallet.balance += totalPassive;
-                this.emitUpdate();
+                await this.credit(totalPassive, 'PASSIVE MINING');
             }
         }, 1000);
     }
 
     public registerCapturedNode(hostname: string, cpuPower: number) {
+        console.log(`[EconomyService] Captured Node: ${hostname} (+${cpuPower/100} Ƶ/sec)`);
         this.capturedNodes.set(hostname, cpuPower);
         this.emitUpdate();
     }
 
     public getBalance(): number {
-        return this.wallet.balance;
+        return this.cachedBalance;
     }
 
     public getSession(): MiningSession {
@@ -69,48 +79,55 @@ export class EconomyService {
         this.emitUpdate();
     }
 
-    public syncWallet() {
-        this.loadWallet();
+    public dispose() {
+        if (this.tickInterval) {
+            clearInterval(this.tickInterval);
+            this.tickInterval = null;
+        }
     }
 
-    public debit(amount: number, description: string): boolean {
-        if (this.wallet.balance < amount) return false;
-        
-        this.wallet.balance -= amount;
-        this.addTransaction('DEBIT', amount, description);
-        this.saveWallet();
-        this.emitUpdate();
-        return true;
-    }
+    public async debit(amount: number, description: string): Promise<boolean> {
+        if (amount <= 0) return true;
+        if (this.cachedBalance < amount) {
+            console.log(`[EconomyService] DEBIT REJECTED: Insufficient Funds (${amount} > ${this.cachedBalance})`);
+            return false;
+        }
 
-    public credit(amount: number, description: string) {
-        this.wallet.balance += amount;
-        this.addTransaction('CREDIT', amount, description);
-        this.saveWallet();
-        this.emitUpdate();
-    }
-
-    private addTransaction(type: 'DEBIT' | 'CREDIT', amount: number, description: string) {
         const tx: Transaction = {
             id: Math.random().toString(36).substring(2, 9),
             amount,
+            timestamp: Date.now(),
             description,
-            type,
-            timestamp: Date.now()
+            type: 'DEBIT'
         };
-        this.wallet.transactions.unshift(tx);
-        if (this.wallet.transactions.length > 50) this.wallet.transactions.pop();
+
+        await this.repository.append(tx);
+        await this.syncCachedBalance();
+        return true;
+    }
+
+    public async credit(amount: number, description: string): Promise<void> {
+        if (amount <= 0) return;
+
+        const tx: Transaction = {
+            id: Math.random().toString(36).substring(2, 9),
+            amount,
+            timestamp: Date.now(),
+            description,
+            type: 'CREDIT'
+        };
+
+        await this.repository.append(tx);
+        await this.syncCachedBalance();
     }
 
     /**
      * Record a rhythmic hit and update balance.
      */
-    public recordHit(nextBeatTime?: number) {
-        const reward = this.session.processHit(Date.now(), nextBeatTime);
+    public async recordHit(isOnBeat?: boolean) {
+        const reward = this.session.processHit(Date.now(), isOnBeat);
         if (reward > 0) {
-            this.wallet.balance += reward;
-            this.saveWallet();
-            this.emitUpdate();
+            await this.credit(reward, 'RHYTHM MINING');
         }
     }
 
@@ -122,33 +139,13 @@ export class EconomyService {
     private emitUpdate() {
         if (this.bus) {
             this.bus.emit(GameEventType.ECONOMY_UPDATE, {
-                balance: this.wallet.balance,
+                balance: this.cachedBalance,
                 hashRate: this.session.hashRate + (Array.from(this.capturedNodes.values()).reduce((a, b) => a + b, 0) / 100),
                 streak: this.session.streak,
                 sessionReward: this.session.sessionZincMined,
+                totalMined: this.session.totalZincMined,
                 capturedCount: this.capturedNodes.size
             });
         }
-    }
-
-    private loadWallet() {
-        try {
-            const content = this.fsService.readFile(this.WALLET_PATH);
-            const data = JSON.parse(content);
-            this.wallet = {
-                balance: data.balance || 0,
-                transactions: data.transactions || [],
-                lastUpdated: data.lastUpdated || Date.now()
-            };
-        } catch (e) {
-            this.saveWallet(); 
-        }
-    }
-
-    private saveWallet() {
-        try {
-            this.wallet.lastUpdated = Date.now();
-            this.fsService.writeFile(this.WALLET_PATH, JSON.stringify(this.wallet, null, 2));
-        } catch (e) {}
     }
 }

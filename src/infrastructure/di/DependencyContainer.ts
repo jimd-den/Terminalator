@@ -35,6 +35,9 @@ import { MasteryTracker } from '../../domain/services/tutor/MasteryTracker';
 import { DiskMasteryRepository } from '../../interface-adapters/DiskMasteryRepository';
 import { IdentityService } from '../../domain/services/IdentityService';
 import { RhythmConductor } from '../../domain/services/RhythmConductor';
+import { ILedgerRepository } from '../../domain/interfaces/ILedgerRepository';
+import { SqliteLedgerRepository } from '../persistence/SqliteLedgerRepository';
+import { LocalStorageLedgerRepository } from '../persistence/LocalStorageLedgerRepository';
 
 // Scaling Engine Imports
 import { ConstraintMissionFactory } from '../../domain/usecases/mission/ConstraintMissionFactory';
@@ -76,22 +79,40 @@ import { NetScanCommand } from '../../domain/commands/core/NetScanCommand';
 import { NetLinkCommand } from '../../domain/commands/core/NetLinkCommand';
 import { BypassCommand } from '../../domain/commands/core/BypassCommand';
 import { NetConfCommand } from '../../domain/commands/core/NetConfCommand';
+import { IrcCommand } from '../../domain/commands/core/IrcCommand';
+import { ArchiveCommand } from '../../domain/commands/core/ArchiveCommand';
 
 export class DependencyContainer {
+    private static economyService: EconomyService | null = null;
+    private static masteryTracker: MasteryTracker | null = null;
+    private static tutorBrain: TutorBrain | null = null;
 
     public static createRhythmConductor(bus: SimulationBus): RhythmConductor {
         return new RhythmConductor(bus);
     }
 
-    public static createEconomyService(fs: FileSystem, bus?: SimulationBus, conductor?: RhythmConductor): EconomyService {
-        const fsService = new FileSystemService(fs);
-        return new EconomyService(fsService, bus, conductor);
+    public static createLedgerRepository(): ILedgerRepository {
+        // Platform check: Use LocalStorage for Web to avoid SQLite Worker issues
+        if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+            return new LocalStorageLedgerRepository();
+        }
+        return new SqliteLedgerRepository();
+    }
+
+    public static createEconomyService(bus?: SimulationBus, conductor?: RhythmConductor): EconomyService {
+        if (!this.economyService) {
+            this.economyService = new EconomyService(bus, conductor);
+        }
+        return this.economyService;
     }
 
     public static createMasteryTracker(fs: FileSystem): MasteryTracker {
-        const fsService = new FileSystemService(fs);
-        const repository = new DiskMasteryRepository(fsService);
-        return new MasteryTracker(repository);
+        if (!this.masteryTracker) {
+            const fsService = this.createFileSystemService(fs);
+            const repository = new DiskMasteryRepository(fsService);
+            this.masteryTracker = new MasteryTracker(repository);
+        }
+        return this.masteryTracker;
     }
     
     public static createPersona(id: string, name: string): PersonaLoader {
@@ -103,10 +124,13 @@ export class DependencyContainer {
     }
 
     public static createTutorBrain(fs: FileSystem, bus: SimulationBus): TutorBrain {
-        const masteryTracker = this.createMasteryTracker(fs);
-        const intensityCalculator = new IntensityCalculator(masteryTracker);
-        const intentInterpreter = new MissionIntentInterpreter();
-        return new TutorBrain(intensityCalculator, intentInterpreter, bus);
+        if (!this.tutorBrain) {
+            const masteryTracker = this.createMasteryTracker(fs);
+            const intensityCalculator = new IntensityCalculator(masteryTracker);
+            const intentInterpreter = new MissionIntentInterpreter();
+            this.tutorBrain = new TutorBrain(intensityCalculator, intentInterpreter, bus);
+        }
+        return this.tutorBrain;
     }
 
     public static createTutorObserver(bus: SimulationBus, tutorService: TutorService, fsService: FileSystemService): TutorObserver {
@@ -124,23 +148,40 @@ export class DependencyContainer {
         return new TutorShadow(engine, economy, bus, director, conductor);
     }
 
+    private static fsServiceMap: Map<FileSystem, FileSystemService> = new Map();
+
+    public static createFileSystemService(fs: FileSystem): FileSystemService {
+        let service = this.fsServiceMap.get(fs);
+        if (!service) {
+            service = new FileSystemService(fs);
+            this.fsServiceMap.set(fs, service);
+        }
+        return service;
+    }
+
     public static createGameManager(
         fs: FileSystem, 
         networkMap: NetworkMap, 
         telemetry: TelemetryPort,
         bus: SimulationBus,
-        conductor: RhythmConductor
+        conductor: RhythmConductor,
+        economyService?: EconomyService,
+        masteryTracker?: MasteryTracker
     ): GameManager {
-        const fsService = new FileSystemService(fs);
+        const fsService = this.createFileSystemService(fs);
         const identityService = new IdentityService();
         const missionRepository = new MissionRepository(new JsonMissionDataProvider());
         const lessonRegistry = new LessonRegistry();
         const strategyRegistry = new StrategyRegistry();
         const tutorService = new TutorService(missionRepository, lessonRegistry, strategyRegistry);
-        const masteryTracker = this.createMasteryTracker(fs);
-        const economyService = this.createEconomyService(fs, bus, conductor);
         
-        const worldManager = new WorldManager(networkMap);
+        const activeMasteryTracker = masteryTracker || this.createMasteryTracker(fs);
+        const activeEconomyService = economyService || this.createEconomyService(bus, conductor);
+        
+        const worldManager = new WorldManager(
+            networkMap, 
+            (f) => DependencyContainer.createFileSystemService(f)
+        );
         worldManager.registerHost('terminalator', fsService);
 
         // --- Scaling Engine Wiring ---
@@ -165,11 +206,13 @@ export class DependencyContainer {
             new ChownCommand(fsService, identityService),
             new LnCommand(fsService),
             new RmdirCommand(fsService),
-            new TransferCommand(),
+            new TransferCommand(), // Note: Transfer uses context.fileSystemService
             new NetScanCommand(),
             new NetLinkCommand(),
             new BypassCommand(),
-            new NetConfCommand()
+            new NetConfCommand(),
+            new IrcCommand(),
+            new ArchiveCommand()
         ];
 
         const missionPopulator = new MissionPopulator(worldManager);
@@ -178,7 +221,7 @@ export class DependencyContainer {
         const worldPatchService = new WorldPatchService(worldManager);
 
         const combinatorialFactory = new ConstraintMissionFactory(new UnixKnowledgeBase(), worldPatchService);
-        const tutorProgression = new TutorLedProgression(combinatorialFactory as any, masteryTracker);
+        const tutorProgression = new TutorLedProgression(combinatorialFactory as any, activeMasteryTracker);
 
         const missionService = new MissionService(
             tutorService, 
@@ -193,11 +236,13 @@ export class DependencyContainer {
         const tutorEngine = new TutorEngine(bus);
         const lessonService = new LessonService();
 
-        const lessonCoordinator = new LessonCoordinator(tutorEngine, mailSystem, missionService, economyService);
+        const lessonCoordinator = new LessonCoordinator(tutorEngine, mailSystem, missionService, activeEconomyService);
 
         const tutorObserver = this.createTutorObserver(bus, tutorService, fsService);
 
         worldPatchService.initializeRootFileSystem(fs);
+        // Refresh Tutor's FS view after population
+        tutorObserver.setFileSystemService(fsService);
 
         return new GameManager(
             fs,

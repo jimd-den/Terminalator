@@ -16,25 +16,32 @@ import { TutorKnowledgeBase } from '../../../../entities/knowledge/TutorKnowledg
  */
 export class NetworkScanStrategy implements ICommandStrategy {
     public readonly name = "NetworkScan";
-    public readonly cost = 10;
+    public readonly cost = 0; // Basic command (Phase 10 rebalance)
 
     public isSatisfiedBy(state: PlannerState): boolean {
-        // Initial action, always satisfied
-        return true;
+        // Can run if we have a target host we haven't 'seen' yet, or if we know nothing
+        const knowsGoal = state.targetHost && state.knownValues.has(state.targetHost);
+        const hasId = state.knownTypes.has(KnowledgeType.IP) || state.knownTypes.has(KnowledgeType.HOSTNAME);
+        const satisfied = (state.targetHost && !knowsGoal) || !hasId;
+        console.log(`[NetworkScanStrategy] isSatisfied: ${satisfied}. knowsGoal: ${knowsGoal}, hasId: ${hasId}`);
+        return satisfied;
     }
 
     public applyEffects(state: PlannerState): PlannerState {
         const nextTypes = new Set(state.knownTypes);
+        const nextValues = new Set(state.knownValues);
         nextTypes.add(KnowledgeType.IP);
+        nextTypes.add(KnowledgeType.HOSTNAME);
+        if (state.targetHost) nextValues.add(state.targetHost); // Assume discovery finds the target
         return {
             ...state,
             knownTypes: nextTypes,
+            knownValues: nextValues,
             currentHost: state.currentHost
         };
     }
 
-    public generateCommand(kb: TutorKnowledgeBase): string {
-        // In a real scenario, this might pull the current subnet from the KB
+    public generateCommand(kb: TutorKnowledgeBase, goalHost?: string): string {
         return "net-scan";
     }
 }
@@ -44,10 +51,14 @@ export class NetworkScanStrategy implements ICommandStrategy {
  */
 export class FindFileStrategy implements ICommandStrategy {
     public readonly name = "FindFile";
-    public readonly cost = 5;
+    public readonly cost = 0; // Basic command
 
     public isSatisfiedBy(state: PlannerState): boolean {
-        return state.knownTypes.has(KnowledgeType.METADATA);
+        const hasMeta = state.knownTypes.has(KnowledgeType.METADATA);
+        const notLocal = state.currentHost !== 'terminalator';
+        const satisfied = hasMeta && notLocal;
+        console.log(`[FindFileStrategy] isSatisfied: ${satisfied}. hasMeta: ${hasMeta}, notLocal: ${notLocal}, currentHost: ${state.currentHost}`);
+        return satisfied;
     }
 
     public applyEffects(state: PlannerState): PlannerState {
@@ -60,9 +71,8 @@ export class FindFileStrategy implements ICommandStrategy {
         };
     }
 
-    public generateCommand(kb: TutorKnowledgeBase): string {
-        // Potential heuristic: search for common sensitive filenames
-        return "find / -name '*.log' -o -name '*.txt' 2>/dev/null";
+    public generateCommand(kb: TutorKnowledgeBase, goalHost?: string): string {
+        return "ls -R /";
     }
 }
 
@@ -71,33 +81,37 @@ export class FindFileStrategy implements ICommandStrategy {
  */
 export class SSHStrategy implements ICommandStrategy {
     public readonly name = "SSH";
-    public readonly cost = 2;
+    public readonly cost = 0; // Basic command
 
     public isSatisfiedBy(state: PlannerState): boolean {
-        // Need an IP or Hostname to SSH into
-        return state.knownTypes.has(KnowledgeType.IP) || state.knownTypes.has(KnowledgeType.HOSTNAME);
+        const types = Array.from(state.knownTypes);
+        const hasId = state.knownTypes.has(KnowledgeType.IP) || state.knownTypes.has(KnowledgeType.HOSTNAME);
+        // We can SSH if we are NOT already on a remote host
+        const satisfied = hasId && state.currentHost === 'terminalator';
+        console.log(`[SSHStrategy] isSatisfied: ${satisfied}. Types: [${types.join(',')}]. hasId: ${hasId}, currentHost: ${state.currentHost}`);
+        return satisfied;
     }
 
     public applyEffects(state: PlannerState): PlannerState {
-        // Effectively "refreshes" knowledge potential on a new node
-        // In the planner, we might represent this as gaining access to a new scope
         const nextTypes = new Set(state.knownTypes);
-        nextTypes.add(KnowledgeType.METADATA); // "Connected" state
+        nextTypes.add(KnowledgeType.METADATA);
         return {
             ...state,
             knownTypes: nextTypes,
-            currentHost: state.currentHost
+            currentHost: state.targetHost || 'any' // Success: We are now on the target host (if known)
         };
     }
 
-    public generateCommand(kb: TutorKnowledgeBase): string {
+    public generateCommand(kb: TutorKnowledgeBase, goalHost?: string): string {
         const hostnames = kb.recall(KnowledgeType.HOSTNAME);
         if (hostnames.length > 0) {
-            return `net-link admin@${hostnames[hostnames.length - 1].value}`;
+            let target = hostnames[hostnames.length - 1].value;
+            if (goalHost && hostnames.some(h => h.value === goalHost)) {
+                target = goalHost;
+            }
+            return `net-link admin@${target}`;
         }
-
         const ips = kb.recall(KnowledgeType.IP);
-        // Find an IP we haven't connected to yet or just pick the latest
         const target = ips.length > 0 ? ips[ips.length - 1].value : "10.0.0.1";
         return `net-link admin@${target}`;
     }

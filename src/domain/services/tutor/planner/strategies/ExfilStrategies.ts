@@ -16,26 +16,36 @@ import { TutorKnowledgeBase } from '../../../../entities/knowledge/TutorKnowledg
  */
 export class ReadFileStrategy implements ICommandStrategy {
     public readonly name = "ReadFile";
-    public readonly cost = 2;
+    public readonly cost = 15;
 
     public isSatisfiedBy(state: PlannerState): boolean {
-        return state.knownTypes.has(KnowledgeType.PATH) && state.knownTypes.has(KnowledgeType.METADATA);
+        const hasPath = state.knownTypes.has(KnowledgeType.PATH);
+        const hasMeta = state.knownTypes.has(KnowledgeType.METADATA);
+        const notLocal = state.currentHost !== 'terminalator';
+        const satisfied = hasPath && hasMeta && notLocal;
+        console.log(`[ReadFileStrategy] isSatisfied: ${satisfied}. hasPath: ${hasPath}, hasMeta: ${hasMeta}, currentHost: ${state.currentHost}`);
+        return satisfied;
     }
 
     public applyEffects(state: PlannerState): PlannerState {
         const nextTypes = new Set(state.knownTypes);
-        nextTypes.add(KnowledgeType.METADATA);
+        nextTypes.add(KnowledgeType.MISSION_OBJECTIVE);
+        
+        const nextValues = new Set(state.knownValues);
+        nextValues.add(`MISSION_DATA_ACQUIRED`);
+
         return {
             ...state,
             knownTypes: nextTypes,
+            knownValues: nextValues,
             currentHost: state.currentHost
         };
     }
 
-    public generateCommand(kb: TutorKnowledgeBase): string {
+    public generateCommand(kb: TutorKnowledgeBase, goalHost?: string): string {
         const paths = kb.recall(KnowledgeType.PATH);
-        // Pick the most recently discovered path, or a heuristic choice
-        const target = paths.length > 0 ? paths[paths.length - 1].value : "/etc/hostname";
+        // Find path on target host
+        const target = paths.find(p => p.metadata?.host === goalHost)?.value || "/var/data/target";
         return `cat ${target}`;
     }
 }
@@ -45,26 +55,32 @@ export class ReadFileStrategy implements ICommandStrategy {
  */
 export class GrepContentStrategy implements ICommandStrategy {
     public readonly name = "GrepContent";
-    public readonly cost = 3;
+    public readonly cost = 20;
 
     public isSatisfiedBy(state: PlannerState): boolean {
-        return state.knownTypes.has(KnowledgeType.PATH) && state.knownTypes.has(KnowledgeType.METADATA);
+        const hasPath = state.knownTypes.has(KnowledgeType.PATH);
+        const notLocal = state.currentHost !== 'terminalator';
+        const satisfied = hasPath && notLocal;
+        console.log(`[GrepContentStrategy] isSatisfied: ${satisfied}. hasPath: ${hasPath}, currentHost: ${state.currentHost}`);
+        return satisfied;
     }
 
     public applyEffects(state: PlannerState): PlannerState {
         const nextTypes = new Set(state.knownTypes);
         nextTypes.add(KnowledgeType.METADATA);
-        nextTypes.add(KnowledgeType.CREDENTIAL);
+        
+        const nextValues = new Set(state.knownValues);
+        nextValues.add(`CONTENT_SEARCHED`);
+
         return {
             ...state,
             knownTypes: nextTypes,
+            knownValues: nextValues,
             currentHost: state.currentHost
         };
     }
 
-    public generateCommand(kb: TutorKnowledgeBase): string {
-        const paths = kb.recall(KnowledgeType.PATH);
-        const target = paths.length > 0 ? paths[paths.length - 1].value : "/var/log";
-        return `grep -ri "password" ${target} 2>/dev/null`;
+    public generateCommand(kb: TutorKnowledgeBase, goalHost?: string): string {
+        return `grep -r admin /`;
     }
 }

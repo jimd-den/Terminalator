@@ -18,7 +18,7 @@ import { ICommandStrategy } from '../../tutor/planner/ICommandStrategy';
 import { KnowledgeType } from '../../../entities/knowledge/KnowledgeEntity';
 import { NetworkScanStrategy, FindFileStrategy } from '../../tutor/planner/strategies/ReconStrategies';
 import { ReadFileStrategy, GrepContentStrategy } from '../../tutor/planner/strategies/ExfilStrategies';
-import { AutoPwnStrategy } from '../../tutor/planner/strategies/ExploitStrategies';
+import { BypassStrategy } from '../../tutor/planner/strategies/ExploitStrategies';
 
 export class WorldVerifier {
     private planner = new GOAPPlanner();
@@ -27,7 +27,7 @@ export class WorldVerifier {
         new FindFileStrategy(),
         new ReadFileStrategy(),
         new GrepContentStrategy(),
-        new AutoPwnStrategy()
+        new BypassStrategy()
     ];
 
     /**
@@ -37,7 +37,7 @@ export class WorldVerifier {
         const start = {
             knownTypes: new Set<KnowledgeType>(),
             knownValues: new Set<string>(),
-            knownTools: new Set<string>(['autopwn.sh']), // Assume tools for verification
+            knownTools: new Set<string>(['bypass.sh']), // Assume tools for verification
             currentHost: 'terminalator'
         };
 

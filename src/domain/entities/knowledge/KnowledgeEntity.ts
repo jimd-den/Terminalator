@@ -33,7 +33,9 @@ export enum KnowledgeType {
     /** Credentials or secrets. */
     CREDENTIAL = 'CREDENTIAL',
     /** System metadata or status. */
-    METADATA = 'METADATA'
+    METADATA = 'METADATA',
+    /** Specific goal completion criteria. */
+    MISSION_OBJECTIVE = 'MISSION_OBJECTIVE'
 }
 
 export interface KnowledgeEntity {

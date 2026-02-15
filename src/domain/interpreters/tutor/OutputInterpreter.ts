@@ -17,6 +17,9 @@ export class OutputInterpreter {
             case 'ls':
                 entities.push(...this.parseLs(output, command));
                 break;
+            case 'find':
+                entities.push(...this.parseFind(output, command));
+                break;
             case 'check-comms':
                 entities.push(...this.parseCheckComms(output));
                 break;
@@ -25,6 +28,21 @@ export class OutputInterpreter {
                 break;
             case 'net-scan':
                 entities.push(...this.parseNetScan(output));
+                break;
+            case 'cat':
+                entities.push(...this.parseCat(output, command));
+                break;
+            case 'bypass.sh':
+                entities.push(...this.parseBypass(output));
+                break;
+            case 'net-link':
+                entities.push({
+                    type: KnowledgeType.METADATA,
+                    value: 'CONNECTED',
+                    discoveredAt: Date.now(),
+                    source: 'net-link',
+                    isBelief: false
+                });
                 break;
             case 'grep':
                 entities.push(...this.parseGrep(output));
@@ -43,19 +61,46 @@ export class OutputInterpreter {
     private parseLs(output: string, command: string): KnowledgeEntity[] {
         const entities: KnowledgeEntity[] = [];
         const lines = output.split('\n');
+        let currentDir = '';
         
         for (const line of lines) {
             const trimmed = line.trim();
             if (!trimmed || trimmed.startsWith('total')) continue;
             
+            if (trimmed.endsWith(':')) {
+                currentDir = trimmed.slice(0, -1);
+                if (currentDir === '.') currentDir = '';
+                continue;
+            }
+
             const parts = trimmed.split(/\s+/);
-            // In 'ls -la', filename is the last part.
-            // We ignore '.' and '..'
             const name = parts[parts.length - 1];
             if (name && name !== '.' && name !== '..' && !/^\d+$/.test(name)) {
+                const fullPath = currentDir ? 
+                    (currentDir.endsWith('/') ? `${currentDir}${name}` : `${currentDir}/${name}`) : 
+                    name;
+
                 entities.push({
                     type: KnowledgeType.PATH,
-                    value: name,
+                    value: fullPath,
+                    discoveredAt: Date.now(),
+                    source: command,
+                    isBelief: false
+                });
+            }
+        }
+        return entities;
+    }
+
+    private parseFind(output: string, command: string): KnowledgeEntity[] {
+        const entities: KnowledgeEntity[] = [];
+        const lines = output.split('\n');
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed) {
+                entities.push({
+                    type: KnowledgeType.PATH,
+                    value: trimmed,
                     discoveredAt: Date.now(),
                     source: command,
                     isBelief: false
@@ -116,6 +161,35 @@ export class OutputInterpreter {
                 value: match[1],
                 discoveredAt: Date.now(),
                 source: 'net-scan',
+                isBelief: false
+            });
+        }
+        return entities;
+    }
+
+    private parseCat(output: string, command: string): KnowledgeEntity[] {
+        const entities: KnowledgeEntity[] = [];
+        if (output.includes('TARGET DATA FOR')) {
+            entities.push({
+                type: KnowledgeType.MISSION_OBJECTIVE,
+                value: 'MISSION_DATA_ACQUIRED',
+                discoveredAt: Date.now(),
+                source: command,
+                isBelief: false
+            });
+        }
+        return entities;
+    }
+
+    private parseBypass(output: string): KnowledgeEntity[] {
+        const entities: KnowledgeEntity[] = [];
+        const match = /CREDENTIAL: ([^\s]+)/.exec(output);
+        if (match) {
+            entities.push({
+                type: KnowledgeType.CREDENTIAL,
+                value: match[1],
+                discoveredAt: Date.now(),
+                source: 'bypass.sh',
                 isBelief: false
             });
         }

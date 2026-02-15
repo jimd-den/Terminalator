@@ -4,6 +4,7 @@ import { useProcess } from '../../context/ProcessProvider';
 import { GameEventType } from '../../../../domain/services/SimulationBus';
 import { THEME } from '../../Theme';
 import { useTheme } from '../../context/ThemeContext';
+import { WidgetContext, InlineWidget } from '../OutputContainer';
 
 interface ResultCard {
     id: string;
@@ -14,6 +15,11 @@ interface ResultCard {
     hostname: string;
     verb: string;
     isHistory: boolean;
+    metadata?: any;
+}
+
+interface ResultStackViewProps {
+    widgetContext?: WidgetContext;
 }
 
 const GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;':,./<>?";
@@ -97,7 +103,7 @@ const TypewriterOutput: React.FC<{ text: string, style: any }> = ({ text, style 
  * 2. Clear animation (One-by-one sequential pop).
  * 3. Bottom-weighted scrolling.
  */
-export const ResultStackView: React.FC = () => {
+export const ResultStackView: React.FC<ResultStackViewProps> = ({ widgetContext }) => {
     const { bus } = useProcess();
     const { theme, settings } = useTheme();
     const colors = theme.colors;
@@ -131,53 +137,66 @@ export const ResultStackView: React.FC = () => {
         const unsub = bus.subscribe(GameEventType.TUTOR_EVENT, (event) => {
             const { type, payload } = event.payload;
             
-            if (type === 'PRESENTATION_START') {
-                setActiveCard({
-                    id: `card-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-                    command: payload.command,
-                    verb: payload.verb || 'PROCESSING',
-                    output: '',
-                    exitCode: 0,
-                    timestamp: Date.now(),
-                    hostname: 'SYSTEM',
-                    isHistory: false
-                });
-                moveAnim.setValue({ x: 0, y: 0 }); 
-                scaleAnim.setValue(1.1);
-                widthAnim.setValue(350);
-                
-                // Trigger entry animation
-                Animated.parallel([
-                    Animated.spring(scaleAnim, { toValue: 1.1, friction: 4, useNativeDriver: false }),
-                    Animated.timing(widthAnim, { toValue: 350, duration: 200, useNativeDriver: false })
-                ]).start();
-                
-                setTimeout(() => {
-                    bus.emit(GameEventType.TUTOR_EVENT, { type: 'ANIMATION_COMPLETE', payload: { command: payload.command } });
-                }, 600);
-
-            } else if (type === 'PRESENTATION_RESULT') {
-                setActiveCard(prev => prev ? { ...prev, exitCode: payload.exitCode } : null);
-                
-                // If it was a CLEAR command, trigger pop animation
-                const isClear = payload.command && payload.command.trim().toUpperCase() === 'CLEAR';
-
-                if (isClear) {
-                    performClearAnimation().then(() => {
-                        setTimeout(() => settleActiveCard(payload.command), 200);
+            try {
+                if (type === 'PRESENTATION_START') {
+                    setActiveCard({
+                        id: `card-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+                        command: payload.command,
+                        verb: payload.verb || 'PROCESSING',
+                        output: '',
+                        exitCode: 0,
+                        timestamp: Date.now(),
+                        hostname: 'SYSTEM',
+                        isHistory: false,
+                        metadata: undefined
                     });
-                } else {
-                    setTimeout(() => settleActiveCard(payload.command), 1000);
-                }
+                    moveAnim.setValue({ x: 0, y: 0 }); 
+                    scaleAnim.setValue(1.1);
+                    widthAnim.setValue(350);
+                    
+                    // Trigger entry animation
+                    Animated.parallel([
+                        Animated.spring(scaleAnim, { toValue: 1.1, friction: 4, useNativeDriver: false }),
+                        Animated.timing(widthAnim, { toValue: 350, duration: 200, useNativeDriver: false })
+                    ]).start();
+                    
+                    setTimeout(() => {
+                        bus.emit(GameEventType.TUTOR_EVENT, { type: 'ANIMATION_COMPLETE', payload: { command: payload.command } });
+                    }, 600);
 
-            } else if (type === 'RESULT_CARD') {
-                setActiveCard(prev => prev ? { ...prev, output: payload.output, hostname: payload.hostname } : null);
-                setHistory(prev => prev.map(c => c.command === payload.command ? { ...c, output: payload.output } : c));
+                } else if (type === 'PRESENTATION_RESULT') {
+                    setActiveCard(prev => prev ? { ...prev, exitCode: payload.exitCode } : null);
+                    
+                    const isClear = payload.command && payload.command.trim().toUpperCase() === 'CLEAR';
+
+                    if (isClear) {
+                        performClearAnimation().then(() => {
+                            setTimeout(() => settleActiveCard(payload.command), 200);
+                        });
+                    } else {
+                        setTimeout(() => settleActiveCard(payload.command), 1000);
+                    }
+
+                } else if (type === 'RESULT_CARD') {
+                    setActiveCard(prev => prev ? { 
+                        ...prev, 
+                        output: payload.output, 
+                        hostname: payload.hostname,
+                        metadata: payload.metadata 
+                    } : null);
+                    setHistory(prev => prev.map(c => c.command === payload.command ? { ...c, output: payload.output, metadata: payload.metadata } : c));
+                }
+            } catch (err) {
+                console.error("[ResultStackView] Error handling event:", err);
+                // Emergency release of locks if animation fails
+                if (type === 'PRESENTATION_START' || type === 'PRESENTATION_RESULT') {
+                    bus.emit(GameEventType.TUTOR_EVENT, { type: 'ANIMATION_COMPLETE', payload: { command: payload?.command || 'ERROR' } });
+                }
             }
         });
 
         return () => unsub();
-    }, [bus, history, containerHeight]); // Re-subscribe if height changes
+    }, [bus, history, containerHeight]);
 
     // Ensure scroll to bottom
     useEffect(() => {
@@ -190,8 +209,6 @@ export const ResultStackView: React.FC = () => {
     const settleActiveCard = (command: string) => {
         setIsSettling(true);
         
-        // Target: Dock at the bottom. 
-        // Use containerHeight to ensure it doesn't go below the IRC chat
         const targetY = containerHeight > 0 ? containerHeight * 0.4 : 300; 
         
         Animated.parallel([
@@ -222,7 +239,7 @@ export const ResultStackView: React.FC = () => {
         historyContent: {
             justifyContent: 'flex-end',
             minHeight: '100%',
-            paddingBottom: 40, // Reduced padding
+            paddingBottom: 40,
             gap: 30,
         },
         card: {
@@ -276,9 +293,9 @@ export const ResultStackView: React.FC = () => {
             zIndex: 100,
             alignSelf: 'center' as const,
             position: 'absolute' as const,
-            top: 20 // Move from 100 to 20 to stay within top box
+            top: 20
         } : {
-            width: '95%' as any, // Use any to allow percentage string in union type
+            width: '95%' as any,
             alignSelf: 'center' as const,
         };
 
@@ -315,14 +332,18 @@ export const ResultStackView: React.FC = () => {
                     />
                 </View>
                 
-                {card.isHistory && card.output ? (
+                {card.isHistory && (
                     <View style={dynamicStyles.outputContainer}>
-                        <TypewriterOutput 
-                            text={card.output} 
-                            style={[dynamicStyles.cardOutput, { color: colors.text.primary, fontFamily: settings.fontFamily }]}
-                        />
+                        {card.metadata?.renderType && card.metadata.renderType === 'archive-widget' ? (
+                            <InlineWidget type={card.metadata.renderType} context={widgetContext} />
+                        ) : card.output ? (
+                            <TypewriterOutput 
+                                text={card.output} 
+                                style={[dynamicStyles.cardOutput, { color: colors.text.primary, fontFamily: settings.fontFamily }]}
+                            />
+                        ) : null}
                     </View>
-                ) : null}
+                )}
             </Animated.View>
         );
     };
@@ -330,7 +351,7 @@ export const ResultStackView: React.FC = () => {
     return (
         <View 
             style={dynamicStyles.container} 
-            pointerEvents="none"
+            pointerEvents="box-none" // Allow interactions with children (scroll, widgets)
             onLayout={(e) => setContainerHeight(e.nativeEvent.layout.height)}
         >
             <ScrollView 
@@ -346,5 +367,3 @@ export const ResultStackView: React.FC = () => {
         </View>
     );
 };
-
-// Remove static styles

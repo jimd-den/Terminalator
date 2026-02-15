@@ -16,6 +16,7 @@ export interface RhythmSummary {
     accuracyPercentage: string;
     maxStreak: number;
     totalMined: string;
+    totalWallet: string;
 }
 
 export class RhythmGamePresenter {
@@ -47,7 +48,8 @@ export class RhythmGamePresenter {
             perfectPercentage: ((stats.perfectHits / (stats.totalHits || 1)) * 100).toFixed(1) + '%',
             accuracyPercentage: stats.accuracy.toFixed(1) + '%',
             maxStreak: stats.maxStreak,
-            totalMined: ZincFormatter.formatFull(stats.totalZincMined)
+            totalMined: ZincFormatter.formatFull(stats.totalZincMined),
+            totalWallet: ZincFormatter.formatFull(stats.walletBalance)
         };
     }
 

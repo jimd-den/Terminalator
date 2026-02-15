@@ -18,8 +18,9 @@ import { NetworkMap } from '../services/NetworkMap';
 import { IWorldManager } from '../interfaces/IWorldManager';
 import { RISCVInterpreter } from './asm/RISCVInterpreter';
 import { CpuState } from '../entities/asm/CpuState';
+import { EconomyService } from '../services/EconomyService';
 
-export { CommandResponse };
+export type { CommandResponse };
 
 /**
  * ExecuteCommand (Refactored Facade)
@@ -41,6 +42,7 @@ export class ExecuteCommand implements IShellExecutor {
     private redirectionService: RedirectionService;
     protected networkMap: NetworkMap;
     private worldManager?: IWorldManager;
+    protected economyService?: EconomyService;
     private riscv: RISCVInterpreter;
 
     constructor(
@@ -49,11 +51,16 @@ export class ExecuteCommand implements IShellExecutor {
         registry?: CommandRegistry,
         protected binaryRunner?: IBinaryRunner,
         networkMap?: NetworkMap,
-        worldManager?: IWorldManager
+        worldManager?: IWorldManager,
+        economyService?: EconomyService
     ) {
         if (fsOrService instanceof FileSystemService) {
             this.service = fsOrService;
             this.fs = (fsOrService as any).fs as FileSystem;
+            if (!this.fs) {
+                // Fallback for public getter
+                this.fs = (fsOrService as any).fileSystem;
+            }
         } else {
             this.fs = fsOrService;
             this.service = new FileSystemService(this.fs);
@@ -61,6 +68,7 @@ export class ExecuteCommand implements IShellExecutor {
 
         this.worldManager = worldManager;
         this.networkMap = networkMap || new NetworkMap();
+        this.economyService = economyService;
         this.riscv = new RISCVInterpreter();
         
         // Register local host
@@ -90,7 +98,10 @@ export class ExecuteCommand implements IShellExecutor {
             this.redirectionService,
             this.binaryRunner,
             () => this,
-            this.networkMap
+            this.networkMap,
+            undefined, // bus
+            this.economyService,
+            this.service // 12th Arg: Local FS
         );
     }
 
@@ -109,7 +120,10 @@ export class ExecuteCommand implements IShellExecutor {
             new RedirectionService(fsService),
             this.binaryRunner,
             () => this,
-            this.networkMap
+            this.networkMap,
+            undefined, // bus
+            this.economyService,
+            this.service // 12th Arg: Local FS (The workstation)
         );
     }
 

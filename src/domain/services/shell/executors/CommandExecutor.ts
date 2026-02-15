@@ -29,7 +29,8 @@ export class CommandExecutor implements NodeExecutor {
         private binaryRunner?: IBinaryRunner,
         private executorFactory?: () => IShellExecutor,
         private networkMap?: NetworkMap,
-        private economy?: EconomyService
+        private economy?: EconomyService,
+        private localFsService?: FileSystemService
     ) { }
 
     async execute(
@@ -68,6 +69,7 @@ export class CommandExecutor implements NodeExecutor {
                 const context: ProcessContext = {
                     fs: this.fs,
                     fileSystemService: this.fsService,
+                    localFileSystemService: this.localFsService,
                     env: state.environment,
                     cwd: state.currentDirectory,
                     user: state.user,
@@ -88,6 +90,7 @@ export class CommandExecutor implements NodeExecutor {
 
                 const res = await command.execute(expandedArgs, context, state);
                 const finalRes = this.redirectionService.handleRedirections(res, cmdNode.redirects, state);
+                finalRes.utility = commandName; // Set utility name (Phase 10 fix)
                 this.emitCommandExecuted(commandName, expandedArgs, finalRes, state.currentDirectory);
                 return finalRes;
             } catch (error: any) {

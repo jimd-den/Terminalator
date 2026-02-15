@@ -24,19 +24,21 @@ export class BuyToolStrategy implements ICommandStrategy {
         const tool = ToolRegistry.getToolByBinary(toolBinary);
         this.name = `Buy_${toolBinary}`;
         this.toolBinary = toolBinary;
-        this.cost = tool ? tool.cost / 10 : 50; // Map Ƶ to Planner Cost
+        this.cost = 5; // Lower cost to encourage automation (Phase 10 fix)
     }
 
     public isSatisfiedBy(state: PlannerState): boolean {
-        // Precondition: Must know about a vendor node (METADATA usually stores vendor info in this sim)
-        // Or we can just assume if we have a goal for a tool, we can buy it if we have enough Ƶ.
-        // For simplicity, we assume the Tutor knows where to buy.
-        return true;
+        // Only buy if we don't have it yet
+        const alreadyOwned = state.knownTools.has(this.toolBinary);
+        const satisfied = !alreadyOwned;
+        console.log(`[BuyToolStrategy] isSatisfied: ${satisfied}. tool: ${this.toolBinary}, alreadyOwned: ${alreadyOwned}`);
+        return satisfied;
     }
 
     public applyEffects(state: PlannerState): PlannerState {
         const nextTools = new Set(state.knownTools);
         nextTools.add(this.toolBinary);
+        console.log(`[BuyToolStrategy] applyEffects: added ${this.toolBinary} to knownTools. New size: ${nextTools.size}`);
         return {
             ...state,
             knownTools: nextTools,
@@ -44,7 +46,7 @@ export class BuyToolStrategy implements ICommandStrategy {
         };
     }
 
-    public generateCommand(kb: TutorKnowledgeBase): string {
+    public generateCommand(kb: TutorKnowledgeBase, goalHost?: string): string {
         const tool = ToolRegistry.getToolByBinary(this.toolBinary);
         return `transfer --amount ${tool?.cost || 500} --tool ${this.toolBinary}`;
     }

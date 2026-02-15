@@ -121,7 +121,7 @@ export class GrepCommand extends CommandBase {
 
     protected override parseArgs(args: string[]) {
         // Grep options that take arguments: -e, -f
-        super.parseArgs(args, ['e', 'f']);
+        super.parseArgs(args, ['e', 'f', 'recursive']);
     }
 
     protected async executeInternal(
@@ -145,7 +145,7 @@ export class GrepCommand extends CommandBase {
             lineNumbers: flags.has('n'),
             invertMatch: flags.has('v'),
             exactLine: flags.has('x'),
-            recursive: flags.has('r') || flags.has('R')
+            recursive: flags.has('r') || flags.has('R') || this.options.has('recursive')
         };
 
         const patterns: string[] = [];

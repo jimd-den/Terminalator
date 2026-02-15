@@ -40,8 +40,9 @@ export class TestUser {
         const conductor = new RhythmConductor(bus);
         this.gameManager = DependencyContainer.createGameManager(fs, networkMap, telemetry, bus, conductor);
         const fsService = new FileSystemService(fs);
+        const economyService = this.gameManager.getEconomyService();
         
-        this.executor = new GameCommandExecutor(fsService, this.gameManager, networkMap, telemetry);
+        this.executor = new GameCommandExecutor(fsService, this.gameManager, networkMap, economyService, telemetry);
         this.state = createInitialTerminalState();
     }
 

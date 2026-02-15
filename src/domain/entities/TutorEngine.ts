@@ -43,6 +43,7 @@ export interface Lesson {
     instructions: string;
     tutorIntent?: string; // [NEW] Semantic intent for proactive instructions
     isMission?: boolean; // [NEW] Distinguish from training context
+    suggestedCommand?: string; // [NEW] Command for auto-start or HUD
     setup?: (fs: FileSystem) => void;
 }
 
@@ -54,6 +55,7 @@ export interface RhythmStats {
     maxStreak: number;
     accuracy: number;
     totalZincMined: number;
+    walletBalance: number; // [NEW] Persistent total for summary screens
 }
 
 export class TutorEngine {
@@ -72,7 +74,8 @@ export class TutorEngine {
         mistakes: 0,
         maxStreak: 0,
         accuracy: 100,
-        totalZincMined: 0
+        totalZincMined: 0,
+        walletBalance: 0
     };
 
     // Emotion & Patience
@@ -108,7 +111,8 @@ export class TutorEngine {
             mistakes: 0,
             maxStreak: 0,
             accuracy: 100,
-            totalZincMined: 0
+            totalZincMined: 0,
+            walletBalance: 0
         };
 
         this.bpm = 120; 
@@ -263,6 +267,10 @@ export class TutorEngine {
 
     public setSessionZinc(amount: number) {
         this.stats.totalZincMined = amount;
+    }
+
+    public setWalletBalance(amount: number) {
+        this.stats.walletBalance = amount;
     }
 
     private completeLesson() {

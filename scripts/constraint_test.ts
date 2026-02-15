@@ -15,6 +15,7 @@ const mission: Mission = {
     objectiveTarget: 'test',
     description: 'test',
     reward: '100',
+    rewardValue: 100,
     status: 'active',
     currentStep: 'PENDING' as any,
     assignedBy: 'npc',

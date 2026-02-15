@@ -25,6 +25,11 @@ export interface ProcessContext {
     fileSystemService: FileSystemService;
 
     /**
+     * Local FileSystem Service (always the primary workstation)
+     */
+    localFileSystemService?: FileSystemService;
+
+    /**
      * Environment variables for the process
      */
     env: Record<string, string>;

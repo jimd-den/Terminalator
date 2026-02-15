@@ -28,7 +28,7 @@ import { ICommandStrategy } from './planner/ICommandStrategy';
 import { NetworkScanStrategy, FindFileStrategy, SSHStrategy } from './planner/strategies/ReconStrategies';
 import { ReadFileStrategy, GrepContentStrategy } from './planner/strategies/ExfilStrategies';
 import { BuyToolStrategy } from './planner/strategies/EconomyStrategies';
-import { AutoPwnStrategy } from './planner/strategies/ExploitStrategies';
+import { BypassStrategy } from './planner/strategies/ExploitStrategies';
 import { KnowledgeType } from '../../entities/knowledge/KnowledgeEntity';
 
 export type TutorReactionCallback = (action: TutorAction) => void;
@@ -36,7 +36,7 @@ export type TutorReactionCallback = (action: TutorAction) => void;
 export class TutorObserver {
     private reactionListeners: TutorReactionCallback[] = [];
     private activeMission: Mission | null = null;
-    private knowledgeBase: TutorKnowledgeBase = new TutorKnowledgeBase();
+    private knowledgeBase: TutorKnowledgeBase;
     private interpreter: OutputInterpreter = new OutputInterpreter();
     private planner: GOAPPlanner = new GOAPPlanner();
     private currentHost: string = 'terminalator';
@@ -48,7 +48,7 @@ export class TutorObserver {
         new GrepContentStrategy(),
         new BuyToolStrategy('bypass.sh'),
         new BuyToolStrategy('decrypter.bin'),
-        new AutoPwnStrategy()
+        new BypassStrategy()
     ];
 
     constructor(
@@ -57,6 +57,15 @@ export class TutorObserver {
         private tutorService: TutorService,
         private fsService: FileSystemService
     ) {
+        this.knowledgeBase = new TutorKnowledgeBase();
+        // Initial system knowledge (Pillar: Perception)
+        this.knowledgeBase.learn({
+            type: KnowledgeType.METADATA,
+            value: 'SYSTEM_ROOT',
+            discoveredAt: Date.now(),
+            source: 'INITIALIZATION',
+            isBelief: false
+        });
         this.initialize();
     }
 
@@ -68,33 +77,67 @@ export class TutorObserver {
     }
 
     /**
+     * Updates the filesystem service reference.
+     */
+    public setFileSystemService(service: FileSystemService): void {
+        this.fsService = service;
+    }
+
+    /**
      * Runs the GOAP planner to find the next optimal step towards the mission goal.
      */
     public triggerPlanning(): void {
         if (!this.activeMission) return;
 
+        // Refresh BELIEFS about physical world before planning (Phase 10 fix)
+        const knownTools = this.getToolsInBin();
+
         // 1. Build Current State
         const knownTypes = new Set<KnowledgeType>(this.knowledgeBase.getAll().map(e => e.type));
         const knownValues = new Set<string>(this.knowledgeBase.getAll().map(e => e.value));
-        const knownTools = this.getToolsInBin();
 
-        const start = { knownTypes, knownValues, knownTools, currentHost: this.currentHost };
+        const start = { 
+            knownTypes, 
+            knownValues, 
+            knownTools, 
+            currentHost: this.currentHost,
+            targetHost: this.activeMission.targetSystem 
+        };
+
+        console.log(`[TutorObserver] Planning for mission ${this.activeMission.id}. Goal Target: ${this.activeMission.targetSystem}. Current Host: ${this.currentHost}. Known Types: ${Array.from(knownTypes).join(',')}`);
 
         // 2. Build Goal State (Derived from mission objective)
-        // For now, mapping all missions to "We need a CREDENTIAL (secret)"
+        // Heuristic: If we don't have CREDENTIAL, we need it. 
+        // If we have CREDENTIAL, we need to apply it (e.g. FindFile or Grep on target)
+        const needsCredential = !knownTypes.has(KnowledgeType.CREDENTIAL);
+        const needsPaths = !knownTypes.has(KnowledgeType.PATH);
+
+        const goalTypes = new Set<KnowledgeType>();
+        const goalValues = new Set<string>();
+
+        if (needsCredential) goalTypes.add(KnowledgeType.CREDENTIAL);
+        else if (needsPaths) goalTypes.add(KnowledgeType.PATH);
+        else {
+            goalTypes.add(KnowledgeType.MISSION_OBJECTIVE);
+            goalValues.add(`MISSION_DATA_ACQUIRED`);
+        }
+
         const goal = {
-            knownTypes: new Set([KnowledgeType.CREDENTIAL]),
-            knownValues: new Set<string>(),
+            knownTypes: goalTypes,
+            knownValues: goalValues,
             knownTools: new Set<string>(),
-            currentHost: 'any' // Simplified for now
+            currentHost: this.activeMission.targetSystem || 'any',
+            targetHost: this.activeMission.targetSystem
         };
+
+        console.log(`[TutorObserver] GOAL HOST set to: ${goal.currentHost}`);
 
         // 3. Resolve Plan
         const plan = this.planner.plan(start, goal, this.strategies);
 
         if (plan && plan.length > 0) {
             const nextStep = plan[0] as ICommandStrategy;
-            const command = nextStep.generateCommand(this.knowledgeBase);
+            const command = nextStep.generateCommand(this.knowledgeBase, this.activeMission.targetSystem);
 
             if (!command) {
                 console.warn(`[TutorObserver] Strategy ${nextStep.name} generated an empty command.`);
@@ -109,6 +152,7 @@ export class TutorObserver {
                 payload: {
                     plan: plan.map(s => s.name),
                     nextCommand: command,
+                    suggestedCommand: command,
                     instructions: `I've calculated our next move. Use this: ${command}`
                 }
             });
@@ -119,22 +163,47 @@ export class TutorObserver {
                 type: 'HINT',
                 intent: TutorIntent.NUDGE_PROGRESSION,
                 missionId: this.activeMission.id,
-                confidence: 1.0
+                confidence: 1.0,
+                suggestedCommand: command
             };
             this.emitReaction(reaction);
+        } else if (this.activeMission) {
+            // FALLBACK: If no plan found but mission active, suggest scanning or comms
+            const fallbackCmd = knownTypes.has(KnowledgeType.HOSTNAME) ? 'net-scan' : 'check-comms';
+            
+            // Emit PLAN_UPDATED for RhythmHUD visibility
+            this.bus.emit(GameEventType.TUTOR_EVENT, {
+                type: 'PLAN_UPDATED',
+                payload: {
+                    plan: [fallbackCmd.toUpperCase()],
+                    nextCommand: fallbackCmd,
+                    suggestedCommand: fallbackCmd,
+                    instructions: `I'm lost. Try synchronized connection: ${fallbackCmd}`
+                }
+            });
+
+            this.emitReaction({
+                message: `I'm lost. Try synchronized connection: ${fallbackCmd}`,
+                type: 'HINT',
+                intent: TutorIntent.NUDGE_PROGRESSION,
+                missionId: this.activeMission.id,
+                confidence: 0.5,
+                suggestedCommand: fallbackCmd
+            });
         }
     }
 
     private getToolsInBin(): Set<string> {
         const tools = new Set<string>();
-        try {
-            const binDir = this.fsService.resolve('/bin') as any;
-            if (binDir && binDir.children) {
-                binDir.children.forEach((node: any, name: string) => {
-                    tools.add(name);
-                });
-            }
-        } catch (e) {}
+        const candidates = ['bypass.sh', 'decrypter.bin', 'net-scan', 'transfer', 'check-comms', 'grep', 'awk', 'sed', 'cat', 'ls', 'cd'];
+        candidates.forEach(t => {
+            try {
+                const node = this.fsService.resolve(`/bin/${t}`);
+                if (node) {
+                    tools.add(t);
+                }
+            } catch (e) {}
+        });
         return tools;
     }
 
@@ -147,9 +216,24 @@ export class TutorObserver {
     }
 
     private handleEvent(event: GameEvent): void {
+        // 0. Mission Activation (Sync Knowledge)
+        if (event.type === GameEventType.MISSION_PROGRESS) {
+            if (event.payload.type === 'CREATED') {
+                this.triggerPlanning();
+            } else if (event.payload.type === 'COMPLETED') {
+                console.log(`[TutorObserver] Mission ${event.payload.missionId} COMPLETED. Clearing state.`);
+                this.activeMission = null;
+            }
+        }
+
         // 1. Update Disposition based on Event
         if (event.type === GameEventType.COMMAND_EXECUTED) {
             const success = event.payload.exitCode === 0;
+            if (event.payload.state?.fsContext) {
+                this.currentHost = event.payload.state.fsContext;
+            } else {
+                this.currentHost = 'terminalator';
+            }
             this.psychAdapter.recordEvent(success ? 'SUCCESS' : 'ERROR');
 
             if (event.payload.state) {
@@ -162,13 +246,16 @@ export class TutorObserver {
                     event.payload.command, 
                     event.payload.output
                 );
-                discoveries.forEach(entity => this.knowledgeBase.learn(entity));
+                discoveries.forEach(entity => {
+                    console.log(`[TutorObserver] LEARNED: ${entity.type}=${entity.value}`);
+                    this.knowledgeBase.learn(entity);
+                });
                 
                 // If new knowledge was found, we might want to log it or trigger a specific reaction later
                 if (discoveries.length > 0) {
                     console.log(`[TutorObserver] Discovered ${discoveries.length} new knowledge entities.`);
-                    this.triggerPlanning(); // Activation (Phase 10)
                 }
+                this.triggerPlanning(); // Trigger plan update after every success
             }
         }
 

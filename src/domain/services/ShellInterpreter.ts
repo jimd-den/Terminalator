@@ -44,7 +44,8 @@ export class ShellInterpreter {
         private executorFactory?: () => IShellExecutor,
         private networkMap?: NetworkMap,
         private bus?: SimulationBus,
-        private economy?: EconomyService
+        private economy?: EconomyService,
+        private localFsService?: FileSystemService
     ) {
         this.initializeExecutors();
     }
@@ -62,7 +63,8 @@ export class ShellInterpreter {
             this.binaryRunner,
             this.executorFactory,
             this.networkMap,
-            this.economy
+            this.economy,
+            this.localFsService
         );
         this.handlerMap.set(NodeType.COMMAND, cmdExec);
 

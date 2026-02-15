@@ -24,7 +24,8 @@ export interface ICommandStrategy extends IPlannerAction {
      * Generates the actual shell command string to be executed or suggested.
      * 
      * @param kb The Tutor's current knowledge base to pull parameters from.
+     * @param goalHost Optional host ID that is the target of the current plan.
      * @returns A valid Unix command string (e.g., "ls -la /etc", "ping 10.0.0.1").
      */
-    generateCommand(kb: TutorKnowledgeBase): string;
+    generateCommand(kb: TutorKnowledgeBase, goalHost?: string): string;
 }

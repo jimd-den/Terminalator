@@ -61,7 +61,9 @@ export class GOAPPlanner {
 
             // Check if goal reached
             if (this.isGoalReached(current.state, goal)) {
-                return this.reconstructPath(current);
+                const path = this.reconstructPath(current);
+                console.log(`[GOAPPlanner] Goal reached! Path found: ${path.map(a => a.name).join(' -> ')}`);
+                return path;
             }
 
             const stateKey = this.serializeState(current.state);
@@ -94,6 +96,7 @@ export class GOAPPlanner {
             }
         }
 
+        console.log(`[GOAPPlanner] No plan found after exploring ${closedSet.size} states.`);
         return null; // No path found
     }
 
@@ -101,6 +104,10 @@ export class GOAPPlanner {
      * Goal is reached if the current state possesses all the types required by the goal state.
      */
     private isGoalReached(current: PlannerState, goal: PlannerState): boolean {
+        const hostMatch = goal.currentHost === 'any' || current.currentHost === goal.currentHost;
+        
+        if (!hostMatch) return false;
+
         for (const type of goal.knownTypes) {
             if (!current.knownTypes.has(type)) return false;
         }
@@ -114,16 +121,21 @@ export class GOAPPlanner {
                 if (!current.knownTools || !current.knownTools.has(tool)) return false;
             }
         }
+
+        console.log(`[GOAPPlanner] SUCCESS: Goal reached at host ${current.currentHost}`);
         return true;
     }
 
     /**
-     * Simple heuristic: count of missing knowledge types.
+     * Simple heuristic: count of missing knowledge types and values.
      */
     private calculateHeuristic(current: PlannerState, goal: PlannerState): number {
         let count = 0;
         for (const type of goal.knownTypes) {
             if (!current.knownTypes.has(type)) count++;
+        }
+        for (const value of goal.knownValues) {
+            if (!current.knownValues.has(value)) count++;
         }
         return count;
     }

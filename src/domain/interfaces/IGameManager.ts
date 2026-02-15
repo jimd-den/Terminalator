@@ -20,7 +20,7 @@ export interface IGameManager {
     spawnNPCEvent(): Promise<Mission | null> | Mission | null;
     getActiveMissions(): Mission[];
     getActiveNPCs(): NPC[];
-    startMission(id: string, currentState?: TerminalState): void;
+    startMission(id: string, currentState?: TerminalState): Promise<void>;
     abandonMission(id: string): void;
     onCommandExecuted(state: TerminalState, response: CommandResponse, prevFsContext?: string): void;
     startTutor(lessonId: string): void;

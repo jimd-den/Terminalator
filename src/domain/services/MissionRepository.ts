@@ -55,6 +55,7 @@ export class MissionRepository {
             objectiveTarget: variables.objectiveTarget || 'payload.dat',
             description: this.injectVariables(selectedVariant.description, variables),
             reward: selectedVariant.reward,
+            rewardValue: parseInt(selectedVariant.reward) || 1000,
             status: 'pending',
             currentStep: MissionStep.PENDING,
             assignedBy: npc.id,

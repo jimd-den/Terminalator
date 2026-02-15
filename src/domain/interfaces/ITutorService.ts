@@ -8,6 +8,7 @@ export interface TutorAction {
     type: 'HINT' | 'WARNING' | 'CONGRATS';
     confidence: number; // 0-1
     severity?: 'INFO' | 'WARN' | 'ERROR' | 'SUCCESS';
+    suggestedCommand?: string; // [NEW] Command to be pushed to RhythmHUD or Terminal
 }
 
 export interface TutorProgressionResult {

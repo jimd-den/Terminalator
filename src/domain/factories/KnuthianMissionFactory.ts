@@ -33,6 +33,7 @@ export class KnuthianMissionFactory {
             OBJECTIVE: Sort the remote record file (${problemSize} entries) by ID. 
             CONSTRAINT: Efficiency is paramount. O(n^2) bubble sorts will timeout. Use O(n log n).`,
             reward: `${employer.wealth / 1000} Credits`,
+            rewardValue: employer.wealth / 1000,
             status: 'pending',
             currentStep: MissionStep.PENDING,
             assignedBy: npc.id,
@@ -64,6 +65,7 @@ export class KnuthianMissionFactory {
             OBJECTIVE: Locate Transaction ID #BAD-BEEF.
             CONSTRAINT: Linear search will take too long. You must use Binary Search.`,
             reward: '5000 Credits',
+            rewardValue: 5000,
             status: 'pending',
             currentStep: MissionStep.PENDING,
             assignedBy: npc.id,

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, useWindowDimensions } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { THEME } from '../../Theme';
 import { LayoutProps } from '../../../../domain/entities/ThemeComponents';
 
@@ -21,8 +21,9 @@ export const StandardLayout: React.FC<LayoutProps> = ({
     theme,
     settings
 }) => {
-    const colors = theme.colors;
     const { height: windowHeight } = useWindowDimensions();
+    const insets = useSafeAreaInsets();
+    const colors = theme.colors;
 
     const dynamicStyles = StyleSheet.create({
         container: {
@@ -31,6 +32,7 @@ export const StandardLayout: React.FC<LayoutProps> = ({
         },
         flex: {
             flex: 1,
+            paddingTop: insets.top, // Only manual top inset
         },
         mainRow: {
             flex: 1,
@@ -79,11 +81,11 @@ export const StandardLayout: React.FC<LayoutProps> = ({
     });
 
     return (
-        <SafeAreaView style={[dynamicStyles.container, style]}>
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                style={dynamicStyles.flex}
-            >
+        <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={dynamicStyles.container}
+        >
+            <View style={dynamicStyles.flex}>
                 {headerComponent ? (
                     <View style={dynamicStyles.header}>
                         {headerComponent}
@@ -111,13 +113,17 @@ export const StandardLayout: React.FC<LayoutProps> = ({
                             {tutorBarComponent}
                         </View>
 
-                        <View style={{ zIndex: 11 }}>
-                            {middleContent}
-                        </View>
+                        {middleContent && (
+                            <View style={{ zIndex: 11 }}>
+                                {middleContent}
+                            </View>
+                        )}
 
-                        <View style={dynamicStyles.bottomBox}>
-                            {bottomContent}
-                        </View>
+                        {bottomContent && (
+                            <View style={dynamicStyles.bottomBox}>
+                                {bottomContent}
+                            </View>
+                        )}
                     </View>
 
                     {sideContent && (
@@ -126,8 +132,8 @@ export const StandardLayout: React.FC<LayoutProps> = ({
                         </View>
                     )}
                 </View>
-            </KeyboardAvoidingView>
-            {children}
-        </SafeAreaView>
+                {children}
+            </View>
+        </KeyboardAvoidingView>
     );
 };

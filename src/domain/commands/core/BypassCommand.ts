@@ -25,8 +25,13 @@ export class BypassCommand extends CommandBase {
     ): Promise<CommandResponse> {
         const target = this.options.get('target');
         if (!target) {
-            return { output: 'usage: ./bypass.sh --target <id>', exitCode: 1, newState: state };
+            return { output: 'usage: bypass.sh --target <id>', exitCode: 1, newState: state };
         }
+
+        console.log(`[BypassCommand] Running against target: ${target}`);
+
+        // Update state to connect to target
+        const nextState = { ...state, fsContext: target };
 
         return {
             output: `
@@ -36,9 +41,10 @@ export class BypassCommand extends CommandBase {
 [+] Initiating bypass...
 [+] Success! Gained access credentials.
 [+] CREDENTIAL: ${Math.random().toString(36).substring(2, 10).toUpperCase()}
+[+] Connection established.
 `.trim(),
             exitCode: 0,
-            newState: state
+            newState: nextState
         };
     }
 

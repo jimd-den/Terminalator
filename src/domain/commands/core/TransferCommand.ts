@@ -60,8 +60,6 @@ export class TransferCommand extends CommandBase {
         }
 
         // Check if tool is available on the current node (must be a vendor node)
-        // We assume for now that if you're on a vendor node, you can buy.
-        // Ideally we'd check context.fs for /public/tools/toolName
         const vendorToolPath = `/public/tools/${toolName}`;
         try {
             context.fileSystemService.resolve(vendorToolPath);
@@ -70,19 +68,29 @@ export class TransferCommand extends CommandBase {
         }
 
         // Perform transaction
-        const success = context.economy.debit(amount, `Purchased ${tool.name}`);
+        const success = await context.economy.debit(amount, `Purchased ${tool.name}`);
         if (!success) {
             return { output: `transfer: transaction failed. check balance.`, exitCode: 1, newState: state };
         }
 
-        // "Download" tool to local /bin
-        // We need to write to the LOCAL file system, not necessarily the current one if connected via SSH.
-        // But for simplicity in this version, we write to the current FS /bin.
+        // "Download" tool to local /bin (ALWAYS use localFileSystemService if available)
+        const targetFs = context.localFileSystemService || context.fileSystemService;
         const binPath = `/bin/${toolName}`;
+        
         const content = `[ LICENSED BINARY: ${tool.name.toUpperCase()} ]
 # Authorized for use by operator.
 # Capability unlocked.`;
-        context.fileSystemService.writeFile(binPath, content);
+        
+        targetFs.writeFile(binPath, content);
+
+        // Set executable
+        const node = targetFs.resolve(binPath);
+        if (node) {
+            const inode = targetFs.getInode(node.inodeId);
+            if (inode) {
+                inode.mode |= 0o111; // Ensure executable
+            }
+        }
 
         return {
             output: `TRANSFER COMPLETE.

@@ -54,7 +54,8 @@ export class CombinatorialUtteranceEngine {
             message,
             type: this.mapIntentToType(intent),
             confidence: 1.0,
-            severity: this.mapIntentToSeverity(intent)
+            severity: this.mapIntentToSeverity(intent),
+            suggestedCommand: context.suggestedCommand
         };
     }
 

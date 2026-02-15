@@ -57,7 +57,7 @@ export class TutorShadow {
      * @param mode - 'SHELL' or 'VIM'.
      * @returns true if the key is allowed through, false if it's consumed/blocked.
      */
-    public intercept(key: string, mode: 'SHELL' | 'VIM' = 'SHELL'): boolean {
+    public async intercept(key: string, mode: 'SHELL' | 'VIM' = 'SHELL'): Promise<boolean> {
         // 0. Check Summary or Countdown Mode (Blocking)
         if (this.isSummaryActive || this.isCountdownActive) {
             if (this.isSummaryActive && key === 'ENTER') {
@@ -73,7 +73,7 @@ export class TutorShadow {
             console.log("[TutorShadow] Engine NOT active. Pass through.");
             // Free play mining
             if (key.length === 1) {
-                this.economy.recordHit();
+                await this.economy.recordHit();
                 this.bus.emit(GameEventType.KEYSTROKE_ACCEPTED, { key });
             }
             return true; // Pass through
@@ -105,7 +105,7 @@ export class TutorShadow {
         console.log(`[TutorShadow] Engine Result for ${key}: ${result}`);
 
         if (result === InputResult.ACCEPTED) {
-            this.economy.recordHit(this.currentBeatTime);
+            await this.economy.recordHit();
             // Sync session reward back to engine so summary reflects it
             this.engine.setSessionZinc(this.economy.getSession().sessionZincMined);
             this.bus.emit(GameEventType.KEYSTROKE_ACCEPTED, { key });

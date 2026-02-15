@@ -41,7 +41,7 @@ export class SimulationMediator {
             const cmd = registry.get(cmdName);
             if (cmd && cmd.getMetadata) {
                 const meta = cmd.getMetadata();
-                verb = meta.verb;
+                verb = meta.verb || verb;
             }
         }
 
@@ -74,6 +74,7 @@ export class SimulationMediator {
                 command: input,
                 output: response.output,
                 exitCode: response.exitCode,
+                metadata: response.metadata, // Pass metadata (e.g., renderType) to the UI
                 timestamp: Date.now(),
                 hostname: response.newState?.fsContext || state.fsContext || 'LOCAL'
             } 

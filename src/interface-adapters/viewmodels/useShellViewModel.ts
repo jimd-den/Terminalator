@@ -177,9 +177,9 @@ export const useShellViewModel = (
     // -- Keyboard Input Logic (moved out of VM but kept here for now) --
     // Ideally this logic should exist in InputController or ShellController, 
     // but React event handling makes it cleaner to keep as a callback hook here.
-    const handleKeyPress = useCallback((key: string) => {
+    const handleKeyPress = useCallback(async (key: string) => {
         // 1. TUTOR SHADOW INTERCEPTION (GATING)
-        const allowed = tutorShadow.intercept(key, 'SHELL');
+        const allowed = await tutorShadow.intercept(key, 'SHELL');
         if (!allowed) return;
 
         // [FIX] Double Input: If tutor is active and accepted the key, 

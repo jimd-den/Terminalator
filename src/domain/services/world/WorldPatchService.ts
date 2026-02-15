@@ -101,7 +101,18 @@ export class WorldPatchService {
      */
     public initializeRootFileSystem(fs: FileSystem) {
         const fsService = new FileSystemService(fs);
-        if (fs.root && fs.root.children.size === 0) {
+        
+        // Check if /bin/ls exists. If not, it's a "cold" system that needs basic tools.
+        let needsPopulate = false;
+        try {
+            if (!fsService.resolve('/bin/ls')) {
+                needsPopulate = true;
+            }
+        } catch (e) {
+            needsPopulate = true;
+        }
+
+        if (needsPopulate) {
             const generator = new SystemGenerator();
             generator.populate(fsService, { difficulty: 1 });
         }
