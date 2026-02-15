@@ -32,6 +32,7 @@ export class FindCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        const fsService = context.fileSystemService || this.fs;
         let paths: string[] = [];
         let predicates: Predicate[] = [];
         let expressionIndex = -1;
@@ -87,7 +88,7 @@ export class FindCommand implements ICommand {
                     const type = args[++i];
                     predicates.push({
                         evaluate: async (node) => {
-                            const inode = this.fs.getInode(node.inodeId);
+                            const inode = fsService.getInode(node.inodeId);
                             if (!inode) return false;
                             if (type === 'f') return (inode.mode & S_IFREG) !== 0;
                             if (type === 'd') return (inode.mode & S_IFDIR) !== 0;
@@ -120,8 +121,6 @@ export class FindCommand implements ICommand {
                         evaluate: async (node, path, fs, ctx, st, outBuf) => {
                             const cmdArgs = execArgs.map(a => {
                                 const val = a === '{}' ? path : a.replace(/{}/g, path);
-                                // Simple single quoting for shell safety if arguments contain spaces or special chars
-                                // We replace ' with '"'"' to handle internal single quotes
                                 return `'${val.replace(/'/g, "'\"'\"'")}'`;
                             });
                             const cmdLine = cmdArgs.join(' ');
@@ -161,10 +160,10 @@ export class FindCommand implements ICommand {
                 startPath = state.currentDirectory === '/' ? `/${path}` : `${state.currentDirectory}/${path}`;
             }
 
-            const node = this.fs.resolve(startPath);
+            const node = fsService.resolve(startPath);
             if (!node) return this.error(`\`${path}\`: No such file or directory`, state);
 
-            await this.traverse(node, path, predicates, results, context, state, 0, maxDepth);
+            await this.traverse(node, path, predicates, results, context, state, 0, maxDepth, fsService);
         }
 
         return {
@@ -186,7 +185,8 @@ export class FindCommand implements ICommand {
         context: ProcessContext,
         state: TerminalState,
         currentDepth: number,
-        maxDepth: number
+        maxDepth: number,
+        fsService: FileSystemService
     ) {
         if (currentDepth > maxDepth) return;
 
@@ -196,9 +196,7 @@ export class FindCommand implements ICommand {
         for (const p of predicates) {
             if (!keepGoing) break;
 
-            // Evaluate predicate
-            // Note: maxdepth is checked via recursion limit, but its predicate "evaluate" returns true.
-            const res = await p.evaluate(node, currentPath, this.fs, context, state, output);
+            const res = await p.evaluate(node, currentPath, fsService, context, state, output);
 
             if (p.type === 'prune' && res) pruned = true;
 
@@ -211,15 +209,14 @@ export class FindCommand implements ICommand {
 
         if (pruned) return;
 
-        if (this.fs.isDirectory(node) && currentDepth < maxDepth) {
+        if (fsService.isDirectory(node) && currentDepth < maxDepth) {
             const dirNode = node as DirectoryNode;
-            // Sort children for deterministic output (optional but good for tests)
             const children = Array.from(dirNode.children.entries()).sort((a, b) => a[0].localeCompare(b[0]));
 
             for (const [name, child] of children) {
                 let childPath = currentPath.endsWith('/') ? `${currentPath}${name}` : `${currentPath}/${name}`;
                 if (currentPath === '/') childPath = `/${name}`;
-                await this.traverse(child, childPath, predicates, output, context, state, currentDepth + 1, maxDepth);
+                await this.traverse(child, childPath, predicates, output, context, state, currentDepth + 1, maxDepth, fsService);
             }
         }
     }

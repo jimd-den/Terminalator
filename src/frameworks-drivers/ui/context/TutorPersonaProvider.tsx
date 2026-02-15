@@ -10,7 +10,7 @@
 import React, { createContext, useContext, useCallback, ReactNode } from 'react';
 import { CoreEngine } from '../../../core/CoreEngine';
 import { DependencyContainer } from '../../../infrastructure/di/DependencyContainer';
-import { useTutorMessaging } from './TutorMessagingProvider';
+import { GameEventType } from '../../../domain/services/SimulationBus';
 
 interface TutorPersonaContextType {
     tutorBrain: any;
@@ -24,14 +24,16 @@ export const TutorPersonaProvider: React.FC<{ children: ReactNode }> = ({ childr
     const engine = CoreEngine.getInstance();
     const tutorBrain = engine.getTutorBrain();
     const tutorShadow = engine.getTutorShadow();
-    
-    const { sendTutorMessage } = useTutorMessaging();
+    const bus = engine.getSimulationBus();
 
     const switchPersona = useCallback((id: 'standard' | 'rogue') => {
         const name = id === 'rogue' ? 'GLITCH' : 'TUTOR';
         tutorBrain.setPersona(DependencyContainer.createPersona(id, name));
-        sendTutorMessage(`PERSONAL PROTOCOL ${name} INITIALIZED.`, 'info', name);
-    }, [tutorBrain, sendTutorMessage]);
+        
+        if (bus) {
+            bus.emit(GameEventType.PERSONA_SWITCHED, { id, name });
+        }
+    }, [tutorBrain, bus]);
 
     return (
         <TutorPersonaContext.Provider value={{ tutorBrain, tutorShadow, switchPersona }}>

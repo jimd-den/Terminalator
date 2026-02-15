@@ -57,6 +57,8 @@ import { UnexpandCommand } from '../commands/core/UnexpandCommand';
 import { TsortCommand } from '../commands/core/TsortCommand';
 import { RmdirCommand } from '../commands/core/RmdirCommand';
 import { LinkCommand } from '../commands/core/LinkCommand';
+import { NetLinkCommand } from '../commands/core/NetLinkCommand';
+import { NetScanCommand } from '../commands/core/NetScanCommand';
 import { UnlinkCommand } from '../commands/core/UnlinkCommand';
 import { ReadlinkCommand } from '../commands/core/ReadlinkCommand';
 import { RealpathCommand } from '../commands/core/RealpathCommand';
@@ -249,6 +251,8 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('tsort', new TsortCommand(fsService));
         registry.register('rmdir', new RmdirCommand(fsService));
         registry.register('link', new LinkCommand(fsService));
+        registry.register('net-scan', new NetScanCommand());
+        registry.register('net-link', new NetLinkCommand());
         registry.register('unlink', new UnlinkCommand(fsService));
         registry.register('readlink', new ReadlinkCommand(fsService));
         registry.register('realpath', new RealpathCommand(fsService));
@@ -392,12 +396,18 @@ export class CoreUtilsModule implements CommandModule {
 
         // Clear (Simple inline)
         registry.register('clear', {
-            execute: (_args, _context, state) => ({
+            name: 'clear',
+            description: 'Clear the terminal screen',
+            execute: (_args: string[], _context: any, state: any) => ({
                 output: '',
                 newState: state,
                 exitCode: 0,
                 uiAction: 'CLEAR'
+            }),
+            getMetadata: () => ({
+                verb: 'CLEAR' as any,
+                style: 'NORMAL'
             })
-        });
+        } as any);
     }
 }

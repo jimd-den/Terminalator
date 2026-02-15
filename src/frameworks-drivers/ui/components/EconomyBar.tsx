@@ -1,57 +1,81 @@
-/**
- * EconomyBar - Presentation Layer
- * 
- * A dedicated, centered bar for Economy metrics (ZINC and Hashrate).
- * Decoupled from the system status vitals.
- */
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
-import { useEconomy } from '../context/EconomyProvider';
-import { THEME } from '../Theme';
-import { HashRateMonitor } from './HashRateMonitor';
+import { useProcess } from '../context/ProcessProvider';
+import { GameEventType } from '../../../domain/services/SimulationBus';
+import { ZincFormatter } from '../../../domain/utils/ZincFormatter';
+import { CoreEngine } from '../../../core/CoreEngine';
 
 export const EconomyBar: React.FC = () => {
     const { theme, settings } = useTheme();
-    const { zincBalance } = useEconomy();
-    const colors = theme.colors;
+    const { bus } = useProcess();
+    
+    // Pillar: THE BALANCED SCALE (Initial State Hydration)
+    // Hydrate immediately from the singleton service to prevent 0-flicker on navigation
+    const engine = CoreEngine.getInstance();
+    const economyService = engine.getEconomyService();
+    
+    const [balance, setBalance] = useState(() => economyService.getBalance());
+    const [hashRate, setHashRate] = useState(() => {
+        const session = economyService.getSession();
+        return session.hashRate; 
+    });
 
-    const styles = StyleSheet.create({
+    useEffect(() => {
+        const unsub = bus.subscribe(GameEventType.ECONOMY_UPDATE, (event) => {
+            setBalance(event.payload.balance);
+            setHashRate(event.payload.hashRate);
+        });
+        return () => unsub();
+    }, [bus]);
+
+    const formatted = ZincFormatter.format(balance);
+
+    const dynamicStyles = StyleSheet.create({
         container: {
             flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: '#000', // Black background for separation
-            paddingVertical: 6,
-            borderBottomWidth: 1,
-            borderBottomColor: 'rgba(0, 255, 65, 0.2)', // Subtle border
-            gap: 20,
+            paddingVertical: 4,
+            paddingHorizontal: 12,
+            borderTopWidth: 1,
+            backgroundColor: theme.colors.background,
+            justifyContent: 'space-between',
         },
         section: {
             flexDirection: 'row',
             alignItems: 'center',
+            gap: 8,
         },
-        creditLabel: {
-            color: '#000',
-            backgroundColor: colors.secondary,
-            fontFamily: settings.fontFamily,
-            fontSize: 14,
+        label: {
+            fontSize: 10,
             fontWeight: 'bold',
-            paddingHorizontal: 10,
-            paddingVertical: 2,
+            letterSpacing: 1,
+        },
+        value: {
+            fontSize: 12,
+            fontWeight: 'bold',
         }
     });
 
     return (
-        <View style={styles.container}>
-            <View style={styles.section}>
-                <Text style={styles.creditLabel}>
-                    Ƶ {zincBalance.toFixed(12)}
+        <View style={[dynamicStyles.container, { borderTopColor: theme.colors.border }]}>
+            <View style={dynamicStyles.section}>
+                <Text style={[dynamicStyles.label, { color: theme.colors.text.dim, fontFamily: settings.fontFamily }]}>
+                    WALLET
+                </Text>
+                <Text style={[dynamicStyles.value, { color: theme.colors.secondary, fontFamily: settings.fontFamily }]}>
+                    {formatted.value} <Text style={{ fontSize: 10 }}>{formatted.unit}</Text>
                 </Text>
             </View>
-
-            <HashRateMonitor />
+            <View style={dynamicStyles.section}>
+                <Text style={[dynamicStyles.label, { color: theme.colors.text.dim, fontFamily: settings.fontFamily }]}>
+                    HASHRATE
+                </Text>
+                <Text style={[dynamicStyles.value, { color: theme.colors.primary, fontFamily: settings.fontFamily }]}>
+                    {hashRate.toFixed(2)} H/s
+                </Text>
+            </View>
         </View>
     );
 };
+
+// Remove static styles

@@ -33,6 +33,13 @@ export interface CommandResponse {
     };
 }
 
+import { TheatricalVerb } from '../services/PresentationDirector';
+
+export interface CommandMetadata {
+    verb: TheatricalVerb;
+    style?: 'NORMAL' | 'GLITCH' | 'SYSTEM_ALERT';
+}
+
 export interface ICommand {
     /**
      * The name of the command (e.g., 'ls', 'cd')
@@ -43,6 +50,11 @@ export interface ICommand {
      * Brief help text for the command
      */
     description: string;
+
+    /**
+     * Returns metadata for theatrical presentation.
+     */
+    getMetadata?(): CommandMetadata;
 
     /**
      * Execute the command with the given arguments and context.

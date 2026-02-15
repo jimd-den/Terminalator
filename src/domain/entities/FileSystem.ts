@@ -42,7 +42,8 @@ export enum FileType {
     Socket = S_IFSOCK
 }
 
-export { InodeTable, Inode };
+export { InodeTable };
+export type { Inode };
 
 // Compatibility alias to ease refactor pain in other files
 export type Dentry = IFileSystemNode;

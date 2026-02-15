@@ -67,7 +67,8 @@ export class ConstraintMissionFactory {
             targetUser: 'admin',
             objectiveTarget: '/var/data/target', 
             description: `MISSION: ${problem.objective}. SOLUTION HINT: Use ${primaryTool}.`,
-            reward: '2500 Credits',
+            reward: '2500 Ƶ',
+            rewardValue: 2500,
             status: 'pending',
             currentStep: MissionStep.PENDING,
             currentStepId: grammar.initialStepId,
@@ -83,52 +84,65 @@ export class ConstraintMissionFactory {
 
     private generateGrammarFromChain(id: string, chain: SolvedStep[], problem: ProblemDefinition): MissionGrammar {
         const steps: StepRule[] = [];
+        let initialStepId = 'step_0';
         
-        // 1. Connect
-        steps.push({
-            id: 'step1',
-            stepType: 'CONNECT',
-            description: `Connect to ${problem.targetSystem}`,
-            lessonText: `ssh admin@${problem.targetSystem}`,
-            commandMatcher: { type: GameEventType.COMMAND_EXECUTED, target: 'ssh', ruleKey: 'SUCCESS_EXIT' },
-            onComplete: { nextStepId: 'step2', tutorIntent: 'LINK_ESTABLISHED' }
-        });
+        // 1. Connection Phase (if remote)
+        if (problem.targetSystem !== 'terminalator') {
+            initialStepId = 'connect';
+            steps.push({
+                id: 'connect',
+                stepType: 'CONNECT',
+                description: `Establish link to ${problem.targetSystem}`,
+                tutorIntent: 'INSTRUCT_SSH',
+                lessonText: `ssh admin@${problem.targetSystem}`,
+                commandMatcher: { type: GameEventType.COMMAND_EXECUTED, target: 'ssh', ruleKey: 'SUCCESS_EXIT' },
+                onComplete: { nextStepId: 'step_0', tutorIntent: 'LINK_ESTABLISHED' }
+            });
+        }
 
-        // 2. Navigate
-        steps.push({
-            id: 'step2',
-            stepType: 'LOCATE',
-            description: `Navigate to /var/data`,
-            lessonText: `cd /var/data`,
-            commandMatcher: { type: GameEventType.COMMAND_EXECUTED, target: 'cd', ruleKey: 'DIR_MATCH' },
-            onComplete: { nextStepId: 'step3', tutorIntent: 'FILE_LOCATED' }
-        });
+        // 2. Dynamic Chain Mapping
+        chain.forEach((step, index) => {
+            const isLast = index === chain.length - 1;
+            const nextId = isLast ? undefined : `step_${index + 1}`;
+            const cmdString = `${step.tool} ${step.flags.join(' ')}`.trim();
 
-        // 3. Chain Execution (Simplification: Chain mapped to sequential or piped commands)
-        // For Phase 2, we just take the last step as the "Action"
-        const lastStep = chain[chain.length - 1];
-        const flagStr = lastStep.flags.join(' ');
-        const cmdString = `${lastStep.tool} ${flagStr} target`.trim();
-
-        steps.push({
-            id: 'step3',
-            stepType: 'MODIFY', // Generic action
-            description: `Execute: ${cmdString}`,
-            lessonText: cmdString,
-            cwdPattern: '/var/data',
-            commandMatcher: {
-                type: GameEventType.COMMAND_EXECUTED,
-                target: lastStep.tool,
-                ruleKey: 'SUCCESS_EXIT'
-            },
-            onComplete: { tutorIntent: 'MISSION_ACCOMPLISHED' }
+            steps.push({
+                id: `step_${index}`,
+                stepType: this.mapToolToStepType(step.tool),
+                description: step.reasoning,
+                tutorIntent: isLast ? 'INSTRUCT_ACTION' : 'NUDGE_PROGRESSION',
+                lessonText: cmdString,
+                commandMatcher: {
+                    type: GameEventType.COMMAND_EXECUTED,
+                    target: step.tool,
+                    ruleKey: 'SUCCESS_EXIT'
+                },
+                onComplete: { 
+                    nextStepId: nextId, 
+                    tutorIntent: isLast ? 'MISSION_ACCOMPLISHED' : 'STEP_COMPLETE' 
+                }
+            });
         });
 
         return {
             archetype: 'CONSTRAINT_SOLVER',
-            initialStepId: 'step1',
+            initialStepId,
             steps
         };
+    }
+
+    private mapToolToStepType(tool: string): any {
+        const map: Record<string, string> = {
+            'cd': 'LOCATE',
+            'ls': 'LIST',
+            'grep': 'SEARCH',
+            'awk': 'FILTER',
+            'sed': 'TRANSFORM',
+            'mkdir': 'MODIFY',
+            'rm': 'MODIFY',
+            'cat': 'READ'
+        };
+        return map[tool] || 'ACTION';
     }
 
     private solveFlags(tool: any, constraints: string[]): string[] {
@@ -143,11 +157,21 @@ export class ConstraintMissionFactory {
     private generatePrepSpec(problem: ProblemDefinition): SystemPreparationSpec {
         return {
             hostname: problem.targetSystem,
-            requiredDirs: ['/home/admin', '/var/data'],
+            requiredDirs: ['/home/admin', '/var/data', '/public/tools'],
             files: [
                 {
                     path: '/var/data/target',
                     rawContent: `TARGET DATA FOR ${problem.objective}`,
+                    mode: 0o644
+                },
+                {
+                    path: '/public/tools/bypass.sh',
+                    rawContent: '# Vendor binary for bypass.sh',
+                    mode: 0o644
+                },
+                {
+                    path: '/public/tools/decrypter.bin',
+                    rawContent: '# Vendor binary for decrypter.bin',
                     mode: 0o644
                 }
             ],

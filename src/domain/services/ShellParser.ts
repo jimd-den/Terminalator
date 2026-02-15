@@ -13,7 +13,8 @@ import {
     ASTNode, NodeType, ListNode, PipelineNode, RedirectNode 
 } from '../interfaces/ShellAST';
 
-export { ASTNode, NodeType, ListNode, PipelineNode, RedirectNode, CommandNode, FunctionDefNode, BlockNode, SubshellNode, IfNode, ForNode, WhileNode } from '../interfaces/ShellAST';
+export type { ASTNode, ListNode, PipelineNode, RedirectNode, CommandNode, FunctionDefNode, BlockNode, SubshellNode, IfNode, ForNode, WhileNode } from '../interfaces/ShellAST';
+export { NodeType } from '../interfaces/ShellAST';
 
 /**
  * ShellParser - Domain Layer

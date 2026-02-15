@@ -87,6 +87,7 @@ export class GenericMissionStrategy implements IMissionStrategy {
             missionId: mission.id,
             type: 'HINT',
             message: currentStep.description,
+            intent: currentStep.tutorIntent as any, // Cast if needed, or update interface
             confidence: 1.0,
             severity: 'INFO'
         };
@@ -186,6 +187,7 @@ export class GenericMissionStrategy implements IMissionStrategy {
             missionId: mission.id,
             type: 'CONGRATS',
             message: transition?.tutorIntent || 'Well done.',
+            intent: transition?.tutorIntent as any,
             confidence: 1.0,
             severity: 'SUCCESS'
         };

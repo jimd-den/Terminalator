@@ -23,3 +23,18 @@
 - [x] Task: Implement `TechnicalThesaurus` using reflection.
 - [x] Task: Add "Juicy" feedback for specific command interactions.
 - [x] Task: Conductor - User Manual Verification 'Phase 4: Polish'
+
+## Phase 5: Event-Driven Refactor (EDA)
+- [x] Task: Audit and Refactor `TutorService` to be reactive (subscribe to domain events).
+- [x] Task: Finalize `TutorObserver.ts` as the sole entry point for reactive behavior.
+- [x] Task: Register `TutorObserver` in `DependencyContainer.ts` (Dependency Injection).
+- [x] Task: Decouple `MissionService` from manual `TutorService` calls (Inversion of Control).
+- [x] Task: Refactor `useTutorMessagingController.ts` to be a pure subscriber (Humble View).
+- [x] Task: Verification - Ensure Tutor interjects proactively based on `SimulationBus` events.
+
+## Phase 6: Eliminate Hardcoded Content (Pure Generative Flow)
+- [x] Task: Expand `TemplateCatalog.ts` and `LexiconData.ts` with 10+ templates and 20+ words per slot.
+- [x] Task: Refactor `AdaptiveTutorEngine.ts` to delegate to `CombinatorialUtteranceEngine`.
+- [x] Task: Refactor `ConstraintMissionFactory.ts` to include `TutorIntent` in all `MissionGrammar` steps.
+- [x] Task: Audit `VimTutorController.ts` and ensure it emits events to the `SimulationBus` instead of sending strings directly.
+- [x] Task: Verify that NO hardcoded strings are being passed to `sendTutorMessage` in the UI layer.

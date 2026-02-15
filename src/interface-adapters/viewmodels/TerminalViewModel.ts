@@ -19,7 +19,6 @@ import { SimulationMediator } from '../../core/presentation/SimulationMediator';
 // Import Headless ViewModel
 import { useHeadlessTerminal } from './useHeadlessTerminal';
 
-export { ActiveView } from './useHeadlessTerminal';
 export { TerminalOutputLine } from '../controllers/OutputController';
 
 export const useTerminalViewModel = (

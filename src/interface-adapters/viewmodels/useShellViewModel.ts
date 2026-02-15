@@ -28,6 +28,7 @@ import { ShellController } from '../controllers/ShellController';
 import { Lesson } from '../../domain/entities/TutorEngine';
 import { TutorShadow } from '../../domain/services/tutor/TutorShadow';
 import { SimulationMediator } from '../../core/presentation/SimulationMediator';
+import { GameEventType, GameEvent } from '../../domain/services/SimulationBus';
 
 export type ActiveApp = { type: 'SHELL' } | { type: 'VIM', filename: string };
 
@@ -70,11 +71,26 @@ export const useShellViewModel = (
 
     // Command Execution Ref for Tutor
     const handleCommandRef = useRef<((cmd?: string) => Promise<void>) | null>(null);
+    const pendingCommandRef = useRef<string | null>(null);
+
+    // Subscribe to Summary Dismissed to execute pending commands
+    useEffect(() => {
+        const unsub = gameManager.getSimulationBus().subscribe(GameEventType.TUTOR_EVENT, (event) => {
+            if (event.payload.type === 'SUMMARY_DISMISSED' && pendingCommandRef.current) {
+                const cmd = pendingCommandRef.current;
+                pendingCommandRef.current = null;
+                if (handleCommandRef.current) {
+                    handleCommandRef.current(cmd);
+                }
+            }
+        });
+        return unsub;
+    }, [gameManager]);
 
     // Tutor Callbacks (Refactored logic)
     const tutorCallbacks: TutorControllerCallbacks = useMemo(() => ({
         onStart: (lesson: Lesson, targetCwd: string) => {
-            const isMission = lesson.isMission || lesson.id.startsWith('MISSION_');
+            const isMission = lesson.isMission || (lesson.id && lesson.id.startsWith('MISSION_'));
             if (isMission) return;
             setState(prev => ({ ...prev, currentDirectory: targetCwd }));
             outputController.appendLine(
@@ -103,14 +119,16 @@ export const useShellViewModel = (
             inputController.setInput(input);
             inputController.updateGhostText(ghostText);
         },
-        onComplete: (lesson: Lesson, originalCwd: string | null) => {
+        onComplete: (payload: { lesson: Lesson, stats: any }, originalCwd: string | null) => {
+            const { lesson, stats } = payload;
             inputController.setInput(lesson.text);
             inputController.updateGhostText('');
-            if (handleCommandRef.current) {
-                handleCommandRef.current(lesson.text);
-                inputController.clearInput();
-            }
-            const isMission = lesson.isMission || lesson.id.startsWith('MISSION_');
+            
+            // Queue command for execution AFTER summary dismissal
+            pendingCommandRef.current = lesson.text;
+            inputController.clearInput();
+
+            const isMission = lesson.isMission || (lesson.id && lesson.id.startsWith('MISSION_'));
             const hasSwitchedContext = !!stateRef.current.fsContext;
             if (originalCwd && !isMission && !hasSwitchedContext) {
                 setTimeout(() => {
@@ -123,7 +141,7 @@ export const useShellViewModel = (
                 }, 1000);
             }
         }
-    }), [inputController, outputController]);
+    }), [inputController, outputController, gameManager]);
 
     const tutorController = useTutorController(
         gameManager.tutorEngine,
@@ -159,9 +177,9 @@ export const useShellViewModel = (
     // -- Keyboard Input Logic (moved out of VM but kept here for now) --
     // Ideally this logic should exist in InputController or ShellController, 
     // but React event handling makes it cleaner to keep as a callback hook here.
-    const handleKeyPress = useCallback((key: string) => {
+    const handleKeyPress = useCallback(async (key: string) => {
         // 1. TUTOR SHADOW INTERCEPTION (GATING)
-        const allowed = tutorShadow.intercept(key, 'SHELL');
+        const allowed = await tutorShadow.intercept(key, 'SHELL');
         if (!allowed) return;
 
         // [FIX] Double Input: If tutor is active and accepted the key, 

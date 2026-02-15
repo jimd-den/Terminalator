@@ -1,6 +1,7 @@
 import { FileSystem } from '../entities/FileSystem';
 import { FileSystemService } from './FileSystemService';
 import { Lesson } from '../entities/TutorEngine';
+import { CoreCommandGenerator } from './tutor/CoreCommandGenerator';
 
 /**
  * LessonService - Domain Service
@@ -9,6 +10,11 @@ import { Lesson } from '../entities/TutorEngine';
  * Decouples the pure TutorEngine entity from FileSystem dependencies.
  */
 export class LessonService {
+    private generator: CoreCommandGenerator;
+
+    constructor() {
+        this.generator = new CoreCommandGenerator();
+    }
 
     private curriculum: Lesson[] = [
         {
@@ -66,16 +72,10 @@ export class LessonService {
     }
 
     /**
-     * Generates a dynamic lesson (placeholder for future procedural generation).
+     * Generates a dynamic lesson using the CoreCommandGenerator.
      */
     generateDynamicLesson(type: string): Lesson {
-        // Placeholder logic, similar to the old LessonGenerator intent
-        // For now, return a basic cleanup lesson
-        return {
-            id: `DYN_${Date.now()}`,
-            type: 'SHELL',
-            text: 'ls -la',
-            instructions: 'PERFORM SYSTEM SCAN:'
-        };
+        // Map abstract types to command types if needed, or pass undefined for random
+        return this.generator.generate();
     }
 }

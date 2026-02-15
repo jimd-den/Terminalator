@@ -22,8 +22,6 @@ import { SimulationMediator } from '../../core/presentation/SimulationMediator';
 import { useShellViewModel } from './useShellViewModel';
 import { useMissionViewModel } from './useMissionViewModel';
 
-export type ActiveView = 'SHELL' | 'COMMS' | 'BUFFERS';
-
 export const useHeadlessTerminal = (
     fs: FileSystem,
     commandCoordinator: CommandCoordinator,
@@ -32,7 +30,6 @@ export const useHeadlessTerminal = (
     simulationMediator: SimulationMediator
 ) => {
     // -- View State (Top Level UI) --
-    const [activeView, setActiveView] = useState<ActiveView>('SHELL');
     const [contextualHint, setContextualHint] = useState<string | null>(null);
     const lastActivityRef = useRef<number>(Date.now());
 
@@ -60,18 +57,6 @@ export const useHeadlessTerminal = (
         );
         setBuffers(archiveService.getAll());
     }, [shellVM.outputLines, archiveService, shellVM.fsContext]);
-
-    const toggleBufferView = useCallback(() => {
-        setActiveView(prev => prev === 'BUFFERS' ? 'SHELL' : 'BUFFERS');
-    }, []);
-
-    const toggleCommsView = useCallback(() => {
-        setActiveView(prev => prev === 'COMMS' ? 'SHELL' : 'COMMS');
-        if (activeView !== 'COMMS' && !missionVM.ircMissionId) {
-            const active = missionVM.missions.find(m => m.status === 'active');
-            missionVM.setIrcMissionId(active ? active.id : (missionVM.missions[0]?.id || null));
-        }
-    }, [activeView, missionVM.ircMissionId, missionVM.missions, missionVM.setIrcMissionId]);
 
     // -- Contextual Hint System --
     const resetInactivityTimer = useCallback(() => {
@@ -104,16 +89,18 @@ export const useHeadlessTerminal = (
         if (action === 'HELP') {
             ['h', 'e', 'l', 'p', 'ENTER'].forEach(k => handleKeyPressWrapped(k));
         } else if (action === 'COMMS') {
-            toggleCommsView();
+            // Execute 'irc' command directly
+            ['i', 'r', 'c', 'ENTER'].forEach(k => handleKeyPressWrapped(k));
         } else if (action === 'BUFFERS') {
-            toggleBufferView();
+            // Execute 'archive' command directly
+            ['a', 'r', 'c', 'h', 'i', 'v', 'e', 'ENTER'].forEach(k => handleKeyPressWrapped(k));
         }
-    }, [handleKeyPressWrapped, toggleCommsView, toggleBufferView]);
+    }, [handleKeyPressWrapped]);
 
     const fKeys = useMemo(() => [
         { key: 'F1', label: 'HELP', action: () => handleAction('HELP') },
-        { key: 'F2', label: 'COMMS', action: () => handleAction('COMMS') },
-        { key: 'F3', label: 'ARCHIVE', action: () => handleAction('BUFFERS') },
+        { key: 'F2', label: 'IRC', action: () => handleAction('COMMS') },
+        { key: 'F3', label: 'ARC', action: () => handleAction('BUFFERS') },
         { key: 'TAB', label: 'AUTO', action: () => handleKeyPressWrapped('TAB') },
         { key: '▲', label: 'UP', action: () => handleKeyPressWrapped('UP') },
         { key: '▼', label: 'DOWN', action: () => handleKeyPressWrapped('DOWN') },
@@ -125,7 +112,6 @@ export const useHeadlessTerminal = (
         activeApp: shellVM.activeApp,
         state: shellVM.state,
         contextualHint,
-        activeView,
         isTransitioning: shellVM.isTransitioning,
 
         // Actions
@@ -133,8 +119,6 @@ export const useHeadlessTerminal = (
         handleAction,
         handleKeyPress: handleKeyPressWrapped,
         handleVimExit: shellVM.handleVimExit,
-        toggleCommsView,
-        toggleBufferView,
 
         // Mission State
         ircMissionId: missionVM.ircMissionId,

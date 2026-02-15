@@ -60,5 +60,18 @@ export enum TutorIntent {
     /**
      * Idle chatter or philosophical observations about terminal supremacy.
      */
-    IDLE_OBSERVATION = 'IDLE_OBSERVATION'
+    IDLE_OBSERVATION = 'IDLE_OBSERVATION',
+
+    // --- Generative Mission Instruction Intents ---
+    INSTRUCT_SSH = 'INSTRUCT_SSH',
+    INSTRUCT_CD = 'INSTRUCT_CD',
+    INSTRUCT_ACTION = 'INSTRUCT_ACTION',
+    LINK_ESTABLISHED = 'LINK_ESTABLISHED',
+    FILE_LOCATED = 'FILE_LOCATED',
+    MISSION_ACCOMPLISHED = 'MISSION_ACCOMPLISHED',
+
+    // --- System / Diegetic Intents ---
+    SYSTEM_CONNECTING = 'SYSTEM_CONNECTING',
+    SYSTEM_REWARD_ESCROW = 'SYSTEM_REWARD_ESCROW',
+    PERSONA_INITIALIZED = 'PERSONA_INITIALIZED'
 }

@@ -17,7 +17,9 @@ export enum PartOfSpeech {
     ADJECTIVE = 'ADJECTIVE',
     ADVERB = 'ADVERB',
     CONNECTOR = 'CONNECTOR',
-    INTERJECTION = 'INTERJECTION'
+    INTERJECTION = 'INTERJECTION',
+    GREETING = 'GREETING',
+    EMPHASIS = 'EMPHASIS'
 }
 
 export interface LexicalEntry {

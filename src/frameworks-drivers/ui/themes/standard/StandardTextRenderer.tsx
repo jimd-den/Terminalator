@@ -12,15 +12,17 @@ import { THEME } from '../../Theme';
 export const StandardTextRenderer: React.FC<TextRendererProps> = ({
     content,
     type = 'primary',
-    style
+    style,
+    theme,
+    settings
 }) => {
     // Default fallback colors
     const colors = {
-        primary: '#00FF41',
-        secondary: '#00FF41',
-        dim: '#003B00',
-        error: '#FF0000',
-        text: '#00FF41'
+        primary: theme.colors.primary,
+        secondary: theme.colors.secondary,
+        dim: theme.colors.text.dim,
+        error: theme.colors.error,
+        text: theme.colors.text.primary
     };
 
     const getTextColor = () => {
@@ -35,7 +37,7 @@ export const StandardTextRenderer: React.FC<TextRendererProps> = ({
 
     const textStyle = {
         color: getTextColor(),
-        fontFamily: THEME.typography.fontFamily,
+        fontFamily: settings.fontFamily,
         fontSize: THEME.typography.fontSize.md,
     };
 

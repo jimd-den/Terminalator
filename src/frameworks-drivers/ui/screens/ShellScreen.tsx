@@ -23,8 +23,8 @@ import { MissionDTO } from '../../../domain/dtos/MissionDTO';
 import { BufferScreen } from './BufferScreen';
 import { BufferDTO } from '../../../domain/dtos/BufferDTO';
 import { FKeyBar, FKeyDef } from '../components/FKeyBar';
-import { MainframeOverlay } from '../components/MainframeOverlay';
-import { TheatricalCanvas } from '../components/theatrical/TheatricalCanvas';
+import { RhythmHUD } from '../components/theatrical/RhythmHUD';
+import { ResultStackView } from '../components/theatrical/ResultStackView';
 import { EconomyBar } from '../components/EconomyBar';
 
 export interface ShellScreenProps {
@@ -41,7 +41,6 @@ export interface ShellScreenProps {
     buffers: BufferDTO[];
 
     // View State
-    activeView: 'SHELL' | 'COMMS' | 'BUFFERS';
     ircMissionId: string | null;
 
     // Actions
@@ -49,8 +48,6 @@ export interface ShellScreenProps {
     handleAction: (action: string) => void;
     markLineComplete: () => void;
     handleKeyPress: (key: string) => void;
-    toggleCommsView: () => void;
-    toggleBufferView: () => void;
     setIrcMissionId: (id: string | null) => void;
     handleStartMission: (id: string) => void;
     handleAbandonMission: (id: string) => void;
@@ -86,6 +83,15 @@ export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
     }, [props.handleKeyPress, setOnInput, setOnKeyPress, refocus, isInputLocked]);
 
     // -- View Composition --
+    const widgetContext = {
+        missions: props.missions,
+        activeMissionId: props.ircMissionId,
+        onMissionSelect: props.setIrcMissionId,
+        onStartMission: props.handleStartMission,
+        onAbandonMission: props.handleAbandonMission,
+        buffers: props.buffers
+    };
+
     const shellView = useShellView({
         outputLines: props.outputLines,
         renderedLineCount: props.renderedLineCount,
@@ -97,6 +103,7 @@ export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
         tutorEmotion: props.tutorEmotion,
         crashingIndices: props.crashingIndices,
         contextualHint: props.contextualHint,
+        widgetContext,
         onRefocus: refocus,
         onKeyPress: props.handleKeyPress,
         onFKeyAction: props.handleAction,
@@ -113,9 +120,9 @@ export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
     // -- View Composition --
     const mainLayout = (
         <View style={{ flex: 1 }}>
-            {shellView.topContent}
-            <MainframeOverlay />
-            <TheatricalCanvas />
+            {/* Legacy output removed in favor of ResultStackView */}
+            <ResultStackView widgetContext={widgetContext} />
+            <RhythmHUD />
         </View>
     );
 

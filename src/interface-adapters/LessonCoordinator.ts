@@ -26,11 +26,15 @@ export class LessonCoordinator {
         this.tutorEngine.subscribe(this.handleTutorEvent);
     }
 
+    public getEconomyService(): EconomyService {
+        return this.economyService;
+    }
+
     /**
      * Handles events emitted by the TutorEngine.
      * Maps low-level typing events to high-level game consequences.
      */
-    private handleTutorEvent = (event: TutorEvent) => {
+    private handleTutorEvent = async (event: TutorEvent) => {
         // Default TutorBot NPC for system messages
         const tutorNpc: NPC = {
             id: 'tutor_bot',
@@ -46,6 +50,26 @@ export class LessonCoordinator {
         switch (event.type) {
             case 'START':
                 this.economyService.startSession();
+                this.tutorEngine.setWalletBalance(this.economyService.getBalance());
+                break;
+
+            case 'PROGRESS':
+                // Record hit for economy rewards, but skip index 0 (initial state)
+                if (event.payload?.index > 0) {
+                    await this.economyService.recordHit(event.payload.isOnBeat);
+                }
+                // Sync session reward AND wallet balance back to engine
+                this.tutorEngine.setSessionZinc(this.economyService.getSession().sessionZincMined);
+                this.tutorEngine.setWalletBalance(this.economyService.getBalance());
+                break;
+
+            case 'CORRECTION':
+            case 'MISTAKE':
+                // Record mistake for economy penalty
+                this.economyService.recordMistake();
+                // Sync stats back to engine
+                this.tutorEngine.setSessionZinc(this.economyService.getSession().sessionZincMined);
+                this.tutorEngine.setWalletBalance(this.economyService.getBalance());
                 break;
 
             case 'SPEED_WARNING':
@@ -56,7 +80,10 @@ export class LessonCoordinator {
                 break;
 
             case 'COMPLETE':
-                const lesson = event.payload as Lesson;
+                const payload = event.payload;
+                const lesson = payload?.lesson;
+
+                if (!lesson) return;
 
                 // 1. Send Lore Mail (Persistence / Narrative)
                 this.mailSystem.sendMail(
@@ -66,7 +93,7 @@ export class LessonCoordinator {
                 );
 
                 // 2. Mission Integration (if lesson is tied to a mission)
-                if (lesson.id.startsWith('MISSION_')) {
+                if (lesson.id && lesson.id.startsWith('MISSION_')) {
                     const missionId = lesson.id.replace('MISSION_', '');
                     const mission = this.missionService.getMissionById(missionId);
                     if (mission) {

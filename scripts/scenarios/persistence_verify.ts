@@ -9,7 +9,7 @@ async function verifyPersistence() {
 
     // 1. Initial State
     console.log("[STEP 1] Initializing services...");
-    const economyService = DependencyContainer.createEconomyService(fs);
+    const economyService = DependencyContainer.createEconomyService();
     const masteryTracker = DependencyContainer.createMasteryTracker(fs);
 
     // 2. Change State
@@ -27,7 +27,7 @@ async function verifyPersistence() {
 
     // 4. Re-initialize (New instances, same FileSystem)
     console.log("[STEP 3] Re-initializing services (Simulating Restart)...");
-    const economyService2 = DependencyContainer.createEconomyService(fs);
+    const economyService2 = DependencyContainer.createEconomyService();
     const masteryTracker2 = DependencyContainer.createMasteryTracker(fs);
 
     // For the test, let's wait a bit.

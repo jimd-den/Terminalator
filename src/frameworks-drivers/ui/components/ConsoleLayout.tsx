@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ViewStyle } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { THEME } from '../Theme';
 import { useTheme } from '../context/ThemeContext';
 import { GlobalTutorBar } from './GlobalTutorBar';
@@ -26,6 +26,7 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
     children
 }) => {
     const { theme, settings } = useTheme();
+    const insets = useSafeAreaInsets();
     const colors = theme.colors;
 
     const dynamicStyles = StyleSheet.create({
@@ -35,6 +36,7 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
         },
         flex: {
             flex: 1,
+            paddingTop: insets.top, // Only handle top inset here
         },
         mainRow: {
             flex: 1,
@@ -56,7 +58,7 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
             alignItems: 'center',
             paddingVertical: THEME.spacing.md,
             borderBottomWidth: 1,
-            borderBottomColor: 'rgba(0, 255, 65, 0.1)',
+            borderBottomColor: colors.primary_10,
         },
         headerText: {
             color: colors.primary,
@@ -64,7 +66,7 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
             fontSize: THEME.typography.fontSize.sm,
         },
         topBox: {
-            flex: 2,
+            flex: 1,
             paddingHorizontal: THEME.spacing.xl,
             paddingTop: THEME.spacing.xl,
             backgroundColor: 'transparent',
@@ -80,12 +82,11 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
     });
 
     return (
-        <SafeAreaView style={[dynamicStyles.container, style]}>
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
-                style={dynamicStyles.flex}
-            >
-
+        <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={dynamicStyles.container}
+        >
+            <View style={dynamicStyles.flex}>
                 {headerComponent ? (
                     <View style={dynamicStyles.header}>
                         {headerComponent}
@@ -108,12 +109,18 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
                         <GlobalTutorBar />
 
                         {/* MIDDLE: Virtual Toolbar (Optional) */}
-                        {middleContent}
+                        {middleContent && (
+                            <View>
+                                {middleContent}
+                            </View>
+                        )}
 
                         {/* BOTTOM BOX: Input/Prompt/Command */}
-                        <View style={dynamicStyles.bottomBox}>
-                            {bottomContent}
-                        </View>
+                        {bottomContent && (
+                            <View style={dynamicStyles.bottomBox}>
+                                {bottomContent}
+                            </View>
+                        )}
                     </View>
 
                     {/* Right Column (Side Pane) */}
@@ -123,9 +130,8 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
                         </View>
                     )}
                 </View>
-
-            </KeyboardAvoidingView>
-            {children}
-        </SafeAreaView>
+                {children}
+            </View>
+        </KeyboardAvoidingView>
     );
 };

@@ -9,11 +9,23 @@
  */
 
 import React from 'react';
-import { ScrollView, Text, StyleSheet, View, Pressable } from 'react-native';
+import { ScrollView, Text, StyleSheet, View, Pressable, Dimensions } from 'react-native';
 import { useTheme, useThemeComponents } from '../context/ThemeContext';
 import { THEME } from '../Theme';
 import { GhostWriter } from '../GhostWriter';
 import { TerminalOutputLine } from '../../../interface-adapters/controllers/OutputController';
+import { BufferScreen } from '../screens/BufferScreen';
+import { MissionDTO } from '../../../domain/dtos/MissionDTO';
+import { BufferDTO } from '../../../domain/dtos/BufferDTO';
+
+export interface WidgetContext {
+    missions: MissionDTO[];
+    activeMissionId: string | null;
+    onMissionSelect: (id: string | null) => void;
+    onStartMission: (id: string) => void;
+    onAbandonMission: (id: string) => void;
+    buffers: BufferDTO[];
+}
 
 interface OutputContainerProps {
     lines: TerminalOutputLine[];
@@ -22,6 +34,7 @@ interface OutputContainerProps {
     onSave: (index: number) => void;
     onMinimize: (index: number) => void;
     onDelete: (index: number) => void;
+    widgetContext?: WidgetContext;
 }
 
 // Memoized blinking status component
@@ -133,7 +146,7 @@ const StatusIndicator = ({
                     onPress={onSave}
                     style={({ pressed }) => [
                         indicatorStyles.saveBtn,
-                        pressed && { backgroundColor: 'rgba(0, 255, 65, 0.2)' }
+                        pressed && { backgroundColor: colors.primary_20 }
                     ]}
                 >
                     <TextRenderer style={indicatorStyles.saveText} content="SAVE" />
@@ -142,7 +155,7 @@ const StatusIndicator = ({
                     onPress={onMinimize}
                     style={({ pressed }) => [
                         indicatorStyles.saveBtn,
-                        pressed && { backgroundColor: 'rgba(0, 255, 65, 0.2)' }
+                        pressed && { backgroundColor: colors.primary_20 }
                     ]}
                 >
                     <TextRenderer style={indicatorStyles.saveText} content={isMinimized ? 'MAX' : 'MIN'} />
@@ -151,7 +164,7 @@ const StatusIndicator = ({
                     onPress={onDelete}
                     style={({ pressed }) => [
                         indicatorStyles.deleteBtn,
-                        pressed && { backgroundColor: 'rgba(255, 0, 0, 0.2)' }
+                        pressed && { backgroundColor: colors.error_20 }
                     ]}
                 >
                     <TextRenderer type="error" style={indicatorStyles.deleteText} content="DEL" />
@@ -263,13 +276,41 @@ const OutputLineItem = React.memo(({ line, index, styles, colors, settings, onSa
     return null;
 });
 
+/**
+ * InlineWidget - Connects domain state to specialized UI widgets inside the terminal output.
+ */
+export const InlineWidget = ({ type, context }: { type: 'comms-widget' | 'archive-widget', context?: WidgetContext }) => {
+    const components = useThemeComponents();
+    const { TextRenderer } = components;
+    const { height: windowHeight } = Dimensions.get('window');
+    
+    // Dynamic height: 50% of screen, capped between 200 and 500
+    const widgetHeight = Math.min(Math.max(windowHeight * 0.5, 200), 500);
+
+    if (!context) return <TextRenderer content="[ WIDGET_CONTEXT_MISSING ]" type="error" />;
+
+    if (type === 'archive-widget') {
+        return (
+            <View style={{ height: widgetHeight, marginBottom: THEME.spacing.md }}>
+                <BufferScreen 
+                    buffers={context.buffers}
+                    onClose={() => {}} 
+                />
+            </View>
+        );
+    }
+
+    return null;
+};
+
 export const OutputContainer: React.FC<OutputContainerProps> = ({
     lines,
     renderedLineCount,
     onLineComplete,
     onSave,
     onMinimize,
-    onDelete
+    onDelete,
+    widgetContext
 }) => {
     const { theme, settings } = useTheme();
     const components = useThemeComponents();
@@ -318,7 +359,8 @@ export const OutputContainer: React.FC<OutputContainerProps> = ({
             fontSize: THEME.typography.fontSize.md,
         },
         fileText: {
-            color: 'rgba(0, 255, 65, 0.7)',
+            color: colors.text.primary,
+            opacity: 0.7,
             fontFamily: settings.fontFamily,
             fontSize: THEME.typography.fontSize.md,
         },
@@ -342,7 +384,7 @@ export const OutputContainer: React.FC<OutputContainerProps> = ({
         },
         cardBody: {
             padding: THEME.spacing.md,
-            backgroundColor: 'rgba(0, 255, 65, 0.05)',
+            backgroundColor: colors.primary_05,
         },
     });
 
@@ -438,6 +480,23 @@ export const OutputContainer: React.FC<OutputContainerProps> = ({
                 return (
                     <View key={index}>
                         {renderItems(isTyped)}
+                    </View>
+                );
+            }
+
+            // -- Inline Widget Rendering --
+            if (line.type === 'output' && line.metadata?.renderType === 'archive-widget') {
+                return (
+                    <View key={index} style={styles.cardContainer}>
+                        <View style={styles.cardHeader}>
+                            <TextRenderer 
+                                style={styles.cardHeaderText} 
+                                content='[ ARCHIVE_INDEX_LOADED ]' 
+                            />
+                        </View>
+                        <View style={{ backgroundColor: colors.background }}>
+                            <InlineWidget type={line.metadata.renderType as any} context={widgetContext} />
+                        </View>
                     </View>
                 );
             }

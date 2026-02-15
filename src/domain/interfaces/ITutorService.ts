@@ -1,11 +1,14 @@
 import { MissionStep } from "../entities/Mission";
+import { TutorIntent } from "../entities/tutor/TutorIntent";
 
 export interface TutorAction {
     missionId: string;
     message: string;
+    intent?: TutorIntent; // [NEW] Semantic intent for generative override
     type: 'HINT' | 'WARNING' | 'CONGRATS';
     confidence: number; // 0-1
     severity?: 'INFO' | 'WARN' | 'ERROR' | 'SUCCESS';
+    suggestedCommand?: string; // [NEW] Command to be pushed to RhythmHUD or Terminal
 }
 
 export interface TutorProgressionResult {

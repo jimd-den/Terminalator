@@ -6,8 +6,8 @@ import { useTutorPersona } from '../context/TutorPersonaProvider';
 /**
  * useTutorMessagingController - Interface Adapter Layer
  * 
- * Bridges the TutorBrain events to the TutorMessagingService.
- * This is the "Humble Object" that wires the Brain to the UI/Service.
+ * Bridges the TutorObserver events to the TutorMessagingService.
+ * This is the "Humble Object" that wires the reactive Domain to the UI.
  * 
  * Pillar: The Four-Fold Shield (Strict Architecture)
  * Pillar: The Master’s Tool (Observer/Bridge Pattern)
@@ -15,35 +15,32 @@ import { useTutorPersona } from '../context/TutorPersonaProvider';
 export const useTutorMessagingController = () => {
     const { gameManager } = useProcess();
     const { sendTutorMessage } = useTutorMessaging();
-    const { tutorBrain } = useTutorPersona();
 
     useEffect(() => {
-        if (!gameManager || !tutorBrain) return;
+        if (!gameManager) return;
 
-        // Sync active mission
+        const observer = gameManager.getTutorObserver();
+        if (!observer) return;
+
+        // Sync active mission to observer
         const syncMission = () => {
             const active = gameManager.getActiveMissions().find(m => m.status === 'active');
-            tutorBrain.setActiveMission(active || null);
+            observer.setActiveMission(active || null);
         };
 
-        // Initial sync
         syncMission();
 
-        // Initialize Brain observation
-        tutorBrain.observe(gameManager);
-
-        // Subscribe to Brain's reactions and forward to Messaging Service
-        const unsubscribeBrain = tutorBrain.subscribe((text: string, type: string) => {
-            // Re-sync before generating if needed, or rely on interval/event
-            syncMission();
+        // Subscribe to TutorObserver's reactive reactions
+        const unsubscribe = observer.onReaction((action: any) => {
             // Forward reaction to UI message queue
-            sendTutorMessage(text, type as any, tutorBrain.activePersona.name.toUpperCase());
+            sendTutorMessage(action.message, action.type || 'info', 'TUTOR');
         });
 
+        // We also still support the legacy TutorBrain for now if needed,
+        // but the goal is to migrate to the Observer.
+
         return () => {
-            unsubscribeBrain();
-            // Note: We don't necessarily want to stop observing the game if the hook unmounts,
-            // but in React context, this hook usually lives with the App tree.
+            unsubscribe();
         };
-    }, [gameManager, tutorBrain, sendTutorMessage]);
+    }, [gameManager, sendTutorMessage]);
 };

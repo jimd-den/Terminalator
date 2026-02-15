@@ -22,15 +22,12 @@ import { useProcess } from '../context/ProcessProvider';
 import { useTutorPersona } from '../context/TutorPersonaProvider';
 import { useTerminalViewModel } from '../../../interface-adapters/viewmodels/TerminalViewModel';
 import { useTheme, useThemeComponents } from '../context/ThemeContext';
-import { CommsPane } from '../components/CommsPane';
 import { StatusBar } from '../components/StatusBar';
-import { MainframeOverlay } from '../components/MainframeOverlay';
-import { TheatricalCanvas } from '../components/theatrical/TheatricalCanvas';
+import { RhythmHUD } from '../components/theatrical/RhythmHUD';
 import { EconomyBar } from '../components/EconomyBar';
 
 import { ShellScreen } from './ShellScreen';
 import { VimScreen } from './VimScreen';
-import { BufferScreen } from './BufferScreen';
 
 const styles = StyleSheet.create({
     container: {
@@ -67,71 +64,6 @@ export const TerminalScreen: React.FC = () => {
         />
     );
 
-    const renderComms = () => (
-        <Layout
-            headerComponent={
-                <StatusBar
-                    status="COMMS LINK"
-                    user={viewModel.state.environment.USER || "OPERATOR"}
-                    connectionStatus={viewModel.state.fsContext ? 'SECURE' : 'LOCAL'}
-                    activeMissionName={null}
-                />
-            }
-            status="ENCRYPTED TRANSMISSION"
-            topContent={
-                <View style={{ flex: 1 }}>
-                    <CommsPane
-                        missions={viewModel.missions}
-                        activeMissionId={viewModel.ircMissionId}
-                        onMissionSelect={viewModel.setIrcMissionId}
-                        onStartMission={viewModel.handleStartMission}
-                        onAbandonMission={viewModel.handleAbandonMission}
-                    />
-                    <MainframeOverlay />
-                    <TheatricalCanvas />
-                </View>
-            }
-            middleContent={<FKeyBar keys={[
-                { key: 'F2', label: 'CLOSE', action: viewModel.toggleCommsView },
-                { key: 'ESC', label: 'BACK', action: viewModel.toggleCommsView }
-            ]} />}
-            bottomContent={<View style={styles.footerPlaceholder} />}
-            tutorBarComponent={<GlobalTutorBar />}
-            economyBarComponent={<EconomyBar />}
-        />
-    );
-
-    const renderBuffers = () => (
-        <Layout
-            headerComponent={
-                <StatusBar
-                    status="ARCHIVE"
-                    user={viewModel.state.environment.USER || "OPERATOR"}
-                    connectionStatus={viewModel.state.fsContext ? 'SECURE' : 'LOCAL'}
-                    activeMissionName={null}
-                />
-            }
-            status="RECOVERED DATA BANKS"
-            topContent={
-                <View style={{ flex: 1 }}>
-                    <BufferScreen
-                        buffers={viewModel.buffers}
-                        onClose={viewModel.toggleBufferView}
-                    />
-                    <MainframeOverlay />
-                    <TheatricalCanvas />
-                </View>
-            }
-            middleContent={<FKeyBar keys={[
-                { key: 'F3', label: 'CLOSE', action: viewModel.toggleBufferView },
-                { key: 'ESC', label: 'BACK', action: viewModel.toggleBufferView }
-            ]} />}
-            bottomContent={<View style={styles.footerPlaceholder} />}
-            tutorBarComponent={<GlobalTutorBar />}
-            economyBarComponent={<EconomyBar />}
-        />
-    );
-
     const renderShell = () => (
         <ShellScreen
             state={viewModel.state}
@@ -164,8 +96,9 @@ export const TerminalScreen: React.FC = () => {
     // Main Dispatcher
     const renderActiveContent = () => {
         if (viewModel.activeApp.type === 'VIM') return renderVim();
-        if (viewModel.activeView === 'COMMS') return renderComms();
-        if (viewModel.activeView === 'BUFFERS') return renderBuffers();
+        // Comms and Buffers are now rendered inline via 'irc' and 'archive' commands in the Shell
+        // if (viewModel.activeView === 'COMMS') return renderComms();
+        // if (viewModel.activeView === 'BUFFERS') return renderBuffers();
         return renderShell();
     };
 

@@ -26,108 +26,116 @@ import { IWorldManager } from '../domain/interfaces/IWorldManager';
 import { IWorldStateProvider } from '../domain/interfaces/IWorldStateProvider';
 
 import { SystemPreparationSpec } from '../domain/entities/world/SystemPreparationSpec';
-
-
+import { SimulationBus, GameEventType } from '../domain/services/SimulationBus';
+import { TutorObserver } from '../domain/services/tutor/TutorObserver';
+import { EconomyService } from '../domain/services/EconomyService';
 
 /**
-
  * GameManager - Interface Adapter layer
-
- * 
-
- * Acts as a Facade/Coordinator for the game's various subsystems.
-
- * Upgraded to support Scaling Engines.
-
- *
-
- * Pillar: The Four-Fold Shield (Strict Architecture)
-
- * Pillar: The Balanced Scale (SOLID / KISS)
-
  */
-
 export class GameManager implements IGameManager {
-
     private missionService: MissionService;
-
     private npcService: NPCService;
-
     private worldPatchService: WorldPatchService;
-
     private lessonCoordinator: LessonCoordinator;
-
     private mailSystem: MailSystem;
+    private lessonService: LessonService;
+    private worldManager: IWorldManager & IWorldStateProvider;
+    private presentationDirector: PresentationDirector;
+    private tutorObserver: TutorObserver;
+    private activeMissionId: string | null = null;
 
-        private lessonService: LessonService;
-
-        private worldManager: IWorldManager & IWorldStateProvider;
-
-        private presentationDirector: PresentationDirector;
-
-    
-
-        public readonly tutorEngine: TutorEngine;
-
-
+    public readonly tutorEngine: TutorEngine;
 
     constructor(
-
         private fs: FileSystem,
-
         private networkMap: NetworkMap,
-
         missionService: MissionService,
-
         npcService: NPCService,
-
         worldPatchService: WorldPatchService,
-
         lessonCoordinator: LessonCoordinator,
-
         mailSystem: MailSystem,
-
         lessonService: LessonService,
+        worldManager: IWorldManager & IWorldStateProvider,
+        tutorEngine: TutorEngine,
+        presentationDirector: PresentationDirector,
+        private bus: SimulationBus,
+        tutorObserver: TutorObserver,
+        private telemetry?: TelemetryPort
+    ) {
+        if (!this.fs) {
+            throw new Error("GameManager initialized without FileSystem! Critical Error.");
+        }
 
-                worldManager: IWorldManager & IWorldStateProvider,
+        this.missionService = missionService;
+        this.npcService = npcService;
+        this.worldPatchService = worldPatchService;
+        this.lessonCoordinator = lessonCoordinator;
+        this.mailSystem = mailSystem;
+        this.lessonService = lessonService;
+        this.worldManager = worldManager;
+        this.tutorEngine = tutorEngine;
+        this.presentationDirector = presentationDirector;
+        this.tutorObserver = tutorObserver;
 
-                tutorEngine: TutorEngine,
+        this.initializeReactiveListeners();
+    }
 
-                presentationDirector: PresentationDirector,
+    private initializeReactiveListeners(): void {
+        this.bus.subscribe(GameEventType.MISSION_PROGRESS, async (event) => {
+            if (event.payload.type === 'COMPLETED') {
+                const mission = this.missionService.getMissionById(event.payload.missionId);
+                if (mission) {
+                    // CREDIT WALLET (Phase 10 fix: Link Mission rewards to Economy)
+                    const reward = mission.rewardValue || parseInt(mission.reward) || 0;
+                    await this.getEconomyService().credit(reward, `MISSION COMPLETE: ${mission.id}`);
 
-                private telemetry?: TelemetryPort
+                    this.mailSystem.sendMail(
+                        { id: 'bank', name: 'Bank', origin: '', career: '', goal: '', status: 'active', traits: [], loadout: [] },
+                        'PAYMENT RECEIVED',
+                        `Escrow released for Mission ${mission.id}. ${mission.reward} transferred.`
+                    );
+                }
+            }
+        });
 
-            ) {
-
-                if (!this.fs) {
-
-                    throw new Error("GameManager initialized without FileSystem! Critical Error.");
-
+        this.bus.subscribe(GameEventType.TUTOR_EVENT, (event) => {
+            if (event.payload.type === 'PLAN_UPDATED') {
+                const { nextCommand, suggestedCommand, instructions } = event.payload.payload;
+                const command = suggestedCommand || nextCommand;
+                
+                if (!command) {
+                    console.warn(`[GameManager] Received PLAN_UPDATED with empty command. Ignoring.`);
+                    return;
                 }
 
-        
-
-                this.missionService = missionService;
-
-                this.npcService = npcService;
-
-                this.worldPatchService = worldPatchService;
-
-                this.lessonCoordinator = lessonCoordinator;
-
-                this.mailSystem = mailSystem;
-
-                this.lessonService = lessonService;
-
-                this.worldManager = worldManager;
-
-                this.tutorEngine = tutorEngine;
-
-                this.presentationDirector = presentationDirector;
-
+                const lesson: Lesson = {
+                    id: `PLAN_STEP_${Date.now()}`,
+                    type: 'SHELL',
+                    text: command,
+                    instructions: instructions,
+                    suggestedCommand: command,
+                    isMission: true
+                };
+                
+                // For activation, we start the lesson immediately when the plan updates
+                console.log(`[GameManager] Auto-starting Planner Command: ${nextCommand}`);
+                this.tutorEngine.startLesson(lesson);
             }
+        });
+    }
 
+    public getTutorObserver(): TutorObserver {
+        return this.tutorObserver;
+    }
 
+    public getEconomyService(): EconomyService {
+        return this.lessonCoordinator.getEconomyService();
+    }
+
+    public getSimulationBus(): SimulationBus {
+            return this.bus;
+        }
 
         public getWorldManager(): IWorldManager & IWorldStateProvider {
 
@@ -184,102 +192,57 @@ export class GameManager implements IGameManager {
 
 
     /**
-
      * Called after every command execution to update game state.
-
      */
-
     public onCommandExecuted(state: TerminalState, response: CommandResponse, _prevFsContext?: string) {
-
-                // Emit for TutorBrain observation (includes exitCode and utility)
-
-                this.emitEvent('COMMAND_EXECUTED', { 
-
-                    output: response.output, 
-
-                    exitCode: response.exitCode,
-
-                    utility: response.utility || 'unknown'
-
-                });
-
-
-
-        const { hints, progression } = this.missionService.updateMissions(state, response);
-
-
-
-        hints.filter(h => h.type === 'CONGRATS').forEach(h => {
-
-            const mission = this.missionService.getMissionById(h.missionId);
-
-            if (mission) {
-
-                this.mailSystem.sendMail(
-
-                    { id: 'bank', name: 'Bank', origin: '', career: '', goal: '', status: 'active', traits: [], loadout: [] },
-
-                    'PAYMENT RECEIVED',
-
-                    `Escrow released for Mission ${mission.id}. ${mission.reward} transferred.`
-
-                );
-
+        // Pillar: THE BALANCED SCALE (Observer Pattern)
+        // Emit for TutorObserver and other reactive listeners
+        const payload: any = { 
+            command: response.utility || response.command || 'unknown',
+            args: [], 
+            exitCode: response.exitCode || 0,
+            output: response.output || '',
+            cwd: state.currentDirectory,
+            state: {
+                ...state,
+                fsContext: state.fsContext || 'terminalator'
             }
+        };
 
-        });
+        this.bus.emit(GameEventType.COMMAND_EXECUTED, payload);
 
+        // --- Objective-Based Completion Check (Phase 10) ---
+        if (this.activeMissionId) {
+            const kb = this.tutorObserver.getKnowledgeBase();
+            const acquired = kb.recall('MISSION_OBJECTIVE' as any)
+                .some(e => e.value === 'MISSION_DATA_ACQUIRED');
 
-
-                if (progression && progression.result && progression.result.type === 'START_LESSON') {
-
-
-
-                    const result = progression.result;
-
-
-
-                    const lessonId = result.lessonId || 'DUMMY_LESSON';
-
-
-
-                    const objective = result.objectiveTarget || 'TARGET';
-
-
-
-        
-
-
-
-                    setTimeout(() => {
-
-
-
-                        const lesson: Lesson = {
-
-
-
-                            id: lessonId,
-
-
-
-                            type: 'SHELL',
-
-                    text: result.text || 'ls -la',
-
-                    instructions: result.instructions || `CONNECTION ESTABLISHED. SCAN SYSTEM FOR ${objective}`,
-
-                    isMission: result.isMission || true
-
-                };
-
-                this.tutorEngine.startLesson(lesson);
-
-            }, 200);
-
+            if (acquired) {
+                if (this.telemetry) {
+                    this.telemetry.info(`[GameManager] Objective Met for Mission ${this.activeMissionId}. Completing.`);
+                }
+                this.bus.emit(GameEventType.MISSION_PROGRESS, {
+                    missionId: this.activeMissionId,
+                    type: 'COMPLETED',
+                    status: 'completed',
+                    result: { type: 'MISSION_COMPLETE' }
+                });
+                this.activeMissionId = null;
+                return;
+            }
         }
 
+        // Legacy: Internal listeners
+        this.emitEvent('COMMAND_EXECUTED', { 
+            output: response.output, 
+            exitCode: response.exitCode,
+            utility: response.utility || 'unknown'
+        });
+
+        const { hints, progression } = this.missionService.updateMissions(state, response);
     }
+
+        
 
 
 
@@ -303,11 +266,11 @@ export class GameManager implements IGameManager {
 
             const npc = this.npcService.spawnNPC();
 
-            const mission = await this.missionService.createMission(npc);
+                        const mission = await this.missionService.createMission(npc);
 
+            
 
-
-            this.prepareSystem(mission.targetSystem, [mission]);
+                        this.prepareSystem(mission.targetSystem, [mission]);
 
 
 
@@ -587,7 +550,7 @@ export class GameManager implements IGameManager {
 
 
 
-        public startMission(missionId: string, currentState?: TerminalState) {
+        public async startMission(missionId: string, currentState?: TerminalState) {
 
 
 
@@ -595,39 +558,93 @@ export class GameManager implements IGameManager {
 
 
 
-            if (mission && mission.status === 'pending') {
+                        if (mission && mission.status === 'pending') {
 
 
 
-                mission.status = 'active';
+                                                        mission.status = 'active';
+
+                                                        this.activeMissionId = mission.id;
 
 
 
-                mission.chatHistory.push({
+                            
 
 
 
-                    sender: 'SYSTEM',
+                                                        // AWARD SIGNING BONUS (Phase 10 fix: Ensure funds for tools)
 
 
 
-                    message: `MISSION STARTED. TARGET: ${mission.targetSystem}`,
+                                                        await this.getEconomyService().credit(500, `MISSION START ADVANCE: ${mission.id}`);
 
 
 
-                    timestamp: Date.now()
+                            
 
 
 
-                });
+                                                        mission.chatHistory.push({
 
 
 
-    
+                                sender: 'SYSTEM',
 
 
 
-                                                        if (currentState && currentState.fsContext === mission.targetSystem) {
+                                message: `MISSION STARTED. TARGET: ${mission.targetSystem}`,
+
+
+
+                                timestamp: Date.now()
+
+
+
+                            });
+
+
+
+            
+
+
+
+                            // Activation: Link TutorObserver to the active mission (Phase 10)
+
+
+
+                            this.tutorObserver.setActiveMission(mission);
+
+
+
+            
+
+
+
+                            if (mission.type === 'generative') {
+
+
+
+                                console.log(`[GameManager] Starting Generative Mission: ${mission.id}`);
+
+
+
+                                this.tutorObserver.triggerPlanning();
+
+
+
+                                return;
+
+
+
+                            }
+
+
+
+                
+
+
+
+                                                                    if (currentState && currentState.fsContext === mission.targetSystem) {
 
 
 
@@ -691,7 +708,7 @@ export class GameManager implements IGameManager {
 
 
 
-                                            // Determine lesson from grammar
+                                                        // Determine lesson from grammar
 
 
 
@@ -699,7 +716,7 @@ export class GameManager implements IGameManager {
 
 
 
-                                            let lessonText = `ssh admin@${mission.targetSystem}`;
+                                
 
 
 
@@ -707,7 +724,7 @@ export class GameManager implements IGameManager {
 
 
 
-                                            let instructions = `INITIATE SATLINK // CONNECT TO ${mission.targetSystem}`;
+                                                        let lessonText = `ssh admin@${mission.targetSystem}`;
 
 
 
@@ -715,31 +732,7 @@ export class GameManager implements IGameManager {
 
 
 
-                if (mission.grammar) {
-
-
-
-                    const step = mission.grammar.steps.find(s => s.id === mission.currentStepId);
-
-
-
-                    if (step && step.lessonText) {
-
-
-
-                        lessonText = step.lessonText;
-
-
-
-                        instructions = step.description;
-
-
-
-                    }
-
-
-
-                }
+                                
 
 
 
@@ -747,31 +740,327 @@ export class GameManager implements IGameManager {
 
 
 
-                const lesson: Lesson = {
+                                                        let instructions = `INITIATE SATLINK // CONNECT TO ${mission.targetSystem}`;
 
 
 
-                    id: `MISSION_${mission.id}`,
+    
 
 
 
-                    type: 'SHELL' as const,
+                                
 
 
 
-                    text: lessonText,
+    
 
 
 
-                    instructions: instructions,
+                                                        let tutorIntent = 'INSTRUCT_SSH';
 
 
 
-                    isMission: true
+    
 
 
 
-                };
+                                
+
+
+
+    
+
+
+
+                                            
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                        if (mission.grammar) {
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                            const step = mission.grammar.steps.find(s => s.id === mission.currentStepId);
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                            if (step && step.lessonText) {
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                                lessonText = step.lessonText;
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                                instructions = step.description;
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                                tutorIntent = step.tutorIntent || 'NUDGE_PROGRESSION';
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                            }
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                        }
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                            
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                        const lesson: Lesson = {
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                            id: `MISSION_${mission.id}`,
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                            type: 'SHELL' as const,
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                            text: lessonText,
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                            instructions: instructions,
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                            tutorIntent: tutorIntent,
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                            isMission: true
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                                        };
+
+
+
+    
+
+
+
+                                
+
+
+
+    
+
+
+
+                                            
 
 
 

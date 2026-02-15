@@ -18,10 +18,6 @@ import { LessonRegistry } from '../../domain/services/LessonRegistry';
 import { StrategyRegistry } from '../../domain/services/mission-strategies/StrategyRegistry';
 import { TutorService } from '../../domain/services/TutorService';
 import { WorldManager } from '../../interface-adapters/WorldManager';
-import { ProceduralMissionFactory } from '../../domain/factories/ProceduralMissionFactory';
-import { KnuthianMissionFactory } from '../../domain/factories/KnuthianMissionFactory';
-import { ComplexityEstimator } from '../../domain/services/constraints/ComplexityEstimator';
-import { ConstraintValidator } from '../../domain/services/constraints/ConstraintValidator';
 import { MissionPopulator } from '../../domain/services/MissionPopulator';
 import { MissionService } from '../../domain/services/MissionService';
 import { NPCService } from '../../domain/services/NPCService';
@@ -34,12 +30,14 @@ import { LessonService } from '../../domain/services/LessonService';
 import { LessonCoordinator } from '../../interface-adapters/LessonCoordinator';
 import { GameManager } from '../../interface-adapters/GameManager';
 
-import { CreditService } from '../../domain/services/gamification/CreditService';
 import { EconomyService } from '../../domain/services/EconomyService';
-import { DiskCreditRepository } from '../../interface-adapters/DiskCreditRepository';
 import { MasteryTracker } from '../../domain/services/tutor/MasteryTracker';
 import { DiskMasteryRepository } from '../../interface-adapters/DiskMasteryRepository';
 import { IdentityService } from '../../domain/services/IdentityService';
+import { RhythmConductor } from '../../domain/services/RhythmConductor';
+import { ILedgerRepository } from '../../domain/interfaces/ILedgerRepository';
+import { SqliteLedgerRepository } from '../persistence/SqliteLedgerRepository';
+import { LocalStorageLedgerRepository } from '../persistence/LocalStorageLedgerRepository';
 
 // Scaling Engine Imports
 import { ConstraintMissionFactory } from '../../domain/usecases/mission/ConstraintMissionFactory';
@@ -51,14 +49,16 @@ import { PersonaLoader } from '../../domain/services/tutor/PersonaLoader';
 import * as dialogueLibrary from '../../domain/data/tutor/DialogueLibrary.json';
 import { TutorBrain } from '../../domain/entities/tutor/TutorBrain';
 import { TutorShadow } from '../../domain/services/tutor/TutorShadow';
+import { TutorObserver } from '../../domain/services/tutor/TutorObserver';
+import { PsychAdapter } from '../../domain/services/tutor/PsychAdapter';
 import { IStructuredCommand } from '../../domain/commands/IStructuredCommand';
 
 // Structured Commands
 import { GrepCommand } from '../../domain/commands/core/GrepCommand';
 import { SedCommand } from '../../domain/commands/core/SedCommand';
 import { AwkCommand } from '../../domain/commands/core/AwkCommand';
-import { LsCommand } from '../../domain/commands/core/LsCommand';
 import { CdCommand } from '../../domain/commands/core/CdCommand';
+import { LsCommand } from '../../domain/commands/core/LsCommand';
 import { MkdirCommand } from '../../domain/commands/core/MkdirCommand';
 import { CatCommand } from '../../domain/commands/core/CatCommand';
 import { TouchCommand } from '../../domain/commands/core/TouchCommand';
@@ -74,18 +74,45 @@ import { ChgrpCommand } from '../../domain/commands/core/ChgrpCommand';
 import { ChownCommand } from '../../domain/commands/core/ChownCommand';
 import { LnCommand } from '../../domain/commands/core/LnCommand';
 import { RmdirCommand } from '../../domain/commands/core/RmdirCommand';
+import { TransferCommand } from '../../domain/commands/core/TransferCommand';
+import { NetScanCommand } from '../../domain/commands/core/NetScanCommand';
+import { NetLinkCommand } from '../../domain/commands/core/NetLinkCommand';
+import { BypassCommand } from '../../domain/commands/core/BypassCommand';
+import { NetConfCommand } from '../../domain/commands/core/NetConfCommand';
+import { IrcCommand } from '../../domain/commands/core/IrcCommand';
+import { ArchiveCommand } from '../../domain/commands/core/ArchiveCommand';
 
 export class DependencyContainer {
+    private static economyService: EconomyService | null = null;
+    private static masteryTracker: MasteryTracker | null = null;
+    private static tutorBrain: TutorBrain | null = null;
 
-    public static createEconomyService(fs: FileSystem, bus?: SimulationBus): EconomyService {
-        const fsService = new FileSystemService(fs);
-        return new EconomyService(fsService, bus);
+    public static createRhythmConductor(bus: SimulationBus): RhythmConductor {
+        return new RhythmConductor(bus);
+    }
+
+    public static createLedgerRepository(): ILedgerRepository {
+        // Platform check: Use LocalStorage for Web to avoid SQLite Worker issues
+        if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+            return new LocalStorageLedgerRepository();
+        }
+        return new SqliteLedgerRepository();
+    }
+
+    public static createEconomyService(bus?: SimulationBus, conductor?: RhythmConductor): EconomyService {
+        if (!this.economyService) {
+            this.economyService = new EconomyService(bus, conductor);
+        }
+        return this.economyService;
     }
 
     public static createMasteryTracker(fs: FileSystem): MasteryTracker {
-        const fsService = new FileSystemService(fs);
-        const repository = new DiskMasteryRepository(fsService);
-        return new MasteryTracker(repository);
+        if (!this.masteryTracker) {
+            const fsService = this.createFileSystemService(fs);
+            const repository = new DiskMasteryRepository(fsService);
+            this.masteryTracker = new MasteryTracker(repository);
+        }
+        return this.masteryTracker;
     }
     
     public static createPersona(id: string, name: string): PersonaLoader {
@@ -97,37 +124,64 @@ export class DependencyContainer {
     }
 
     public static createTutorBrain(fs: FileSystem, bus: SimulationBus): TutorBrain {
-        const masteryTracker = this.createMasteryTracker(fs);
-        const intensityCalculator = new IntensityCalculator(masteryTracker);
-        const intentInterpreter = new MissionIntentInterpreter();
-        return new TutorBrain(intensityCalculator, intentInterpreter, bus);
+        if (!this.tutorBrain) {
+            const masteryTracker = this.createMasteryTracker(fs);
+            const intensityCalculator = new IntensityCalculator(masteryTracker);
+            const intentInterpreter = new MissionIntentInterpreter();
+            this.tutorBrain = new TutorBrain(intensityCalculator, intentInterpreter, bus);
+        }
+        return this.tutorBrain;
+    }
+
+    public static createTutorObserver(bus: SimulationBus, tutorService: TutorService, fsService: FileSystemService): TutorObserver {
+        const psychAdapter = new PsychAdapter();
+        return new TutorObserver(bus, psychAdapter, tutorService, fsService);
     }
 
     public static createTutorShadow(
         engine: TutorEngine, 
         economy: EconomyService, 
         bus: SimulationBus,
-        director: PresentationDirector
+        director: PresentationDirector,
+        conductor: RhythmConductor
     ): TutorShadow {
-        return new TutorShadow(engine, economy, bus, director);
+        return new TutorShadow(engine, economy, bus, director, conductor);
+    }
+
+    private static fsServiceMap: Map<FileSystem, FileSystemService> = new Map();
+
+    public static createFileSystemService(fs: FileSystem): FileSystemService {
+        let service = this.fsServiceMap.get(fs);
+        if (!service) {
+            service = new FileSystemService(fs);
+            this.fsServiceMap.set(fs, service);
+        }
+        return service;
     }
 
     public static createGameManager(
         fs: FileSystem, 
         networkMap: NetworkMap, 
         telemetry: TelemetryPort,
-        bus: SimulationBus
+        bus: SimulationBus,
+        conductor: RhythmConductor,
+        economyService?: EconomyService,
+        masteryTracker?: MasteryTracker
     ): GameManager {
-        const fsService = new FileSystemService(fs);
+        const fsService = this.createFileSystemService(fs);
         const identityService = new IdentityService();
         const missionRepository = new MissionRepository(new JsonMissionDataProvider());
         const lessonRegistry = new LessonRegistry();
         const strategyRegistry = new StrategyRegistry();
         const tutorService = new TutorService(missionRepository, lessonRegistry, strategyRegistry);
-        const masteryTracker = this.createMasteryTracker(fs);
-        const economyService = this.createEconomyService(fs, bus);
         
-        const worldManager = new WorldManager();
+        const activeMasteryTracker = masteryTracker || this.createMasteryTracker(fs);
+        const activeEconomyService = economyService || this.createEconomyService(bus, conductor);
+        
+        const worldManager = new WorldManager(
+            networkMap, 
+            (f) => DependencyContainer.createFileSystemService(f)
+        );
         worldManager.registerHost('terminalator', fsService);
 
         // --- Scaling Engine Wiring ---
@@ -151,7 +205,14 @@ export class DependencyContainer {
             new ChgrpCommand(fsService, identityService),
             new ChownCommand(fsService, identityService),
             new LnCommand(fsService),
-            new RmdirCommand(fsService)
+            new RmdirCommand(fsService),
+            new TransferCommand(), // Note: Transfer uses context.fileSystemService
+            new NetScanCommand(),
+            new NetLinkCommand(),
+            new BypassCommand(),
+            new NetConfCommand(),
+            new IrcCommand(),
+            new ArchiveCommand()
         ];
 
         const missionPopulator = new MissionPopulator(worldManager);
@@ -160,20 +221,12 @@ export class DependencyContainer {
         const worldPatchService = new WorldPatchService(worldManager);
 
         const combinatorialFactory = new ConstraintMissionFactory(new UnixKnowledgeBase(), worldPatchService);
-        const tutorProgression = new TutorLedProgression(combinatorialFactory as any, masteryTracker);
-
-        const proceduralFactory = new ProceduralMissionFactory(worldManager);
-        const knuthianFactory = new KnuthianMissionFactory();
-        const complexityEstimator = new ComplexityEstimator();
-        const constraintValidator = new ConstraintValidator(complexityEstimator);
+        const tutorProgression = new TutorLedProgression(combinatorialFactory as any, activeMasteryTracker);
 
         const missionService = new MissionService(
-            missionRepository, 
             tutorService, 
+            bus,
             worldManager, 
-            proceduralFactory, 
-            constraintValidator,
-            knuthianFactory,
             missionPopulator,
             tutorProgression
         );
@@ -183,9 +236,13 @@ export class DependencyContainer {
         const tutorEngine = new TutorEngine(bus);
         const lessonService = new LessonService();
 
-        const lessonCoordinator = new LessonCoordinator(tutorEngine, mailSystem, missionService, economyService);
+        const lessonCoordinator = new LessonCoordinator(tutorEngine, mailSystem, missionService, activeEconomyService);
+
+        const tutorObserver = this.createTutorObserver(bus, tutorService, fsService);
 
         worldPatchService.initializeRootFileSystem(fs);
+        // Refresh Tutor's FS view after population
+        tutorObserver.setFileSystemService(fsService);
 
         return new GameManager(
             fs,
@@ -199,6 +256,8 @@ export class DependencyContainer {
             worldManager,
             tutorEngine,
             presentationDirector,
+            bus,
+            tutorObserver,
             telemetry
         );
     }

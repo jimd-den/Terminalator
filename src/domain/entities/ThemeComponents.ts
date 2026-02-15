@@ -20,12 +20,16 @@ export interface LayoutProps {
     economyBarComponent?: React.ReactNode;
     style?: any;
     children?: React.ReactNode;
+    theme?: any;
+    settings?: any;
 }
 
 export interface TextRendererProps {
     content: string;
     type?: 'primary' | 'secondary' | 'dim' | 'error' | 'success';
     style?: any;
+    theme?: any;
+    settings?: any;
 }
 
 export interface CursorProps {
@@ -33,6 +37,8 @@ export interface CursorProps {
     color: string;
     type?: 'block' | 'line' | 'underline';
     metadata?: Record<string, any>;
+    theme?: any;
+    settings?: any;
 }
 
 export interface ThemeComponentMap {

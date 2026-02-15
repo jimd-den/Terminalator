@@ -13,7 +13,7 @@ import { TerminalState } from '../entities/TerminalState';
 import { CommandResponse } from '../entities/Command';
 import { ProcessContext } from '../entities/ProcessContext';
 
-export { CommandResponse };
+export type { CommandResponse };
 
 export interface CommandContext extends ProcessContext {
     // Alias for backward compatibility if needed, or extend
