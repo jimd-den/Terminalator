@@ -12,7 +12,7 @@ import React, { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { THEME } from '../Theme';
 import { CommsPane } from '../components/CommsPane';
-import { StatusBar } from '../components/StatusBar';
+import { SystemBar } from '../components/SystemBar';
 import { useShellView } from '../components/ShellView';
 import { GlobalTutorBar } from '../components/GlobalTutorBar';
 import { useInput } from '../context/InputContext';
@@ -25,7 +25,6 @@ import { BufferDTO } from '../../../domain/dtos/BufferDTO';
 import { FKeyBar, FKeyDef } from '../components/FKeyBar';
 import { RhythmHUD } from '../components/theatrical/RhythmHUD';
 import { ResultStackView } from '../components/theatrical/ResultStackView';
-import { EconomyBar } from '../components/EconomyBar';
 
 export interface ShellScreenProps {
     // State
@@ -126,12 +125,15 @@ export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
         </View>
     );
 
+    // Status and economy are one block now: a single place to look, and it can
+    // show where in the lattice the shell is standing.
     const statusBar = (
-        <StatusBar
+        <SystemBar
             status={props.state.fsContext ? "REMOTE" : "OPERATIONAL"}
             user={props.state.environment.USER || "OPERATOR"}
             connectionStatus={props.state.fsContext ? 'SECURE' : 'LOCAL'}
             activeMissionName={missionName}
+            host={props.state.fsContext || props.state.environment.HOSTNAME || 'localhost'}
         />
     );
 
@@ -143,7 +145,6 @@ export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
             middleContent={<FKeyBar keys={props.fKeys} />}
             bottomContent={shellView.bottomContent}
             tutorBarComponent={<GlobalTutorBar />}
-            economyBarComponent={<EconomyBar />}
         />
     );
 };

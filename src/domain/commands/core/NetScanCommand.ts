@@ -31,8 +31,15 @@ import { NodeType } from '../../entities/world/Lattice';
 
 const MAX_RADIUS = 4;
 
-/** Fixed-width columns keep the scan readable on a narrow phone terminal. */
-const pad = (s: string, n: number) => (s.length > n ? s.slice(0, n - 1) + '…' : s.padEnd(n));
+/**
+ * A phone terminal fits roughly 44 monospace characters. A conventional
+ * column table blows past that and soft-wraps mid-row, which turns a tidy
+ * grid into unreadable rubble -- so each node gets a two-line record instead,
+ * with the fields that matter on the wrap-safe second line.
+ */
+const LINE_BUDGET = 44;
+
+const clip = (s: string, n: number) => (s.length > n ? s.slice(0, n - 1) + '…' : s);
 
 export class NetScanCommand extends CommandBase {
     public readonly capabilities = [CommandCapability.LIST];
@@ -83,30 +90,37 @@ export class NetScanCommand extends CommandBase {
 
         // Nearest first, so the reachable next hop is always at the top.
         const sorted = [...found].sort((a, b) => a.latency - b.latency);
-        const localCount = sorted.filter(d => !d.external).length;
+        const local = sorted.filter(d => !d.external);
+        const uplinks = sorted.filter(d => d.external);
 
-        const lines: string[] = [
-            `Scanning lattice from ${origin} (radius ${radius})...`,
-            '',
-            `  ${pad('HOST', 24)}${pad('ADDRESS', 18)}${pad('TYPE', 12)}${pad('SEC', 5)}${pad('LAT', 7)}LINK`,
-            `  ${'─'.repeat(72)}`
-        ];
+        const lines: string[] = [`Scanning lattice from ${clip(origin, 28)} (r${radius})...`];
 
-        for (const d of sorted) {
-            const n = d.node;
-            const vendor = n.components.isVendor ? ' *VENDOR*' : '';
-            lines.push(
-                `  ${pad(n.hostname, 24)}${pad(n.ip, 18)}${pad(this.shortType(n.type), 12)}` +
-                `${pad(String(n.components.securityLevel), 5)}${pad(`${d.latency}ms`, 7)}` +
-                `${d.external ? 'UPLINK' : 'local'}${vendor}`
-            );
-        }
+        const section = (title: string, group: typeof sorted) => {
+            if (group.length === 0) return;
+            lines.push('');
+            lines.push(`${title} (${group.length})`);
+            for (const d of group) {
+                const n = d.node;
+                lines.push(`  ${clip(n.hostname, LINE_BUDGET - 2)}`);
+                const facts = [
+                    n.ip,
+                    this.shortType(n.type),
+                    `sec${n.components.securityLevel}`,
+                    `${d.latency}ms`
+                ];
+                if (n.components.isVendor) facts.push('VENDOR');
+                lines.push(`    ${facts.join(' ')}`);
+            }
+        };
 
-        const externals = sorted.length - localCount;
+        section('LOCAL', local);
+        section('UPLINK', uplinks);
+
         lines.push('');
-        lines.push(`${sorted.length} nodes reachable — ${localCount} local, ${externals} via uplink.`);
-        if (externals > 0) {
-            lines.push(`Uplinks lead to unmapped subnets. net-link an uplink, then scan again.`);
+        lines.push(`${sorted.length} reachable — ${local.length} local, ${uplinks.length} uplink.`);
+        if (uplinks.length > 0) {
+            lines.push(`Uplinks reach unmapped subnets.`);
+            lines.push(`net-link one, then scan again.`);
         }
 
         return { output: lines.join('\n'), exitCode: 0, newState: state };

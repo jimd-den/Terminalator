@@ -15,6 +15,7 @@ import { THEME } from '../Theme';
 import { useTheme } from '../context/ThemeContext';
 import { THEMES } from '../../../domain/entities/Theme';
 import { ConsoleLayout } from '../components/ConsoleLayout';
+import { GlobalTutorBar } from '../components/GlobalTutorBar';
 import { SettingsPane } from '../components/SettingsPane';
 
 const FONTS = [
@@ -49,6 +50,7 @@ export const SettingsScreen: React.FC = () => {
             topContent={content}
             middleContent={null}
             bottomContent={null}
+            tutorBarComponent={<GlobalTutorBar />}
         />
     );
 };

@@ -2,7 +2,6 @@ import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ViewStyle } fro
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { THEME } from '../Theme';
 import { useTheme } from '../context/ThemeContext';
-import { GlobalTutorBar } from './GlobalTutorBar';
 
 interface ConsoleLayoutProps {
     status?: string;
@@ -12,6 +11,14 @@ interface ConsoleLayoutProps {
     bottomContent: React.ReactNode;
     style?: ViewStyle;
     sideContent?: React.ReactNode;
+    /**
+     * Slots mirroring StandardLayout. This layout previously hardcoded its own
+     * GlobalTutorBar and had no economy slot at all, so a screen using it
+     * silently lost chrome that the standard layout showed -- and could not
+     * suppress the tutor bar even where it made no sense.
+     */
+    tutorBarComponent?: React.ReactNode;
+    economyBarComponent?: React.ReactNode;
     children?: React.ReactNode;
 }
 
@@ -22,6 +29,8 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
     middleContent,
     bottomContent,
     sideContent,
+    tutorBarComponent,
+    economyBarComponent,
     style,
     children
 }) => {
@@ -97,6 +106,8 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
                     </View>
                 )}
 
+                {economyBarComponent}
+
                 <View style={dynamicStyles.mainRow}>
                     {/* Left Column (Main Terminal) */}
                     <View style={dynamicStyles.leftColumn}>
@@ -106,7 +117,7 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
                         </View>
 
                         {/* TUTOR BAR: IRC-style chat above the keyboard/F-keys */}
-                        <GlobalTutorBar />
+                        {tutorBarComponent}
 
                         {/* MIDDLE: Virtual Toolbar (Optional) */}
                         {middleContent && (

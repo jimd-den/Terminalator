@@ -219,7 +219,7 @@ export const ResultStackView: React.FC<ResultStackViewProps> = ({ widgetContext 
             setActiveCard(current => {
                 if (current) {
                     const finalCard = { ...current, isHistory: true };
-                    setHistory(prev => [...prev, finalCard].slice(-15));
+                    setHistory(prev => [...prev, finalCard].slice(-60));
                 }
                 return null;
             });
@@ -236,25 +236,28 @@ export const ResultStackView: React.FC<ResultStackViewProps> = ({ widgetContext 
         scroll: {
             flex: 1,
         },
+        // Bottom-anchored like a real terminal, but at terminal density. The
+        // old spacing (20pt padding, 30pt gaps, a 70pt floor per card) meant a
+        // phone showed barely two commands and a large empty band above them.
         historyContent: {
             justifyContent: 'flex-end',
             minHeight: '100%',
-            paddingBottom: 40,
-            gap: 30,
+            paddingBottom: 8,
+            gap: 10,
         },
         card: {
-            borderWidth: 2,
+            borderWidth: 1,
             backgroundColor: colors.background,
-            padding: 20,
-            minHeight: 70,
+            paddingHorizontal: 12,
+            paddingVertical: 8,
         },
         cardHeader: {
             flexDirection: 'row',
             justifyContent: 'space-between',
-            marginBottom: 12,
+            marginBottom: 6,
             borderBottomWidth: 1,
             borderBottomColor: colors.primary_20,
-            paddingBottom: 8,
+            paddingBottom: 4,
         },
         cardTitle: {
             fontSize: 11,
@@ -264,21 +267,19 @@ export const ResultStackView: React.FC<ResultStackViewProps> = ({ widgetContext 
         },
         mainContent: {
             justifyContent: 'center',
-            paddingVertical: 12,
         },
         contentStyle: {
             fontFamily: settings.fontFamily,
         },
         outputContainer: {
-            marginTop: 12,
-            paddingTop: 12,
+            marginTop: 6,
+            paddingTop: 6,
             borderTopWidth: 1,
             borderTopColor: colors.primary_10,
         },
         cardOutput: {
-            fontSize: 13,
-            lineHeight: 20,
-            letterSpacing: 0.5,
+            fontSize: 12,
+            lineHeight: 17,
             fontFamily: settings.fontFamily,
         }
     });
@@ -295,8 +296,8 @@ export const ResultStackView: React.FC<ResultStackViewProps> = ({ widgetContext 
             position: 'absolute' as const,
             top: 20
         } : {
-            width: '95%' as any,
-            alignSelf: 'center' as const,
+            width: '100%' as any,
+            alignSelf: 'stretch' as const,
         };
 
         const isPreExec = isCurrentlyActive && !isSettling;
@@ -322,9 +323,9 @@ export const ResultStackView: React.FC<ResultStackViewProps> = ({ widgetContext 
                             dynamicStyles.contentStyle, 
                             { 
                                 color: isPreExec ? colors.primary : colors.secondary,
-                                fontSize: isPreExec ? 32 : 16,
+                                fontSize: isPreExec ? 32 : 14,
                                 fontWeight: isPreExec ? '900' : 'bold',
-                                letterSpacing: isPreExec ? 8 : 1,
+                                letterSpacing: isPreExec ? 8 : 0.5,
                                 textAlign: isPreExec ? 'center' : 'left',
                                 width: '100%'
                             }

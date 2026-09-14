@@ -49,14 +49,19 @@ export const StandardLayout: React.FC<LayoutProps> = ({
             borderLeftWidth: 1,
             borderLeftColor: colors.primary,
         },
+        // The header slot is a bare mount point: components dropped in here
+        // (SystemBar) own their own padding and rule, so wrapping them in a
+        // second bordered, padded box just doubled the chrome.
         header: {
+            zIndex: 10,
+        },
+        headerFallback: {
             flexDirection: 'row',
             justifyContent: 'center',
             alignItems: 'center',
-            paddingVertical: THEME.spacing.md,
+            paddingVertical: THEME.spacing.sm,
             borderBottomWidth: 1,
             borderBottomColor: colors.primary_10,
-            zIndex: 10,
         },
         headerText: {
             color: colors.primary,
@@ -65,16 +70,16 @@ export const StandardLayout: React.FC<LayoutProps> = ({
         },
         topBox: {
             flex: 1, // Let topBox grow to fill available space
-            paddingHorizontal: THEME.spacing.xl,
-            paddingTop: THEME.spacing.xl,
+            paddingHorizontal: THEME.spacing.md,
+            paddingTop: THEME.spacing.sm,
             backgroundColor: 'transparent',
             zIndex: 10,
         },
         bottomBox: {
-            paddingHorizontal: THEME.spacing.xl,
-            paddingBottom: THEME.spacing.xl,
+            paddingHorizontal: THEME.spacing.md,
+            paddingTop: THEME.spacing.xs,
+            paddingBottom: THEME.spacing.md,
             backgroundColor: 'transparent',
-            minHeight: 100,
             justifyContent: 'center',
             zIndex: 10,
         },
@@ -91,7 +96,7 @@ export const StandardLayout: React.FC<LayoutProps> = ({
                         {headerComponent}
                     </View>
                 ) : (
-                    <View style={dynamicStyles.header}>
+                    <View style={[dynamicStyles.header, dynamicStyles.headerFallback]}>
                         <Text style={dynamicStyles.headerText}>[ STATUS: {status} ]</Text>
                     </View>
                 )}

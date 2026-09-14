@@ -88,9 +88,14 @@ export class GenCommand extends CommandBase {
                 if (found.length === 0) {
                     return this.fail(`gen: nothing reachable from '${target}'`, state);
                 }
+                // Two lines per node: a padded column layout overflows the ~44
+                // characters a phone terminal actually fits.
                 const lines = found
                     .sort((a, b) => a.latency - b.latency)
-                    .map(d => `  ${d.external ? '↗' : '·'} ${d.node.hostname.padEnd(24)} ${d.node.ip.padEnd(18)} ${d.latency}ms`);
+                    .flatMap(d => [
+                        `  ${d.external ? '↗' : '·'} ${d.node.hostname}`,
+                        `      ${d.node.ip} ${d.latency}ms`
+                    ]);
                 return this.ok(
                     [`Neighbourhood of ${target} (radius ${radius}): ${found.length} nodes`, ...lines].join('\n'),
                     state
