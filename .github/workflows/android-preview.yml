@@ -19,7 +19,12 @@
 #
 # Triggers:
 #   * manually, via the Actions tab (Run workflow)
-#   * automatically, on any tag matching v* or preview-*
+#   * on any tag matching v* or preview-*
+#   * on pushes to main/master and to claude/** working branches
+#
+# A tag push reuses the tag as the release name. Any other run derives one
+# (preview-<date>-<run>-<sha>) and lets `gh release create` cut that tag
+# server-side, so a preview is reachable without anyone having to tag by hand.
 #
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -36,6 +41,10 @@ on:
     tags:
       - "v*"
       - "preview-*"
+    branches:
+      - main
+      - master
+      - "claude/**"
 
 # Needed to create the release and upload the APK to it.
 permissions:
