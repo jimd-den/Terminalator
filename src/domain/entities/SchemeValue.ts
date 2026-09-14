@@ -91,6 +91,14 @@ export const EOF: SchemeValue = { type: 'eof', value: null };
 export interface Procedure {
     readonly name?: string;
     readonly isBuiltin: boolean;
+    /**
+     * True for a captured continuation. These are builtins, but applying one
+     * REPLACES the VM's control state rather than returning a value into it,
+     * so the interpreter loop must not advance the program counter or push a
+     * result afterwards -- doing so overwrites the state the continuation just
+     * restored.
+     */
+    readonly isContinuation?: boolean;
     readonly params?: string[];
     readonly body?: SchemeValue;
     readonly env?: any; // Will be typed as Environment

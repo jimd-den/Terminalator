@@ -164,12 +164,13 @@ export class SchemeCompiler {
         // Push procedure
         instrs.push(...this.compile(arr[0], false));
 
-        // APPLY
-        instrs.push({ op: 'APPLY', argCount: arr.length - 1 } as Instruction);
-
-        if (isTail) {
-            instrs.push({ op: 'RETURN' } as Instruction);
-        }
+        // In tail position, emit TAIL_APPLY so the VM reuses this frame rather
+        // than stacking a new one. Emitting APPLY + RETURN here is what made
+        // tail recursion consume memory proportional to iteration count.
+        instrs.push({
+            op: isTail ? 'TAIL_APPLY' : 'APPLY',
+            argCount: arr.length - 1
+        } as Instruction);
 
         return instrs;
     }
