@@ -5,6 +5,24 @@ import { GameEventType } from '../../../../domain/services/SimulationBus';
 import { THEME } from '../../Theme';
 import { useTheme } from '../../context/ThemeContext';
 import { WidgetContext, InlineWidget } from '../OutputContainer';
+import { DURATION, EASE, SPRING, enter, enterStyle } from '../../Motion';
+import { classify, lookFor, accentColor } from '../../CommandFamily';
+
+/**
+ * Wraps a settled card so it rises and springs into the stack rather than
+ * appearing. Each card owns its driver, so a new result animates without
+ * disturbing the scrollback above it.
+ */
+const SettledCard: React.FC<{ children: React.ReactNode; style: any }> = ({ children, style }) => {
+    const appear = useRef(new Animated.Value(0)).current;
+    useEffect(() => { enter(appear).start(); }, [appear]);
+    const e = enterStyle(appear, 18);
+    return (
+        <Animated.View style={[style, { opacity: e.opacity, transform: e.transform }]}>
+            {children}
+        </Animated.View>
+    );
+};
 
 interface ResultCard {
     id: string;
@@ -155,9 +173,15 @@ export const ResultStackView: React.FC<ResultStackViewProps> = ({ widgetContext 
                     widthAnim.setValue(350);
                     
                     // Trigger entry animation
+                    scaleAnim.setValue(0.8);
                     Animated.parallel([
-                        Animated.spring(scaleAnim, { toValue: 1.1, friction: 4, useNativeDriver: false }),
-                        Animated.timing(widthAnim, { toValue: 350, duration: 200, useNativeDriver: false })
+                        Animated.spring(scaleAnim, { toValue: 1.1, ...SPRING.bouncy, useNativeDriver: false }),
+                        Animated.timing(widthAnim, {
+                            toValue: 350,
+                            duration: DURATION.base,
+                            easing: EASE.pop,
+                            useNativeDriver: false
+                        })
                     ]).start();
                     
                     setTimeout(() => {
@@ -211,10 +235,23 @@ export const ResultStackView: React.FC<ResultStackViewProps> = ({ widgetContext 
         
         const targetY = containerHeight > 0 ? containerHeight * 0.4 : 300; 
         
+        // The card travels down into the stack and settles with a spring
+        // rather than easing linearly to a stop -- the overshoot is what makes
+        // it read as an object being placed instead of a value being tweened.
         Animated.parallel([
-            Animated.timing(moveAnim.y, { toValue: targetY, duration: 800, useNativeDriver: false }),
-            Animated.timing(scaleAnim, { toValue: 1, duration: 800, useNativeDriver: false }),
-            Animated.timing(widthAnim, { toValue: Dimensions.get('window').width * 0.95, duration: 800, useNativeDriver: false })
+            Animated.timing(moveAnim.y, {
+                toValue: targetY,
+                duration: DURATION.theatrical,
+                easing: EASE.anticipate,
+                useNativeDriver: false
+            }),
+            Animated.spring(scaleAnim, { toValue: 1, ...SPRING.firm, useNativeDriver: false }),
+            Animated.timing(widthAnim, {
+                toValue: Dimensions.get('window').width * 0.95,
+                duration: DURATION.theatrical,
+                easing: EASE.snap,
+                useNativeDriver: false
+            })
         ]).start(() => {
             setActiveCard(current => {
                 if (current) {
@@ -260,10 +297,13 @@ export const ResultStackView: React.FC<ResultStackViewProps> = ({ widgetContext 
             paddingBottom: 4,
         },
         cardTitle: {
-            fontSize: 11,
+            fontSize: 10,
             fontFamily: settings.fontFamily,
-            letterSpacing: 2,
+            // Tightened from 2: three header fields now share this row, and
+            // wide tracking pushed the timestamp into a wrap on a phone.
+            letterSpacing: 0.5,
             fontWeight: 'bold',
+            flexShrink: 1,
         },
         mainContent: {
             justifyContent: 'center',
@@ -285,8 +325,12 @@ export const ResultStackView: React.FC<ResultStackViewProps> = ({ widgetContext 
     });
 
     const renderCard = (card: ResultCard, isCurrentlyActive: boolean) => {
-        const isError = card.exitCode !== 0;
-        const borderColor = isError ? colors.error : colors.primary;
+        // Each command family carries its own accent and sigil so a long
+        // scrollback stays skimmable -- you find a past result by its shape
+        // rather than by reading every card.
+        const family = classify(card.command, card.exitCode);
+        const look = lookFor(family);
+        const borderColor = accentColor(family, colors);
 
         const cardStyle = isCurrentlyActive ? {
             transform: [{ translateY: moveAnim.y }, { scale: scaleAnim }],
@@ -302,10 +346,13 @@ export const ResultStackView: React.FC<ResultStackViewProps> = ({ widgetContext 
 
         const isPreExec = isCurrentlyActive && !isSettling;
 
-        return (
-            <Animated.View key={card.id} style={[dynamicStyles.card, { borderColor }, cardStyle]}>
+        const body = (
+            <>
                 <View style={dynamicStyles.cardHeader}>
-                    <Text style={[dynamicStyles.cardTitle, { color: colors.text.dim }]}>
+                    <Text style={[dynamicStyles.cardTitle, { color: borderColor }]}>
+                        {look.sigil} {look.label}
+                    </Text>
+                    <Text style={[dynamicStyles.cardTitle, { color: colors.text.dim }]} numberOfLines={1}>
                         {card.hostname} // {new Date(card.timestamp).toLocaleTimeString()}
                     </Text>
                     <Text style={[dynamicStyles.cardTitle, { color: borderColor }]}>
@@ -322,7 +369,7 @@ export const ResultStackView: React.FC<ResultStackViewProps> = ({ widgetContext 
                         style={[
                             dynamicStyles.contentStyle, 
                             { 
-                                color: isPreExec ? colors.primary : colors.secondary,
+                                color: isPreExec ? colors.primary : borderColor,
                                 fontSize: isPreExec ? 32 : 14,
                                 fontWeight: isPreExec ? '900' : 'bold',
                                 letterSpacing: isPreExec ? 8 : 0.5,
@@ -345,7 +392,19 @@ export const ResultStackView: React.FC<ResultStackViewProps> = ({ widgetContext 
                         ) : null}
                     </View>
                 )}
+            </>
+        );
+
+        // The active card is driven by the settle animation; history cards get
+        // their own entrance so the stack builds rather than blinks.
+        return isCurrentlyActive ? (
+            <Animated.View key={card.id} style={[dynamicStyles.card, { borderColor }, cardStyle]}>
+                {body}
             </Animated.View>
+        ) : (
+            <SettledCard key={card.id} style={[dynamicStyles.card, { borderColor }, cardStyle]}>
+                {body}
+            </SettledCard>
         );
     };
 

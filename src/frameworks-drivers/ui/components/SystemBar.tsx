@@ -18,14 +18,40 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { useProcess } from '../context/ProcessProvider';
 import { GameEventType } from '../../../domain/services/SimulationBus';
 import { ZincFormatter } from '../../../domain/utils/ZincFormatter';
 import { CoreEngine } from '../../../core/CoreEngine';
 import { THEME } from '../Theme';
+import { popEmphasis } from '../Motion';
+
+/**
+ * A readout that pops when its value changes.
+ *
+ * The point is not decoration: NODES ticking from 3 to 19 after a scan is the
+ * single clearest signal that the world got bigger, and a number that changes
+ * silently in the corner is a number nobody notices. The pop draws the eye to
+ * the *change*, then gets out of the way.
+ */
+const PoppingValue: React.FC<{ value: string | number; style: any }> = ({ value, style }) => {
+    const scale = useRef(new Animated.Value(1)).current;
+    const previous = useRef(value);
+
+    useEffect(() => {
+        if (previous.current === value) return;
+        previous.current = value;
+        popEmphasis(scale).start();
+    }, [value, scale]);
+
+    return (
+        <Animated.Text style={[style, { transform: [{ scale }] }]}>
+            {value}
+        </Animated.Text>
+    );
+};
 
 interface SystemBarProps {
     status?: string;
@@ -152,13 +178,13 @@ export const SystemBar: React.FC<SystemBarProps> = ({
                 <View style={styles.spacer} />
 
                 <Text style={styles.label}>NODES</Text>
-                <Text style={[styles.value, { color: colors.primary }]}>{known}</Text>
+                <PoppingValue value={known} style={[styles.value, { color: colors.primary }]} />
 
                 <Text style={styles.label}>ZINC</Text>
-                <Text style={[styles.value, { color: colors.secondary }]}>
-                    {wallet.value}
-                    <Text style={{ fontSize: 9 }}> {wallet.unit}</Text>
-                </Text>
+                <PoppingValue
+                    value={`${wallet.value} ${wallet.unit}`}
+                    style={[styles.value, { color: colors.secondary }]}
+                />
 
                 <Text style={styles.label}>H/s</Text>
                 <Text style={[styles.value, { color: colors.primary }]}>{hashRate.toFixed(2)}</Text>
