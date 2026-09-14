@@ -15,6 +15,7 @@
 
 import { SchemeValue, makeBoolean, schemeToString, makeProcedure, Procedure, listToArray } from '../entities/SchemeValue';
 import { Environment } from '../entities/Environment';
+import { TraceRecorder } from './SchemeTrace';
 
 /**
  * A raised Scheme condition travelling as a JS exception.
@@ -76,6 +77,11 @@ export class SchemeVM {
     private callStack: any[] = [];
     private handlers: HandlerFrame[] = [];
     private instructionCount: number = 0;
+    /**
+     * Optional step recorder. Left undefined the VM does no tracing work at
+     * all, which matters because this loop runs millions of instructions.
+     */
+    private tracer?: TraceRecorder;
 
     constructor(env: Environment) {
         this.env = env;
@@ -83,6 +89,35 @@ export class SchemeVM {
 
     public getInstructionCount(): number {
         return this.instructionCount;
+    }
+
+    /** Turns on step recording. Off by default; see SchemeTrace. */
+    public setTracer(tracer: TraceRecorder | undefined): void {
+        this.tracer = tracer;
+    }
+
+    /** Short rendering of a value for trace labels. */
+    private brief(v: SchemeValue): string {
+        const s = schemeToString(v);
+        return s.length > 28 ? s.slice(0, 27) + '…' : s;
+    }
+
+    private procName(proc: Procedure): string {
+        return proc.name ?? (proc.isBuiltin ? 'builtin' : 'lambda');
+    }
+
+    /**
+     * Gives an anonymous closure the name it is being bound to.
+     *
+     * Procedures are values, so `(define (sum n) ...)` produces a closure that
+     * knows nothing about the name `sum`. Attaching it at the binding site is
+     * what lets a trace read `sum` rather than a column of `lambda`.
+     */
+    private nameIfAnonymous(value: SchemeValue, name: string): SchemeValue {
+        if (value.type !== 'procedure') return value;
+        const proc = value.value as Procedure;
+        if (proc.name) return value;
+        return makeProcedure({ ...proc, name });
     }
 
     /**
@@ -108,19 +143,34 @@ export class SchemeVM {
                     this.pc++;
                     break;
 
-                case 'LOOKUP':
-                    this.stack.push(this.env.lookup(instr.name));
+                case 'LOOKUP': {
+                    const found = this.env.lookup(instr.name);
+                    this.stack.push(found);
+                    this.tracer?.record({
+                        kind: 'lookup', depth: this.callStack.length,
+                        label: instr.name, detail: `→ ${this.brief(found)}`
+                    });
                     this.pc++;
                     break;
+                }
 
-                case 'DEFINE':
-                    this.env.define(instr.name, this.stack.pop()!);
+                case 'DEFINE': {
+                    const bound = this.nameIfAnonymous(this.stack.pop()!, instr.name);
+                    this.env.define(instr.name, bound);
+                    this.tracer?.record({
+                        kind: 'bind', depth: this.callStack.length,
+                        label: instr.name, detail: this.brief(bound)
+                    });
                     this.stack.push({ type: 'symbol', value: instr.name });
                     this.pc++;
                     break;
+                }
 
                 case 'SET':
-                    this.env.assign(instr.name, this.stack.pop()!);
+                    // Naming here matters for letrec, which binds a hole and
+                    // then assigns the real closure -- without this every
+                    // recursive procedure would trace as "lambda".
+                    this.env.assign(instr.name, this.nameIfAnonymous(this.stack.pop()!, instr.name));
                     this.pc++;
                     break;
 
@@ -154,6 +204,10 @@ export class SchemeVM {
                 }
 
                 case 'RETURN':
+                    this.tracer?.record({
+                        kind: 'return', depth: Math.max(0, this.callStack.length - 1),
+                        detail: this.stack.length ? this.brief(this.stack[this.stack.length - 1]) : ''
+                    });
                     if (this.callStack.length === 0) {
                         return this.stack[this.stack.length - 1];
                     }
@@ -212,6 +266,10 @@ export class SchemeVM {
                         }
                     };
 
+                    this.tracer?.record({
+                        kind: 'capture', depth: this.callStack.length,
+                        label: 'call/cc', detail: 'save point'
+                    });
                     this.stack.push(makeProcedure(continuation));
                     this.stack.push(receiver);
                     this.pc++;
@@ -275,10 +333,19 @@ export class SchemeVM {
         this.env = (proc.env as Environment).extend(proc.params!, args);
         this.code = (proc.body as any).code;
         this.pc = 0;
+        this.tracer?.record({
+            kind: 'tail-call', depth: this.callStack.length,
+            label: this.procName(proc),
+            detail: args.map(a => this.brief(a)).join(' ')
+        });
     }
 
     /** The RETURN instruction's behaviour, reusable from tail application. */
     private performReturn(): void {
+        this.tracer?.record({
+            kind: 'return', depth: Math.max(0, this.callStack.length - 1),
+            detail: this.stack.length ? this.brief(this.stack[this.stack.length - 1]) : ''
+        });
         if (this.callStack.length === 0) {
             this.pc = this.code.length;   // halt the loop; result is on the stack
             return;
@@ -334,6 +401,11 @@ export class SchemeVM {
         }
 
         if (proc.isContinuation) {
+            this.tracer?.record({
+                kind: 'warp', depth: this.callStack.length,
+                label: 'continuation',
+                detail: args.length ? `carrying ${this.brief(args[0])}` : 'no value'
+            });
             // The continuation's own call() has already set stack, pc, code and
             // env to the captured point. Touching any of them here would undo
             // the jump -- which is exactly what made (k v) fail before.
@@ -345,11 +417,17 @@ export class SchemeVM {
             this.stack.push(proc.call!(args));
             this.pc++;
         } else {
-            // Enter function
+            // Enter function -- this PUSHES a frame, which is the thing a tail
+            // call avoids.
             this.callStack.push({ pc: this.pc + 1, code: this.code, env: this.env });
             this.env = (proc.env as Environment).extend(proc.params!, args);
             this.code = (proc.body as any).code;
             this.pc = 0;
+            this.tracer?.record({
+                kind: 'call', depth: this.callStack.length,
+                label: this.procName(proc),
+                detail: args.map(a => this.brief(a)).join(' ')
+            });
         }
     }
 }

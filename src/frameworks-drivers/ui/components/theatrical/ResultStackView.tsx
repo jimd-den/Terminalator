@@ -382,8 +382,10 @@ export const ResultStackView: React.FC<ResultStackViewProps> = ({ widgetContext 
                 
                 {card.isHistory && (
                     <View style={dynamicStyles.outputContainer}>
-                        {card.metadata?.renderType && card.metadata.renderType === 'archive-widget' ? (
-                            <InlineWidget type={card.metadata.renderType} context={widgetContext} />
+                        {card.metadata?.renderType === 'scheme-trace' ? (
+                            <InlineWidget type="scheme-trace" data={card.metadata.data} />
+                        ) : card.metadata?.renderType === 'archive-widget' ? (
+                            <InlineWidget type="archive-widget" context={widgetContext} />
                         ) : card.output ? (
                             <TypewriterOutput 
                                 text={card.output} 

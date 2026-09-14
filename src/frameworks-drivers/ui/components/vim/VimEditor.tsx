@@ -185,13 +185,37 @@ export const useVimEditor = (
         }
     });
 
+    /**
+     * Depth cycle for nested brackets.
+     *
+     * Drawn from the active theme rather than hardcoded, so every theme keeps
+     * its own palette. Five steps is enough that two visually adjacent depths
+     * never share a colour in practice, while staying inside the theme's range.
+     */
+    // Three steps, not five: the themes are deliberately monochrome-plus-accent
+    // (Matrix is green and gold, full stop), so inventing extra hues would
+    // fight their identity. Three is enough that adjacent nesting levels never
+    // share a colour, which is all the reader actually needs.
+    const DEPTH_CYCLE = [
+        colors.primary,
+        colors.secondary,
+        colors.text.dim
+    ];
+
     // -- Token Color Mapper --
-    const getTokenColor = (type: string) => {
+    // In Scheme the nesting IS the syntax, so a token carrying a depth is
+    // coloured by that depth: matching brackets share a colour and the shape
+    // of the program can be read without counting parens.
+    const getTokenColor = (type: string, depth?: number) => {
+        if (depth !== undefined) {
+            return DEPTH_CYCLE[depth % DEPTH_CYCLE.length];
+        }
         switch (type) {
             case 'keyword': return colors.secondary;
             case 'string': return colors.secondary;
             case 'comment': return colors.text.dim;
             case 'number': return colors.primary;
+            case 'function': return colors.primary;
             case 'operator': return colors.text.primary;
             default: return colors.text.primary;
         }
@@ -215,7 +239,7 @@ export const useVimEditor = (
             <View key={lineIdx} style={[dynamicStyles.lineWrapper, lineError && dynamicStyles.errorLine]}>
                 <View style={{ flexDirection: 'row' }}>
                     {tokens.map((token, tokenIdx) => {
-                        const tokenColor = getTokenColor(token.type);
+                        const tokenColor = getTokenColor(token.type, token.depth);
                         if (isCurrentLine && !cursorRendered) {
                             let offsetBefore = tokens.slice(0, tokenIdx).reduce((acc, t) => acc + t.text.length, 0);
                             const cursorInToken = state.cursor.col >= offsetBefore && state.cursor.col < offsetBefore + token.text.length;

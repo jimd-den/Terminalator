@@ -19,12 +19,25 @@ import { SchemeCompiler } from './SchemeCompiler';
 import { SchemeVM } from './SchemeVM';
 import { MacroExpander } from '../services/scheme/MacroExpander';
 import { SchemeDesugarer } from './SchemeDesugarer';
+import { TraceRecorder, TraceResult } from './SchemeTrace';
 
 export class SchemeEvaluator {
     private compiler: SchemeCompiler;
     private macroExpander: MacroExpander;
     private desugarer: SchemeDesugarer;
     public lastInstructionCount: number = 0;
+    /** Populated after an evaluate() that ran with tracing enabled. */
+    public lastTrace?: TraceResult;
+    private tracer?: TraceRecorder;
+
+    /**
+     * Enables step recording for subsequent evaluations. Pass undefined to
+     * turn it back off -- an attached recorder costs the VM work on every
+     * call, lookup and return.
+     */
+    public setTracing(enabled: boolean, budget: number = 400): void {
+        this.tracer = enabled ? new TraceRecorder(budget) : undefined;
+    }
 
     constructor() {
         this.compiler = new SchemeCompiler();
@@ -49,8 +62,10 @@ export class SchemeEvaluator {
 
         // 4. Execute
         const vm = new SchemeVM(env);
+        vm.setTracer(this.tracer);
         const result = vm.execute(code);
         this.lastInstructionCount = vm.getInstructionCount();
+        this.lastTrace = this.tracer?.result();
         return result;
     }
 }

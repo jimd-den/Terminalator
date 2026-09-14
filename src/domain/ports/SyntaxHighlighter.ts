@@ -14,6 +14,14 @@
 export interface HighlightToken {
     text: string;
     type: 'keyword' | 'string' | 'comment' | 'number' | 'function' | 'operator' | 'plain';
+    /**
+     * Nesting depth, for languages where structure IS the syntax.
+     *
+     * Scheme sets this on parentheses so a renderer can colour them by depth.
+     * In a language made of nested lists, matching brackets by eye is most of
+     * the reading effort, and depth colour removes it.
+     */
+    depth?: number;
 }
 
 export interface SyntaxHighlighter {

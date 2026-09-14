@@ -23,19 +23,29 @@
 
 export type Family = 'network' | 'filesystem' | 'economy' | 'system' | 'text' | 'error';
 
+/**
+ * Tones are restricted to keys the theme palette actually defines. An earlier
+ * version named 'warning' and 'success', which no theme has, so two families
+ * silently fell back to primary and the variety it claimed did not exist.
+ * Typing the union against the real palette is what makes that a compile
+ * error rather than a shrug.
+ */
+type Tone = 'primary' | 'secondary' | 'error';
+
 interface FamilyLook {
     /** Single-glyph sigil shown in the card header. */
     sigil: string;
-    /** Which theme colour carries the accent. */
-    tone: 'primary' | 'secondary' | 'warning' | 'success' | 'error';
+    tone: Tone;
     label: string;
 }
 
+// With only two accent hues available, the sigil and label do most of the
+// distinguishing work and colour separates the broad categories.
 const LOOKS: Record<Family, FamilyLook> = {
     network:    { sigil: '⇄', tone: 'secondary', label: 'NET' },
     filesystem: { sigil: '▤', tone: 'primary',   label: 'FS'  },
-    economy:    { sigil: '◈', tone: 'warning',   label: 'ECO' },
-    text:       { sigil: '✎', tone: 'success',   label: 'TXT' },
+    economy:    { sigil: '◈', tone: 'secondary', label: 'ECO' },
+    text:       { sigil: '✎', tone: 'primary',   label: 'TXT' },
     system:     { sigil: '⚙', tone: 'primary',   label: 'SYS' },
     error:      { sigil: '✕', tone: 'error',     label: 'ERR' }
 };
@@ -77,5 +87,5 @@ export const classify = (commandLine: string, exitCode: number): Family => {
 export const lookFor = (family: Family): FamilyLook => LOOKS[family];
 
 /** Resolves a family's accent against the active theme's palette. */
-export const accentColor = (family: Family, colors: any): string =>
-    colors[LOOKS[family].tone] ?? colors.primary;
+export const accentColor = (family: Family, colors: Record<Tone, string>): string =>
+    colors[LOOKS[family].tone];

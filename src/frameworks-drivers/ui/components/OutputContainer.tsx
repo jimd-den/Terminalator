@@ -12,6 +12,7 @@ import React from 'react';
 import { ScrollView, Text, StyleSheet, View, Pressable, Dimensions } from 'react-native';
 import { useTheme, useThemeComponents } from '../context/ThemeContext';
 import { THEME } from '../Theme';
+import { SchemeTraceView } from './scheme/SchemeTraceView';
 import { GhostWriter } from '../GhostWriter';
 import { TerminalOutputLine } from '../../../interface-adapters/controllers/OutputController';
 import { BufferScreen } from '../screens/BufferScreen';
@@ -279,7 +280,11 @@ const OutputLineItem = React.memo(({ line, index, styles, colors, settings, onSa
 /**
  * InlineWidget - Connects domain state to specialized UI widgets inside the terminal output.
  */
-export const InlineWidget = ({ type, context }: { type: 'comms-widget' | 'archive-widget', context?: WidgetContext }) => {
+export const InlineWidget = ({ type, context, data }: {
+    type: 'comms-widget' | 'archive-widget' | 'scheme-trace',
+    context?: WidgetContext,
+    data?: any
+}) => {
     const components = useThemeComponents();
     const { TextRenderer } = components;
     const { height: windowHeight } = Dimensions.get('window');
@@ -287,9 +292,17 @@ export const InlineWidget = ({ type, context }: { type: 'comms-widget' | 'archiv
     // Dynamic height: 50% of screen, capped between 200 and 500
     const widgetHeight = Math.min(Math.max(windowHeight * 0.5, 200), 500);
 
-    if (!context) return <TextRenderer content="[ WIDGET_CONTEXT_MISSING ]" type="error" />;
+    if (type !== 'scheme-trace' && !context) {
+        return <TextRenderer content="[ WIDGET_CONTEXT_MISSING ]" type="error" />;
+    }
 
-    if (type === 'archive-widget') {
+    // An evaluation trace carries its own payload rather than reading shared
+    // widget context, since it describes one specific run.
+    if (type === 'scheme-trace') {
+        return data ? <SchemeTraceView trace={data} /> : null;
+    }
+
+    if (type === 'archive-widget' && context) {
         return (
             <View style={{ height: widgetHeight, marginBottom: THEME.spacing.md }}>
                 <BufferScreen 
