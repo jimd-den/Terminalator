@@ -45,19 +45,34 @@ export class NetLinkCommand extends CommandBase {
 
         const system = context.networkMap.getSystem(target);
         if (!system) {
-            return { output: `net-link: connect to host ${target} failed: Link refused`, exitCode: 1, newState: state };
+            return {
+                output: `net-link: connect to host ${target} failed: Link refused\n` +
+                        `Hostnames resolve only once discovered — try net-scan first, or give a lattice address.`,
+                exitCode: 1,
+                newState: state
+            };
         }
 
+        // Node metadata is derived, so the banner can describe any machine in
+        // the lattice without anything having been stored about it.
+        const node = context.networkMap.getNode(target);
+        const canonical = node?.hostname ?? target;
+
         const newState = mergeState(state, {
-            fsContext: target,
+            fsContext: canonical,
             currentDirectory: '/home/admin'
         });
 
-        return {
-            output: `LINK ESTABLISHED to ${target}.
-Welcome to ${target} node cluster.`,
-            exitCode: 0,
-            newState
-        };
+        const banner = node
+            ? [
+                `LINK ESTABLISHED — ${canonical} [${node.ip}]`,
+                `${node.type} · ${node.components.osType} · security ${node.components.securityLevel}/10 · ${node.components.cpuPower} cyc`,
+                node.components.isVendor
+                    ? `Vendor node. Stock: ${(node.components.inventory ?? []).join(', ')}`
+                    : `Authenticated as ${user}.`
+              ].join('\n')
+            : `LINK ESTABLISHED to ${target}.`;
+
+        return { output: banner, exitCode: 0, newState };
     }
 }

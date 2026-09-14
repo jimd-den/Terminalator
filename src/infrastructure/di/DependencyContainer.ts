@@ -79,6 +79,7 @@ import { NetScanCommand } from '../../domain/commands/core/NetScanCommand';
 import { NetLinkCommand } from '../../domain/commands/core/NetLinkCommand';
 import { BypassCommand } from '../../domain/commands/core/BypassCommand';
 import { NetConfCommand } from '../../domain/commands/core/NetConfCommand';
+import { GenCommand } from '../../domain/commands/core/GenCommand';
 import { IrcCommand } from '../../domain/commands/core/IrcCommand';
 import { ArchiveCommand } from '../../domain/commands/core/ArchiveCommand';
 
@@ -211,6 +212,7 @@ export class DependencyContainer {
             new NetLinkCommand(),
             new BypassCommand(),
             new NetConfCommand(),
+            new GenCommand(),
             new IrcCommand(),
             new ArchiveCommand()
         ];

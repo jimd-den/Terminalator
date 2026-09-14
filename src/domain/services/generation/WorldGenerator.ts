@@ -24,7 +24,9 @@ import { NPC } from '../../entities/NPC';
 import { FileSystemService } from '../FileSystemService';
 
 import { FileSystem } from '../../entities/FileSystem';
-import { IUniverseStrategy } from '../../interfaces/IUniverseStrategy';
+import { IUniverseStrategy, DiscoveredNode } from '../../interfaces/IUniverseStrategy';
+import { InfiniteLattice } from '../world/lattice/InfiniteLattice';
+import { LatticeAddress, formatAddress, parseAddress } from '../world/lattice/LatticeAddress';
 
 export interface GeneratedWorld {
     locations: Location[];
@@ -36,37 +38,140 @@ export interface GeneratedWorld {
 
 /**
  * DeterministicUniverseStrategy
- * 
- * Implements lazy, behavior-based world generation.
+ *
+ * Lazy, behaviour-based world generation over an unbounded coordinate space.
+ *
+ * Nothing is generated ahead of time and nothing is cached here: every answer
+ * is derived on demand from (seed, address) by the InfiniteLattice. Hostnames
+ * discovered through expansion are remembered only as an alias table, because a
+ * name is knowledge the player acquired -- the node itself was always there.
  */
 class DeterministicUniverseStrategy implements IUniverseStrategy {
+    private readonly lattice: InfiniteLattice;
+
+    /** hostname -> address, populated as the player discovers names. */
+    private readonly aliases = new Map<string, string>();
+
     constructor(
         private seed: WorldSeed,
         private seedString: string,
         private graphGenerator: NetworkGraphGenerator,
         private hydrator: FileSystemHydrator,
         private npcPopulator: NPCPopulator
-    ) {}
+    ) {
+        this.lattice = new InfiniteLattice(seed);
+
+        // The home node's name is known from the outset; everything else must
+        // be found by scanning.
+        const home = this.lattice.home();
+        this.remember(home);
+
+        // The player's own machine answers to its diegetic names as well as its
+        // derived one, so commands issued from the boot context resolve to a
+        // real coordinate instead of falling off the lattice.
+        const homeIp = formatAddress(home);
+        ['terminalator', 'localhost'].forEach(n => this.aliases.set(n, homeIp));
+    }
+
+    public getSeed(): string {
+        return this.seedString;
+    }
+
+    public deriveHome(): LatticeNode {
+        const home = this.lattice.home();
+        return this.lattice.nodeAt(home) ?? this.lattice.slice(home, 0).nodes[0];
+    }
+
+    /**
+     * Resolves either a raw coordinate (always works, anywhere in the lattice)
+     * or a hostname the player has already discovered.
+     */
+    private locate(target: string): LatticeAddress | undefined {
+        const direct = this.lattice.resolveAddress(target);
+        if (direct) return direct;
+
+        const aliased = this.aliases.get(target.toLowerCase());
+        return aliased ? parseAddress(aliased) : undefined;
+    }
+
+    private remember(addr: LatticeAddress): LatticeNode | undefined {
+        const node = this.lattice.nodeAt(addr);
+        if (node) this.aliases.set(node.hostname.toLowerCase(), node.ip);
+        return node;
+    }
 
     public getNodeDetails(hostname: string): LatticeNode | undefined {
-        return this.graphGenerator.findNodeByHostname(this.seed, hostname);
+        const addr = this.locate(hostname);
+        if (!addr) return undefined;
+        return this.remember(addr);
+    }
+
+    public expand(hostname: string, radius: number = 1): DiscoveredNode[] {
+        const addr = this.locate(hostname);
+        if (!addr) return [];
+
+        const found = new Map<string, DiscoveredNode>();
+        let frontier: LatticeAddress[] = [addr];
+        const visited = new Set<string>([formatAddress(addr)]);
+
+        for (let depth = 0; depth < Math.max(1, radius); depth++) {
+            const next: LatticeAddress[] = [];
+            for (const current of frontier) {
+                for (const link of this.lattice.neighbors(current)) {
+                    // Discovering a node teaches its name.
+                    this.aliases.set(link.node.hostname.toLowerCase(), link.node.ip);
+                    if (!found.has(link.node.ip)) {
+                        found.set(link.node.ip, {
+                            node: link.node,
+                            latency: link.latency,
+                            external: link.external
+                        });
+                    }
+                    if (visited.has(link.node.ip)) continue;
+                    visited.add(link.node.ip);
+                    const parsed = parseAddress(link.node.ip);
+                    if (parsed) next.push(parsed);
+                }
+            }
+            frontier = next;
+            if (frontier.length === 0) break;
+        }
+
+        return Array.from(found.values());
     }
 
     public mountFilesystem(hostname: string): FileSystem {
         const fs = new FileSystem();
         const node = this.getNodeDetails(hostname);
         if (node) {
-            // Lazy Hydration
             const fsService = new FileSystemService(fs);
-            // We provide empty topology/npcs for lazy hydration unless we want to generate neighbors
-            this.hydrator.hydrate(this.seed, node, fsService, { nodes: [node], edges: [] }, []);
+            // Hydration is seeded per-node so a machine's contents are as stable
+            // as the machine itself, and neighbours are derived (not stored) so
+            // link files point somewhere real.
+            const addr = parseAddress(node.ip);
+            const neighbourNodes = addr
+                ? this.lattice.neighbors(addr).slice(0, 8).map(l => l.node)
+                : [];
+            this.hydrator.hydrate(
+                this.seed.derive('fs', node.ip),
+                node,
+                fsService,
+                { nodes: [node, ...neighbourNodes], edges: [] },
+                []
+            );
         }
         return fs;
     }
 
     public getInitialHosts(): string[] {
-        // Return a set of "starting" hosts that are always available
-        return ['terminalator', 'gateway-alpha', 'research-srv-1'];
+        const home = this.deriveHome();
+        // The player boots knowing their own machine and whatever their gateway
+        // already advertises -- everything beyond that must be scanned for.
+        const neighbours = this.expand(home.ip, 1)
+            .filter(d => !d.external)
+            .slice(0, 3)
+            .map(d => d.node.hostname);
+        return Array.from(new Set([home.hostname, ...neighbours]));
     }
 }
 

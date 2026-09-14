@@ -17,9 +17,18 @@
 
 export class WorldSeed {
     private state: number;
+    private readonly origin: string;
 
     constructor(seedString: string) {
+        this.origin = seedString;
         this.state = this.cyrb128(seedString);
+    }
+
+    /**
+     * The seed string this generator was born from.
+     */
+    public get seedString(): string {
+        return this.origin;
     }
 
     /**
@@ -80,5 +89,44 @@ export class WorldSeed {
      */
     public chance(probability: number): boolean {
         return this.next() < probability;
+    }
+
+    /**
+     * Derives an INDEPENDENT sub-seed for a coordinate in the world.
+     *
+     * This is the cornerstone of infinite generation: the returned WorldSeed
+     * depends ONLY on this seed's origin string and the given parts -- never on
+     * how many numbers have already been drawn from this instance. That purity
+     * is what lets us derive node #4,000,000,000 without generating the first
+     * 3,999,999,999, and lets us re-derive it identically forever after.
+     *
+     * Callers MUST use a derived seed (not the root) when generating content,
+     * otherwise draw-order leaks in and determinism is lost.
+     */
+    public derive(...parts: (string | number)[]): WorldSeed {
+        return new WorldSeed(`${this.origin}::${parts.join(':')}`);
+    }
+
+    /**
+     * Pure scalar hash of a coordinate: same inputs, same float, always.
+     * Does not disturb this generator's stream.
+     */
+    public hash(...parts: (string | number)[]): number {
+        return this.derive(...parts).next();
+    }
+
+    /**
+     * Pure integer in [min, max] for a coordinate. Stream-independent.
+     */
+    public hashRange(min: number, max: number, ...parts: (string | number)[]): number {
+        return Math.floor(this.hash(...parts) * (max - min + 1)) + min;
+    }
+
+    /**
+     * Pure element choice for a coordinate. Stream-independent.
+     */
+    public hashPick<T>(array: T[], ...parts: (string | number)[]): T {
+        if (array.length === 0) throw new Error("Cannot pick from empty array");
+        return array[this.hashRange(0, array.length - 1, ...parts)];
     }
 }

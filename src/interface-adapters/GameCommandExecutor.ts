@@ -37,6 +37,7 @@ import { NetLinkCommand } from '../domain/commands/core/NetLinkCommand';
 import { BypassCommand } from '../domain/commands/core/BypassCommand';
 import { TransferCommand } from '../domain/commands/core/TransferCommand';
 import { NetConfCommand } from '../domain/commands/core/NetConfCommand';
+import { GenCommand } from '../domain/commands/core/GenCommand';
 import { IrcCommand } from '../domain/commands/core/IrcCommand';
 import { ArchiveCommand } from '../domain/commands/core/ArchiveCommand';
 
@@ -94,6 +95,7 @@ export class GameCommandExecutor implements IShellExecutor {
         this.registry.register('net-scan', new NetScanCommand());
         this.registry.register('net-link', new NetLinkCommand());
         this.registry.register('net-conf', new NetConfCommand());
+        this.registry.register('gen', new GenCommand());
         this.registry.register('bypass.sh', new BypassCommand());
         this.registry.register('transfer', new TransferCommand());
 

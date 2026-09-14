@@ -32,10 +32,16 @@ export class WorldManager implements IWorldStateProvider, IWorldManager {
 
     constructor(
         private networkMap?: NetworkMap,
-        private fsServiceProvider?: (fs: FileSystem) => FileSystemService
+        private fsServiceProvider?: (fs: FileSystem) => FileSystemService,
+        seed: string = 'prime-station-seed'
     ) {
         this.generator = new WorldGenerator();
-        this.universe = this.generator.createUniverse('prime-station-seed');
+        this.universe = this.generator.createUniverse(seed);
+
+        // The NetworkMap is a projection of this universe, not a rival source of
+        // truth -- attaching it here is what lets commands reach coordinates
+        // that were never booted.
+        this.networkMap?.attachUniverse(this.universe);
 
         this.dispatcher = new WorldEffectDispatcher(this.devices, this.locations);
         this.observer = new FileSystemObserver(this.dispatcher);
@@ -51,7 +57,6 @@ export class WorldManager implements IWorldStateProvider, IWorldManager {
      * Registers a host (Local or Remote) with the simulation loop.
      */
     public registerHost(hostname: string, service: FileSystemService): void {
-        console.log(`[WorldManager] Registering host: ${hostname}. Has NetworkMap: ${!!this.networkMap}`);
         this.hostFileSystems.set(hostname, service);
         this.observer.observe(hostname, service);
         this.projector.project(hostname, service);
@@ -94,7 +99,6 @@ export class WorldManager implements IWorldStateProvider, IWorldManager {
      */
     public getHostFileSystem(hostname: string): FileSystemService | null {
         if (!this.hostFileSystems.has(hostname)) {
-            console.log(`[WorldManager] Lazy-Mounting Filesystem for: ${hostname}`);
             const fs = this.universe.mountFilesystem(hostname);
             
             // Resolve service via provider or fallback
@@ -109,6 +113,13 @@ export class WorldManager implements IWorldStateProvider, IWorldManager {
 
     public getAllHosts(): string[] {
         return Array.from(this.hostFileSystems.keys());
+    }
+
+    /**
+     * The strategy that defines what exists in this world.
+     */
+    public getUniverse(): IUniverseStrategy {
+        return this.universe;
     }
 
     /**
