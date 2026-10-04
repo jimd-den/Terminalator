@@ -51,6 +51,8 @@ export interface ShellRuntime {
     conditionDepth: number;
     /** Name lookup for `type` / `command -v`. */
     describeCommand(name: string, state: TerminalState): CommandDescription;
+    /** All executables for `name` along PATH. */
+    findInPath(name: string, state: TerminalState): string[];
     newScope(state: TerminalState, io?: IOContext): ExpansionScope;
 }
 

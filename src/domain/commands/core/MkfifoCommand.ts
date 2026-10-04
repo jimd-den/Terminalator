@@ -1,71 +1,39 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
-/**
- * MkfifoCommand - Core Command
- *
- * Creates named pipes (FIFOs).
- *
- * Pillar: The Four-Fold Shield (Strict Architecture)
- * Pillar: The Swift Stream (Performance)
- *
- * Intent:
- * Calls fs.mkfifo to create a special file type.
- * Refactored to implement IStructuredCommand for combinatorial scaling.
- */
-
-import { CommandBase } from '../CommandBase';
-import { CommandCapability } from '../IStructuredCommand';
-import { ProcessContext } from '../../../domain/entities/ProcessContext';
-import { FileSystemService } from '../../../domain/services/FileSystemService';
+/** mkfifo - make FIFO special files (POSIX): `mkfifo [-m mode] file...` */
+import { CommandResponse } from '../ICommand';
+import { ProcessContext } from '../../entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../entities/Command';
+import { FileSystemService } from '../../services/FileSystemService';
+import { Utility } from '../shared/Utility';
+import { getopt } from '../shared/InputFiles';
+import { statPath } from '../shared/FileInfo';
+import { strerror } from '../shared/PathOps';
+import { ModeParser } from '../../services/ModeParser';
 
-export class MkfifoCommand extends CommandBase {
-    public readonly capabilities = [CommandCapability.MODIFY];
-    public readonly utility = 'mkfifo';
+export class MkfifoCommand extends Utility {
+    readonly utility = 'mkfifo';
 
-    constructor(private fs: FileSystemService) { 
-        super();
-    }
+    constructor(private fs?: FileSystemService) { super(); }
 
-    protected override parseArgs(args: string[]) {
-        super.parseArgs(args, ['m']);
-    }
-
-    protected async executeInternal(
-        rawArgs: string[],
-        flags: Set<string>,
-        operands: string[],
-        context: ProcessContext,
-        state: TerminalState
-    ): Promise<CommandResponse> {
-        let mode = 0o644;
-        const modeStr = this.options.get('m');
-
-        if (modeStr) {
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const { opts, operands, error } = getopt(args, 'm:');
+        if (error) return this.usage(state, error);
+        if (!operands.length) return this.usage(state, 'missing operand');
+        let mode: number | undefined;
+        if (opts.has('m')) {
+            try { mode = ModeParser.parse(String(opts.get('m')), 0o666); } catch { return this.usage(state, `invalid mode '${opts.get('m')}'`); }
+        }
+        const fs = context.fileSystemService;
+        const errors: string[] = [];
+        for (const file of operands) {
+            if (statPath(context, file, false)) { errors.push(`cannot create fifo '${file}': File exists`); continue; }
             try {
-                mode = parseInt(modeStr, 8);
-                if (isNaN(mode)) throw new Error('Invalid octal');
+                const abs = fs.resolveAbsolutePath(file, context.cwd);
+                fs.mkfifo(abs, undefined, undefined, undefined, '/');
+                if (mode !== undefined) fs.chmod(abs, mode, '/');
             } catch (e) {
-                return { output: `mkfifo: invalid mode: '${modeStr}'`, newState: state, exitCode: 1 };
+                errors.push(`cannot create fifo '${file}': ${strerror(e)}`);
             }
         }
-
-        if (operands.length === 0) {
-            return { output: 'mkfifo: missing operand', newState: state, exitCode: 1 };
-        }
-
-        let output = '';
-        let finalExitCode = 0;
-
-        for (const target of operands) {
-            try {
-                context.fileSystemService.mkfifo(target, mode, 1000, 1000, state.currentDirectory);
-            } catch (error: any) {
-                output += `mkfifo: cannot create fifo '${target}': ${error.message}\n`;
-                finalExitCode = 1;
-            }
-        }
-
-        return { output: output.trim(), newState: state, exitCode: finalExitCode };
+        return this.respond(state, '', errors);
     }
 }

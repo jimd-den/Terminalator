@@ -47,7 +47,7 @@ async function runSimulator(script: string): Promise<{ stdout: string; status: n
     state.exportedVars = [...(state.exportedVars ?? []), 'TZ', 'LC_ALL'];
     const res = await executor.executeWithSeparateStreams(script, state);
     // Compare as bytes (latin1), like the reference capture.
-    const stdout = Buffer.from(res.output, /[^\x00-\xff]/.test(res.output) ? 'utf8' : 'latin1').toString('latin1');
+    const stdout = Buffer.from(res.output, res.binary ? 'latin1' : 'utf8').toString('latin1');
     return { stdout, status: res.exitCode };
 }
 

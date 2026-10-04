@@ -136,6 +136,10 @@ export class ExecuteCommand implements IShellExecutor {
     private async executeLine(input: string, state: TerminalState, separate: boolean): Promise<CommandResponse> {
         if (!input.trim()) return { output: '', exitCode: 0, newState: state, command: input };
 
+        // The interactive shell keeps the history list (used by fc and history).
+        const historySize = parseInt(state.environment.HISTSIZE ?? '1000', 10) || 1000;
+        state = { ...state, history: [...(state.history ?? []), input.replace(/\n+$/, '')].slice(-historySize) };
+
         const interpreter = this.resolveInterpreter(state);
         const terminal = new BufferSink();
         const errors = separate ? new BufferSink() : terminal;
@@ -201,6 +205,7 @@ export class ExecuteCommand implements IShellExecutor {
         return {
             output: terminal.contents(),
             stderr: separate ? errors.contents() : undefined,
+            binary: separate && terminal.binary ? true : undefined,
             exitCode: res.status,
             newState: finalState,
             command: input,

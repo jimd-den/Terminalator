@@ -1,6 +1,6 @@
 import {
     ASTNode, NodeType, CommandNode, PipelineNode, ListNode, AsyncNode, SubshellNode, BlockNode,
-    FunctionDefNode, RedirectedNode, IfNode, ForNode, WhileNode, CaseNode, RedirectNode
+    FunctionDefNode, RedirectedNode, IfNode, ForNode, WhileNode, CaseNode, RedirectNode, TimedNode
 } from '../../interfaces/ShellAST';
 
 /**
@@ -58,6 +58,10 @@ export function printNode(node: ASTNode | null | undefined, indent = ''): string
             const n = node as CaseNode;
             const items = n.items.map(i => `${inner}${i.patterns.join(' | ')}) ${printNode(i.body, inner)} ;;`).join('\n');
             return `case ${n.word} in\n${items}\n${indent}esac`;
+        }
+        case NodeType.TIMED: {
+            const n = node as TimedNode;
+            return `time${n.posix ? ' -p' : ''}${n.body ? ' ' + printNode(n.body, indent) : ''}`;
         }
         default:
             return '';

@@ -1,68 +1,45 @@
 /**
- * ReadlinkCommand - Core Command
- *
- * Read the value of a symbolic link.
- *
- * Pillar: The Four-Fold Shield (Strict Architecture)
- * Pillar: The Swift Stream (Performance)
- *
- * Intent:
- * Display symlink target.
+ * readlink - print symbolic link targets or canonical names (GNU):
+ * `readlink [-f|-e|-m] [-n] [-q|-s] [-v] [-z] file...`
  */
-
-import { ICommand } from '../ICommand';
-import { ProcessContext } from '../../../domain/entities/ProcessContext';
-import { FileSystemService } from '../../../domain/services/FileSystemService';
+import { CommandResponse } from '../ICommand';
+import { ProcessContext } from '../../entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../entities/Command';
+import { FileSystemService } from '../../services/FileSystemService';
+import { Utility } from '../shared/Utility';
+import { getopt } from '../shared/InputFiles';
+import { statPath } from '../shared/FileInfo';
+import { canonicalize } from '../shared/PathOps';
 
-import { FileSystem } from '../../entities/FileSystem';
+export class ReadlinkCommand extends Utility {
+    readonly utility = 'readlink';
 
-export class ReadlinkCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+    constructor(private fs?: FileSystemService) { super(); }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const files = args.filter(a => !a.startsWith('-'));
-        if (files.length === 0) {
-            return { output: 'readlink: missing operand', newState: state, exitCode: 1 };
-        }
-
-        const file = files[0]; // POSIX readlink usually takes file
-
-        try {
-            const path = this.resolvePath(file, state);
-            const node = context.fileSystemService.resolve(path); // resolveNode typically resolves links?
-            // We need to resolve the node WITHOUT following the link if it is the target.
-            // FileSystem might resolve links automatically.
-            // We need `lstat` or similar.
-            // If `resolveNode` follows links, `readlink` on a symlink will give the target file's node.
-            // But we need the link content.
-            // Does FS expose `getLinkTarget(path)`?
-            // Or `readLink(path)`?
-            // Assuming `fs.readLink(path)` exists.
-
-            const target = context.fileSystemService.readlink(path);
-            if (target) {
-                return {
-                    output: target,
-                    newState: state,
-                    exitCode: 0
-                };
-            } else {
-                // Not a link? POSIX: exit >0 or silent?
-                // "If the argument is not a symbolic link... exit status 1"
-                return { output: '', newState: state, exitCode: 1 };
+        const { opts, operands, error } = getopt(args, 'femnqsvz');
+        if (error) return this.usage(state, error);
+        if (!operands.length) return this.usage(state, 'missing operand');
+        const mode = opts.has('e') ? 'e' : opts.has('m') ? 'm' : opts.has('f') ? 'f' : null;
+        const verbose = opts.has('v') && !opts.has('q') && !opts.has('s');
+        const end = opts.has('z') ? '\0' : opts.has('n') && operands.length === 1 ? '' : '\n';
+        let out = '';
+        const errors: string[] = [];
+        for (const file of operands) {
+            let result: string | null = null;
+            if (mode) result = canonicalize(context, file, mode);
+            else {
+                const info = statPath(context, file, false);
+                if (info?.kind === 'symlink') result = context.fileSystemService.readlink(info.path, '/');
+                else if (verbose) errors.push(`${file}: ${info ? 'Invalid argument' : 'No such file or directory'}`);
             }
-
-        } catch (e: any) {
-            // Check if error is "not a link" vs "no such file".
-            // Simplified.
-            return { output: `readlink: ${file}: Invalid argument`, newState: state, exitCode: 1 };
+            if (result === null) {
+                if (mode && verbose) errors.push(`${file}: No such file or directory`);
+                continue;
+            }
+            out += result + end;
         }
-    }
-
-    private resolvePath(path: string, state: TerminalState): string {
-        if (path.startsWith('/')) return path;
-        return state.currentDirectory === '/' ? `/${path}` : `${state.currentDirectory}/${path}`;
+        const failed = out === '' || errors.length > 0 || operands.length > out.split(end || '\n').filter(Boolean).length;
+        return this.respond(state, out, errors, failed ? 1 : 0);
     }
 }

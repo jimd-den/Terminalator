@@ -41,6 +41,8 @@ export interface TerminalState {
     shellPid?: number;
     /** $! */
     lastBackgroundPid?: number;
+    /** File mode creation mask (umask). */
+    umask?: number;
     /** Saved values for `local` variables, one frame per active function call (null = was unset). */
     localFrames?: Array<Record<string, string | null>>;
 }
@@ -77,8 +79,7 @@ export const createInitialTerminalState = (): TerminalState => {
         },
         aliases: {
             'll': 'ls -l',
-            'la': 'ls -a',
-            'source': '.'
+            'la': 'ls -a'
         },
         user: { uid: 1000, gid: 1000, groups: [1000, 1001, 100] },
         lastExitCode: 0,

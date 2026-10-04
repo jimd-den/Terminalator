@@ -10,6 +10,8 @@ import { TrapBuiltin } from './TrapBuiltin';
 import { AliasBuiltin, UnaliasBuiltin } from './AliasBuiltins';
 import { CdBuiltin, PwdBuiltin } from './CdBuiltin';
 import { ShBuiltin } from './ShBuiltin';
+import { UmaskBuiltin } from './UmaskBuiltin';
+import { FcBuiltin, HistoryBuiltin } from './HistoryBuiltins';
 
 /** The shell's builtin utilities (special builtins per XCU §2.14 plus regular builtins). */
 export function createDefaultBuiltins(): BuiltinRegistry {
@@ -39,7 +41,10 @@ export function createDefaultBuiltins(): BuiltinRegistry {
         .register(UnaliasBuiltin)
         .register(CdBuiltin)
         .register(PwdBuiltin)
-        .register(ShBuiltin);
+        .register(ShBuiltin)
+        .register(UmaskBuiltin)
+        .register(FcBuiltin)
+        .register(HistoryBuiltin);
 }
 
 export { BuiltinRegistry } from './ShellBuiltin';

@@ -109,6 +109,7 @@ export const ShiftBuiltin: ShellBuiltin = {
     names: ['shift'],
     special: true,
     run(ctx): BuiltinResult {
+        if (ctx.args.length > 1) return fail(ctx, 'too many arguments', 2);
         const n = ctx.args.length ? Number(ctx.args[0]) : 1;
         const params = getPositional(ctx.state);
         if (!Number.isInteger(n) || n < 0) return fail(ctx, `${ctx.args[0]}: bad number`, 2);

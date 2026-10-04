@@ -21,6 +21,12 @@ export interface CommandContext extends ProcessContext {
 
 export interface ICommand {
     /**
+     * Output is exactly what the utility writes (no newline normalisation).
+     * Legacy commands that omit trailing newlines leave this unset.
+     */
+    readonly exactOutput?: boolean;
+
+    /**
      * Executes the command.
      *
      * @param args - Arguments passed to the command.

@@ -86,6 +86,22 @@ export interface ProcessContext {
 
     /** The name the utility was invoked as (argv[0]), e.g. `[` vs `test`. */
     argv0?: string;
+
+    /**
+     * Runs another utility as a child process (fork+exec): PATH search, no
+     * shell functions. Its output goes to this process's stdout/stderr.
+     * Resolves to the exit status (127 not found, 126 not executable).
+     */
+    spawn?: (argv: string[], options?: SpawnOptions) => Promise<number>;
+}
+
+export interface SpawnOptions {
+    /** Complete environment for the child (default: this process's). */
+    env?: Record<string, string>;
+    /** Data for the child's standard input (default: inherited). */
+    stdin?: string;
+    /** Working directory (default: inherited). */
+    cwd?: string;
 }
 
 

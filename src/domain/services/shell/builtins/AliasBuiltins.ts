@@ -6,17 +6,25 @@ export const AliasBuiltin: ShellBuiltin = {
     special: false,
     run(ctx): BuiltinResult {
         const aliases = ctx.state.aliases ?? {};
-        const print = (name: string) => out(ctx, `${name}=${shellQuote(aliases[name])}\n`);
-        if (ctx.args.length === 0) {
+        const prefix = ctx.args[0] === '-p' ? 'alias ' : '';
+        const operands = prefix ? ctx.args.slice(1) : ctx.args;
+        const print = (name: string) => out(ctx, `${prefix}${name}=${shellQuote(aliases[name])}\n`);
+        if (operands.length === 0) {
             Object.keys(aliases).sort().forEach(print);
             return { status: 0 };
         }
         const next = { ...aliases };
         let status = 0;
-        for (const arg of ctx.args) {
+        for (const arg of operands) {
             const eq = arg.indexOf('=');
             if (eq > 0) {
-                next[arg.substring(0, eq)] = arg.substring(eq + 1);
+                const name = arg.substring(0, eq);
+                if (/[\s=\/$`'"\\|&;<>()]/.test(name)) {
+                    ctx.io.stderr.write(`alias: ${name}: invalid alias name\n`);
+                    status = 1;
+                    continue;
+                }
+                next[name] = arg.substring(eq + 1);
             } else if (aliases[arg] !== undefined) {
                 print(arg);
             } else {

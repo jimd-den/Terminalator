@@ -112,7 +112,7 @@ export class Redirector {
         if (node && this.fs.isDirectory(node)) throw new RedirectionError(`${target}: Is a directory`);
         if (node && !clobber) throw new RedirectionError(`${target}: cannot overwrite existing file`);
         try {
-            return new FileSink(this.fs, path, state.user, append);
+            return new FileSink(this.fs.asUser(state.user, state.umask ?? 0o022), path, state.user, append);
         } catch (e: any) {
             throw new RedirectionError(`${target}: ${this.reason(e)}`);
         }

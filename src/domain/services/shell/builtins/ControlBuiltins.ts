@@ -22,6 +22,7 @@ export const LoopControlBuiltin: ShellBuiltin = {
     names: ['break', 'continue'],
     special: true,
     run(ctx): BuiltinResult {
+        if (ctx.args.length > 1) return fail(ctx, 'too many arguments', 1);
         const n = parseCount(ctx, 1);
         if (n === null || n < 1) return fail(ctx, `${ctx.args[0]}: bad number`, 2);
         return { status: 0, flow: { kind: ctx.name as 'break' | 'continue', levels: n } };

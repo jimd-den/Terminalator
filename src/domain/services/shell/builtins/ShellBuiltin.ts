@@ -26,6 +26,8 @@ export interface ShellBuiltin {
     readonly names: string[];
     /** POSIX special builtins (XCU §2.14): found before functions; assignments persist. */
     readonly special: boolean;
+    /** Also an installed program (e.g. /usr/bin/sh): `type` reports its path. */
+    readonly external?: boolean;
     run(ctx: BuiltinContext): Promise<BuiltinResult> | BuiltinResult;
 }
 

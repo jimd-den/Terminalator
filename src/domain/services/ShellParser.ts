@@ -11,7 +11,7 @@ import { FunctionDefParser } from './shell/FunctionDefParser';
 import { SimpleCommandParser } from './shell/SimpleCommandParser';
 import { IncompleteInputError, ShellSyntaxError } from './shell/ShellSyntaxError';
 import {
-    ASTNode, NodeType, ListNode, PipelineNode, RedirectNode, RedirectOp, AsyncNode, RedirectedNode
+    ASTNode, NodeType, ListNode, PipelineNode, RedirectNode, RedirectOp, AsyncNode, RedirectedNode, TimedNode
 } from '../interfaces/ShellAST';
 
 export {
@@ -220,8 +220,16 @@ export class ShellParser implements IShellParserFacade {
         return left;
     }
 
-    /** pipeline: ['!'] command { '|' linebreak command } */
+    /** pipeline: ['time' ['-p']] ['!'] command { '|' linebreak command } */
     private parsePipeline(): ASTNode | null {
+        if (this.isWord('time')) {
+            this.advance();
+            const posix = this.isWord('-p');
+            if (posix) this.advance();
+            const atEnd = [TokenType.EOF, TokenType.NEWLINE, TokenType.SEMI, TokenType.AMP].includes(this.peek().type);
+            const body = atEnd ? null : this.parsePipeline();
+            return { type: NodeType.TIMED, body, posix } as TimedNode;
+        }
         let negate = false;
         while (this.isWord('!')) {
             this.advance();

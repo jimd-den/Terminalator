@@ -1,132 +1,83 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
- * SplitCommand - Core Command
- *
- * Split a file into pieces.
- *
- * Pillar: The Four-Fold Shield (Strict Architecture)
- * Pillar: The Swift Stream (Performance)
- *
- * Intent:
- * Break files into chunks.
+ * split - split files into pieces (POSIX):
+ *   split [-l line_count] [-a suffix_length] [file [name]]
+ *   split -b n[k|m] [-a suffix_length] [file [name]]
+ * plus GNU -d (numeric suffixes).
  */
-
-import { ICommand } from '../ICommand';
-import { ProcessContext } from '../../../domain/entities/ProcessContext';
-import { FileSystemService } from '../../../domain/services/FileSystemService';
+import { CommandResponse } from '../ICommand';
+import { ProcessContext } from '../../entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../entities/Command';
+import { FileSystemService } from '../../services/FileSystemService';
+import { Utility } from '../shared/Utility';
+import { getopt, readInputBytes } from '../shared/InputFiles';
+import { strerror } from '../shared/PathOps';
 
-import { FileSystem } from '../../entities/FileSystem';
+export function suffix(index: number, length: number, numeric: boolean): string | null {
+    const base = numeric ? 10 : 26;
+    if (index >= base ** length) return null;
+    let s = '';
+    for (let k = 0; k < length; k++) {
+        const d = index % base;
+        s = (numeric ? String(d) : String.fromCharCode(97 + d)) + s;
+        index = Math.floor(index / base);
+    }
+    return s;
+}
 
-export class SplitCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+export class SplitCommand extends Utility {
+    readonly utility = 'split';
+
+    constructor(private fs?: FileSystemService) { super(); }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = getStdinAsString(context);
-        // split [-l line_count] [-a suffix_length] [file [prefix]]
-        let lineCount = 1000;
-        let suffixLength = 2;
-        const operands: string[] = [];
+        const normalized = args.map(a => (/^-[0-9]+$/.test(a) ? `-l${a.substring(1)}` : a));
+        const { opts, operands, error } = getopt(normalized, 'l:b:a:d');
+        if (error) return this.usage(state, error);
+        if (operands.length > 2) return this.usage(state, `extra operand '${operands[2]}'`);
+        const suffixLen = opts.has('a') ? Number(opts.get('a')) : 2;
+        if (!Number.isInteger(suffixLen) || suffixLen < 1) return this.usage(state, `invalid suffix length: '${opts.get('a')}'`);
 
-        for (let i = 0; i < args.length; i++) {
-            const arg = args[i];
-            if (arg === '-l') {
-                lineCount = parseInt(args[++i], 10) || 1000;
-            } else if (arg === '-a') {
-                suffixLength = parseInt(args[++i], 10) || 2;
-            } else if (!arg.startsWith('-')) {
-                operands.push(arg);
-            }
+        let byBytes: number | null = null;
+        let lineCount = 1000;
+        if (opts.has('b')) {
+            const m = /^([0-9]+)([kmKMG]?)$/.exec(String(opts.get('b')));
+            if (!m || m[1] === '0') return this.usage(state, `invalid number of bytes: '${opts.get('b')}'`);
+            byBytes = parseInt(m[1], 10) * ({ '': 1, k: 1024, K: 1024, m: 1 << 20, M: 1 << 20, G: 1 << 30 } as Record<string, number>)[m[2]];
+        } else if (opts.has('l')) {
+            lineCount = Number(opts.get('l'));
+            if (!Number.isInteger(lineCount) || lineCount < 1) return this.usage(state, `invalid number of lines: '${opts.get('l')}'`);
         }
 
-        let content = '';
-        let prefix = 'x'; // POSIX default prefix is 'x'
+        const input = readInputBytes(context, operands[0] ?? '-');
+        if (!input.ok) return this.respond(state, '', [`cannot open ${input.error.replace(/^([^:]*):/, "'$1' for reading:")}`]);
+        const prefix = operands[1] ?? 'x';
+        const data = input.data;
 
-        if (operands.length > 0) {
-            const file = operands[0];
-            if (file === '-') {
-                content = input || '';
-            } else {
-                try {
-                    content = context.fileSystemService.readFile(this.resolvePath(file, state));
-                } catch (e) {
-                    return { output: `split: ${file}: No such file`, newState: state, exitCode: 1 };
+        const pieces: Uint8Array[] = [];
+        if (byBytes !== null) {
+            for (let i = 0; i < data.length; i += byBytes) pieces.push(data.subarray(i, i + byBytes));
+        } else {
+            let start = 0, lines = 0;
+            for (let i = 0; i < data.length; i++) {
+                if (data[i] === 10 && ++lines === lineCount) {
+                    pieces.push(data.subarray(start, i + 1));
+                    start = i + 1;
+                    lines = 0;
                 }
             }
-            if (operands.length > 1) {
-                prefix = operands[1];
-            }
-        } else {
-            content = input || '';
+            if (start < data.length) pieces.push(data.subarray(start));
         }
 
-        const lines = content.split('\n');
-        // Handle trailing newline behavior: if file ends in newline, last split element is empty.
-        // split usually preserves content exactly. "a\n" is 1 line. "a" is 1 line.
-        // We'll stick to simple line splitting for chunks.
-        if (content.endsWith('\n') && lines[lines.length - 1] === '') lines.pop();
-
-        let chunkIndex = 0;
-        for (let i = 0; i < lines.length; i += lineCount) {
-            const chunk = lines.slice(i, i + lineCount);
-            // Reconstruct content
-            // Be careful: if original had newlines, we add them back.
-            // Split output files usually end with newline unless original didn't?
-            // "The split utility shall read an input file ... and write ... fixed-size pieces"
-            // We'll assume standard text files.
-            const chunkContent = chunk.join('\n') + '\n';
-
-            // Generate filename: prefix + suffix (aa, ab, ..., zy, zz)
-            const suffix = this.generateSuffix(chunkIndex, suffixLength);
-            const filename = prefix + suffix;
-
-            // Write to CWD
-            const path = state.currentDirectory === '/' ? `/${filename}` : `${state.currentDirectory}/${filename}`;
+        const fs = context.fileSystemService;
+        for (let i = 0; i < pieces.length; i++) {
+            const sfx = suffix(i, suffixLen, opts.has('d'));
+            if (sfx === null) return this.respond(state, '', ['output file suffixes exhausted']);
             try {
-                context.fileSystemService.writeFile(path, chunkContent, 'w');
+                fs.writeFile(fs.resolveAbsolutePath(prefix + sfx, context.cwd), pieces[i], 'w', undefined, undefined, '/');
             } catch (e) {
-                return { output: `split: cannot write ${filename}`, newState: state, exitCode: 1 };
+                return this.respond(state, '', [`${prefix + sfx}: ${strerror(e)}`]);
             }
-            chunkIndex++;
         }
-
-        return {
-            output: '', // No output on success
-            newState: state,
-            exitCode: 0
-        };
-    }
-
-    private resolvePath(path: string, state: TerminalState): string {
-        if (path.startsWith('/')) return path;
-        return state.currentDirectory === '/' ? `/${path}` : `${state.currentDirectory}/${path}`;
-    }
-
-    private generateSuffix(index: number, length: number): string {
-        // Base 26: a-z
-        let suffix = '';
-        let temp = index;
-        for (let i = 0; i < length; i++) {
-            const charCode = 97 + (temp % 26); // 'a' is 97
-            suffix = String.fromCharCode(charCode) + suffix;
-            temp = Math.floor(temp / 26);
-        }
-        // This generates "ba" for index 1? No.
-        // Standard is aa, ab, ac...
-        // My logic: index 0 -> aa. index 1 -> ab.
-        // With i loop 0..length-1:
-        // suffix added at start?
-        // Wait. "aa", "ab"
-        // rightmost char changes fastest.
-        // Logic:
-        // char at pos p (from right, 0-indexed) is (index / 26^p) % 26
-
-        let res = '';
-        for (let i = 0; i < length; i++) {
-            const val = Math.floor(index / Math.pow(26, length - 1 - i)) % 26;
-            res += String.fromCharCode(97 + val);
-        }
-        return res;
+        return this.respond(state, '');
     }
 }

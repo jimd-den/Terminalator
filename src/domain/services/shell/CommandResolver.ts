@@ -1,6 +1,13 @@
 import { FileSystemService } from '../FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
 
+/**
+ * Utilities the shell runs without a PATH search, as dash and bash do
+ * (they are builtins there): found even if PATH is empty or /usr/bin is
+ * damaged, and reported by `type` as shell builtins.
+ */
+export const BUILTIN_UTILITIES = new Set(['echo', 'printf', 'test', '[', 'kill', 'true', 'false', 'pwd', 'jobs', 'fg', 'bg', 'wait', 'times', 'ulimit']);
+
 /** Marker written into /bin stubs: the file is backed by a registry utility. */
 export const UTILITY_STUB_PREFIX = '#!/bin/sh\n# terminalator-utility: ';
 
@@ -35,6 +42,21 @@ export class CommandResolver {
             if (result.kind === 'not-executable') notExecutable ??= result.path;
         }
         return notExecutable ? { kind: 'not-executable', path: notExecutable } : { kind: 'not-found' };
+    }
+
+    /** Every executable named `name` along PATH, in search order (`type -a`). */
+    resolveAll(name: string, state: TerminalState): string[] {
+        if (name.includes('/')) {
+            const r = this.resolve(name, state);
+            return r.kind === 'file' ? [r.path] : [];
+        }
+        const found: string[] = [];
+        for (const rawDir of (state.environment.PATH ?? '/usr/bin:/bin').split(':')) {
+            const dir = rawDir === '' ? state.currentDirectory : rawDir;
+            const r = this.inspect(this.fs.resolveAbsolutePath(`${dir}/${name}`, state.currentDirectory), state);
+            if (r.kind === 'file' && !found.includes(r.path)) found.push(r.path);
+        }
+        return found;
     }
 
     private inspect(path: string, state: TerminalState): ResolvedCommand {

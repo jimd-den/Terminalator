@@ -79,7 +79,7 @@ export const ExecBuiltin: ShellBuiltin = {
     },
 };
 
-const KEYWORDS = new Set(['if', 'then', 'else', 'elif', 'fi', 'case', 'esac', 'for', 'while', 'until', 'do', 'done', 'in', '{', '}', '!']);
+const KEYWORDS = new Set(['time', 'if', 'then', 'else', 'elif', 'fi', 'case', 'esac', 'for', 'while', 'until', 'do', 'done', 'in', '{', '}', '!']);
 
 export function isKeyword(name: string): boolean {
     return KEYWORDS.has(name);
@@ -136,20 +136,43 @@ export const CommandBuiltin: ShellBuiltin = {
     },
 };
 
-/** type name... — describe how each name would be interpreted. */
+/**
+ * type [-afptP] name... — describe how each name would be interpreted
+ * (-a all, -t kind word, -p/-P path only: common extensions).
+ */
 export const TypeBuiltin: ShellBuiltin = {
     names: ['type'],
     special: false,
     run(ctx): BuiltinResult {
+        let i = 0;
+        const flags = new Set<string>();
+        for (; i < ctx.args.length && /^-[afptP]+$/.test(ctx.args[i]); i++) for (const c of ctx.args[i].substring(1)) flags.add(c);
+        if (ctx.args[i] === '--') i++;
         let status = 0;
-        for (const name of ctx.args) {
+        for (const name of ctx.args.slice(i)) {
             const d = ctx.runtime.describeCommand(name, ctx.state);
+            const paths = ctx.runtime.findInPath(name, ctx.state);
+            if (flags.has('P') || (flags.has('p') && !flags.has('a'))) {
+                const path = flags.has('P') ? paths[0] : d.kind === 'file' ? d.path : undefined;
+                if (path) out(ctx, path + '\n');
+                else if (flags.has('P') || d.kind === 'not-found') status = 1;
+                continue;
+            }
             if (d.kind === 'not-found') {
-                ctx.io.stderr.write(`${name}: not found\n`);
+                if (!flags.has('t')) ctx.io.stderr.write(`${name}: not found\n`);
                 status = 1;
                 continue;
             }
-            out(ctx, describe(name, d, printNode(ctx.state.functions?.get(name))) + '\n');
+            const kinds: CommandDescription[] = flags.has('a')
+                ? [
+                    ...(d.kind !== 'file' ? [d] : []),
+                    ...paths.map(path => ({ kind: 'file', path }) as CommandDescription),
+                ]
+                : [d];
+            for (const k of kinds) {
+                if (flags.has('t')) out(ctx, (k.kind === 'special-builtin' ? 'builtin' : k.kind) + '\n');
+                else out(ctx, describe(name, k, printNode(ctx.state.functions?.get(name))) + '\n');
+            }
         }
         return { status };
     },

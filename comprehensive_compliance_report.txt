@@ -8,10 +8,7 @@ UTILITY: mkdir
 [PASS] MKDIR_07
 [PASS] MKDIR_08
 [PASS] MKDIR_09
-[FAIL] MKDIR_10: Complex nested creation
-       -> Exit Code: Expected 0, got 1
-       -> Missing File: Expected /root/sub1/sub2 to be created.
-       -> Missing File: Expected /root/other to be created.
+[PASS] MKDIR_10
 UTILITY: cd
 [PASS] CD_01
 [PASS] CD_02
@@ -183,10 +180,7 @@ UTILITY: sed
 [PASS] SED_03
 [PASS] SED_04
 [PASS] SED_05
-[FAIL] SED_06: Multiple commands -e
-       -> Stdout Regex Mismatch.
-   Expected: /c/
-   Got: "a"
+[PASS] SED_06
 [PASS] SED_07
 [PASS] SED_08
 [PASS] SED_09
@@ -250,10 +244,7 @@ UTILITY: tr
 [PASS] TR_01
 [PASS] TR_02
 [PASS] TR_03
-[FAIL] TR_04: Complement -c
-       -> Stdout Regex Mismatch.
-   Expected: /xexxox/
-   Got: "xellxx"
+[PASS] TR_04
 [PASS] TR_05
 [PASS] TR_06
 [PASS] TR_07
@@ -286,21 +277,17 @@ UTILITY: alias
 [PASS] ALIAS_01
 [PASS] ALIAS_02
 [PASS] ALIAS_03
-[FAIL] ALIAS_04: Invalid name
-       -> Exit Code: Expected 1, got 0
+[PASS] ALIAS_04
 [PASS] ALIAS_05
 [PASS] ALIAS_06
 [PASS] ALIAS_07
 [PASS] ALIAS_08
 [PASS] ALIAS_09
-[FAIL] ALIAS_10: Flag -p (stub)
-       -> Exit Code: Expected 0, got 1
+[PASS] ALIAS_10
 UTILITY: unalias
-[FAIL] UNALIAS_01: Remove alias
-       -> Exit Code: Expected 0, got 1
+[PASS] UNALIAS_01
 [PASS] UNALIAS_02
-[FAIL] UNALIAS_03: Remove multiple
-       -> Exit Code: Expected 0, got 1
+[PASS] UNALIAS_03
 [PASS] UNALIAS_04
 [PASS] UNALIAS_05
 [PASS] UNALIAS_06
@@ -369,19 +356,16 @@ UTILITY: sleep
 [PASS] SLEEP_03
 [PASS] SLEEP_04
 [PASS] SLEEP_05
-[FAIL] SLEEP_06: Negative?
-       -> Exit Code: Expected 1, got 0
+[PASS] SLEEP_06
 [PASS] SLEEP_07
-[FAIL] SLEEP_08: Multiple args?
-       -> Exit Code: Expected 1, got 0
+[PASS] SLEEP_08
 [PASS] SLEEP_09
 [PASS] SLEEP_10
 UTILITY: false
 [PASS] FALSE_01
 [PASS] FALSE_02
 [PASS] FALSE_03
-[FAIL] FALSE_04: Pipe failure
-       -> Exit Code: Expected 1, got 0
+[PASS] FALSE_04
 [PASS] FALSE_05
 [PASS] FALSE_06
 [PASS] FALSE_07
@@ -420,8 +404,7 @@ UTILITY: dirname
 [PASS] DIRNAME_07
 [PASS] DIRNAME_08
 [PASS] DIRNAME_09
-[FAIL] DIRNAME_10: Multiple args fail?
-       -> Exit Code: Expected 1, got 0
+[PASS] DIRNAME_10
 UTILITY: file
 [PASS] FILE_01
 [PASS] FILE_02
@@ -439,8 +422,7 @@ UTILITY: join
 [PASS] JOIN_02
 [PASS] JOIN_03
 [PASS] JOIN_04
-[FAIL] JOIN_05: Output format -o
-       -> Exit Code: Expected 0, got 1
+[PASS] JOIN_05
 [PASS] JOIN_06
 [PASS] JOIN_07
 [PASS] JOIN_08
@@ -451,43 +433,31 @@ UTILITY: paste
 [PASS] PASTE_02
 [PASS] PASTE_03
 [PASS] PASTE_04
-[FAIL] PASTE_05: Multiple files
-       -> Exit Code: Expected 0, got 1
+[PASS] PASTE_05
 [PASS] PASTE_06
 [PASS] PASTE_07
 [PASS] PASTE_08
-[FAIL] PASTE_09: Multiline delim
-       -> Exit Code: Expected 0, got 1
+[PASS] PASTE_09
 [PASS] PASTE_10
 UTILITY: split
 [PASS] SPLIT_01
 [PASS] SPLIT_02
-[FAIL] SPLIT_03: Bytes -b
-       -> Exit Code: Expected 0, got 1
-       -> Missing File: Expected /home/operator/xab to be created.
+[PASS] SPLIT_03
 [PASS] SPLIT_04
 [PASS] SPLIT_05
 [PASS] SPLIT_06
 [PASS] SPLIT_07
 [PASS] SPLIT_08
-[FAIL] SPLIT_09: Numeric suffix -d (Ext)
-       -> Missing File: Expected /home/operator/x00 to be created.
-[FAIL] SPLIT_10: Split empty?
-       -> Exit Code: Expected 0, got 1
+[PASS] SPLIT_09
+[PASS] SPLIT_10
 UTILITY: csplit
-[FAIL] CSPLIT_01: Context split line
-       -> Missing File: Expected /home/operator/xx00 to be created.
-       -> Missing File: Expected /home/operator/xx01 to be created.
+[PASS] CSPLIT_01
 [PASS] CSPLIT_02
-[FAIL] CSPLIT_03: Prefix -f
-       -> Missing File: Expected /home/operator/out00 to be created.
-[FAIL] CSPLIT_04: Digits -n
-       -> Missing File: Expected /home/operator/xx0000 to be created.
-[FAIL] CSPLIT_05: Keep files -k
-       -> Exit Code: Expected 1, got 0
+[PASS] CSPLIT_03
+[PASS] CSPLIT_04
+[PASS] CSPLIT_05
 [PASS] CSPLIT_06
-[FAIL] CSPLIT_07: Fail missing
-       -> Exit Code: Expected 1, got 0
+[PASS] CSPLIT_07
 [PASS] CSPLIT_08
 [PASS] CSPLIT_09
 [PASS] CSPLIT_10
@@ -499,8 +469,7 @@ UTILITY: comm
 [PASS] COMM_05
 [PASS] COMM_06
 [PASS] COMM_07
-[FAIL] COMM_08: Stdin
-       -> Exit Code: Expected 0, got 1
+[PASS] COMM_08
 [PASS] COMM_09
 [PASS] COMM_10
 UTILITY: cmp
@@ -556,20 +525,16 @@ UTILITY: test
 [PASS] TEST_06
 [PASS] TEST_07
 [PASS] TEST_08
-[FAIL] TEST_09: AND -a (XSI)
-       -> Exit Code: Expected 1, got 0
+[PASS] TEST_09
 [PASS] TEST_10
 UTILITY: [
 [PASS] BRACKET_01
-[FAIL] BRACKET_02: Missing closing
-       -> Exit Code: Expected 1, got 2
+[PASS] BRACKET_02
 [PASS] BRACKET_03
-[FAIL] BRACKET_04: Spaces needed
-       -> Exit Code: Expected 1, got 127
+[PASS] BRACKET_04
 [PASS] BRACKET_05
 [PASS] BRACKET_06
-[FAIL] BRACKET_07: Group ( ) (XSI)
-       -> Exit Code: Expected 0, got 2
+[PASS] BRACKET_07
 [PASS] BRACKET_08
 [PASS] BRACKET_09
 [PASS] BRACKET_10
@@ -613,10 +578,8 @@ UTILITY: uname
 [PASS] UNAME_04
 [PASS] UNAME_05
 [PASS] UNAME_06
-[FAIL] UNAME_07: Invalid flag
-       -> Exit Code: Expected 1, got 0
-[FAIL] UNAME_08: Extra args
-       -> Exit Code: Expected 1, got 0
+[PASS] UNAME_07
+[PASS] UNAME_08
 [PASS] UNAME_09
 [PASS] UNAME_10
 UTILITY: logname
@@ -632,24 +595,13 @@ UTILITY: logname
 [PASS] LOGNAME_10
 UTILITY: env
 [PASS] ENV_01
-[FAIL] ENV_02: Set var
-       -> Stdout Regex Mismatch.
-   Expected: /TESTVAR=val/
-   Got: "PATH=/usr/local/bin:/usr/bin:/bin\nUSER=operator\nLOGNAME=operator\nPWD=/home/operator\nLANG=C.UTF-8\nHOME=/home/operator\nSHELL=/bin/sh\nTERM=xterm-256color"
-[FAIL] ENV_03: Run utility
-       -> Stdout Regex Mismatch.
-   Expected: /hello/
-   Got: "PATH=/usr/local/bin:/usr/bin:/bin\nUSER=operator\nLOGNAME=operator\nPWD=/home/operator\nLANG=C.UTF-8\nHOME=/home/operator\nSHELL=/bin/sh\nTERM=xterm-256color"
+[PASS] ENV_02
+[PASS] ENV_03
 [PASS] ENV_04
 [PASS] ENV_05
-[FAIL] ENV_06: Fail missing util
-       -> Exit Code: Expected 127, got 0
-[FAIL] ENV_07: Fail permission
-       -> Exit Code: Expected 126, got 0
-[FAIL] ENV_08: Multiple vars
-       -> Stdout Regex Mismatch.
-   Expected: /ok/
-   Got: "PATH=/usr/local/bin:/usr/bin:/bin\nUSER=operator\nLOGNAME=operator\nPWD=/home/operator\nLANG=C.UTF-8\nHOME=/home/operator\nSHELL=/bin/sh\nTERM=xterm-256color"
+[PASS] ENV_06
+[PASS] ENV_07
+[PASS] ENV_08
 [PASS] ENV_09
 [PASS] ENV_10
 UTILITY: ar
@@ -691,10 +643,7 @@ UTILITY: sh
 [PASS] SH_04
 [PASS] SH_05
 [PASS] SH_06
-[FAIL] SH_07: Positional args
-       -> Stdout Regex Mismatch.
-   Expected: /123/
-   Got: ""
+[PASS] SH_07
 [PASS] SH_08
 [PASS] SH_09
 [PASS] SH_10
@@ -716,12 +665,10 @@ UTILITY: time
 [PASS] TIME_03
 [PASS] TIME_04
 [PASS] TIME_05
-[FAIL] TIME_06: No args?
-       -> Exit Code: Expected 0, got 1
+[PASS] TIME_06
 [PASS] TIME_07
 [PASS] TIME_08
-[FAIL] TIME_09: Subshell
-       -> Exit Code: Expected 0, got 2
+[PASS] TIME_09
 [PASS] TIME_10
 UTILITY: fold
 [PASS] FOLD_01
@@ -789,27 +736,19 @@ UTILITY: mesg
 [PASS] MESG_10
 UTILITY: uudecode
 [PASS] UUDECODE_01
-[FAIL] UUDECODE_02: Stdout -o
-       -> Exit Code: Expected 0, got 1
+[PASS] UUDECODE_02
 [PASS] UUDECODE_03
 [PASS] UUDECODE_04
-[FAIL] UUDECODE_05: Fail strict
-       -> Exit Code: Expected 1, got 0
+[PASS] UUDECODE_05
 [PASS] UUDECODE_06
-[FAIL] UUDECODE_07: Base64 -m (Ext)
-       -> Exit Code: Expected 0, got 1
-[FAIL] UUDECODE_08: Output flag (Ext)
-       -> Exit Code: Expected 0, got 1
+[PASS] UUDECODE_07
+[PASS] UUDECODE_08
 [PASS] UUDECODE_09
 [PASS] UUDECODE_10
 UTILITY: uuencode
 [PASS] UUENCODE_01
 [PASS] UUENCODE_02
-[FAIL] UUENCODE_03: Base64 -m
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /begin-base64/
-   Got: "uuencode: missing operand"
+[PASS] UUENCODE_03
 [PASS] UUENCODE_04
 [PASS] UUENCODE_05
 [PASS] UUENCODE_06
@@ -941,10 +880,8 @@ UTILITY: cal
 [PASS] CAL_01
 [PASS] CAL_02
 [PASS] CAL_03
-[FAIL] CAL_04: Fail bad month
-       -> Exit Code: Expected 1, got 0
-[FAIL] CAL_05: Fail bad year
-       -> Exit Code: Expected 1, got 0
+[PASS] CAL_04
+[PASS] CAL_05
 [PASS] CAL_06
 [PASS] CAL_07
 [PASS] CAL_08
@@ -952,35 +889,26 @@ UTILITY: cal
 [PASS] CAL_10
 UTILITY: link
 [PASS] LINK_01
-[FAIL] LINK_02: Content check
-       -> Stdout Regex Mismatch.
-   Expected: /x/
-   Got: "cat: lnk: No such file or directory"
+[PASS] LINK_02
 [PASS] LINK_03
 [PASS] LINK_04
 [PASS] LINK_05
 [PASS] LINK_06
 [PASS] LINK_07
 [PASS] LINK_08
-[FAIL] LINK_09: Verify count (stub)
-       -> Exit Code: Expected 0, got 1
+[PASS] LINK_09
 [PASS] LINK_10
 UTILITY: ln
 [PASS] LN_01
 [PASS] LN_02
-[FAIL] LN_03: Force -f
-       -> Exit Code: Expected 0, got 1
+[PASS] LN_03
 [PASS] LN_04
 [PASS] LN_05
 [PASS] LN_06
 [PASS] LN_07
 [PASS] LN_08
-[FAIL] LN_09: Multiple inputs
-       -> Exit Code: Expected 0, got 1
-       -> Missing File: Expected /home/operator/d/f1 to be created.
-       -> Missing File: Expected /home/operator/d/f2 to be created.
-[FAIL] LN_10: Interact -i
-       -> Exit Code: Expected 0, got 1
+[PASS] LN_09
+[PASS] LN_10
 UTILITY: nl
 [PASS] NL_01
 [PASS] NL_02
@@ -1085,8 +1013,7 @@ UTILITY: command
 [PASS] COMMAND_07
 [PASS] COMMAND_08
 [PASS] COMMAND_09
-[FAIL] COMMAND_10: No args
-       -> Exit Code: Expected 1, got 0
+[PASS] COMMAND_10
 UTILITY: fc
 [PASS] FC_01
 [PASS] FC_02
@@ -1095,8 +1022,7 @@ UTILITY: fc
 [PASS] FC_05
 [PASS] FC_06
 [PASS] FC_07
-[FAIL] FC_08: Fail missing
-       -> Exit Code: Expected 1, got 0
+[PASS] FC_08
 [PASS] FC_09
 [PASS] FC_10
 UTILITY: getopts
@@ -1135,18 +1061,14 @@ UTILITY: set
 UTILITY: shift
 [PASS] SHIFT_01
 [PASS] SHIFT_02
-[FAIL] SHIFT_03: Fail > count
-       -> Exit Code: Expected 1, got 2
+[PASS] SHIFT_03
 [PASS] SHIFT_04
-[FAIL] SHIFT_05: Too many args
-       -> Exit Code: Expected 1, got 2
-[FAIL] SHIFT_06: No args set
-       -> Exit Code: Expected 1, got 2
+[PASS] SHIFT_05
+[PASS] SHIFT_06
 [PASS] SHIFT_07
 [PASS] SHIFT_08
 [PASS] SHIFT_09
-[FAIL] SHIFT_10: Invalid arg
-       -> Exit Code: Expected 1, got 2
+[PASS] SHIFT_10
 UTILITY: times
 [PASS] TIMES_01
 [PASS] TIMES_02
@@ -1172,20 +1094,14 @@ UTILITY: trap
 UTILITY: type
 [PASS] TYPE_01
 [PASS] TYPE_02
-[FAIL] TYPE_03: Identify builtin
-       -> Stdout Regex Mismatch.
-   Expected: /builtin/
-   Got: "echo is /usr/bin/echo"
+[PASS] TYPE_03
 [PASS] TYPE_04
 [PASS] TYPE_05
 [PASS] TYPE_06
 [PASS] TYPE_07
-[FAIL] TYPE_08: All locations -a (Ext)
-       -> Exit Code: Expected 0, got 1
-[FAIL] TYPE_09: Path -p (Ext)
-       -> Exit Code: Expected 0, got 1
-[FAIL] TYPE_10: No args
-       -> Exit Code: Expected 1, got 0
+[PASS] TYPE_08
+[PASS] TYPE_09
+[PASS] TYPE_10
 UTILITY: ulimit
 [PASS] ULIMIT_01
 [PASS] ULIMIT_02
@@ -1203,22 +1119,11 @@ UTILITY: umask
 [PASS] UMASK_01
 [PASS] UMASK_02
 [PASS] UMASK_03
-[FAIL] UMASK_04: Symbolic output -S
-       -> Stdout Regex Mismatch.
-   Expected: /u=.*,g=.*,o=.*/
-   Got: ""
-[FAIL] UMASK_05: Fail invalid
-       -> Exit Code: Expected 1, got 0
-[FAIL] UMASK_06: Verify effect
-       -> Stdout Regex Mismatch.
-   Expected: /000/
-   Got: "0022"
-[FAIL] UMASK_07: Verify effect 2
-       -> Stdout Regex Mismatch.
-   Expected: /777/
-   Got: "0022"
-[FAIL] UMASK_08: Too many args
-       -> Exit Code: Expected 1, got 0
+[PASS] UMASK_04
+[PASS] UMASK_05
+[PASS] UMASK_06
+[PASS] UMASK_07
+[PASS] UMASK_08
 [PASS] UMASK_09
 [PASS] UMASK_10
 UTILITY: unset
@@ -1229,10 +1134,8 @@ UTILITY: unset
 [PASS] UNSET_05
 [PASS] UNSET_06
 [PASS] UNSET_07
-[FAIL] UNSET_08: No args
-       -> Exit Code: Expected 1, got 0
-[FAIL] UNSET_09: Unset array (Ext)
-       -> Exit Code: Expected 0, got 1
+[PASS] UNSET_08
+[PASS] UNSET_09
 [PASS] UNSET_10
 UTILITY: export
 [PASS] EXPORT_01
@@ -1249,8 +1152,7 @@ UTILITY: eval
 [PASS] EVAL_01
 [PASS] EVAL_02
 [PASS] EVAL_03
-[FAIL] EVAL_04: Fail syntax
-       -> Exit Code: Expected 1, got 2
+[PASS] EVAL_04
 [PASS] EVAL_05
 [PASS] EVAL_06
 [PASS] EVAL_07
@@ -1396,7 +1298,7 @@ UTILITY: who
 [FAIL] WHO_02: Headers -H
        -> Stdout Regex Mismatch.
    Expected: /NAME/
-   Got: "operator   tty1   2026-10-04 18:43"
+   Got: "operator   tty1   2026-10-04 19:01"
 [PASS] WHO_03
 [PASS] WHO_04
 [PASS] WHO_05
@@ -1691,22 +1593,16 @@ UTILITY: mkfifo
 [PASS] MKFIFO_04
 [PASS] MKFIFO_05
 [PASS] MKFIFO_06
-[FAIL] MKFIFO_07: Consistency
-       -> Exit Code: Expected 0, got 1
-[FAIL] MKFIFO_08: Verify type (stub)
-       -> Stdout Regex Mismatch.
-   Expected: /^p/
-   Got: "mkfifo: cannot create fifo 'p': File exists\n-rw-r--r-- 1 operator operator 0 Oct  4 18:43 p"
-[FAIL] MKFIFO_09: Permissions check
-       -> Exit Code: Expected 0, got 1
+[PASS] MKFIFO_07
+[PASS] MKFIFO_08
+[PASS] MKFIFO_09
 [PASS] MKFIFO_10
 UTILITY: unlink
 [PASS] UNLINK_01
 [PASS] UNLINK_02
 [PASS] UNLINK_03
 [PASS] UNLINK_04
-[FAIL] UNLINK_05: Fail mult args
-       -> Exit Code: Expected 1, got 0
+[PASS] UNLINK_05
 [PASS] UNLINK_06
 [PASS] UNLINK_07
 [PASS] UNLINK_08
@@ -1727,34 +1623,20 @@ UTILITY: patch
 [PASS] PATCH_10
 UTILITY: readlink
 [PASS] READLINK_01
-[FAIL] READLINK_02: Canonical -f
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /\/home\/operator\/f/
-   Got: "readlink: l: Invalid argument"
+[PASS] READLINK_02
 [PASS] READLINK_03
 [PASS] READLINK_04
-[FAIL] READLINK_05: Silent -q
-       -> Stdout Regex Mismatch.
-   Expected: /^$/
-   Got: "readlink: missing: Invalid argument"
-[FAIL] READLINK_06: No newline -n
-       -> Exit Code: Expected 0, got 1
+[PASS] READLINK_05
+[PASS] READLINK_06
 [PASS] READLINK_07
-[FAIL] READLINK_08: Verbose -v
-       -> Exit Code: Expected 0, got 1
-[FAIL] READLINK_09: Consistency
-       -> Exit Code: Expected 0, got 1
+[PASS] READLINK_08
+[PASS] READLINK_09
 [PASS] READLINK_10
 UTILITY: realpath
 [PASS] REALPATH_01
-[FAIL] REALPATH_02: Resolve symlink
-       -> Stdout Regex Mismatch.
-   Expected: /\/f/
-   Got: "/home/operator/l"
+[PASS] REALPATH_02
 [PASS] REALPATH_03
-[FAIL] REALPATH_04: Ignore missing -m
-       -> Exit Code: Expected 0, got 1
+[PASS] REALPATH_04
 [PASS] REALPATH_05
 [PASS] REALPATH_06
 [PASS] REALPATH_07
@@ -1778,30 +1660,24 @@ UTILITY: timeout
 UTILITY: break
 [PASS] BREAK_01
 [PASS] BREAK_02
-[FAIL] BREAK_03: Fail arg
-       -> Exit Code: Expected 1, got 2
+[PASS] BREAK_03
 [PASS] BREAK_04
 [PASS] BREAK_05
 [PASS] BREAK_06
 [PASS] BREAK_07
-[FAIL] BREAK_08: Too many args
-       -> Exit Code: Expected 1, got 0
-[FAIL] BREAK_09: Zero depth
-       -> Exit Code: Expected 1, got 2
+[PASS] BREAK_08
+[PASS] BREAK_09
 [PASS] BREAK_10
 UTILITY: continue
 [PASS] CONTINUE_01
 [PASS] CONTINUE_02
-[FAIL] CONTINUE_03: Fail arg
-       -> Exit Code: Expected 1, got 2
+[PASS] CONTINUE_03
 [PASS] CONTINUE_04
 [PASS] CONTINUE_05
 [PASS] CONTINUE_06
 [PASS] CONTINUE_07
-[FAIL] CONTINUE_08: Zero
-       -> Exit Code: Expected 1, got 2
-[FAIL] CONTINUE_09: Too many
-       -> Exit Code: Expected 1, got 0
+[PASS] CONTINUE_08
+[PASS] CONTINUE_09
 [PASS] CONTINUE_10
 UTILITY: colon
 [PASS] COLON_01
@@ -1838,8 +1714,7 @@ UTILITY: exit
 [PASS] EXIT_10
 UTILITY: readonly
 [PASS] READONLY_01
-[FAIL] READONLY_02: Fail modify
-       -> Exit Code: Expected 1, got 2
+[PASS] READONLY_02
 [PASS] READONLY_03
 [PASS] READONLY_04
 [PASS] READONLY_05
@@ -2036,13 +1911,11 @@ UTILITY: ipcs
 UTILITY: iconv
 [PASS] ICONV_01
 [PASS] ICONV_02
-[FAIL] ICONV_03: Fail codeset
-       -> Exit Code: Expected 1, got 0
+[PASS] ICONV_03
 [PASS] ICONV_04
 [PASS] ICONV_05
 [PASS] ICONV_06
-[FAIL] ICONV_07: Fail args
-       -> Exit Code: Expected 1, got 0
+[PASS] ICONV_07
 [PASS] ICONV_08
 [PASS] ICONV_09
 [PASS] ICONV_10
@@ -2227,8 +2100,7 @@ UTILITY: ngettext
 UTILITY: pathchk
 [PASS] PATHCHK_01
 [PASS] PATHCHK_02
-[FAIL] PATHCHK_03: Fail long
-       -> Exit Code: Expected 1, got 0
+[PASS] PATHCHK_03
 [PASS] PATHCHK_04
 [PASS] PATHCHK_05
 [PASS] PATHCHK_06
@@ -2320,7 +2192,7 @@ UTILITY: xgettext
 === COMPLIANCE SUMMARY ===
 UTILITY       | TESTS | PASS | FAIL | COMPLIANCE
 --------------|-------|------|------|-----------
-mkdir         |    10 |    9 |    1 |     90.0%
+mkdir         |    10 |   10 |    0 |    100.0%
 cd            |    10 |   10 |    0 |    100.0%
 ls            |    10 |   10 |    0 |    100.0%
 touch         |    10 |   10 |    0 |    100.0%
@@ -2336,57 +2208,57 @@ tail          |    10 |   10 |    0 |    100.0%
 wc            |    10 |   10 |    0 |    100.0%
 chmod         |    10 |   10 |    0 |    100.0%
 awk           |    10 |   10 |    0 |    100.0%
-sed           |    10 |    9 |    1 |     90.0%
+sed           |    10 |   10 |    0 |    100.0%
 find          |    11 |   10 |    0 |     90.9%
 date          |    10 |   10 |    0 |    100.0%
 diff          |    10 |   10 |    0 |    100.0%
 sort          |    10 |   10 |    0 |    100.0%
 uniq          |    10 |   10 |    0 |    100.0%
-tr            |    10 |    9 |    1 |     90.0%
+tr            |    10 |   10 |    0 |    100.0%
 cut           |    10 |   10 |    0 |    100.0%
 tee           |    10 |   10 |    0 |    100.0%
-alias         |    10 |    8 |    2 |     80.0%
-unalias       |    10 |    8 |    2 |     80.0%
+alias         |    10 |   10 |    0 |    100.0%
+unalias       |    10 |   10 |    0 |    100.0%
 bg            |    10 |   10 |    0 |    100.0%
 fg            |    10 |   10 |    0 |    100.0%
 jobs          |    10 |   10 |    0 |    100.0%
 kill          |    10 |   10 |    0 |    100.0%
 wait          |    10 |   10 |    0 |    100.0%
-sleep         |    10 |    8 |    2 |     80.0%
-false         |    10 |    9 |    1 |     90.0%
+sleep         |    10 |   10 |    0 |    100.0%
+false         |    10 |   10 |    0 |    100.0%
 true          |    10 |   10 |    0 |    100.0%
 basename      |    10 |   10 |    0 |    100.0%
-dirname       |    10 |    9 |    1 |     90.0%
+dirname       |    10 |   10 |    0 |    100.0%
 file          |    10 |    9 |    1 |     90.0%
-join          |    10 |    9 |    1 |     90.0%
-paste         |    10 |    8 |    2 |     80.0%
-split         |    10 |    7 |    3 |     70.0%
-csplit        |    10 |    5 |    5 |     50.0%
-comm          |    10 |    9 |    1 |     90.0%
+join          |    10 |   10 |    0 |    100.0%
+paste         |    10 |   10 |    0 |    100.0%
+split         |    10 |   10 |    0 |    100.0%
+csplit        |    10 |   10 |    0 |    100.0%
+comm          |    10 |   10 |    0 |    100.0%
 cmp           |    10 |   10 |    0 |    100.0%
 od            |    10 |   10 |    0 |    100.0%
 expr          |    10 |   10 |    0 |    100.0%
 printf        |    10 |   10 |    0 |    100.0%
-test          |    10 |    9 |    1 |     90.0%
-[             |    10 |    7 |    3 |     70.0%
+test          |    10 |   10 |    0 |    100.0%
+[             |    10 |   10 |    0 |    100.0%
 read          |    10 |   10 |    0 |    100.0%
 xargs         |    10 |   10 |    0 |    100.0%
 id            |    10 |   10 |    0 |    100.0%
-uname         |    10 |    8 |    2 |     80.0%
+uname         |    10 |   10 |    0 |    100.0%
 logname       |    10 |   10 |    0 |    100.0%
-env           |    10 |    5 |    5 |     50.0%
+env           |    10 |   10 |    0 |    100.0%
 ar            |    10 |    4 |    6 |     40.0%
 make          |    10 |    9 |    1 |     90.0%
-sh            |    11 |   10 |    1 |     90.9%
+sh            |    11 |   11 |    0 |    100.0%
 strings       |    10 |   10 |    0 |    100.0%
-time          |    10 |    8 |    2 |     80.0%
+time          |    10 |   10 |    0 |    100.0%
 fold          |    10 |   10 |    0 |    100.0%
 cksum         |    10 |   10 |    0 |    100.0%
 du            |    10 |    9 |    1 |     90.0%
 df            |    10 |    9 |    1 |     90.0%
 mesg          |    10 |    5 |    5 |     50.0%
-uudecode      |    10 |    6 |    4 |     60.0%
-uuencode      |    10 |    9 |    1 |     90.0%
+uudecode      |    10 |   10 |    0 |    100.0%
+uuencode      |    10 |   10 |    0 |    100.0%
 compress      |    10 |   10 |    0 |    100.0%
 uncompress    |    10 |   10 |    0 |    100.0%
 zcat          |    10 |   10 |    0 |    100.0%
@@ -2396,29 +2268,29 @@ tar           |    10 |    6 |    4 |     60.0%
 cpio          |    10 |    8 |    2 |     80.0%
 pax           |    10 |    7 |    3 |     70.0%
 dd            |    10 |   10 |    0 |    100.0%
-cal           |    10 |    8 |    2 |     80.0%
-link          |    10 |    8 |    2 |     80.0%
-ln            |    10 |    7 |    3 |     70.0%
+cal           |    10 |   10 |    0 |    100.0%
+link          |    10 |   10 |    0 |    100.0%
+ln            |    10 |   10 |    0 |    100.0%
 nl            |    10 |   10 |    0 |    100.0%
 pr            |    10 |    2 |    8 |     20.0%
 tsort         |    10 |   10 |    0 |    100.0%
 man           |    10 |    7 |    3 |     70.0%
 more          |    10 |    4 |    6 |     40.0%
 expand        |    10 |   10 |    0 |    100.0%
-command       |    10 |    9 |    1 |     90.0%
-fc            |    10 |    9 |    1 |     90.0%
+command       |    10 |   10 |    0 |    100.0%
+fc            |    10 |   10 |    0 |    100.0%
 getopts       |    10 |   10 |    0 |    100.0%
 hash          |    10 |   10 |    0 |    100.0%
 set           |    10 |   10 |    0 |    100.0%
-shift         |    10 |    6 |    4 |     60.0%
+shift         |    10 |   10 |    0 |    100.0%
 times         |    10 |   10 |    0 |    100.0%
 trap          |    10 |   10 |    0 |    100.0%
-type          |    10 |    6 |    4 |     60.0%
+type          |    10 |   10 |    0 |    100.0%
 ulimit        |    10 |    8 |    2 |     80.0%
-umask         |    10 |    5 |    5 |     50.0%
-unset         |    10 |    8 |    2 |     80.0%
+umask         |    10 |   10 |    0 |    100.0%
+unset         |    10 |   10 |    0 |    100.0%
 export        |    10 |   10 |    0 |    100.0%
-eval          |    10 |    9 |    1 |     90.0%
+eval          |    10 |   10 |    0 |    100.0%
 exec          |    10 |   10 |    0 |    100.0%
 ps            |    10 |    7 |    3 |     70.0%
 nice          |    10 |    8 |    2 |     80.0%
@@ -2451,18 +2323,18 @@ asa           |    10 |    9 |    1 |     90.0%
 chgrp         |    10 |   10 |    0 |    100.0%
 chown         |    10 |   10 |    0 |    100.0%
 rmdir         |    10 |   10 |    0 |    100.0%
-mkfifo        |    10 |    7 |    3 |     70.0%
-unlink        |    10 |    9 |    1 |     90.0%
+mkfifo        |    10 |   10 |    0 |    100.0%
+unlink        |    10 |   10 |    0 |    100.0%
 patch         |    10 |    8 |    2 |     80.0%
-readlink      |    10 |    5 |    5 |     50.0%
-realpath      |    10 |    8 |    2 |     80.0%
+readlink      |    10 |   10 |    0 |    100.0%
+realpath      |    10 |   10 |    0 |    100.0%
 timeout       |    10 |    7 |    3 |     70.0%
-break         |    10 |    7 |    3 |     70.0%
-continue      |    10 |    7 |    3 |     70.0%
+break         |    10 |   10 |    0 |    100.0%
+continue      |    10 |   10 |    0 |    100.0%
 colon         |    10 |   10 |    0 |    100.0%
 dot           |    10 |   10 |    0 |    100.0%
 exit          |    10 |   10 |    0 |    100.0%
-readonly      |    10 |    9 |    1 |     90.0%
+readonly      |    10 |   10 |    0 |    100.0%
 return        |    10 |   10 |    0 |    100.0%
 admin         |    10 |    2 |    8 |     20.0%
 delta         |    10 |    0 |    0 |      0.0%
@@ -2476,7 +2348,7 @@ val           |    10 |    9 |    1 |     90.0%
 what          |    10 |    6 |    4 |     60.0%
 ipcrm         |    10 |    7 |    3 |     70.0%
 ipcs          |    10 |    9 |    1 |     90.0%
-iconv         |    10 |    8 |    2 |     80.0%
+iconv         |    10 |   10 |    0 |    100.0%
 locale        |    10 |    7 |    3 |     70.0%
 localedef     |    10 |    8 |    2 |     80.0%
 c17           |    10 |    3 |    7 |     30.0%
@@ -2489,14 +2361,14 @@ gettext       |    10 |   10 |    0 |    100.0%
 msgfmt        |    10 |    4 |    6 |     40.0%
 newgrp        |    10 |    7 |    3 |     70.0%
 ngettext      |    10 |    3 |    7 |     30.0%
-pathchk       |    10 |    9 |    1 |     90.0%
+pathchk       |    10 |   10 |    0 |    100.0%
 unexpand      |    10 |   10 |    0 |    100.0%
 uucp          |    10 |    2 |    8 |     20.0%
 uustat        |    10 |    9 |    1 |     90.0%
 uux           |    10 |    2 |    8 |     20.0%
 xgettext      |    10 |    6 |    4 |     60.0%
 
-TOTAL COMPLIANCE: 81.7% (1432/1752)
+TOTAL COMPLIANCE: 86.8% (1520/1752)
 
 === MISSING UTILITIES (Implemented but failing) ===
 None

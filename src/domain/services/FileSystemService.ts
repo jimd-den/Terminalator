@@ -41,6 +41,8 @@ export class FileSystemService {
     private writeListeners: ((path: string, content: string | Uint8Array, actingUser?: { uid: number, gid: number, groups: number[] }) => void)[] = [];
     /** Credentials of the process using this view (see `asUser`). Undefined = kernel/system access. */
     private credentials?: Credentials;
+    /** File mode creation mask of the bound process (applied to default modes). */
+    private umask = 0o022;
 
     constructor(private fs: FileSystem) {
         // Dependency Injection / Composition Root for FS Sub-system
@@ -82,9 +84,10 @@ export class FileSystemService {
      * operation that is not given explicit credentials is permission-checked
      * as `user`, and new files are owned by them. The view shares all state.
      */
-    asUser(user: Credentials): FileSystemService {
+    asUser(user: Credentials, umask = 0o022): FileSystemService {
         const view = Object.create(this) as FileSystemService;
         view.credentials = user;
+        view.umask = umask;
         return view;
     }
 
@@ -173,7 +176,7 @@ export class FileSystemService {
             // I should fix that. But let's proceed with functionality.
 
             this.checkParentWritable(parent, actingUser);
-            dentry = this.fileOps.createFile(parent as DirectoryNode, name, 0o644, uid ?? actingUser?.uid ?? 1000, gid ?? actingUser?.gid ?? 1000);
+            dentry = this.fileOps.createFile(parent as DirectoryNode, name, 0o666 & ~this.umask, uid ?? actingUser?.uid ?? 1000, gid ?? actingUser?.gid ?? 1000);
         }
 
         this.fileOps.writeFile(dentry, content, modeStr, actingUser);
@@ -185,7 +188,8 @@ export class FileSystemService {
         return dentry;
     }
 
-    createFile(path: string, mode: number = 0o644, uid?: number, gid?: number, cwd: string = '/'): Dentry {
+    createFile(path: string, mode?: number, uid?: number, gid?: number, cwd: string = '/'): Dentry {
+        mode ??= 0o666 & ~this.umask;
         uid ??= this.credentials?.uid ?? 1000;
         gid ??= this.credentials?.gid ?? 1000;
         // Similar parent resolution logic
@@ -200,7 +204,8 @@ export class FileSystemService {
         return this.fileOps.createFile(parent as DirectoryNode, name, mode, uid, gid);
     }
 
-    mkfifo(path: string, mode: number = 0o644, uid?: number, gid?: number, cwd: string = '/'): Dentry {
+    mkfifo(path: string, mode?: number, uid?: number, gid?: number, cwd: string = '/'): Dentry {
+        mode ??= 0o666 & ~this.umask;
         uid ??= this.credentials?.uid ?? 1000;
         gid ??= this.credentials?.gid ?? 1000;
         const absPath = this.resolveAbsolutePath(path, cwd);
@@ -229,7 +234,8 @@ export class FileSystemService {
     // DIRECTORY OPERATIONS (Delegated to DirService)
     // ==========================================
 
-    mkdir(path: string, mode: number = 0o755, uid?: number, gid?: number, cwd: string = '/'): Dentry {
+    mkdir(path: string, mode?: number, uid?: number, gid?: number, cwd: string = '/'): Dentry {
+        mode ??= 0o777 & ~this.umask;
         uid ??= this.credentials?.uid ?? 1000;
         gid ??= this.credentials?.gid ?? 1000;
         const absPath = this.resolveAbsolutePath(path, cwd);
@@ -243,13 +249,15 @@ export class FileSystemService {
         return this.dirService.mkdir(parent as DirectoryNode, name, mode, uid, gid);
     }
 
-    mkdirp(path: string, mode: number = 0o755, uid?: number, gid?: number, cwd: string = '/'): Dentry {
+    mkdirp(path: string, mode?: number, uid?: number, gid?: number, cwd: string = '/'): Dentry {
+        mode ??= 0o777 & ~this.umask;
         uid ??= this.credentials?.uid ?? 1000;
         gid ??= this.credentials?.gid ?? 1000;
         return this.dirService.mkdirp(path, mode, uid, gid, cwd);
     }
 
-    createDirectory(path: string, mode: number = 0o755, uid?: number, gid?: number, cwd: string = '/'): Dentry {
+    createDirectory(path: string, mode?: number, uid?: number, gid?: number, cwd: string = '/'): Dentry {
+        mode ??= 0o777 & ~this.umask;
         uid ??= this.credentials?.uid ?? 1000;
         gid ??= this.credentials?.gid ?? 1000;
         return this.mkdirp(path, mode, uid, gid, cwd);

@@ -9,7 +9,7 @@ import {
     exportedEnvironment, getOption, ReadonlyVariableError, setVariable
 } from '../expansion/ShellVariables';
 import { BuiltinRegistry, ShellBuiltin } from '../builtins/ShellBuiltin';
-import { CommandResolver } from '../CommandResolver';
+import { BUILTIN_UTILITIES, CommandResolver } from '../CommandResolver';
 import { UtilityRunner } from '../UtilityRunner';
 import { ProgramLoader } from '../ProgramLoader';
 import { SimulationBus, GameEventType, CommandExecutedPayload } from '../../SimulationBus';
@@ -93,6 +93,14 @@ export class CommandExecutor implements NodeExecutor {
         if (fn) return this.withTemporaryAssignments(assignments, state, s => this.runFunction(fn, args, s, io));
 
         if (builtin) return this.withTemporaryAssignments(assignments, state, s => this.runBuiltin(builtin, name, args, s, io));
+
+        if (BUILTIN_UTILITIES.has(name) && this.runtime.registry.get(name)) {
+            return this.withTemporaryAssignments(assignments, state, s => {
+                const env = { ...exportedEnvironment(s) };
+                for (const [n, v] of assignments) env[n] = v;
+                return this.runUtility(name, args, env, s, io);
+            });
+        }
 
         return this.withTemporaryAssignments(assignments, state, s => this.runExternal(name, args, assignments, s, io));
     }

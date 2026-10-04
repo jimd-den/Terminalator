@@ -11,6 +11,7 @@ import { defaultBuildArgs } from '../CommandBase';
 export abstract class Utility implements IStructuredCommand {
     abstract readonly utility: string;
     readonly capabilities: CommandCapability[] = [];
+    readonly exactOutput = true;
 
     abstract execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse | Promise<CommandResponse>;
 

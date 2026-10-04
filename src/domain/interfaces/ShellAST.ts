@@ -19,7 +19,8 @@ export enum NodeType {
     IF = 'IF',
     FOR = 'FOR',
     WHILE = 'WHILE',
-    CASE = 'CASE'
+    CASE = 'CASE',
+    TIMED = 'TIMED'
 }
 
 export interface ASTNode {
@@ -131,4 +132,12 @@ export interface CaseNode extends ASTNode {
     type: NodeType.CASE;
     word: string;
     items: CaseItem[];
+}
+
+/** `time [-p] [pipeline]` (reserved word in bash/ksh): report elapsed time on stderr. */
+export interface TimedNode extends ASTNode {
+    type: NodeType.TIMED;
+    body: ASTNode | null;
+    /** -p: POSIX output format. */
+    posix: boolean;
 }

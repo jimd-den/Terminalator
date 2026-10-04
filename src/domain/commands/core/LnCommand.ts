@@ -1,95 +1,68 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
- * LnCommand - Core Command
- *
- * Creates links (hard or soft).
- *
- * Pillar: The Four-Fold Shield (Strict Architecture)
- * Pillar: The Swift Stream (Performance)
- * Pillar: The Storyteller’s Code (Literate Documentation)
- *
- * Intent:
- * Allows the operator to create links between files.
- * Refactored to implement IStructuredCommand for combinatorial scaling.
+ * ln - link files (POSIX):
+ *   ln [-fs] [-L|-P] source target
+ *   ln [-fs] [-L|-P] source... directory
+ * plus -n, -v and -i (no terminal answers: never overwrite) from GNU.
  */
-
-import { CommandBase } from '../CommandBase';
-import { CommandCapability } from '../IStructuredCommand';
-import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { CommandResponse } from '../ICommand';
+import { ProcessContext } from '../../entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../entities/Command';
-
 import { FileSystemService } from '../../services/FileSystemService';
+import { CommandCapability } from '../IStructuredCommand';
+import { Utility } from '../shared/Utility';
+import { getopt } from '../shared/InputFiles';
+import { statPath } from '../shared/FileInfo';
+import { canonicalize, strerror } from '../shared/PathOps';
+import { basename } from './BasenameCommand';
 
-export class LnCommand extends CommandBase {
-    public readonly capabilities = [CommandCapability.MODIFY];
-    public readonly utility = 'ln';
+export class LnCommand extends Utility {
+    readonly utility = 'ln';
+    readonly capabilities = [CommandCapability.MODIFY];
 
-    constructor(private fs: FileSystemService) { 
-        super();
-    }
+    constructor(private fs?: FileSystemService) { super(); }
 
-    protected async executeInternal(
-        rawArgs: string[],
-        flags: Set<string>,
-        operands: string[],
-        context: ProcessContext,
-        state: TerminalState
-    ): Promise<CommandResponse> {
-        const symbolic = flags.has('s');
-        const force = flags.has('f');
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const { opts, operands, error } = getopt(args, 'fsLPnvi');
+        if (error) return this.usage(state, error);
+        if (operands.length === 0) return this.usage(state, 'missing file operand');
+        if (operands.length === 1) operands.push('.');
 
-        if (operands.length < 2) {
-            return {
-                output: 'ln: missing file operand',
-                newState: state,
-                exitCode: 1
-            };
-        }
+        const fs = context.fileSystemService;
+        const lastInfo = statPath(context, operands[operands.length - 1], !opts.has('n'));
+        const toDir = lastInfo?.kind === 'directory';
+        if (operands.length > 2 && !toDir) return this.usage(state, `target '${operands[operands.length - 1]}': Not a directory`);
 
-        const target = operands[0];
-        const linkName = operands[1];
+        const sources = operands.slice(0, -1);
+        const errors: string[] = [];
+        let out = '';
+        for (const source of sources) {
+            const dest = toDir ? `${operands[operands.length - 1]}/${basename(source)}` : operands[operands.length - 1];
+            const kind = opts.has('s') ? 'symbolic link' : 'hard link';
+            const absDest = fs.resolveAbsolutePath(dest, context.cwd);
+            const existing = statPath(context, dest, false);
 
-        let finalLinkPath = linkName;
-
-        let linkNode = context.fileSystemService.resolve(linkName.startsWith('/') ? linkName : (state.currentDirectory === '/' ? `/${linkName}` : `${state.currentDirectory}/${linkName}`));
-
-        if (linkNode && context.fileSystemService.isDirectory(linkNode)) {
-            const targetBase = target.substring(target.lastIndexOf('/') + 1);
-            finalLinkPath = linkName.endsWith('/') ? `${linkName}${targetBase}` : `${linkName}/${targetBase}`;
-        }
-
-        let absLinkPath = finalLinkPath;
-        if (!finalLinkPath.startsWith('/')) {
-            absLinkPath = state.currentDirectory === '/'
-                ? `/${finalLinkPath}`
-                : `${state.currentDirectory}/${finalLinkPath}`;
-        }
-
-        try {
-            if (symbolic) {
-                context.fileSystemService.symlink(target, absLinkPath, 1000, 1000, '/');
-            } else {
-                let absTarget = target;
-                if (!target.startsWith('/')) {
-                    absTarget = state.currentDirectory === '/'
-                        ? `/${target}`
-                        : `${state.currentDirectory}/${target}`;
-                }
-                context.fileSystemService.link(absTarget, absLinkPath, '/');
+            if (!opts.has('s')) {
+                const src = statPath(context, source, opts.has('L'));
+                if (!src) { errors.push(`failed to access '${source}': No such file or directory`); continue; }
+                if (src.kind === 'directory') { errors.push(`${source}: hard link not allowed for directory`); continue; }
+                if (existing && existing.inode.id === src.inode.id) { errors.push(`'${source}' and '${dest}' are the same file`); continue; }
             }
-        } catch (e: any) {
-            return {
-                output: `ln: ${e.message}`,
-                newState: state,
-                exitCode: 1
-            };
+            if (existing) {
+                if (!opts.has('f') || opts.has('i')) { errors.push(`failed to create ${kind} '${dest}': File exists`); continue; }
+                if (existing.kind === 'directory') { errors.push(`cannot overwrite directory '${dest}'`); continue; }
+                try { fs.deleteNode(absDest, '/'); } catch (e) { errors.push(`cannot remove '${dest}': ${strerror(e)}`); continue; }
+            }
+            try {
+                if (opts.has('s')) fs.symlink(source, absDest, context.user.uid, context.user.gid, '/');
+                else {
+                    const src = opts.has('L') ? canonicalize(context, source, 'e') ?? source : source;
+                    fs.link(fs.resolveAbsolutePath(src, context.cwd), absDest, '/');
+                }
+                if (opts.has('v')) out += `'${dest}' ${opts.has('s') ? '->' : '=>'} '${source}'\n`;
+            } catch (e) {
+                errors.push(`failed to create ${kind} '${dest}': ${strerror(e)}`);
+            }
         }
-
-        return {
-            output: '',
-            newState: state,
-            exitCode: 0
-        };
+        return this.respond(state, out, errors);
     }
 }

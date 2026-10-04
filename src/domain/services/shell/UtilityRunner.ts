@@ -5,7 +5,7 @@ import { StringStream } from '../../entities/Stream';
 import { TerminalState } from '../../entities/TerminalState';
 import { IShellExecutor } from '../../interfaces/IShellExecutor';
 import { NetworkMap } from '../NetworkMap';
-import { IOContext, isTty } from './io/IOContext';
+import { IOContext, inputFromString, isTty } from './io/IOContext';
 import { binaryStringToBytes, bytesToStreamText } from './io/OutputSink';
 import { ShellResult } from './ShellRuntime';
 import { ShellRuntime } from './ShellRuntime';
@@ -54,7 +54,7 @@ export class UtilityRunner {
         const context: ProcessContext = {
             fs: this.runtime.fsService.fileSystem,
             // The process sees the file system through its own credentials.
-            fileSystemService: this.runtime.fsService.asUser(state.user),
+            fileSystemService: this.runtime.fsService.asUser(state.user, state.umask ?? 0o022),
             env,
             cwd: state.currentDirectory,
             user: state.user,
@@ -66,6 +66,20 @@ export class UtilityRunner {
             networkMap: this.networkMap,
             stdoutIsTty: io.isatty(1),
             argv0: name,
+            spawn: async (argv, options = {}) => {
+                const [child, ...childArgs] = argv;
+                if (!child) return 0;
+                const childEnv = options.env ?? env;
+                const childState: TerminalState = {
+                    ...state,
+                    environment: { ...childEnv },
+                    exportedVars: Object.keys(childEnv),
+                    currentDirectory: options.cwd ?? state.currentDirectory,
+                };
+                const childIo = options.stdin !== undefined ? io.withStdin(inputFromString(options.stdin)) : io;
+                const res = await this.runtime.invoke(child, childArgs, childState, childIo, { skipFunctions: true });
+                return res.status;
+            },
         };
         Object.defineProperty(context, 'stdinLegacy', {
             enumerable: true,
@@ -90,7 +104,9 @@ export class UtilityRunner {
             io.stderr.write(stderr.getContents() + (response.stderr ?? ''));
             return this.finish(response, state, status);
         }
-        const { out, err } = this.route(name, response.output ?? '', status);
+        const { out, err } = command.exactOutput
+            ? { out: response.output ?? '', err: '' }
+            : this.route(name, response.output ?? '', status);
         io.stdout.write(streamed + out);
         io.stderr.write(stderr.getContents() + (response.stderr ?? '') + err);
 

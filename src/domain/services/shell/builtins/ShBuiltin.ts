@@ -8,6 +8,7 @@ import { OPTION_LETTERS } from '../expansion/ShellVariables';
 export const ShBuiltin: ShellBuiltin = {
     names: ['sh', 'bash', 'dash'],
     special: false,
+    external: true,
     async run(ctx): Promise<BuiltinResult> {
         const args = ctx.args;
         let i = 0;

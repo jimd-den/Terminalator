@@ -16,7 +16,7 @@ import { Redirector } from './shell/io/Redirector';
 import { ExpansionScope, WordExpander } from './shell/expansion/WordExpander';
 import { exportedEnvironment, getOption } from './shell/expansion/ShellVariables';
 import { BuiltinRegistry, createDefaultBuiltins, isKeyword } from './shell/builtins';
-import { CommandResolver } from './shell/CommandResolver';
+import { CommandResolver, BUILTIN_UTILITIES } from './shell/CommandResolver';
 import { UtilityRunner } from './shell/UtilityRunner';
 import { ExecutableFormat, ProgramLoader } from './shell/ProgramLoader';
 import { ShellSyntaxError } from './shell/ShellSyntaxError';
@@ -30,6 +30,7 @@ import { SubshellExecutor } from './shell/executors/SubshellExecutor';
 import { FunctionDefExecutor } from './shell/executors/FunctionDefExecutor';
 import { BlockExecutor } from './shell/executors/BlockExecutor';
 import { RedirectedExecutor } from './shell/executors/RedirectedExecutor';
+import { TimedExecutor } from './shell/executors/TimedExecutor';
 
 /** Abort threshold for a single top-level command line (runaway scripts). */
 export const MAX_STEPS = 250000;
@@ -108,6 +109,7 @@ export class ShellInterpreter implements ShellRuntime {
         this.handlers.set(NodeType.FUNCTION_DEF, new FunctionDefExecutor());
         this.handlers.set(NodeType.BLOCK, new BlockExecutor(this));
         this.handlers.set(NodeType.REDIRECTED, new RedirectedExecutor(this));
+        this.handlers.set(NodeType.TIMED, new TimedExecutor(this));
     }
 
     /** Resets per-command-line accounting (called by the top-level executor). */
@@ -203,11 +205,16 @@ export class ShellInterpreter implements ShellRuntime {
         const builtin = this.builtins.get(name);
         if (builtin?.special) return { kind: 'special-builtin' };
         if (state.functions?.has(name)) return { kind: 'function' };
-        if (builtin) return { kind: 'builtin' };
+        if (builtin && !builtin.external) return { kind: 'builtin' };
+        if (BUILTIN_UTILITIES.has(name) && this.registry.get(name)) return { kind: 'builtin' };
         const resolved = this.resolver.resolve(name, state);
         if (resolved.kind === 'file') return { kind: 'file', path: resolved.path };
         if (!name.includes('/') && this.registry.get(name)) return { kind: 'file', path: `/usr/bin/${name}` };
         return { kind: 'not-found' };
+    }
+
+    findInPath(name: string, state: TerminalState): string[] {
+        return this.resolver.resolveAll(name, state);
     }
 
     newScope(state: TerminalState, io?: IOContext): ExpansionScope {

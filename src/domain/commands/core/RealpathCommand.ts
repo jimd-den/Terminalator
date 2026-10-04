@@ -1,90 +1,58 @@
 /**
- * RealpathCommand - Core Command
- *
- * Return the canonicalized absolute pathname.
- *
- * Pillar: The Four-Fold Shield (Strict Architecture)
- * Pillar: The Swift Stream (Performance)
- *
- * Intent:
- * Resolve paths to absolute.
+ * realpath - print the resolved absolute path (POSIX 2024 / GNU):
+ * `realpath [-e|-m] [-q] [-s] [-z] file...`
  */
-
-import { ICommand } from '../ICommand';
-import { ProcessContext } from '../../../domain/entities/ProcessContext';
-import { FileSystemService } from '../../../domain/services/FileSystemService';
+import { CommandResponse } from '../ICommand';
+import { ProcessContext } from '../../entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../entities/Command';
+import { FileSystemService } from '../../services/FileSystemService';
+import { Utility } from '../shared/Utility';
+import { getopt } from '../shared/InputFiles';
+import { canonicalize } from '../shared/PathOps';
 
-import { FileSystem } from '../../entities/FileSystem';
+/** Path of `to` relative to directory `from` (both absolute). */
+export function relative(from: string, to: string): string {
+    const a = from.split('/').filter(Boolean), b = to.split('/').filter(Boolean);
+    let i = 0;
+    while (i < a.length && i < b.length && a[i] === b[i]) i++;
+    const parts = [...Array(a.length - i).fill('..'), ...b.slice(i)];
+    return parts.length ? parts.join('/') : '.';
+}
 
-export class RealpathCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+export class RealpathCommand extends Utility {
+    readonly utility = 'realpath';
+
+    constructor(private fs?: FileSystemService) { super(); }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const files = args.filter(a => !a.startsWith('-'));
-        if (files.length === 0) {
-            return { output: 'realpath: missing operand', newState: state, exitCode: 1 };
-        }
-
-        const file = files[0];
-
-        try {
-            // resolvePath usually does normalization (../ etc).
-            // FS uses `PathResolver` internally presumably.
-            // My local `resolvePath` helper in commands does cwd + join.
-            // Does it normalize?
-            // "path normalization (ignoring redundant slashes)" is tested in POSIX suite.
-            // But does it handle `..`?
-            // `FileSystem.resolveNode` handles logic.
-            // But we need the *string path*, not the node.
-            // If FS facade doesn't expose `resolvePath` explicitly, we might need to rely on what we have.
-            // However, `posix_suite` passed "Root parent is root" and "Path normalization".
-            // So `fs` or the shell logic handles it.
-            // Here we want to print the resolved path.
-
-            // Re-implement path resolution using simple string manipulation if FS doesn't expose it?
-            // Or assume `resolvePath` in this class should be smarter?
-            // Currently `resolvePath` in commands is naive concatenation.
-            // Let's make `RealpathCommand` smarter or assume FS has `getAbsolutePath`?
-            // I'll implement a `normalize` function here for `realpath`.
-
-            let absPath = this.resolvePath(file, state);
-            absPath = this.normalize(absPath);
-
-            // Check existence? POSIX realpath fails if components don't exist.
-            const node = context.fileSystemService.resolve(absPath);
-            if (!node) {
-                return { output: `realpath: ${file}: No such file or directory`, newState: state, exitCode: 1 };
+        let relativeTo: string | undefined, relativeBase: string | undefined;
+        args = args.filter(a => {
+            if (a.startsWith('--relative-to=')) { relativeTo = a.substring(14); return false; }
+            if (a.startsWith('--relative-base=')) { relativeBase = a.substring(16); return false; }
+            return true;
+        });
+        const { opts, operands, error } = getopt(args, 'emqszEPL');
+        if (error) return this.usage(state, error);
+        if (!operands.length) return this.usage(state, 'missing operand');
+        const mode = opts.has('e') ? 'e' : opts.has('m') ? 'm' : 'f';
+        let out = '';
+        const errors: string[] = [];
+        for (const file of operands) {
+            const result = canonicalize(context, file, mode, !opts.has('s'));
+            if (result === null) {
+                if (!opts.has('q')) errors.push(`${file}: No such file or directory`);
+                else errors.push('');
+                continue;
             }
-
-            return {
-                output: absPath,
-                newState: state,
-                exitCode: 0
-            };
-
-        } catch (e: any) {
-            return { output: `realpath: ${file}: ${e.message}`, newState: state, exitCode: 1 };
-        }
-    }
-
-    private resolvePath(path: string, state: TerminalState): string {
-        if (path.startsWith('/')) return path;
-        return state.currentDirectory === '/' ? `/${path}` : `${state.currentDirectory}/${path}`;
-    }
-
-    private normalize(path: string): string {
-        const parts = path.split('/');
-        const stack: string[] = [];
-        for (const part of parts) {
-            if (part === '' || part === '.') continue;
-            if (part === '..') {
-                if (stack.length > 0) stack.pop();
-            } else {
-                stack.push(part);
+            let shown = result;
+            const base = relativeTo ?? relativeBase;
+            if (base !== undefined) {
+                const b = canonicalize(context, base, 'm', !opts.has('s')) ?? base;
+                if (relativeTo !== undefined || result === b || result.startsWith(b === '/' ? '/' : b + '/')) shown = relative(b, result);
             }
+            out += shown + (opts.has('z') ? '\0' : '\n');
         }
-        return '/' + stack.join('/');
+        const shown = errors.filter(Boolean);
+        return this.respond(state, out, shown, errors.length ? 1 : 0);
     }
 }

@@ -266,5 +266,185 @@
   "tsort/odd": {
     "stdout": "st=1\n",
     "status": 0
+  },
+  "ln/hard": {
+    "stdout": "1\nx\n",
+    "status": 0
+  },
+  "ln/symlink": {
+    "stdout": "f\nx\nnowhere\nst=1\n",
+    "status": 0
+  },
+  "ln/exists": {
+    "stdout": "ln: failed to create hard link 'b': File exists\nst=1\nst=0\n",
+    "status": 0
+  },
+  "ln/into-dir": {
+    "stdout": "f1\nf2\nok\n",
+    "status": 0
+  },
+  "ln/dir-hard": {
+    "stdout": "ln: d: hard link not allowed for directory\nst=1\n",
+    "status": 0
+  },
+  "ln/multi-not-dir": {
+    "stdout": "ln: target 'c': Not a directory\nst=1\n",
+    "status": 0
+  },
+  "link/basic": {
+    "stdout": "y\nst=1\nst=1\n",
+    "status": 0
+  },
+  "unlink/basic": {
+    "stdout": "gone\nst=1\nst=1\nst=1\n",
+    "status": 0
+  },
+  "readlink/canon": {
+    "stdout": "lb/f\nPWD/a/b/f\nst=1\nPWD/nope/x\nPWD/nope\nst=1\n",
+    "status": 0
+  },
+  "readlink/plain": {
+    "stdout": "st=1\nf\nf\nf\n",
+    "status": 0
+  },
+  "realpath/basic": {
+    "stdout": "PWD/x/y/f\nPWD/ly/f\nPWD\nPWD/missing\nst=1\nPWD/b/c\n",
+    "status": 0
+  },
+  "mkfifo/basic": {
+    "stdout": "p\nst=1\nprw-------\nfifo\n",
+    "status": 0
+  },
+  "sed/subst": {
+    "stdout": "hell0 world\nf0o bar\nhell0 w0rld\nf00 bar\nhello w0rld\nfo0 bar\nX bar\n",
+    "status": 0
+  },
+  "sed/multi-e": {
+    "stdout": "c\nd\n",
+    "status": 0
+  },
+  "sed/addresses": {
+    "stdout": "2\n3\n4\n1\n2\n4\n5\n3\n4\n5\n1\n2\n3\n4\n1\n3\n5\n2\n",
+    "status": 0
+  },
+  "sed/regex": {
+    "stdout": "abcX3def\nX\nehllo\npath:to:x\ntwo one\n",
+    "status": 0
+  },
+  "sed/amp-case": {
+    "stdout": "[]h[]e[ll]o[]\nX\n",
+    "status": 0
+  },
+  "sed/commands": {
+    "stdout": "a\ninserted\nb\nc\na\nb\nappended\nc\na\nchanged\nc\n3\nx\ny\nz\n",
+    "status": 0
+  },
+  "sed/hold": {
+    "stdout": "3\n2\n1\na,b\n",
+    "status": 0
+  },
+  "sed/inplace": {
+    "stdout": "y\n",
+    "status": 0
+  },
+  "sed/quit": {
+    "stdout": "1\n2\n2\n",
+    "status": 0
+  },
+  "sed/script-file": {
+    "stdout": "c\n",
+    "status": 0
+  },
+  "tr/basic": {
+    "stdout": "HELLO\nheo\nabc\nxellxxlla\nb\n",
+    "status": 0
+  },
+  "tr/classes": {
+    "stdout": "HELLO WORLD 123\nHello \na b c\nxxx\nxxxx\n",
+    "status": 0
+  },
+  "tr/escapes": {
+    "stdout": "a b\nzbc\n",
+    "status": 0
+  },
+  "split/lines": {
+    "stdout": "xaa\nxab\nxac\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\np.aaa\np.aab\np.aac\n",
+    "status": 0
+  },
+  "split/bytes": {
+    "stdout": "xaa:123\nxab:456\nxac:7\n",
+    "status": 0
+  },
+  "split/default": {
+    "stdout": " 1000 xaa\n 1000 xab\n  500 xac\n 2500 total\n",
+    "status": 0
+  },
+  "split/stdin-prefix": {
+    "stdout": "1\n2\npartaa\npartab\n",
+    "status": 0
+  },
+  "split/numeric": {
+    "stdout": "x00\nx01\nx02\nx03\n",
+    "status": 0
+  },
+  "csplit/line": {
+    "stdout": "2\n4\na\n--\nb\nc\n",
+    "status": 0
+  },
+  "csplit/regex": {
+    "stdout": "xx00\nxx01\nxx02\nxx03\nh2\ny\n",
+    "status": 0
+  },
+  "csplit/opts": {
+    "stdout": "4\n4\n4\npart000\npart001\npart002\n12\nst=1\n1\n",
+    "status": 0
+  },
+  "csplit/offset": {
+    "stdout": "1\n2\n3\n4\n--\n7\n8\n",
+    "status": 0
+  },
+  "csplit/missing": {
+    "stdout": "st=1\n",
+    "status": 0
+  },
+  "paste/basic": {
+    "stdout": "1\tx\n2\ty\n3\t\n1,x\n2,y\n3,\n1\t2\t3\nx\ty\n1:2;3\n1:x;1\n2:y;2\n3:;3\n",
+    "status": 0
+  },
+  "paste/stdin": {
+    "stdout": "1\t2\n3\t4\na\tb\n",
+    "status": 0
+  },
+  "join/basic": {
+    "stdout": "1 a x\n3 c z\n1 a x\n2 b\n3 c z\n4 w\na x\nc z\n1 x\n2 NONE\n3 z\n",
+    "status": 0
+  },
+  "join/fields": {
+    "stdout": "1:a:x\n2:b:y\n",
+    "status": 0
+  },
+  "comm/basic": {
+    "stdout": "a\n\t\tb\n\tc\n\t\td\nb\nd\na\n\tc\n\t\tb\n\tc\n\td\n",
+    "status": 0
+  },
+  "uname/errors": {
+    "stdout": "st=1\nst=1\n1\n",
+    "status": 0
+  },
+  "sleep/errors": {
+    "stdout": "st=1\nst=1\nst=0\nst=1\n",
+    "status": 0
+  },
+  "pathchk/basic": {
+    "stdout": "st=0\nst=1\nst=1\nst=0\nst=1\n",
+    "status": 0
+  },
+  "dirname/multi": {
+    "stdout": "a\nc\n/\n",
+    "status": 0
+  },
+  "iconv/basic": {
+    "stdout": " 63 61 66 e9 0a\ncafÃ©\nst=1\nx\n",
+    "status": 0
   }
 }

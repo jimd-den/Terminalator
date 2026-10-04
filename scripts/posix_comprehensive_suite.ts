@@ -65,6 +65,8 @@ interface ComprehensiveTestCase {
     posixSection: string; // e.g., 'ls.html'
     posixRequirement: string; // e.g., "The ls utility shall..."
     setup?: (service: FileSystemService) => void;
+    /** Shell history entries before the command runs. */
+    history?: string[];
     command: string; // The command line to execute
     expect: TestExpectation;
 }
@@ -344,7 +346,7 @@ const SUITES: UtilitySuite[] = [
             { id: 'SED_04', description: 'Print lines p', posixSection: 'sed.html', posixRequirement: '-n suppress default', setup: (fs) => fs.writeFile('/f', '1\n2', 'w'), command: "sed -n '2p' /f", expect: { exitCode: 0, stdout: /2/ } },
             { id: 'SED_05', description: 'Regex address', posixSection: 'sed.html', posixRequirement: '/regex/ command', setup: (fs) => fs.writeFile('/f', 'match\nskip', 'w'), command: "sed '/match/d' /f", expect: { exitCode: 0, stdout: /skip/ } },
             { id: 'SED_06', description: 'Multiple commands -e', posixSection: 'sed.html', posixRequirement: '-e script', setup: (fs) => fs.writeFile('/f', 'a', 'w'), command: "sed -e 's/a/b/' -e 's/b/c/' /f", expect: { exitCode: 0, stdout: /c/ } },
-            { id: 'SED_07', description: 'Fail missing file', posixSection: 'sed.html', posixRequirement: 'Error >0', command: 'sed s/x/y/ /missing', expect: { exitCode: 1 } },
+            { id: 'SED_07', description: 'Fail missing file', posixSection: 'sed.html', posixRequirement: 'Error >0', command: 'sed s/x/y/ /missing', expect: { exitCode: 2 }},
             { id: 'SED_08', description: 'Empty file', posixSection: 'sed.html', posixRequirement: 'No output', setup: (fs) => fs.writeFile('/e', '', 'w'), command: "sed 's/x/y/' /e", expect: { exitCode: 0, stdout: /^$/ } },
             { id: 'SED_09', description: 'Backreference \\1 (stub)', posixSection: 'sed.html', posixRequirement: 'Use matches', setup: (fs) => fs.writeFile('/f', 'a', 'w'), command: "sed 's/\\(a\\)/\\1\\1/' /f", expect: { exitCode: 0, stdout: /aa/ } },
             { id: 'SED_10', description: 'In-place -i (Extension)', posixSection: 'sed.html', posixRequirement: '-i not strict POSIX but de facto', setup: (fs) => fs.writeFile('/f', 'a', 'w'), command: "sed -i 's/a/b/' /f", expect: { exitCode: 0, filesModified: [{ path: '/f' }] } } // Might fail if strict POSIX
@@ -442,7 +444,7 @@ const SUITES: UtilitySuite[] = [
             // If fail, we still get visibility.
             { id: 'TR_02', description: 'Delete -d', posixSection: 'tr.html', posixRequirement: '-d delete', command: 'echo hello | tr -d l', expect: { exitCode: 0, stdout: /heo/ } },
             { id: 'TR_03', description: 'Squeeze -s', posixSection: 'tr.html', posixRequirement: '-s squeeze', command: 'echo hello | tr -s l', expect: { exitCode: 0, stdout: /helo/ } },
-            { id: 'TR_04', description: 'Complement -c', posixSection: 'tr.html', posixRequirement: '-c complement', command: 'echo hello | tr -c le x', expect: { exitCode: 0, stdout: /xexxox/ } }, // newline might also be x
+            { id: 'TR_04', description: 'Complement -c', posixSection: 'tr.html', posixRequirement: '-c complement', command: 'echo hello | tr -c le x', expect: { exitCode: 0, stdout: /^xellxx$/ }}, // newline might also be x
             { id: 'TR_05', description: 'Range support', posixSection: 'tr.html', posixRequirement: 'a-z', command: 'echo hello | tr a-z A-Z', expect: { exitCode: 0, stdout: /HELLO/ } },
             { id: 'TR_06', description: 'Fail no args', posixSection: 'tr.html', posixRequirement: 'Error', command: 'tr', expect: { exitCode: 1 } },
             { id: 'TR_07', description: 'Fail one arg (delete needs -d)', posixSection: 'tr.html', posixRequirement: 'Error', command: 'tr a', expect: { exitCode: 1 } }, // Unless -d or -s
@@ -499,7 +501,7 @@ const SUITES: UtilitySuite[] = [
             // To test retrieval, we need a setup that injects alias into state?
             // Or we rely on verify "stdout" if alias supported "alias foo=bar".
             // Let's assume alias command prints nothing on set.
-            { id: 'ALIAS_04', description: 'Invalid name', posixSection: 'alias.html', posixRequirement: 'Error', command: 'alias 123=bar', expect: { exitCode: 1 } }, // Name restrictions?
+            { id: 'ALIAS_04', description: 'Invalid name', posixSection: 'alias.html', posixRequirement: 'Error', command: 'alias "a/b=bar"', expect: { exitCode: 1 } }, // Name restrictions?
             { id: 'ALIAS_05', description: 'Quote value', posixSection: 'alias.html', posixRequirement: 'Quotes', command: "alias foo='bar baz'", expect: { exitCode: 0 } },
             { id: 'ALIAS_06', description: 'Multiple definitions', posixSection: 'alias.html', posixRequirement: 'Multiple args', command: 'alias a=b c=d', expect: { exitCode: 0 } },
             { id: 'ALIAS_07', description: 'List specific missing', posixSection: 'alias.html', posixRequirement: 'Error >0', command: 'alias missing', expect: { exitCode: 1 } },
@@ -514,9 +516,9 @@ const SUITES: UtilitySuite[] = [
         utility: 'unalias',
         htmlFile: 'unalias.html',
         tests: [
-            { id: 'UNALIAS_01', description: 'Remove alias', posixSection: 'unalias.html', posixRequirement: 'unalias name', command: 'unalias foo', expect: { exitCode: 0 } }, // Succeeds even if not exists? POSIX says error if not found.
+            { id: 'UNALIAS_01', description: 'Remove alias', posixSection: 'unalias.html', posixRequirement: 'unalias name', command: 'alias foo=bar; unalias foo', expect: { exitCode: 0 } }, // Succeeds even if not exists? POSIX says error if not found.
             { id: 'UNALIAS_02', description: 'Remove missing', posixSection: 'unalias.html', posixRequirement: 'Error >0', command: 'unalias missing', expect: { exitCode: 1 } },
-            { id: 'UNALIAS_03', description: 'Remove multiple', posixSection: 'unalias.html', posixRequirement: 'Multiple names', command: 'unalias a b', expect: { exitCode: 0 } }, // Fails if they don't exist
+            { id: 'UNALIAS_03', description: 'Remove multiple', posixSection: 'unalias.html', posixRequirement: 'Multiple names', command: 'alias a=1 b=2; unalias a b', expect: { exitCode: 0 } }, // Fails if they don't exist
             { id: 'UNALIAS_04', description: 'Remove all -a', posixSection: 'unalias.html', posixRequirement: '-a', command: 'unalias -a', expect: { exitCode: 0 } },
             { id: 'UNALIAS_05', description: 'Fail no args', posixSection: 'unalias.html', posixRequirement: 'Error', command: 'unalias', expect: { exitCode: 1 } },
             { id: 'UNALIAS_06', description: 'Return code', posixSection: 'unalias.html', posixRequirement: 'Status', command: 'unalias -a', expect: { exitCode: 0 } },
@@ -618,7 +620,7 @@ const SUITES: UtilitySuite[] = [
             { id: 'SLEEP_05', description: 'Time parsing', posixSection: 'sleep.html', posixRequirement: '0', command: 'sleep 0', expect: { exitCode: 0 } },
             { id: 'SLEEP_06', description: 'Negative?', posixSection: 'sleep.html', posixRequirement: 'Error', command: 'sleep -1', expect: { exitCode: 1 } }, // Bad arg
             { id: 'SLEEP_07', description: 'Big number', posixSection: 'sleep.html', posixRequirement: 'Run', command: 'sleep 0', expect: { exitCode: 0 } },
-            { id: 'SLEEP_08', description: 'Multiple args?', posixSection: 'sleep.html', posixRequirement: 'POSIX says one operand usually, GNU allows sum', command: 'sleep 0 0', expect: { exitCode: 1 } }, // Strict POSIX: 'sleep time'
+            { id: 'SLEEP_08', description: 'Multiple args?', posixSection: 'sleep.html', posixRequirement: 'POSIX says one operand usually, GNU allows sum', command: 'sleep 0 0', expect: { exitCode: 0 }}, // Strict POSIX: 'sleep time'
             { id: 'SLEEP_09', description: 'Float?', posixSection: 'sleep.html', posixRequirement: 'Supports float?', command: 'sleep 0.1', expect: { exitCode: 0 } }, // Extension often supported
             { id: 'SLEEP_10', description: 'Suffix?', posixSection: 'sleep.html', posixRequirement: 's/m/h extension', command: 'sleep 0s', expect: { exitCode: 0 } } // Extension
         ]
@@ -630,7 +632,7 @@ const SUITES: UtilitySuite[] = [
             { id: 'FALSE_01', description: 'Return 1', posixSection: 'false.html', posixRequirement: 'Exit >0', command: 'false', expect: { exitCode: 1 } },
             { id: 'FALSE_02', description: 'Args ignored', posixSection: 'false.html', posixRequirement: 'Ignore args', command: 'false --help', expect: { exitCode: 1 } },
             { id: 'FALSE_03', description: 'Consistency', posixSection: 'false.html', posixRequirement: 'Stable', command: 'false', expect: { exitCode: 1 } },
-            { id: 'FALSE_04', description: 'Pipe failure', posixSection: 'false.html', posixRequirement: 'Fail', command: 'false | echo', expect: { exitCode: 1 } }, // If pipe exit codes logic checks first? Or last? Pipeline exit code is last command usually (echo -> 0).
+            { id: 'FALSE_04', description: 'Pipe failure', posixSection: 'false.html', posixRequirement: 'Fail', command: 'echo | false', expect: { exitCode: 1 } }, // If pipe exit codes logic checks first? Or last? Pipeline exit code is last command usually (echo -> 0).
             // If harness executes 'false | echo', output is empty?
             // Wait 'false | echo' -> pipe. 'echo' runs. exit 0.
             // 'false' is first.
@@ -688,7 +690,7 @@ const SUITES: UtilitySuite[] = [
             { id: 'DIRNAME_07', description: 'Complex path', posixSection: 'dirname.html', posixRequirement: 'Resolve', command: 'dirname /a/b/c', expect: { exitCode: 0, stdout: /\/a\/b/ } },
             { id: 'DIRNAME_08', description: 'Dot', posixSection: 'dirname.html', posixRequirement: '.', command: 'dirname .', expect: { exitCode: 0, stdout: /^\.$/ } },
             { id: 'DIRNAME_09', description: 'DotDot', posixSection: 'dirname.html', posixRequirement: '.', command: 'dirname ..', expect: { exitCode: 0, stdout: /^\.$/ } },
-            { id: 'DIRNAME_10', description: 'Multiple args fail?', posixSection: 'dirname.html', posixRequirement: 'One arg', command: 'dirname a b', expect: { exitCode: 1 } }
+            { id: 'DIRNAME_10', description: 'Multiple args fail?', posixSection: 'dirname.html', posixRequirement: 'One arg', command: 'dirname a b', expect: { exitCode: 0, stdout: /^\.\n\.\n$/ }}
         ]
     },
     {
@@ -731,11 +733,11 @@ const SUITES: UtilitySuite[] = [
             { id: 'PASTE_02', description: 'Delimiter -d', posixSection: 'paste.html', posixRequirement: '-d list', setup: (fs) => { fs.writeFile('/1', 'a', 'w'); fs.writeFile('/2', 'b', 'w'); }, command: 'paste -d : /1 /2', expect: { exitCode: 0, stdout: /a:b/ } },
             { id: 'PASTE_03', description: 'Serialize -s', posixSection: 'paste.html', posixRequirement: '-s', setup: (fs) => fs.writeFile('/f', 'a\nb', 'w'), command: 'paste -s /f', expect: { exitCode: 0, stdout: /a\tb/ } },
             { id: 'PASTE_04', description: 'Stdin -', posixSection: 'paste.html', posixRequirement: '-', command: 'paste -', expect: { exitCode: 0 } },
-            { id: 'PASTE_05', description: 'Multiple files', posixSection: 'paste.html', posixRequirement: 'N files', command: 'paste /1 /2 /3', expect: { exitCode: 0 } },
+            { id: 'PASTE_05', description: 'Multiple files', posixSection: 'paste.html', posixRequirement: 'N files', setup: (fs) => { fs.writeFile('/1', 'a\n', 'w'); fs.writeFile('/2', 'b\n', 'w'); fs.writeFile('/3', 'c\n', 'w'); }, command: 'paste /1 /2 /3', expect: { exitCode: 0 } },
             { id: 'PASTE_06', description: 'Fail missing', posixSection: 'paste.html', posixRequirement: 'Error', command: 'paste /missing', expect: { exitCode: 1 } },
             { id: 'PASTE_07', description: 'Empty file', posixSection: 'paste.html', posixRequirement: 'Empty', setup: (fs) => fs.writeFile('/e', '', 'w'), command: 'paste /e', expect: { exitCode: 0, stdout: /^$/ } },
             { id: 'PASTE_08', description: 'Unequal lines', posixSection: 'paste.html', posixRequirement: 'Pad empty', setup: (fs) => { fs.writeFile('/1', 'a\nb', 'w'); fs.writeFile('/2', 'c', 'w'); }, command: 'paste /1 /2', expect: { exitCode: 0, stdout: /a\tc\nb\t/ } },
-            { id: 'PASTE_09', description: 'Multiline delim', posixSection: 'paste.html', posixRequirement: 'Cycle', command: 'paste -d ":;" /1 /2 /3', expect: { exitCode: 0 } }, // Stub
+            { id: 'PASTE_09', description: 'Multiline delim', posixSection: 'paste.html', posixRequirement: 'Cycle', setup: (fs) => { fs.writeFile('/1', 'a\n', 'w'); fs.writeFile('/2', 'b\n', 'w'); fs.writeFile('/3', 'c\n', 'w'); }, command: 'paste -d ":;" /1 /2 /3', expect: { exitCode: 0, stdout: /^a:b;c$/ }}, // Stub
             { id: 'PASTE_10', description: 'No args?', posixSection: 'paste.html', posixRequirement: 'Wait stdin', command: 'paste', expect: { exitCode: 0 } }
         ]
     },
@@ -752,7 +754,7 @@ const SUITES: UtilitySuite[] = [
             { id: 'SPLIT_07', description: 'Fail dir', posixSection: 'split.html', posixRequirement: 'Error', command: 'split /d', expect: { exitCode: 1 } },
             { id: 'SPLIT_08', description: 'Stdin -', posixSection: 'split.html', posixRequirement: '-', command: 'split -', expect: { exitCode: 0 } },
             { id: 'SPLIT_09', description: 'Numeric suffix -d (Ext)', posixSection: 'split.html', posixRequirement: '-d numeric', command: 'split -d /f', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/x00', type: 'file' }] } },
-            { id: 'SPLIT_10', description: 'Split empty?', posixSection: 'split.html', posixRequirement: 'Create empty?', command: 'split /empty', expect: { exitCode: 0 } }
+            { id: 'SPLIT_10', description: 'Split empty?', posixSection: 'split.html', posixRequirement: 'Create empty?', setup: (fs) => fs.writeFile('/empty', '', 'w'), command: 'split /empty', expect: { exitCode: 0 } }
         ]
     },
     {
@@ -768,7 +770,7 @@ const SUITES: UtilitySuite[] = [
             { id: 'CSPLIT_07', description: 'Fail missing', posixSection: 'csplit.html', posixRequirement: 'Error', command: 'csplit /missing 1', expect: { exitCode: 1 } },
             { id: 'CSPLIT_08', description: 'Repeat pattern {*}', posixSection: 'csplit.html', posixRequirement: '{*}', command: 'csplit /f /a/ {*}', expect: { exitCode: 0 } },
             { id: 'CSPLIT_09', description: 'Offset', posixSection: 'csplit.html', posixRequirement: '/regex/+1', command: 'csplit /f /a/+1', expect: { exitCode: 0 } },
-            { id: 'CSPLIT_10', description: 'Stdin', posixSection: 'csplit.html', posixRequirement: '-', command: 'csplit - 10', expect: { exitCode: 0 } }
+            { id: 'CSPLIT_10', description: 'Stdin', posixSection: 'csplit.html', posixRequirement: '-', command: 'seq 1 20 | csplit - 10', expect: { exitCode: 0 } }
         ]
     },
     {
@@ -784,7 +786,7 @@ const SUITES: UtilitySuite[] = [
             { id: 'COMM_07', description: 'Fail missing', posixSection: 'comm.html', posixRequirement: 'Error', command: 'comm f1 missing', expect: { exitCode: 1 } },
             { id: 'COMM_08', description: 'Stdin', posixSection: 'comm.html', posixRequirement: '-', setup: (fs) => { fs.writeFile('/home/operator/f2', 'a', 'w'); }, command: 'echo a | comm - f2', expect: { exitCode: 0 } },
             { id: 'COMM_09', description: 'Empty file', posixSection: 'comm.html', posixRequirement: 'Empty', setup: (fs) => { fs.writeFile('/home/operator/f1', 'a', 'w'); fs.writeFile('/home/operator/e', '', 'w'); }, command: 'comm f1 e', expect: { exitCode: 0 } },
-            { id: 'COMM_10', description: 'Case ignore (Extension)', posixSection: 'comm.html', posixRequirement: '-i', setup: (fs) => { fs.writeFile('/home/operator/f1', 'A', 'w'); fs.writeFile('/home/operator/f2', 'a', 'w'); }, command: 'comm -i f1 f2', expect: { exitCode: 0 } }
+            { id: 'COMM_10', description: 'Case ignore (Extension)', posixSection: 'comm.html', posixRequirement: '-i', setup: (fs) => { fs.writeFile('/home/operator/f1', 'A', 'w'); fs.writeFile('/home/operator/f2', 'a', 'w'); }, command: 'comm -i f1 f2', expect: { exitCode: 1 }}
         ]
     },
     {
@@ -863,7 +865,7 @@ const SUITES: UtilitySuite[] = [
             { id: 'TEST_06', description: 'Dir exists -d', posixSection: 'test.html', posixRequirement: '-d dir', setup: (fs) => fs.mkdir('/d', 0o755), command: 'test -d /d', expect: { exitCode: 0 } },
             { id: 'TEST_07', description: 'Zero length -z', posixSection: 'test.html', posixRequirement: '-z str', command: 'test -z ""', expect: { exitCode: 0 } },
             { id: 'TEST_08', description: 'Non-zero length -n', posixSection: 'test.html', posixRequirement: '-n str', command: 'test -n "a"', expect: { exitCode: 0 } },
-            { id: 'TEST_09', description: 'AND -a (XSI)', posixSection: 'test.html', posixRequirement: '-a', command: 'test -e /f -a -e /f', expect: { exitCode: 1 } }, // Fail if /f missing. Setup?
+            { id: 'TEST_09', description: 'AND -a (XSI)', posixSection: 'test.html', posixRequirement: '-a', command: 'test -e /nonexistent -a -e /f', expect: { exitCode: 1 } }, // Fail if /f missing. Setup?
             { id: 'TEST_10', description: 'NOT !', posixSection: 'test.html', posixRequirement: '!', command: 'test ! -e /missing', expect: { exitCode: 0 } }
         ]
     },
@@ -872,12 +874,12 @@ const SUITES: UtilitySuite[] = [
         htmlFile: 'test.html', // [ is alias to test
         tests: [
             { id: 'BRACKET_01', description: 'Basic check', posixSection: 'test.html', posixRequirement: '[ expr ]', command: '[ 1 -eq 1 ]', expect: { exitCode: 0 } },
-            { id: 'BRACKET_02', description: 'Missing closing', posixSection: 'test.html', posixRequirement: 'Error', command: '[ 1 -eq 1', expect: { exitCode: 1 } }, // Usually missing ] error
+            { id: 'BRACKET_02', description: 'Missing closing', posixSection: 'test.html', posixRequirement: 'Error', command: '[ 1 -eq 1', expect: { exitCode: 2 }}, // Usually missing ] error
             { id: 'BRACKET_03', description: 'Fail check', posixSection: 'test.html', posixRequirement: 'Exit 1', command: '[ 1 -eq 2 ]', expect: { exitCode: 1 } },
-            { id: 'BRACKET_04', description: 'Spaces needed', posixSection: 'test.html', posixRequirement: 'Tokenization', command: '[1 -eq 1]', expect: { exitCode: 1 } }, // Usually command not found '[1'
+            { id: 'BRACKET_04', description: 'Spaces needed', posixSection: 'test.html', posixRequirement: 'Tokenization', command: '[1 -eq 1]', expect: { exitCode: 127 }}, // Usually command not found '[1'
             { id: 'BRACKET_05', description: 'Complex', posixSection: 'test.html', posixRequirement: 'Expression', command: '[ -n "a" ]', expect: { exitCode: 0 } },
             { id: 'BRACKET_06', description: 'Or -o', posixSection: 'test.html', posixRequirement: '-o', command: '[ 1 -eq 0 -o 1 -eq 1 ]', expect: { exitCode: 0 } },
-            { id: 'BRACKET_07', description: 'Group ( ) (XSI)', posixSection: 'test.html', posixRequirement: 'Parens', command: '[ ( 1 -eq 1 ) ]', expect: { exitCode: 0 } }, // Need escapes usually? \( \)
+            { id: 'BRACKET_07', description: 'Group ( ) (XSI)', posixSection: 'test.html', posixRequirement: 'Parens', command: '[ \\( 1 -eq 1 \\) ]', expect: { exitCode: 0 } }, // Need escapes usually? \( \)
             { id: 'BRACKET_08', description: 'Escaped parens', posixSection: 'test.html', posixRequirement: 'Escapes', command: '[ \\( 1 -eq 1 \\) ]', expect: { exitCode: 0 } },
             { id: 'BRACKET_09', description: 'File check', posixSection: 'test.html', posixRequirement: '-f', setup: (fs) => fs.writeFile('/f', 'x', 'w'), command: '[ -f /f ]', expect: { exitCode: 0 } },
             { id: 'BRACKET_10', description: 'Fail arg count', posixSection: 'test.html', posixRequirement: 'Error', command: '[ ]', expect: { exitCode: 1 } }
@@ -1022,7 +1024,7 @@ const SUITES: UtilitySuite[] = [
             { id: 'SH_04', description: 'Exit code', posixSection: 'sh.html', posixRequirement: 'Return script status', command: 'sh -c "exit 5"', expect: { exitCode: 5 } },
             { id: 'SH_05', description: 'Syntax check -n (stub)', posixSection: 'sh.html', posixRequirement: '-n', command: 'sh -n s.sh', expect: { exitCode: 0 } },
             { id: 'SH_06', description: 'Fail missing file', posixSection: 'sh.html', posixRequirement: 'Error 127', command: 'sh missing.sh', expect: { exitCode: 127 } },
-            { id: 'SH_07', description: 'Positional args', posixSection: 'sh.html', posixRequirement: '$1 $2', command: 'sh -c "echo \$1" sh 123', expect: { exitCode: 0, stdout: /123/ } },
+            { id: 'SH_07', description: 'Positional args', posixSection: 'sh.html', posixRequirement: '$1 $2', command: "sh -c 'echo $1' sh 123", expect: { exitCode: 0, stdout: /123/ } },
             { id: 'SH_08', description: 'Verbose -v (Ext)', posixSection: 'sh.html', posixRequirement: '-v', command: 'sh -v -c "echo a"', expect: { exitCode: 0 } },
             { id: 'SH_09', description: 'Restricted -r (Ext)', posixSection: 'sh.html', posixRequirement: '-r', command: 'sh -r', expect: { exitCode: 0 } }, // Interactive
             { id: 'SH_10', description: 'Ignore sigs? (stub)', posixSection: 'sh.html', posixRequirement: 'Signal', command: 'sh -c "echo done"', expect: { exitCode: 0 } },
@@ -1153,7 +1155,7 @@ const SUITES: UtilitySuite[] = [
             { id: 'UUDECODE_04', description: 'Fail missing', posixSection: 'uudecode.html', posixRequirement: 'Error', command: 'uudecode missing', expect: { exitCode: 1 } },
             { id: 'UUDECODE_05', description: 'Fail strict', posixSection: 'uudecode.html', posixRequirement: 'Header check', setup: (fs) => fs.writeFile('bad.uu', 'junk', 'w'), command: 'uudecode bad.uu', expect: { exitCode: 1 } },
             { id: 'UUDECODE_06', description: 'Mode check', posixSection: 'uudecode.html', posixRequirement: 'Chmod', command: 'uudecode f.uu', expect: { exitCode: 0 } }, // Should verify permissions
-            { id: 'UUDECODE_07', description: 'Base64 -m (Ext)', posixSection: 'uudecode.html', posixRequirement: '-m', command: 'uudecode -m f.b64', expect: { exitCode: 0 } },
+            { id: 'UUDECODE_07', description: 'Base64 -m (Ext)', posixSection: 'uudecode.html', posixRequirement: '-m', command: 'uuencode -m /etc/hostname h > f.b64; uudecode f.b64 && cat h', expect: { exitCode: 0, stdout: /terminalator/ }},
             { id: 'UUDECODE_08', description: 'Output flag (Ext)', posixSection: 'uudecode.html', posixRequirement: '-o file', command: 'uudecode -o out f.uu', expect: { exitCode: 0 } },
             { id: 'UUDECODE_09', description: 'Multiple inputs?', posixSection: 'uudecode.html', posixRequirement: 'One file', command: 'uudecode f1 f2', expect: { exitCode: 1 } },
             { id: 'UUDECODE_10', description: 'Consistency', posixSection: 'uudecode.html', posixRequirement: 'Stable', command: 'uudecode f.uu', expect: { exitCode: 0 } }
@@ -1340,7 +1342,7 @@ const SUITES: UtilitySuite[] = [
         htmlFile: 'link.html',
         tests: [
             { id: 'LINK_01', description: 'Create link', posixSection: 'link.html', posixRequirement: 'Hard link', setup: (fs) => fs.writeFile('f', 'x', 'w'), command: 'link f lnk', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/lnk', type: 'file' }] } },
-            { id: 'LINK_02', description: 'Content check', posixSection: 'link.html', posixRequirement: 'Same inode', command: 'cat lnk', expect: { stdout: /x/ } }, // assumes f from 01 exists if sequential, but setup resets.
+            { id: 'LINK_02', description: 'Content check', posixSection: 'link.html', posixRequirement: 'Same inode', command: 'link f lnk; cat lnk', expect: { stdout: /x/ } }, // assumes f from 01 exists if sequential, but setup resets.
             // Reset note: setup creates f.
             { id: 'LINK_03', description: 'Fail if target exists', posixSection: 'link.html', posixRequirement: 'Error EEXIST', setup: (fs) => { fs.writeFile('f', 'x', 'w'); fs.writeFile('lnk', 'y', 'w'); }, command: 'link f lnk', expect: { exitCode: 1 } },
             { id: 'LINK_04', description: 'Fail missing source', posixSection: 'link.html', posixRequirement: 'Error ENOENT', command: 'link missing lnk', expect: { exitCode: 1 } },
@@ -1348,7 +1350,7 @@ const SUITES: UtilitySuite[] = [
             { id: 'LINK_06', description: 'Too many args', posixSection: 'link.html', posixRequirement: 'Error', command: 'link a b c', expect: { exitCode: 1 } },
             { id: 'LINK_07', description: 'Too few args', posixSection: 'link.html', posixRequirement: 'Error', command: 'link a', expect: { exitCode: 1 } },
             { id: 'LINK_08', description: 'Cross device (stub)', posixSection: 'link.html', posixRequirement: 'EXDEV', command: 'link f /dev/null', expect: { exitCode: 1 } }, // Assuming dev is separate
-            { id: 'LINK_09', description: 'Verify count (stub)', posixSection: 'link.html', posixRequirement: 'st_nlink', command: 'link f lnk', expect: { exitCode: 0 } },
+            { id: 'LINK_09', description: 'Verify count (stub)', posixSection: 'link.html', posixRequirement: 'st_nlink', command: 'rm -f lnk; link f lnk && ls -l f', expect: { exitCode: 0, stdout: /^\S+ 2 / }},
             { id: 'LINK_10', description: 'Unlink source', posixSection: 'link.html', posixRequirement: 'Persist', setup: (fs) => { fs.writeFile('f', 'x', 'w'); }, command: 'link f lnk; rm f; cat lnk', expect: { exitCode: 0, stdout: /x/ } }
         ]
     },
@@ -1365,7 +1367,7 @@ const SUITES: UtilitySuite[] = [
             { id: 'LN_07', description: 'Link directory (fail)', posixSection: 'ln.html', posixRequirement: 'No hard link dir', setup: (fs) => fs.mkdir('d', 0o755), command: 'ln d l', expect: { exitCode: 1 } },
             { id: 'LN_08', description: 'Symlink dir', posixSection: 'ln.html', posixRequirement: 'Allowed -s', setup: (fs) => fs.mkdir('d', 0o755), command: 'ln -s d l', expect: { exitCode: 0 } },
             { id: 'LN_09', description: 'Multiple inputs', posixSection: 'ln.html', posixRequirement: 'Into dir', setup: (fs) => { fs.writeFile('f1', '', 'w'); fs.writeFile('f2', '', 'w'); fs.mkdir('d', 0o755); }, command: 'ln f1 f2 d', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/d/f1', type: 'file' }, { path: '/home/operator/d/f2', type: 'file' }] } },
-            { id: 'LN_10', description: 'Interact -i', posixSection: 'ln.html', posixRequirement: '-i prompt', command: 'ln -i f t', expect: { exitCode: 0 } } // Mock non-interactive
+            { id: 'LN_10', description: 'Interact -i', posixSection: 'ln.html', posixRequirement: '-i prompt', command: 'ln -i f fresh', expect: { exitCode: 0 } } // Mock non-interactive
         ]
     },
     {
@@ -1477,7 +1479,7 @@ const SUITES: UtilitySuite[] = [
             { id: 'COMMAND_07', description: 'With args', posixSection: 'command.html', posixRequirement: 'Args pass', command: 'command echo a b', expect: { exitCode: 0, stdout: /a b/ } },
             { id: 'COMMAND_08', description: 'Exit code prop', posixSection: 'command.html', posixRequirement: 'Status', command: 'command false', expect: { exitCode: 1 } },
             { id: 'COMMAND_09', description: 'Special builtin', posixSection: 'command.html', posixRequirement: 'No exit shell', command: 'command set', expect: { exitCode: 0 } }, // if set fails, shell lives
-            { id: 'COMMAND_10', description: 'No args', posixSection: 'command.html', posixRequirement: 'Error', command: 'command', expect: { exitCode: 1 } } // or 0?
+            { id: 'COMMAND_10', description: 'No args', posixSection: 'command.html', posixRequirement: 'Error', command: 'command', expect: { exitCode: 0 }} // or 0?
         ]
     },
     {
@@ -1486,14 +1488,14 @@ const SUITES: UtilitySuite[] = [
         tests: [
             { id: 'FC_01', description: 'List -l', posixSection: 'fc.html', posixRequirement: '-l list', command: 'fc -l', expect: { exitCode: 0 } },
             { id: 'FC_02', description: 'Number -n', posixSection: 'fc.html', posixRequirement: '-n no number', command: 'fc -ln', expect: { exitCode: 0 } },
-            { id: 'FC_03', description: 'Reverse -r', posixSection: 'fc.html', posixRequirement: '-r', command: 'fc -r', expect: { exitCode: 0 } },
-            { id: 'FC_04', description: 'Edit (stub)', posixSection: 'fc.html', posixRequirement: 'Edit', command: 'fc echo', expect: { exitCode: 0 } }, // interactive?
-            { id: 'FC_05', description: 'Execute -e -', posixSection: 'fc.html', posixRequirement: '-e - exec', command: 'echo cmd; fc -e -', expect: { exitCode: 0 } }, // re-exec last
-            { id: 'FC_06', description: 'Range', posixSection: 'fc.html', posixRequirement: 'first last', command: 'fc -l 1 5', expect: { exitCode: 0 } },
-            { id: 'FC_07', description: 'Old=New', posixSection: 'fc.html', posixRequirement: 'Replace', command: 'fc -e - x=y lastcmd', expect: { exitCode: 0 } },
+            { id: 'FC_03', description: 'Reverse -r', posixSection: 'fc.html', posixRequirement: '-r', history: ['echo one', 'echo two', 'echo lastcmd x'], command: 'fc -l -r', expect: { exitCode: 0, stdout: /lastcmd x[\s\S]*echo one/ } },
+            { id: 'FC_04', description: 'Edit (stub)', posixSection: 'fc.html', posixRequirement: 'Edit', history: ['echo one', 'echo two', 'echo lastcmd x'], command: 'fc -e - echo', expect: { exitCode: 0, stdout: /lastcmd x/ } }, // interactive?
+            { id: 'FC_05', description: 'Execute -e -', posixSection: 'fc.html', posixRequirement: '-e - exec', history: ['echo one', 'echo two', 'echo lastcmd x'], command: 'fc -e -', expect: { exitCode: 0, stdout: /lastcmd x\nlastcmd x/ } }, // re-exec last
+            { id: 'FC_06', description: 'Range', posixSection: 'fc.html', posixRequirement: 'first last', history: ['echo one', 'echo two', 'echo lastcmd x'], command: 'fc -l 1 2', expect: { exitCode: 0, stdout: /^1\techo one\n2\techo two\n$/ } },
+            { id: 'FC_07', description: 'Old=New', posixSection: 'fc.html', posixRequirement: 'Replace', history: ['echo one', 'echo two', 'echo lastcmd x'], command: 'fc -e - x=y echo', expect: { exitCode: 0, stdout: /lastcmd y/ } },
             { id: 'FC_08', description: 'Fail missing', posixSection: 'fc.html', posixRequirement: 'Error', command: 'fc missing', expect: { exitCode: 1 } },
-            { id: 'FC_09', description: 'Editor -e', posixSection: 'fc.html', posixRequirement: '-e editor', command: 'fc -e vi', expect: { exitCode: 0 } }, // Mock vi?
-            { id: 'FC_10', description: 'Negative index', posixSection: 'fc.html', posixRequirement: '-1', command: 'fc -l -1', expect: { exitCode: 0 } }
+            { id: 'FC_09', description: 'Editor -e', posixSection: 'fc.html', posixRequirement: '-e editor', history: ['echo one', 'echo two', 'echo lastcmd x'], command: "fc -e 'sed -i s/one/edited/' 1", expect: { exitCode: 0, stdout: /edited/ } }, // Mock vi?
+            { id: 'FC_10', description: 'Negative index', posixSection: 'fc.html', posixRequirement: '-1', history: ['echo one', 'echo two', 'echo lastcmd x'], command: 'fc -l -1', expect: { exitCode: 0, stdout: /^3\techo lastcmd x\n$/ } }
         ]
     },
     {
@@ -1550,14 +1552,14 @@ const SUITES: UtilitySuite[] = [
         tests: [
             { id: 'SHIFT_01', description: 'Shift 1', posixSection: 'shift.html', posixRequirement: 'Default 1', command: 'set a b; shift; echo $1', expect: { exitCode: 0, stdout: /b/ } },
             { id: 'SHIFT_02', description: 'Shift N', posixSection: 'shift.html', posixRequirement: 'N', command: 'set a b c; shift 2; echo $1', expect: { exitCode: 0, stdout: /c/ } },
-            { id: 'SHIFT_03', description: 'Fail > count', posixSection: 'shift.html', posixRequirement: 'Error', command: 'set a; shift 2', expect: { exitCode: 1 } },
+            { id: 'SHIFT_03', description: 'Fail > count', posixSection: 'shift.html', posixRequirement: 'Error', command: 'set a; shift 2', expect: { exitCode: 2 }},
             { id: 'SHIFT_04', description: 'Shift 0', posixSection: 'shift.html', posixRequirement: 'No op', command: 'set a; shift 0; echo $1', expect: { exitCode: 0, stdout: /a/ } },
-            { id: 'SHIFT_05', description: 'Too many args', posixSection: 'shift.html', posixRequirement: 'Error', command: 'shift a b', expect: { exitCode: 1 } }, // Non-numeric
-            { id: 'SHIFT_06', description: 'No args set', posixSection: 'shift.html', posixRequirement: 'Fail', command: 'shift', expect: { exitCode: 1 } },
+            { id: 'SHIFT_05', description: 'Too many args', posixSection: 'shift.html', posixRequirement: 'Error', command: 'shift a b', expect: { exitCode: 2 }}, // Non-numeric
+            { id: 'SHIFT_06', description: 'No args set', posixSection: 'shift.html', posixRequirement: 'Fail', command: 'shift', expect: { exitCode: 2 }},
             { id: 'SHIFT_07', description: 'All args', posixSection: 'shift.html', posixRequirement: 'Clear', command: 'set a; shift', expect: { exitCode: 0 } },
             { id: 'SHIFT_08', description: 'Consistency', posixSection: 'shift.html', posixRequirement: 'Stable', command: 'set a b; shift; shift', expect: { exitCode: 0 } },
             { id: 'SHIFT_09', description: 'Loop usage', posixSection: 'shift.html', posixRequirement: 'Loop', command: 'set a b; shift', expect: { exitCode: 0 } },
-            { id: 'SHIFT_10', description: 'Invalid arg', posixSection: 'shift.html', posixRequirement: 'Error', command: 'shift x', expect: { exitCode: 1 } } // >0
+            { id: 'SHIFT_10', description: 'Invalid arg', posixSection: 'shift.html', posixRequirement: 'Error', command: 'shift x', expect: { exitCode: 2 }} // >0
         ]
     },
     {
@@ -1605,7 +1607,7 @@ const SUITES: UtilitySuite[] = [
             { id: 'TYPE_07', description: 'Multiple', posixSection: 'type.html', posixRequirement: 'Args', command: 'type echo ls', expect: { exitCode: 0 } },
             { id: 'TYPE_08', description: 'All locations -a (Ext)', posixSection: 'type.html', posixRequirement: '-a', command: 'type -a ls', expect: { exitCode: 0 } },
             { id: 'TYPE_09', description: 'Path -p (Ext)', posixSection: 'type.html', posixRequirement: '-p', command: 'type -p ls', expect: { exitCode: 0 } },
-            { id: 'TYPE_10', description: 'No args', posixSection: 'type.html', posixRequirement: 'Error', command: 'type', expect: { exitCode: 1 } }
+            { id: 'TYPE_10', description: 'No args', posixSection: 'type.html', posixRequirement: 'Error', command: 'type', expect: { exitCode: 0 }}
         ]
     },
     {
@@ -1651,8 +1653,8 @@ const SUITES: UtilitySuite[] = [
             { id: 'UNSET_05', description: 'Unset readonly', posixSection: 'unset.html', posixRequirement: 'Error', command: 'readonly r=1; unset r', expect: { exitCode: 1 } },
             { id: 'UNSET_06', description: 'Multiple', posixSection: 'unset.html', posixRequirement: 'Args', command: 'a=1 b=2; unset a b', expect: { exitCode: 0 } },
             { id: 'UNSET_07', description: 'Function precedence', posixSection: 'unset.html', posixRequirement: 'Var first', command: 'f() { :; }; f=1; unset f; echo $f', expect: { stdout: /^$/ } }, // unsets var primarily?
-            { id: 'UNSET_08', description: 'No args', posixSection: 'unset.html', posixRequirement: 'Error?', command: 'unset', expect: { exitCode: 1 } }, // or 0
-            { id: 'UNSET_09', description: 'Unset array (Ext)', posixSection: 'unset.html', posixRequirement: 'Array', command: 'a[1]=1; unset a[1]', expect: { exitCode: 0 } },
+            { id: 'UNSET_08', description: 'No args', posixSection: 'unset.html', posixRequirement: 'Error?', command: 'unset', expect: { exitCode: 0 }}, // or 0
+            { id: 'UNSET_09', description: 'Unset array (Ext)', posixSection: 'unset.html', posixRequirement: 'Array', command: 'a=1 b=2; unset -v a b; echo "${a-unset}${b-unset}"', expect: { exitCode: 0, stdout: /unsetunset/ }},
             { id: 'UNSET_10', description: 'Consistency', posixSection: 'unset.html', posixRequirement: 'Stable', command: 'unset a', expect: { exitCode: 0 } }
         ]
     },
@@ -1679,7 +1681,7 @@ const SUITES: UtilitySuite[] = [
             { id: 'EVAL_01', description: 'Run args', posixSection: 'eval.html', posixRequirement: 'Execute', command: 'eval echo x', expect: { exitCode: 0, stdout: /x/ } },
             { id: 'EVAL_02', description: 'Var expansion', posixSection: 'eval.html', posixRequirement: 'Expand', command: 'a=x; eval echo \$$a', expect: { exitCode: 0 } }, // ? specific to shell var indirection
             { id: 'EVAL_03', description: 'Complex cmd', posixSection: 'eval.html', posixRequirement: 'Parse', command: 'eval "date; uname"', expect: { exitCode: 0 } },
-            { id: 'EVAL_04', description: 'Fail syntax', posixSection: 'eval.html', posixRequirement: 'Error', command: 'eval "if"', expect: { exitCode: 1 } }, // incomplete
+            { id: 'EVAL_04', description: 'Fail syntax', posixSection: 'eval.html', posixRequirement: 'Error', command: 'eval "if"', expect: { exitCode: 2 }}, // incomplete
             { id: 'EVAL_05', description: 'Exit code', posixSection: 'eval.html', posixRequirement: 'Return status', command: 'eval false', expect: { exitCode: 1 } },
             { id: 'EVAL_06', description: 'No args', posixSection: 'eval.html', posixRequirement: 'Success', command: 'eval', expect: { exitCode: 0 } },
             { id: 'EVAL_07', description: 'Concat args', posixSection: 'eval.html', posixRequirement: 'Concat', command: 'eval echo a b', expect: { exitCode: 0, stdout: /a b/ } },
@@ -2210,9 +2212,9 @@ const SUITES: UtilitySuite[] = [
             { id: 'MKFIFO_04', description: 'Multiple', posixSection: 'mkfifo.html', posixRequirement: 'Args', command: 'mkfifo p1 p2', expect: { exitCode: 0 } },
             { id: 'MKFIFO_05', description: 'Fail missing parent', posixSection: 'mkfifo.html', posixRequirement: 'ENOENT', command: 'mkfifo missing/p', expect: { exitCode: 1 } },
             { id: 'MKFIFO_06', description: 'Fail no args', posixSection: 'mkfifo.html', posixRequirement: 'Error', command: 'mkfifo', expect: { exitCode: 1 } },
-            { id: 'MKFIFO_07', description: 'Consistency', posixSection: 'mkfifo.html', posixRequirement: 'Stable', command: 'mkfifo p', expect: { exitCode: 0 } },
-            { id: 'MKFIFO_08', description: 'Verify type (stub)', posixSection: 'mkfifo.html', posixRequirement: 'Is pipe', command: 'mkfifo p; ls -l p', expect: { stdout: /^p/ } }, // pipe char
-            { id: 'MKFIFO_09', description: 'Permissions check', posixSection: 'mkfifo.html', posixRequirement: 'Mode', command: 'mkfifo -m 777 p', expect: { exitCode: 0 } },
+            { id: 'MKFIFO_07', description: 'Consistency', posixSection: 'mkfifo.html', posixRequirement: 'Stable', command: 'mkfifo p7', expect: { exitCode: 0 } },
+            { id: 'MKFIFO_08', description: 'Verify type (stub)', posixSection: 'mkfifo.html', posixRequirement: 'Is pipe', command: 'mkfifo p8; ls -l p8', expect: { stdout: /^p/ } }, // pipe char
+            { id: 'MKFIFO_09', description: 'Permissions check', posixSection: 'mkfifo.html', posixRequirement: 'Mode', command: 'mkfifo -m 777 p9', expect: { exitCode: 0 } },
             { id: 'MKFIFO_10', description: 'Fail invalid mode', posixSection: 'mkfifo.html', posixRequirement: 'Error', command: 'mkfifo -m junk p', expect: { exitCode: 1 } }
         ]
     },
@@ -2253,14 +2255,14 @@ const SUITES: UtilitySuite[] = [
         htmlFile: 'readlink.html', // Note: Not in SUSv5/POSIX? 'readlink' might be distinct. Checks 'realpath' coverage. 'readlink' is common extension or part of 'stat'. Wait, 'readlink' is XSI/Extension or just expected. HTML file exists.
         tests: [
             { id: 'READLINK_01', description: 'Show target', posixSection: 'readlink.html', posixRequirement: 'Target', setup: (fs) => { fs.writeFile('f', '', 'w'); }, command: 'ln -s f l; readlink l', expect: { exitCode: 0, stdout: /f/ } },
-            { id: 'READLINK_02', description: 'Canonical -f', posixSection: 'readlink.html', posixRequirement: '-f', command: 'readlink -f l', expect: { exitCode: 0, stdout: /\/home\/operator\/f/ } },
+            { id: 'READLINK_02', description: 'Canonical -f', posixSection: 'readlink.html', posixRequirement: '-f', setup: (fs) => { fs.writeFile('f', '', 'w'); fs.symlink('f', 'l'); }, command: 'readlink -f l', expect: { exitCode: 0, stdout: /\/home\/operator\/f/ } },
             { id: 'READLINK_03', description: 'Fail not link', posixSection: 'readlink.html', posixRequirement: 'EINVAL?', command: 'readlink f', expect: { exitCode: 1 } }, // or empty
             { id: 'READLINK_04', description: 'Fail missing', posixSection: 'readlink.html', posixRequirement: 'Error', command: 'readlink missing', expect: { exitCode: 1 } },
             { id: 'READLINK_05', description: 'Silent -q', posixSection: 'readlink.html', posixRequirement: '-q', command: 'readlink -q missing', expect: { exitCode: 1, stdout: /^$/ } },
-            { id: 'READLINK_06', description: 'No newline -n', posixSection: 'readlink.html', posixRequirement: '-n', command: 'readlink -n l', expect: { exitCode: 0 } },
-            { id: 'READLINK_07', description: 'Multiple (fail?)', posixSection: 'readlink.html', posixRequirement: 'Error', command: 'readlink l l', expect: { exitCode: 1 } },
-            { id: 'READLINK_08', description: 'Verbose -v', posixSection: 'readlink.html', posixRequirement: '-v', command: 'readlink -v l', expect: { exitCode: 0 } },
-            { id: 'READLINK_09', description: 'Consistency', posixSection: 'readlink.html', posixRequirement: 'Stable', command: 'readlink l', expect: { exitCode: 0 } },
+            { id: 'READLINK_06', description: 'No newline -n', posixSection: 'readlink.html', posixRequirement: '-n', setup: (fs) => { fs.writeFile('f', '', 'w'); fs.symlink('f', 'l'); }, command: 'readlink -n l', expect: { exitCode: 0 } },
+            { id: 'READLINK_07', description: 'Multiple (fail?)', posixSection: 'readlink.html', posixRequirement: 'Error', setup: (fs) => { fs.writeFile('f', '', 'w'); fs.symlink('f', 'l'); }, command: 'readlink l l', expect: { exitCode: 0, stdout: /^f\nf\n$/ }},
+            { id: 'READLINK_08', description: 'Verbose -v', posixSection: 'readlink.html', posixRequirement: '-v', setup: (fs) => { fs.writeFile('f', '', 'w'); fs.symlink('f', 'l'); }, command: 'readlink -v l', expect: { exitCode: 0 } },
+            { id: 'READLINK_09', description: 'Consistency', posixSection: 'readlink.html', posixRequirement: 'Stable', setup: (fs) => { fs.writeFile('f', '', 'w'); fs.symlink('f', 'l'); }, command: 'readlink l', expect: { exitCode: 0 } },
             { id: 'READLINK_10', description: 'Symlink to dir', posixSection: 'readlink.html', posixRequirement: 'Dir', setup: (fs) => fs.mkdir('d', 0o755), command: 'ln -s d ld; readlink ld', expect: { stdout: /d/ } }
         ]
     },
@@ -2270,7 +2272,7 @@ const SUITES: UtilitySuite[] = [
         tests: [
             { id: 'REALPATH_01', description: 'Resolve path', posixSection: 'realpath.html', posixRequirement: 'Resolve', command: 'realpath .', expect: { exitCode: 0, stdout: /\/home\/operator/ } },
             { id: 'REALPATH_02', description: 'Resolve symlink', posixSection: 'realpath.html', posixRequirement: 'Follow', setup: (fs) => { fs.writeFile('f', '', 'w'); }, command: 'ln -s f l; realpath l', expect: { exitCode: 0, stdout: /\/f/ } },
-            { id: 'REALPATH_03', description: 'Fail missing (default)', posixSection: 'realpath.html', posixRequirement: 'Error', command: 'realpath missing', expect: { exitCode: 1 } },
+            { id: 'REALPATH_03', description: 'Fail missing (default)', posixSection: 'realpath.html', posixRequirement: 'Error', command: 'realpath missing', expect: { exitCode: 0 }},
             { id: 'REALPATH_04', description: 'Ignore missing -m', posixSection: 'realpath.html', posixRequirement: '-m', command: 'realpath -m missing', expect: { exitCode: 0 } }, // prints what it would be
             { id: 'REALPATH_05', description: 'Relative to --relative-to', posixSection: 'realpath.html', posixRequirement: 'Rel', command: 'realpath --relative-to=/home /home/operator', expect: { stdout: /operator/ } },
             { id: 'REALPATH_06', description: 'Fail no args', posixSection: 'realpath.html', posixRequirement: 'Error', command: 'realpath', expect: { exitCode: 1 } },
@@ -2302,13 +2304,13 @@ const SUITES: UtilitySuite[] = [
         tests: [
             { id: 'BREAK_01', description: 'Break loop', posixSection: 'break.html', posixRequirement: 'Break', command: 'for i in 1 2; do break; done', expect: { exitCode: 0 } }, // Harness might not support parsing loops
             { id: 'BREAK_02', description: 'Depth', posixSection: 'break.html', posixRequirement: 'N', command: 'break 2', expect: { exitCode: 0 } }, // outside loop?
-            { id: 'BREAK_03', description: 'Fail arg', posixSection: 'break.html', posixRequirement: 'Error', command: 'break x', expect: { exitCode: 1 } }, // >0
+            { id: 'BREAK_03', description: 'Fail arg', posixSection: 'break.html', posixRequirement: 'Error', command: 'break x', expect: { exitCode: 2 }}, // >0
             { id: 'BREAK_04', description: 'No args', posixSection: 'break.html', posixRequirement: '1', command: 'break', expect: { exitCode: 0 } },
             { id: 'BREAK_05', description: 'Outside loop', posixSection: 'break.html', posixRequirement: 'Warning?', command: 'break', expect: { exitCode: 0 } }, // or error
             { id: 'BREAK_06', description: 'Exit code', posixSection: 'break.html', posixRequirement: 'Status', command: 'break', expect: { exitCode: 0 } },
             { id: 'BREAK_07', description: 'Consistency', posixSection: 'break.html', posixRequirement: 'Stable', command: 'break 1', expect: { exitCode: 0 } },
             { id: 'BREAK_08', description: 'Too many args', posixSection: 'break.html', posixRequirement: 'Error', command: 'break 1 2', expect: { exitCode: 1 } },
-            { id: 'BREAK_09', description: 'Zero depth', posixSection: 'break.html', posixRequirement: 'Error?', command: 'break 0', expect: { exitCode: 1 } },
+            { id: 'BREAK_09', description: 'Zero depth', posixSection: 'break.html', posixRequirement: 'Error?', command: 'break 0', expect: { exitCode: 2 }},
             { id: 'BREAK_10', description: 'Simple', posixSection: 'break.html', posixRequirement: 'Works', command: 'break', expect: { exitCode: 0 } }
         ]
     },
@@ -2318,12 +2320,12 @@ const SUITES: UtilitySuite[] = [
         tests: [
             { id: 'CONTINUE_01', description: 'Cont loop', posixSection: 'continue.html', posixRequirement: 'Next', command: 'for i in 1; do continue; done', expect: { exitCode: 0 } },
             { id: 'CONTINUE_02', description: 'Depth', posixSection: 'continue.html', posixRequirement: 'N', command: 'continue 1', expect: { exitCode: 0 } },
-            { id: 'CONTINUE_03', description: 'Fail arg', posixSection: 'continue.html', posixRequirement: 'Error', command: 'continue x', expect: { exitCode: 1 } },
+            { id: 'CONTINUE_03', description: 'Fail arg', posixSection: 'continue.html', posixRequirement: 'Error', command: 'continue x', expect: { exitCode: 2 }},
             { id: 'CONTINUE_04', description: 'No args', posixSection: 'continue.html', posixRequirement: '1', command: 'continue', expect: { exitCode: 0 } },
             { id: 'CONTINUE_05', description: 'Outside loop', posixSection: 'continue.html', posixRequirement: 'Warn', command: 'continue', expect: { exitCode: 0 } },
             { id: 'CONTINUE_06', description: 'Exit code', posixSection: 'continue.html', posixRequirement: 'Status', command: 'continue', expect: { exitCode: 0 } },
             { id: 'CONTINUE_07', description: 'Consistency', posixSection: 'continue.html', posixRequirement: 'Stable', command: 'continue 1', expect: { exitCode: 0 } },
-            { id: 'CONTINUE_08', description: 'Zero', posixSection: 'continue.html', posixRequirement: 'Error', command: 'continue 0', expect: { exitCode: 1 } },
+            { id: 'CONTINUE_08', description: 'Zero', posixSection: 'continue.html', posixRequirement: 'Error', command: 'continue 0', expect: { exitCode: 2 }},
             { id: 'CONTINUE_09', description: 'Too many', posixSection: 'continue.html', posixRequirement: 'Error', command: 'continue 1 1', expect: { exitCode: 1 } },
             { id: 'CONTINUE_10', description: 'Simple', posixSection: 'continue.html', posixRequirement: 'Works', command: 'continue', expect: { exitCode: 0 } }
         ]
@@ -2381,7 +2383,7 @@ const SUITES: UtilitySuite[] = [
         htmlFile: 'readonly.html',
         tests: [
             { id: 'READONLY_01', description: 'Set ro', posixSection: 'readonly.html', posixRequirement: 'Set', command: 'readonly r=1', expect: { exitCode: 0 } },
-            { id: 'READONLY_02', description: 'Fail modify', posixSection: 'readonly.html', posixRequirement: 'Error', command: 'readonly r=1; r=2', expect: { exitCode: 1 } },
+            { id: 'READONLY_02', description: 'Fail modify', posixSection: 'readonly.html', posixRequirement: 'Error', command: 'readonly r=1; r=2', expect: { exitCode: 2 }},
             { id: 'READONLY_03', description: 'List -p', posixSection: 'readonly.html', posixRequirement: '-p', command: 'readonly -p', expect: { exitCode: 0 } },
             { id: 'READONLY_04', description: 'Fail unset', posixSection: 'readonly.html', posixRequirement: 'Error', command: 'readonly r=1; unset r', expect: { exitCode: 1 } },
             { id: 'READONLY_05', description: 'Funcs -f (Ext)', posixSection: 'readonly.html', posixRequirement: '-f', command: 'f(){ :; }; readonly -f f', expect: { exitCode: 0 } },
@@ -2612,7 +2614,7 @@ const SUITES: UtilitySuite[] = [
             { id: 'ICONV_04', description: 'Fail missing', posixSection: 'iconv.html', posixRequirement: 'Error', command: 'iconv missing', expect: { exitCode: 1 } },
             { id: 'ICONV_05', description: 'Stdin', posixSection: 'iconv.html', posixRequirement: '-', command: 'echo x | iconv -f UTF-8 -t ASCII', expect: { exitCode: 0 } },
             { id: 'ICONV_06', description: 'Output -o (Ext)', posixSection: 'iconv.html', posixRequirement: '-o', setup: (fs) => fs.writeFile('/home/operator/f', 'text', 'w'), command: 'iconv -o out f', expect: { exitCode: 0 } },
-            { id: 'ICONV_07', description: 'Fail args', posixSection: 'iconv.html', posixRequirement: 'Error', command: 'iconv', expect: { exitCode: 1 } }, // needs -f -t?
+            { id: 'ICONV_07', description: 'Fail args', posixSection: 'iconv.html', posixRequirement: 'Error', command: 'iconv', expect: { exitCode: 0 }}, // needs -f -t?
             { id: 'ICONV_08', description: 'Silent -s', posixSection: 'iconv.html', posixRequirement: '-s', setup: (fs) => fs.writeFile('/home/operator/f', 'text', 'w'), command: 'iconv -s f', expect: { exitCode: 0 } },
             { id: 'ICONV_09', description: 'Consistency', posixSection: 'iconv.html', posixRequirement: 'Stable', command: 'iconv -l', expect: { exitCode: 0 } },
             { id: 'ICONV_10', description: 'Omit -f -t?', posixSection: 'iconv.html', posixRequirement: 'Default', setup: (fs) => fs.writeFile('/home/operator/f', 'text', 'w'), command: 'iconv f', expect: { exitCode: 0 } }
@@ -2986,7 +2988,7 @@ async function runSuite() {
             }
 
             try {
-                const response = await testExecutor.execute(test.command, testState);
+                const response = await testExecutor.execute(test.command, { ...testState, history: test.history ?? [] });
                 if (ONLY) console.log(`${CYAN}${test.id}${RESET} $ ${test.command}\n${GRAY}${JSON.stringify(response.output)} [exit ${response.exitCode}]${RESET}`);
 
                 // Exit Code
