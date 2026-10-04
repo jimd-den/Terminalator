@@ -721,18 +721,13 @@ UTILITY: df
 UTILITY: mesg
 [PASS] MESG_01
 [PASS] MESG_02
-[FAIL] MESG_03: Set n
-       -> Exit Code: Expected 1, got 0
-[FAIL] MESG_04: Verify n
-       -> Exit Code: Expected 1, got 0
+[PASS] MESG_03
+[PASS] MESG_04
 [PASS] MESG_05
-[FAIL] MESG_06: Fail invalid
-       -> Exit Code: Expected 2, got 0
-[FAIL] MESG_07: Too many args
-       -> Exit Code: Expected 2, got 0
+[PASS] MESG_06
+[PASS] MESG_07
 [PASS] MESG_08
-[FAIL] MESG_09: Verbose (stub)
-       -> Exit Code: Expected 1, got 0
+[PASS] MESG_09
 [PASS] MESG_10
 UTILITY: uudecode
 [PASS] UUDECODE_01
@@ -1110,10 +1105,8 @@ UTILITY: ulimit
 [PASS] ULIMIT_05
 [PASS] ULIMIT_06
 [PASS] ULIMIT_07
-[FAIL] ULIMIT_08: Fail invalid flag
-       -> Exit Code: Expected 1, got 0
-[FAIL] ULIMIT_09: Fail invalid val
-       -> Exit Code: Expected 1, got 0
+[PASS] ULIMIT_08
+[PASS] ULIMIT_09
 [PASS] ULIMIT_10
 UTILITY: umask
 [PASS] UMASK_01
@@ -1172,31 +1165,22 @@ UTILITY: exec
 [PASS] EXEC_10
 UTILITY: ps
 [PASS] PS_01
-[FAIL] PS_02: Full format -f
-       -> Stdout Regex Mismatch.
-   Expected: /UID.*PID/
-   Got: "  PID TTY          TIME CMD\n 1000 pts/0    00:00:00 sh"
+[PASS] PS_02
 [PASS] PS_03
 [PASS] PS_04
 [PASS] PS_05
 [PASS] PS_06
 [PASS] PS_07
-[FAIL] PS_08: Output specific -o
-       -> Stdout Regex Mismatch.
-   Expected: /PID.*COMMAND/
-   Got: "  PID TTY          TIME CMD\n 1000 pts/0    00:00:00 sh"
+[PASS] PS_08
 [PASS] PS_09
-[FAIL] PS_10: Fail invalid
-       -> Exit Code: Expected 1, got 0
+[PASS] PS_10
 UTILITY: nice
 [PASS] NICE_01
 [PASS] NICE_02
 [PASS] NICE_03
-[FAIL] NICE_04: Fail syntax
-       -> Exit Code: Expected 1, got 127
+[PASS] NICE_04
 [PASS] NICE_05
-[FAIL] NICE_06: Negative (root)
-       -> Exit Code: Expected 1, got 0
+[PASS] NICE_06
 [PASS] NICE_07
 [PASS] NICE_08
 [PASS] NICE_09
@@ -1206,13 +1190,10 @@ UTILITY: renice
 [PASS] RENICE_02
 [PASS] RENICE_03
 [PASS] RENICE_04
-[FAIL] RENICE_05: Fail missing
-       -> Exit Code: Expected 1, got 0
-[FAIL] RENICE_06: Fail syntax
-       -> Exit Code: Expected 1, got 0
+[PASS] RENICE_05
+[PASS] RENICE_06
 [PASS] RENICE_07
-[FAIL] RENICE_08: Negative (root)
-       -> Exit Code: Expected 1, got 0
+[PASS] RENICE_08
 [PASS] RENICE_09
 [PASS] RENICE_10
 UTILITY: nohup
@@ -1223,8 +1204,7 @@ UTILITY: nohup
 [PASS] NOHUP_05
 [PASS] NOHUP_06
 [PASS] NOHUP_07
-[FAIL] NOHUP_08: Fail no args
-       -> Exit Code: Expected 127, got 1
+[PASS] NOHUP_08
 [PASS] NOHUP_09
 [PASS] NOHUP_10
 UTILITY: logger
@@ -1298,7 +1278,7 @@ UTILITY: who
 [FAIL] WHO_02: Headers -H
        -> Stdout Regex Mismatch.
    Expected: /NAME/
-   Got: "operator   tty1   2026-10-04 19:01"
+   Got: "operator   tty1   2026-10-04 19:10"
 [PASS] WHO_03
 [PASS] WHO_04
 [PASS] WHO_05
@@ -1646,15 +1626,12 @@ UTILITY: realpath
 UTILITY: timeout
 [PASS] TIMEOUT_01
 [PASS] TIMEOUT_02
-[FAIL] TIMEOUT_03: Signal -s
-       -> Exit Code: Expected 124, got 125
+[PASS] TIMEOUT_03
 [PASS] TIMEOUT_04
 [PASS] TIMEOUT_05
-[FAIL] TIMEOUT_06: Kill after -k
-       -> Exit Code: Expected 124, got 125
+[PASS] TIMEOUT_06
 [PASS] TIMEOUT_07
-[FAIL] TIMEOUT_08: Foreground --foreground
-       -> Exit Code: Expected 0, got 125
+[PASS] TIMEOUT_08
 [PASS] TIMEOUT_09
 [PASS] TIMEOUT_10
 UTILITY: break
@@ -2256,7 +2233,7 @@ fold          |    10 |   10 |    0 |    100.0%
 cksum         |    10 |   10 |    0 |    100.0%
 du            |    10 |    9 |    1 |     90.0%
 df            |    10 |    9 |    1 |     90.0%
-mesg          |    10 |    5 |    5 |     50.0%
+mesg          |    10 |   10 |    0 |    100.0%
 uudecode      |    10 |   10 |    0 |    100.0%
 uuencode      |    10 |   10 |    0 |    100.0%
 compress      |    10 |   10 |    0 |    100.0%
@@ -2286,16 +2263,16 @@ shift         |    10 |   10 |    0 |    100.0%
 times         |    10 |   10 |    0 |    100.0%
 trap          |    10 |   10 |    0 |    100.0%
 type          |    10 |   10 |    0 |    100.0%
-ulimit        |    10 |    8 |    2 |     80.0%
+ulimit        |    10 |   10 |    0 |    100.0%
 umask         |    10 |   10 |    0 |    100.0%
 unset         |    10 |   10 |    0 |    100.0%
 export        |    10 |   10 |    0 |    100.0%
 eval          |    10 |   10 |    0 |    100.0%
 exec          |    10 |   10 |    0 |    100.0%
-ps            |    10 |    7 |    3 |     70.0%
-nice          |    10 |    8 |    2 |     80.0%
-renice        |    10 |    7 |    3 |     70.0%
-nohup         |    10 |    9 |    1 |     90.0%
+ps            |    10 |   10 |    0 |    100.0%
+nice          |    10 |   10 |    0 |    100.0%
+renice        |    10 |   10 |    0 |    100.0%
+nohup         |    10 |   10 |    0 |    100.0%
 logger        |    10 |   10 |    0 |    100.0%
 tput          |    10 |    6 |    4 |     60.0%
 tty           |    10 |   10 |    0 |    100.0%
@@ -2328,7 +2305,7 @@ unlink        |    10 |   10 |    0 |    100.0%
 patch         |    10 |    8 |    2 |     80.0%
 readlink      |    10 |   10 |    0 |    100.0%
 realpath      |    10 |   10 |    0 |    100.0%
-timeout       |    10 |    7 |    3 |     70.0%
+timeout       |    10 |   10 |    0 |    100.0%
 break         |    10 |   10 |    0 |    100.0%
 continue      |    10 |   10 |    0 |    100.0%
 colon         |    10 |   10 |    0 |    100.0%
@@ -2368,7 +2345,7 @@ uustat        |    10 |    9 |    1 |     90.0%
 uux           |    10 |    2 |    8 |     20.0%
 xgettext      |    10 |    6 |    4 |     60.0%
 
-TOTAL COMPLIANCE: 86.8% (1520/1752)
+TOTAL COMPLIANCE: 87.8% (1539/1752)
 
 === MISSING UTILITIES (Implemented but failing) ===
 None
