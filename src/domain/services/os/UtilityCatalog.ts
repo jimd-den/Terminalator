@@ -19,6 +19,6 @@ export const DEFAULT_UTILITIES: string[] = [
     'gencat', 'get', 'gettext', 'ipcrm', 'ipcs', 'locale', 'localedef', 'msgfmt', 'newgrp', 'ngettext',
     'prs', 'rmdel', 'sact', 'sccs', 'unget', 'uucp', 'uustat', 'uux', 'val', 'what',
     'xgettext', 'gzip', 'gunzip', 'tar', 'cpio', 'gcc', 'xargs', 'whoami', 'date', 'scp',
-    'clear', 'sh', 'bash', 'dash', 'read', 'getopts', 'hash', 'mail', 'check-comms', 'compile',
+    'clear', 'sh', 'bash', 'dash', 'read', 'getopts', 'hash', 'seq', 'mail', 'check-comms', 'compile',
     'vim', 'scheme', 'asm', 'settings', 'ssh', 'tutor',
 ];

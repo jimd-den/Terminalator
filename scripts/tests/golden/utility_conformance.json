@@ -1,0 +1,270 @@
+{
+  "od/0:default": {
+    "stdout": "0000000 062550 066154 004557 067567 066162 005144 177401 041101\n0000020 000103\n0000021\n0000000 060541 060541 060541 060541 060541 060541 060541 060541\n*\n0000060 060541 060541 060541 060541 060541 060541 060541 000142\n0000077\n",
+    "status": 0
+  },
+  "od/1:-c": {
+    "stdout": "0000000   h   e   l   l   o  \\t   w   o   r   l   d  \\n 001 377   A   B\n0000020   C\n0000021\n0000000   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a\n*\n0000060   a   a   a   a   a   a   a   a   a   a   a   a   a   a   b\n0000077\n",
+    "status": 0
+  },
+  "od/2:-b": {
+    "stdout": "0000000 150 145 154 154 157 011 167 157 162 154 144 012 001 377 101 102\n0000020 103\n0000021\n0000000 141 141 141 141 141 141 141 141 141 141 141 141 141 141 141 141\n*\n0000060 141 141 141 141 141 141 141 141 141 141 141 141 141 141 142\n0000077\n",
+    "status": 0
+  },
+  "od/3:-x": {
+    "stdout": "0000000 6568 6c6c 096f 6f77 6c72 0a64 ff01 4241\n0000020 0043\n0000021\n0000000 6161 6161 6161 6161 6161 6161 6161 6161\n*\n0000060 6161 6161 6161 6161 6161 6161 6161 0062\n0000077\n",
+    "status": 0
+  },
+  "od/4:-d": {
+    "stdout": "0000000 25960 27756  2415 28535 27762  2660 65281 16961\n0000020    67\n0000021\n0000000 24929 24929 24929 24929 24929 24929 24929 24929\n*\n0000060 24929 24929 24929 24929 24929 24929 24929    98\n0000077\n",
+    "status": 0
+  },
+  "od/5:-s": {
+    "stdout": "0000000  25960  27756   2415  28535  27762   2660   -255  16961\n0000020     67\n0000021\n0000000  24929  24929  24929  24929  24929  24929  24929  24929\n*\n0000060  24929  24929  24929  24929  24929  24929  24929     98\n0000077\n",
+    "status": 0
+  },
+  "od/6:-o": {
+    "stdout": "0000000 062550 066154 004557 067567 066162 005144 177401 041101\n0000020 000103\n0000021\n0000000 060541 060541 060541 060541 060541 060541 060541 060541\n*\n0000060 060541 060541 060541 060541 060541 060541 060541 000142\n0000077\n",
+    "status": 0
+  },
+  "od/7:-t x1": {
+    "stdout": "0000000 68 65 6c 6c 6f 09 77 6f 72 6c 64 0a 01 ff 41 42\n0000020 43\n0000021\n0000000 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61\n*\n0000060 61 61 61 61 61 61 61 61 61 61 61 61 61 61 62\n0000077\n",
+    "status": 0
+  },
+  "od/8:-t d1": {
+    "stdout": "0000000  104  101  108  108  111    9  119  111  114  108  100   10    1   -1   65   66\n0000020   67\n0000021\n0000000   97   97   97   97   97   97   97   97   97   97   97   97   97   97   97   97\n*\n0000060   97   97   97   97   97   97   97   97   97   97   97   97   97   97   98\n0000077\n",
+    "status": 0
+  },
+  "od/9:-t u4": {
+    "stdout": "0000000 1819043176 1870072175  174353522 1111621377\n0000020         67\n0000021\n0000000 1633771873 1633771873 1633771873 1633771873\n*\n0000060 1633771873 1633771873 1633771873    6447457\n0000077\n",
+    "status": 0
+  },
+  "od/10:-t o4": {
+    "stdout": "0000000 15433062550 15735604557 01231066162 10220377401\n0000020 00000000103\n0000021\n0000000 14130260541 14130260541 14130260541 14130260541\n*\n0000060 14130260541 14130260541 14130260541 00030460541\n0000077\n",
+    "status": 0
+  },
+  "od/11:-t x8": {
+    "stdout": "0000000 6f77096f6c6c6568 4241ff010a646c72\n0000020 0000000000000043\n0000021\n0000000 6161616161616161 6161616161616161\n*\n0000060 6161616161616161 0062616161616161\n0000077\n",
+    "status": 0
+  },
+  "od/12:-t f4": {
+    "stdout": "0000000   1.1431415e+27     7.64542e+28   1.0998197e-32       48.499027\n0000020         9.4e-44\n0000021\n0000000    2.598459e+20    2.598459e+20    2.598459e+20    2.598459e+20\n*\n0000060    2.598459e+20    2.598459e+20    2.598459e+20    9.034812e-39\n0000077\n",
+    "status": 0
+  },
+  "od/13:-t f8": {
+    "stdout": "0000000   8.731722756329083e+228       154585404616.84723\n0000020                 3.3e-322\n0000021\n0000000  1.2217638442043777e+161  1.2217638442043777e+161\n*\n0000060  1.2217638442043777e+161   8.179546019469217e-307\n0000077\n",
+    "status": 0
+  },
+  "od/14:-a": {
+    "stdout": "0000000   h   e   l   l   o  ht   w   o   r   l   d  nl soh del   A   B\n0000020   C\n0000021\n0000000   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a\n*\n0000060   a   a   a   a   a   a   a   a   a   a   a   a   a   a   b\n0000077\n",
+    "status": 0
+  },
+  "od/15:-An -tx1": {
+    "stdout": " 68 65 6c 6c 6f 09 77 6f 72 6c 64 0a 01 ff 41 42\n 43\n 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61\n*\n 61 61 61 61 61 61 61 61 61 61 61 61 61 61 62\n",
+    "status": 0
+  },
+  "od/16:-Ad -tx2": {
+    "stdout": "0000000 6568 6c6c 096f 6f77 6c72 0a64 ff01 4241\n0000016 0043\n0000017\n0000000 6161 6161 6161 6161 6161 6161 6161 6161\n*\n0000048 6161 6161 6161 6161 6161 6161 6161 0062\n0000063\n",
+    "status": 0
+  },
+  "od/17:-Ax -c": {
+    "stdout": "000000   h   e   l   l   o  \\t   w   o   r   l   d  \\n 001 377   A   B\n000010   C\n000011\n000000   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a\n*\n000030   a   a   a   a   a   a   a   a   a   a   a   a   a   a   b\n00003f\n",
+    "status": 0
+  },
+  "od/18:-c -tx1": {
+    "stdout": "0000000   h   e   l   l   o  \\t   w   o   r   l   d  \\n 001 377   A   B\n         68  65  6c  6c  6f  09  77  6f  72  6c  64  0a  01  ff  41  42\n0000020   C\n         43\n0000021\n0000000   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a\n         61  61  61  61  61  61  61  61  61  61  61  61  61  61  61  61\n*\n0000060   a   a   a   a   a   a   a   a   a   a   a   a   a   a   b\n         61  61  61  61  61  61  61  61  61  61  61  61  61  61  62\n0000077\n",
+    "status": 0
+  },
+  "od/19:-j3 -N4 -c": {
+    "stdout": "0000003   l   o  \\t   w\n0000007\n0000003   a   a   a   a\n0000007\n",
+    "status": 0
+  },
+  "od/20:-tx1z": {
+    "stdout": "0000000 68 65 6c 6c 6f 09 77 6f 72 6c 64 0a 01 ff 41 42  >hello.world...AB<\n0000020 43                                               >C<\n0000021\n0000000 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61  >aaaaaaaaaaaaaaaa<\n*\n0000060 61 61 61 61 61 61 61 61 61 61 61 61 61 61 62     >aaaaaaaaaaaaaab<\n0000077\n",
+    "status": 0
+  },
+  "od/21:-w4 -tx1": {
+    "stdout": "0000000 68 65 6c 6c\n0000004 6f 09 77 6f\n0000010 72 6c 64 0a\n0000014 01 ff 41 42\n0000020 43\n0000021\n0000000 61 61 61 61\n*\n0000074 61 61 62\n0000077\n",
+    "status": 0
+  },
+  "od/22:-t d2 -t c": {
+    "stdout": "0000000   25960   27756    2415   28535   27762    2660    -255   16961\n          h   e   l   l   o  \\t   w   o   r   l   d  \\n 001 377   A   B\n0000020      67\n          C\n0000021\n0000000   24929   24929   24929   24929   24929   24929   24929   24929\n          a   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a\n*\n0000060   24929   24929   24929   24929   24929   24929   24929      98\n          a   a   a   a   a   a   a   a   a   a   a   a   a   a   b\n0000077\n",
+    "status": 0
+  },
+  "od/23:-v -c": {
+    "stdout": "0000000   h   e   l   l   o  \\t   w   o   r   l   d  \\n 001 377   A   B\n0000020   C\n0000021\n0000000   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a\n0000020   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a\n0000040   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a\n0000060   a   a   a   a   a   a   a   a   a   a   a   a   a   a   b\n0000077\n",
+    "status": 0
+  },
+  "od/24:-t u1 -t a": {
+    "stdout": "0000000 104 101 108 108 111   9 119 111 114 108 100  10   1 255  65  66\n          h   e   l   l   o  ht   w   o   r   l   d  nl soh del   A   B\n0000020  67\n          C\n0000021\n0000000  97  97  97  97  97  97  97  97  97  97  97  97  97  97  97  97\n          a   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a\n*\n0000060  97  97  97  97  97  97  97  97  97  97  97  97  97  97  98\n          a   a   a   a   a   a   a   a   a   a   a   a   a   a   b\n0000077\n",
+    "status": 0
+  },
+  "od/stdin": {
+    "stdout": "0000000   x   y   z\n0000003\n",
+    "status": 0
+  },
+  "od/empty": {
+    "stdout": "0000000\n0000000\n",
+    "status": 0
+  },
+  "od/missing": {
+    "stdout": "st=1\n",
+    "status": 0
+  },
+  "od/two-files": {
+    "stdout": "0000002\n",
+    "status": 0
+  },
+  "cmp/same": {
+    "stdout": "st=0\n",
+    "status": 0
+  },
+  "cmp/differ": {
+    "stdout": "a b differ: char 9, line 2\nst=1\n",
+    "status": 0
+  },
+  "cmp/silent": {
+    "stdout": "st=1\n",
+    "status": 0
+  },
+  "cmp/list": {
+    "stdout": "3 143 130\n4 144 131\nst=1\n",
+    "status": 0
+  },
+  "cmp/eof": {
+    "stdout": "cmp: EOF on a after byte 2, in line 1\nst=1\ncmp: EOF on e which is empty\nst=1\n",
+    "status": 0
+  },
+  "cmp/skip": {
+    "stdout": "st=0\nst=0\n",
+    "status": 0
+  },
+  "cmp/limit": {
+    "stdout": "st=0\n",
+    "status": 0
+  },
+  "cmp/stdin": {
+    "stdout": "st=0\n",
+    "status": 0
+  },
+  "cmp/missing": {
+    "stdout": "st=2\n",
+    "status": 0
+  },
+  "wc/default": {
+    "stdout": " 2  3 14 f\n 2  3 14\n2 f\n3\n14 f\n",
+    "status": 0
+  },
+  "wc/multi": {
+    "stdout": "1 1 2 x\n2 3 6 y\n3 4 8 total\n1 x\n2 y\n3 total\n",
+    "status": 0
+  },
+  "wc/chars": {
+    "stdout": "7 u\n7 u\n",
+    "status": 0
+  },
+  "wc/stdin-pipe": {
+    "stdout": "      0       3       5\n0\n",
+    "status": 0
+  },
+  "cksum/basic": {
+    "stdout": "3015617425 6 h\n4294967295 0\n12738659 1\n1830648734 3893 s\n",
+    "status": 0
+  },
+  "nl/default": {
+    "stdout": "     1\ta\n       \n     2\tb\n",
+    "status": 0
+  },
+  "nl/all": {
+    "stdout": "     1\ta\n     2\t\n     3\tb\n",
+    "status": 0
+  },
+  "nl/opts": {
+    "stdout": "010: a\n012: b\n014: c\n",
+    "status": 0
+  },
+  "nl/ln": {
+    "stdout": "1     \ta\n2     \tb\n",
+    "status": 0
+  },
+  "nl/pattern": {
+    "stdout": "     1\tapple\n     2\tbanana\n       cherry\n",
+    "status": 0
+  },
+  "nl/pages": {
+    "stdout": "\n     1\thead\n\n     1\tbody1\n     2\tbody2\n\n     1\tfoot\n",
+    "status": 0
+  },
+  "nl/join": {
+    "stdout": "     1\ta\n       \n     2\t\n       \n     3\t\n     4\tb\n",
+    "status": 0
+  },
+  "strings/basic": {
+    "stdout": "hello\nworld!\nxy\ttabbed\nabc\nhello\nworld!\nxy\ttabbed\n      4 hello\n      b world!\n     12 xy\ttabbed\n     11 world!\n     18 xy\ttabbed\n",
+    "status": 0
+  },
+  "strings/stdin": {
+    "stdout": "longer\n",
+    "status": 0
+  },
+  "expand/default": {
+    "stdout": "0000000   a                               b                            \n0000020                                   c  \\n                        \n0000040           x  \\n\n0000044\n",
+    "status": 0
+  },
+  "expand/t4": {
+    "stdout": "a   b\n12345   c\n",
+    "status": 0
+  },
+  "expand/list": {
+    "stdout": "a  b   c    d\n",
+    "status": 0
+  },
+  "unexpand/leading": {
+    "stdout": "0000000  \\t   a                               b  \\n                   c\n0000020  \\n\n0000021\n",
+    "status": 0
+  },
+  "unexpand/all": {
+    "stdout": "0000000  \\t   a  \\t   b  \\n\n0000005\n",
+    "status": 0
+  },
+  "unexpand/t4": {
+    "stdout": "0000000  \\t   x  \\t   y  \\n\n0000005\n",
+    "status": 0
+  },
+  "fold/width": {
+    "stdout": "abcd\nefgh\nij\nshor\nt\n",
+    "status": 0
+  },
+  "fold/spaces": {
+    "stdout": "a \nb \nc d\nthe quick \nbrown fox \njumps\n",
+    "status": 0
+  },
+  "fold/tabs": {
+    "stdout": "0000000   a  \\t   b   c  \\n   d   e   f   g   h   i   j   k  \\n\n0000016\n",
+    "status": 0
+  },
+  "fold/bytes": {
+    "stdout": "ab\ncd\nef\n",
+    "status": 0
+  },
+  "fold/zero": {
+    "stdout": "st=1\n",
+    "status": 0
+  },
+  "tsort/basic": {
+    "stdout": "a\ne\nd\nb\nc\n",
+    "status": 0
+  },
+  "tsort/chain": {
+    "stdout": "pants\nshirt\nsocks\nbelt\ntie\nshoes\njacket\n",
+    "status": 0
+  },
+  "tsort/cycle": {
+    "stdout": "a\nb\nst=1\n",
+    "status": 0
+  },
+  "tsort/odd": {
+    "stdout": "st=1\n",
+    "status": 0
+  }
+}

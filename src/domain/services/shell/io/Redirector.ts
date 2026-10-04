@@ -3,7 +3,7 @@ import { TerminalState } from '../../../entities/TerminalState';
 import { FileSystemService } from '../../FileSystemService';
 import { WordExpander, ExpansionScope } from '../expansion/WordExpander';
 import { getOption } from '../expansion/ShellVariables';
-import { IOContext, inputFromString } from './IOContext';
+import { IOContext, inputFromFile, inputFromString } from './IOContext';
 import { FileSink } from './FileSink';
 import { NullSink } from './OutputSink';
 
@@ -62,7 +62,12 @@ export class Redirector {
         const device = this.device(target, io, isInput);
         if (device) return io.with(fd, device);
 
-        if (r.op === '<') return io.with(fd, { input: inputFromString(this.readFile(target, state)) });
+        if (r.op === '<') {
+            const data = this.readFile(target, state);
+            const node = this.fs.resolve(this.fs.resolveAbsolutePath(target, state.currentDirectory), '/');
+            const size = node ? this.fs.getInode(node.inodeId)?.size ?? data.length : data.length;
+            return io.with(fd, { input: inputFromFile(data, size) });
+        }
         if (r.op === '<>') {
             const path = this.fs.resolveAbsolutePath(target, state.currentDirectory);
             const exists = !!this.fs.resolve(path, '/');

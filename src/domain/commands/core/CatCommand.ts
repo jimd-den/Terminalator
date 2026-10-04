@@ -9,7 +9,8 @@ import { ProcessContext } from '../../entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
 import { FileSystemService } from '../../services/FileSystemService';
-import { readInput } from '../shared/InputFiles';
+import { readInput, readInputBytes } from '../shared/InputFiles';
+import { bytesToBinaryString } from '../../services/shell/io/OutputSink';
 
 export class CatCommand extends CommandBase {
     public readonly capabilities = [CommandCapability.READ];
@@ -31,10 +32,24 @@ export class CatCommand extends CommandBase {
         let lineNo = 0;
         let lastBlank = false;
 
+        if (!decorate) {
+            // Plain cat copies bytes exactly (binary-safe).
+            for (const operand of operands.length ? operands : ['-']) {
+                const input = readInputBytes(context, operand);
+                if (!input.ok) { errors.push(`cat: ${input.error}`); continue; }
+                output += bytesToBinaryString(input.data);
+            }
+            return {
+                output, binary: true,
+                stderr: errors.length ? errors.join('\n') + '\n' : undefined,
+                exitCode: errors.length ? 1 : 0,
+                newState: state,
+            };
+        }
+
         for (const operand of operands.length ? operands : ['-']) {
             const input = readInput(context, operand);
             if (!input.ok) { errors.push(`cat: ${input.error}`); continue; }
-            if (!decorate) { output += input.data; continue; }
 
             for (const line of input.data.match(/[^\n]*\n|[^\n]+$/g) ?? []) {
                 const hasNl = line.endsWith('\n');

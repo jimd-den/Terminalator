@@ -11,6 +11,8 @@ import { TerminalState } from './TerminalState';
 
 export interface CommandResponse {
     output: string;
+    /** `output` is a byte string (one char per byte), e.g. compressed data. */
+    binary?: boolean;
     /** Diagnostics destined for file descriptor 2 (optional; legacy commands put them in `output`). */
     stderr?: string;
     exitCode: number;

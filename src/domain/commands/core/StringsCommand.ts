@@ -1,91 +1,52 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
- * StringsCommand - Core Command
- *
- * Find printable strings in files.
- *
- * Pillar: The Four-Fold Shield (Strict Architecture)
- * Pillar: The Swift Stream (Performance)
- *
- * Intent:
- * Extract human-readable text from binary files.
+ * strings - find printable strings in files (POSIX): -a, -n number, -t d|o|x.
+ * A string is at least `number` (default 4) printable characters (and tabs).
  */
-
-import { ICommand } from '../ICommand';
-import { ProcessContext } from '../../../domain/entities/ProcessContext';
-import { FileSystemService } from '../../../domain/services/FileSystemService';
+import { CommandResponse } from '../ICommand';
+import { ProcessContext } from '../../entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../entities/Command';
+import { FileSystemService } from '../../services/FileSystemService';
+import { Utility } from '../shared/Utility';
+import { getopt, readInputBytes } from '../shared/InputFiles';
 
-import { FileSystem } from '../../entities/FileSystem';
+export class StringsCommand extends Utility {
+    readonly utility = 'strings';
 
-export class StringsCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+    constructor(private fs?: FileSystemService) { super(); }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = getStdinAsString(context);
-        let minLength = 4;
-        const files: string[] = [];
+        const normalized = args.map(a => (/^-[0-9]+$/.test(a) ? `-n${a.substring(1)}` : a === '-' ? '-a' : a));
+        const { opts, operands, error } = getopt(normalized, 'an:t:e:fwo');
+        if (error) return this.usage(state, error);
+        const min = opts.has('n') ? Number(opts.get('n')) : 4;
+        if (!Number.isInteger(min) || min < 1) return this.usage(state, `invalid minimum string length ${opts.get('n')}`);
+        const radix = opts.has('o') ? 'o' : opts.has('t') ? String(opts.get('t')) : undefined;
+        if (radix && !['d', 'o', 'x'].includes(radix)) return this.usage(state, `invalid radix ${radix}`);
 
-        for (let i = 0; i < args.length; i++) {
-            const arg = args[i];
-            if (arg === '-n') {
-                minLength = parseInt(args[++i], 10) || 4;
-            } else if (arg.startsWith('-') && !isNaN(parseInt(arg.slice(1)))) {
-                // legacy -N
-                minLength = parseInt(arg.slice(1), 10);
-            } else if (!arg.startsWith('-')) {
-                files.push(arg);
-            }
-        }
-
-        let content = '';
-        if (files.length > 0) {
-            for (const file of files) {
-                try {
-                    content += context.fileSystemService.readFile(this.resolvePath(file, state));
-                } catch (e) {
-                    return { output: `strings: ${file}: No such file`, newState: state, exitCode: 1 };
+        let out = '';
+        const errors: string[] = [];
+        for (const f of operands.length ? operands : ['-']) {
+            const input = readInputBytes(context, f);
+            if (!input.ok) { errors.push(input.error); continue; }
+            const data = input.data;
+            let start = -1;
+            const flush = (end: number) => {
+                if (start >= 0 && end - start >= min) {
+                    const text = String.fromCharCode(...data.subarray(start, end));
+                    const prefix = opts.has('f') ? `${f}: ` : '';
+                    const off = radix ? start.toString(radix === 'd' ? 10 : radix === 'o' ? 8 : 16).padStart(7) + ' ' : '';
+                    out += `${prefix}${off}${text}\n`;
                 }
+                start = -1;
+            };
+            for (let i = 0; i < data.length; i++) {
+                const b = data[i];
+                const printable = (b >= 32 && b < 127) || b === 9;
+                if (printable) { if (start < 0) start = i; }
+                else flush(i);
             }
-        } else if (input) {
-            content = input;
-        } else {
-            // Wait for stdin, or exit
-            return { output: '', newState: state, exitCode: 0 };
+            flush(data.length);
         }
-
-        const strings: string[] = [];
-        let currentString = '';
-
-        for (let i = 0; i < content.length; i++) {
-            const charCode = content.charCodeAt(i);
-            // Printable ASCII: 32-126, plus tab (9). Newline (10)? Strings usually splits on newline.
-            // POSIX: "graphic characters"
-            const isPrintable = (charCode >= 32 && charCode <= 126) || charCode === 9;
-
-            if (isPrintable) {
-                currentString += content[i];
-            } else {
-                if (currentString.length >= minLength) {
-                    strings.push(currentString);
-                }
-                currentString = '';
-            }
-        }
-        if (currentString.length >= minLength) {
-            strings.push(currentString);
-        }
-
-        return {
-            output: strings.join('\n'),
-            newState: state,
-            exitCode: 0
-        };
-    }
-
-    private resolvePath(path: string, state: TerminalState): string {
-        if (path.startsWith('/')) return path;
-        return state.currentDirectory === '/' ? `/${path}` : `${state.currentDirectory}/${path}`;
+        return this.respond(state, out, errors);
     }
 }

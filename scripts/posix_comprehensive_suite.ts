@@ -10,6 +10,20 @@ import { CommandRegistry } from '../src/domain/commands/CommandRegistry';
 import { CoreUtilsModule } from '../src/domain/modules/CoreUtilsModule';
 import { SystemUtilsModule } from '../src/domain/modules/SystemUtilsModule';
 
+import { lzwCompress } from '../src/domain/utils/Lzw';
+import { SystemInstaller, HostProfile } from '../src/domain/services/os/SystemInstaller';
+
+const TEST_HOST: HostProfile = {
+    hostname: 'terminalator',
+    users: [{ name: 'operator', uid: 1000, gid: 1000, gecos: 'Terminal Operator', groups: ['staff', 'users'] }],
+    groups: [{ name: 'staff', gid: 1001, members: ['operator'] }],
+};
+
+/** Fixture: a real .Z file holding 20 lines of "content". */
+function zfile(fs: FileSystemService, path: string) {
+    fs.writeFile(path, lzwCompress(new TextEncoder().encode('content\n'.repeat(20))), 'w');
+}
+
 // --- COLOR CONSTANTS ---
 const GREEN = '\x1b[32m';
 const RED = '\x1b[31m';
@@ -21,6 +35,8 @@ const GRAY = '\x1b[90m';
 const RESET = '\x1b[0m';
 
 // --- CONFIGURATION ---
+/** ONLY=PR,OD_03 runs just those suites/tests and prints their output. */
+const ONLY = process.env.ONLY ? process.env.ONLY.toUpperCase().split(',') : undefined;
 const IDENTITY_UTILITIES = new Set(['id', 'logname', 'newgrp', 'whoami', 'who', 'tty']);
 const REPORT_FILE = 'comprehensive_compliance_report.txt';
 const TESTS_PER_UTILITY_TARGET = 10;
@@ -274,8 +290,8 @@ const SUITES: UtilitySuite[] = [
         utility: 'wc',
         htmlFile: 'wc.html',
         tests: [
-            { id: 'WC_01', description: 'All counts', posixSection: 'wc.html', posixRequirement: 'l, w, c', setup: (fs) => fs.writeFile('/f', 'a b', 'w'), command: 'wc /f', expect: { exitCode: 0, stdout: /1\s+2\s+3/ } },
-            { id: 'WC_02', description: 'Lines only -l', posixSection: 'wc.html', posixRequirement: '-l', setup: (fs) => fs.writeFile('/f', 'a\nb', 'w'), command: 'wc -l /f', expect: { exitCode: 0, stdout: /2\s/ } }, // Should not show words/bytes
+            { id: 'WC_01', description: 'All counts', posixSection: 'wc.html', posixRequirement: 'l, w, c', setup: (fs) => fs.writeFile('/f', 'a b', 'w'), command: 'wc /f', expect: { exitCode: 0, stdout: /0\s+2\s+3/ }},
+            { id: 'WC_02', description: 'Lines only -l', posixSection: 'wc.html', posixRequirement: '-l', setup: (fs) => fs.writeFile('/f', 'a\nb', 'w'), command: 'wc -l /f', expect: { exitCode: 0, stdout: /^1 \/f$/ }}, // Should not show words/bytes
             { id: 'WC_03', description: 'Words only -w', posixSection: 'wc.html', posixRequirement: '-w', setup: (fs) => fs.writeFile('/f', 'a b', 'w'), command: 'wc -w /f', expect: { exitCode: 0, stdout: /2\s/ } },
             { id: 'WC_04', description: 'Bytes only -c', posixSection: 'wc.html', posixRequirement: '-c', setup: (fs) => fs.writeFile('/f', 'abc', 'w'), command: 'wc -c /f', expect: { exitCode: 0, stdout: /3\s/ } },
             { id: 'WC_05', description: 'Chars -m', posixSection: 'wc.html', posixRequirement: '-m (multibyte)', command: 'wc -m /f', expect: { exitCode: 0 } }, // Stub
@@ -782,7 +798,7 @@ const SUITES: UtilitySuite[] = [
             { id: 'CMP_05', description: 'Skip initial bytes', posixSection: 'cmp.html', posixRequirement: 'skip1 skip2', setup: (fs) => { fs.writeFile('/1', 'xa', 'w'); fs.writeFile('/2', 'ya', 'w'); }, command: 'cmp /1 /2 1 1', expect: { exitCode: 0 } }, // Skip 1 byte, now 'a'=='a'
             { id: 'CMP_06', description: 'Fail missing', posixSection: 'cmp.html', posixRequirement: 'Error >1', command: 'cmp /1 /missing', expect: { exitCode: 2 } },
             { id: 'CMP_07', description: 'Limit bytes -n (Ext)', posixSection: 'cmp.html', posixRequirement: '-n match', command: 'cmp -n 1 /1 /2', expect: { exitCode: 1 } },
-            { id: 'CMP_08', description: 'Stdin', posixSection: 'cmp.html', posixRequirement: '-', command: 'cmp - /2', expect: { exitCode: 0 } },
+            { id: 'CMP_08', description: 'Stdin', posixSection: 'cmp.html', posixRequirement: '-', command: 'cat /2 | cmp - /2', expect: { exitCode: 0 } },
             { id: 'CMP_09', description: 'EOF difference', posixSection: 'cmp.html', posixRequirement: 'Short file', setup: (fs) => { fs.writeFile('/1', 'ab', 'w'); fs.writeFile('/2', 'a', 'w'); }, command: 'cmp /1 /2', expect: { exitCode: 1, stdout: /EOF/ } },
             { id: 'CMP_10', description: 'Binary safety', posixSection: 'cmp.html', posixRequirement: 'Binary', setup: (fs) => { fs.writeFile('/1', '\x00', 'w'); fs.writeFile('/2', '\x00', 'w'); }, command: 'cmp /1 /2', expect: { exitCode: 0 } }
         ]
@@ -799,8 +815,8 @@ const SUITES: UtilitySuite[] = [
             { id: 'OD_06', description: 'Length -N', posixSection: 'od.html', posixRequirement: '-N count', command: 'od -N 1 /f', expect: { exitCode: 0 } },
             { id: 'OD_07', description: 'Fail missing', posixSection: 'od.html', posixRequirement: 'Error', command: 'od /missing', expect: { exitCode: 1 } },
             { id: 'OD_08', description: 'Stdin', posixSection: 'od.html', posixRequirement: 'Stdin', command: 'od', expect: { exitCode: 0 } },
-            { id: 'OD_09', description: 'Multiple files', posixSection: 'od.html', posixRequirement: 'Concat', command: 'od /1 /2', expect: { exitCode: 0 } },
-            { id: 'OD_10', description: 'Format -t', posixSection: 'od.html', posixRequirement: '-t type', command: 'od -t x1 /f', expect: { exitCode: 0 } }
+            { id: 'OD_09', description: 'Multiple files', posixSection: 'od.html', posixRequirement: 'Concat', setup: (fs) => { fs.writeFile('/1', 'a', 'w'); fs.writeFile('/2', 'b', 'w'); }, command: 'od /1 /2', expect: { exitCode: 0 } },
+            { id: 'OD_10', description: 'Format -t', posixSection: 'od.html', posixRequirement: '-t type', setup: (fs) => fs.writeFile('/f', 'ba', 'w'), command: 'od -t x1 /f', expect: { exitCode: 0 } }
         ]
     },
     {
@@ -1024,7 +1040,7 @@ const SUITES: UtilitySuite[] = [
             { id: 'STRINGS_05', description: 'Fail missing', posixSection: 'strings.html', posixRequirement: 'Error', command: 'strings /missing', expect: { exitCode: 1 } },
             { id: 'STRINGS_06', description: 'Multiple files', posixSection: 'strings.html', posixRequirement: 'Args', command: 'strings /b /b', expect: { exitCode: 0 } },
             { id: 'STRINGS_07', description: 'Stdin', posixSection: 'strings.html', posixRequirement: '-', command: 'strings -', expect: { exitCode: 0 } },
-            { id: 'STRINGS_08', description: 'Empty file', posixSection: 'strings.html', posixRequirement: 'Empty', command: 'strings /empty', expect: { exitCode: 0 } },
+            { id: 'STRINGS_08', description: 'Empty file', posixSection: 'strings.html', posixRequirement: 'Empty', setup: (fs) => fs.writeFile('/empty', '', 'w'), command: 'strings /empty', expect: { exitCode: 0 } },
             { id: 'STRINGS_09', description: 'Encoding -e (Ext)', posixSection: 'strings.html', posixRequirement: '-e s', command: 'strings -e s /b', expect: { exitCode: 0 } },
             { id: 'STRINGS_10', description: 'Default len 4', posixSection: 'strings.html', posixRequirement: 'Default', command: 'strings /b', expect: { exitCode: 0 } }
         ]
@@ -1052,11 +1068,11 @@ const SUITES: UtilitySuite[] = [
             { id: 'FOLD_01', description: 'Default width 80', posixSection: 'fold.html', posixRequirement: '80 cols', setup: (fs) => fs.writeFile('/f', 'a'.repeat(81), 'w'), command: 'fold /f', expect: { exitCode: 0, stdout: /a\na/ } }, // Wrap at 80
             { id: 'FOLD_02', description: 'Width -w', posixSection: 'fold.html', posixRequirement: '-w width', command: 'echo "12345" | fold -w 2', expect: { exitCode: 0, stdout: /12\n34\n5/ } },
             { id: 'FOLD_03', description: 'Bytes -b', posixSection: 'fold.html', posixRequirement: '-b', command: 'echo "12345" | fold -b -w 2', expect: { exitCode: 0 } },
-            { id: 'FOLD_04', description: 'Space break -s', posixSection: 'fold.html', posixRequirement: '-s', command: 'echo "a b c d" | fold -w 3 -s', expect: { exitCode: 0, stdout: /a b\nc d/ } },
+            { id: 'FOLD_04', description: 'Space break -s', posixSection: 'fold.html', posixRequirement: '-s', command: 'echo "a b c d" | fold -w 3 -s', expect: { exitCode: 0, stdout: /^a \nb \nc d\n$/ }},
             { id: 'FOLD_05', description: 'Fail missing', posixSection: 'fold.html', posixRequirement: 'Error', command: 'fold /missing', expect: { exitCode: 1 } },
             { id: 'FOLD_06', description: 'Multiple files', posixSection: 'fold.html', posixRequirement: 'Args', command: 'fold /f /f', expect: { exitCode: 0 } },
             { id: 'FOLD_07', description: 'Stdin', posixSection: 'fold.html', posixRequirement: '-', command: 'fold -', expect: { exitCode: 0 } },
-            { id: 'FOLD_08', description: 'Empty', posixSection: 'fold.html', posixRequirement: 'Empty', command: 'fold /empty', expect: { exitCode: 0 } },
+            { id: 'FOLD_08', description: 'Empty', posixSection: 'fold.html', posixRequirement: 'Empty', setup: (fs) => fs.writeFile('/empty', '', 'w'), command: 'fold /empty', expect: { exitCode: 0 } },
             { id: 'FOLD_09', description: 'Very small width', posixSection: 'fold.html', posixRequirement: '1', command: 'echo abc | fold -w 1', expect: { exitCode: 0, stdout: /a\nb\nc/ } },
             { id: 'FOLD_10', description: 'Zero width?', posixSection: 'fold.html', posixRequirement: 'Error', command: 'fold -w 0', expect: { exitCode: 1 } }
         ]
@@ -1070,7 +1086,7 @@ const SUITES: UtilitySuite[] = [
             { id: 'CKSUM_03', description: 'Multiple files', posixSection: 'cksum.html', posixRequirement: 'Args', command: 'cksum /f /f', expect: { exitCode: 0 } },
             { id: 'CKSUM_04', description: 'Fail missing', posixSection: 'cksum.html', posixRequirement: 'Error', command: 'cksum /missing', expect: { exitCode: 1 } },
             { id: 'CKSUM_05', description: 'Empty file', posixSection: 'cksum.html', posixRequirement: 'CRC 0?', command: 'touch /e; cksum /e', expect: { exitCode: 0, stdout: /0/ } },
-            { id: 'CKSUM_06', description: 'Binary', posixSection: 'cksum.html', posixRequirement: 'Safe', command: 'cksum /bin', expect: { exitCode: 0 } },
+            { id: 'CKSUM_06', description: 'Binary', posixSection: 'cksum.html', posixRequirement: 'Safe', command: 'cksum /bin/ls', expect: { exitCode: 0 } },
             { id: 'CKSUM_07', description: 'Deterministic', posixSection: 'cksum.html', posixRequirement: 'Stable', command: 'cksum /f; cksum /f', expect: { exitCode: 0 } },
             { id: 'CKSUM_08', description: 'Directory?', posixSection: 'cksum.html', posixRequirement: 'Error/Skip', command: 'cksum /', expect: { exitCode: 1 } }, // Usually fails on dir
             { id: 'CKSUM_09', description: 'Help?', posixSection: 'cksum.html', posixRequirement: 'Ignore', command: 'cksum --help', expect: { exitCode: 1 } },
@@ -1163,48 +1179,48 @@ const SUITES: UtilitySuite[] = [
         utility: 'compress',
         htmlFile: 'compress.html',
         tests: [
-            { id: 'COMPRESS_01', description: 'Compress file', posixSection: 'compress.html', posixRequirement: 'Replace with .Z', setup: (fs) => fs.writeFile('f', 'content', 'w'), command: 'compress f', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/f.Z', type: 'file' }], filesDeleted: ['/home/operator/f'] } },
-            { id: 'COMPRESS_02', description: 'Force -f', posixSection: 'compress.html', posixRequirement: '-f overwrite', command: 'compress -f f', expect: { exitCode: 0 } },
-            { id: 'COMPRESS_03', description: 'Verbose -v', posixSection: 'compress.html', posixRequirement: '-v stats', command: 'compress -v f', expect: { exitCode: 0 } },
-            { id: 'COMPRESS_04', description: 'Stdout -c', posixSection: 'compress.html', posixRequirement: '-c stdout', command: 'compress -c f > out', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/out', type: 'file' }] } },
-            { id: 'COMPRESS_05', description: 'Bits -b', posixSection: 'compress.html', posixRequirement: '-b bits', command: 'compress -b 12 f', expect: { exitCode: 0 } },
+            { id: 'COMPRESS_01', description: 'Compress file', posixSection: 'compress.html', posixRequirement: 'Replace with .Z', setup: (fs) => fs.writeFile('f', 'content\n'.repeat(20), 'w'), command: 'compress f', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/f.Z', type: 'file' }], filesDeleted: ['/home/operator/f'] } },
+            { id: 'COMPRESS_02', description: 'Force -f on incompressible', posixSection: 'compress.html', posixRequirement: '-f forces compression', setup: (fs) => fs.writeFile('tiny', 'x', 'w'), command: 'compress -f tiny', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/tiny.Z', type: 'file' }] } },
+            { id: 'COMPRESS_03', description: 'Verbose -v', posixSection: 'compress.html', posixRequirement: '-v reports compression', setup: (fs) => fs.writeFile('f', 'content\n'.repeat(20), 'w'), command: 'compress -v f 2>&1', expect: { exitCode: 0, stdout: /Compression/ } },
+            { id: 'COMPRESS_04', description: 'Stdout -c', posixSection: 'compress.html', posixRequirement: '-c writes to stdout, keeps file', setup: (fs) => fs.writeFile('f', 'content\n'.repeat(20), 'w'), command: 'compress -c f > out; zcat out | head -n 1', expect: { exitCode: 0, stdout: /^content$/, filesCreated: [{ path: '/home/operator/f', type: 'file' }] } },
+            { id: 'COMPRESS_05', description: 'Bits -b', posixSection: 'compress.html', posixRequirement: '-b maxbits', setup: (fs) => fs.writeFile('f', 'content\n'.repeat(20), 'w'), command: 'compress -b 12 f && zcat f.Z | wc -l', expect: { exitCode: 0, stdout: /20/ } },
             { id: 'COMPRESS_06', description: 'Fail missing', posixSection: 'compress.html', posixRequirement: 'Error', command: 'compress missing', expect: { exitCode: 1 } },
-            { id: 'COMPRESS_07', description: 'Recursion -r (Ext)', posixSection: 'compress.html', posixRequirement: '-r', command: 'compress -r dir', expect: { exitCode: 0 } },
+            { id: 'COMPRESS_07', description: 'Unchanged when larger', posixSection: 'compress.html', posixRequirement: 'Exit 2 if not compressed', setup: (fs) => fs.writeFile('tiny', 'x', 'w'), command: 'compress tiny', expect: { exitCode: 2, filesCreated: [{ path: '/home/operator/tiny', type: 'file' }] } },
             { id: 'COMPRESS_08', description: 'Already .Z', posixSection: 'compress.html', posixRequirement: 'Skip', setup: (fs) => fs.writeFile('f.Z', 'z', 'w'), command: 'compress f.Z', expect: { exitCode: 1 } },
-            { id: 'COMPRESS_09', description: 'Multiple files', posixSection: 'compress.html', posixRequirement: 'Args', command: 'compress f1 f2', expect: { exitCode: 0 } },
-            { id: 'COMPRESS_10', description: 'Check magic (stub)', posixSection: 'compress.html', posixRequirement: 'Magic', command: 'compress f', expect: { exitCode: 0 } }
+            { id: 'COMPRESS_09', description: 'Multiple files', posixSection: 'compress.html', posixRequirement: 'Args', setup: (fs) => { fs.writeFile('f1', 'content\n'.repeat(20), 'w'); fs.writeFile('f2', 'content\n'.repeat(20), 'w'); }, command: 'compress f1 f2', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/f1.Z', type: 'file' }, { path: '/home/operator/f2.Z', type: 'file' }] } },
+            { id: 'COMPRESS_10', description: 'Magic number', posixSection: 'compress.html', posixRequirement: 'LZW header 1f 9d', setup: (fs) => fs.writeFile('f', 'content\n'.repeat(20), 'w'), command: 'compress -c f | od -An -tx1 | head -n 1', expect: { exitCode: 0, stdout: /^ 1f 9d 90/ } }
         ]
     },
     {
         utility: 'uncompress',
         htmlFile: 'uncompress.html',
         tests: [
-            { id: 'UNCOMPRESS_01', description: 'Uncompress file', posixSection: 'uncompress.html', posixRequirement: 'Restore', setup: (fs) => fs.writeFile('f.Z', 'z', 'w'), command: 'uncompress f.Z', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/f', type: 'file' }] } },
-            { id: 'UNCOMPRESS_02', description: 'Stdin -c', posixSection: 'uncompress.html', posixRequirement: '-c', command: 'cat f.Z | uncompress -c', expect: { exitCode: 0 } },
+            { id: 'UNCOMPRESS_01', description: 'Uncompress file', posixSection: 'uncompress.html', posixRequirement: 'Restore', setup: (fs) => zfile(fs, 'f.Z'), command: 'uncompress f.Z', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/f', type: 'file' }], filesDeleted: ['/home/operator/f.Z'] } },
+            { id: 'UNCOMPRESS_02', description: 'Stdin', posixSection: 'uncompress.html', posixRequirement: 'Filter mode', setup: (fs) => zfile(fs, 'f.Z'), command: 'cat f.Z | uncompress -c | head -n 1', expect: { exitCode: 0, stdout: /^content$/ } },
             { id: 'UNCOMPRESS_03', description: 'Fail not compressed', posixSection: 'uncompress.html', posixRequirement: 'Error', setup: (fs) => fs.writeFile('f', 'txt', 'w'), command: 'uncompress f', expect: { exitCode: 1 } }, // Bad magic
             { id: 'UNCOMPRESS_04', description: 'Fail missing', posixSection: 'uncompress.html', posixRequirement: 'Error', command: 'uncompress missing', expect: { exitCode: 1 } },
-            { id: 'UNCOMPRESS_05', description: 'Force -f (stub)', posixSection: 'uncompress.html', posixRequirement: '-f', command: 'uncompress -f f.Z', expect: { exitCode: 0 } },
-            { id: 'UNCOMPRESS_06', description: 'Verbose -v', posixSection: 'uncompress.html', posixRequirement: '-v', command: 'uncompress -v f.Z', expect: { exitCode: 0 } },
-            { id: 'UNCOMPRESS_07', description: 'Implicit extension', posixSection: 'uncompress.html', posixRequirement: 'Add .Z', command: 'uncompress f', expect: { exitCode: 0 } }, // 'f' -> finds 'f.Z'
-            { id: 'UNCOMPRESS_08', description: 'Multiple files', posixSection: 'uncompress.html', posixRequirement: 'Args', command: 'uncompress f1.Z f2.Z', expect: { exitCode: 0 } },
-            { id: 'UNCOMPRESS_09', description: 'Stdout', posixSection: 'uncompress.html', posixRequirement: 'Stream', command: 'uncompress -c f.Z', expect: { exitCode: 0 } },
-            { id: 'UNCOMPRESS_10', description: 'Consistency', posixSection: 'uncompress.html', posixRequirement: 'Stable', command: 'uncompress f.Z', expect: { exitCode: 0 } }
+            { id: 'UNCOMPRESS_05', description: 'Force -f overwrites', posixSection: 'uncompress.html', posixRequirement: '-f', setup: (fs) => { zfile(fs, 'f.Z'); fs.writeFile('f', 'old', 'w'); }, command: 'uncompress -f f.Z && wc -l < f', expect: { exitCode: 0, stdout: /20/ } },
+            { id: 'UNCOMPRESS_06', description: 'Refuse to overwrite', posixSection: 'uncompress.html', posixRequirement: 'Existing file', setup: (fs) => { zfile(fs, 'f.Z'); fs.writeFile('f', 'old', 'w'); }, command: 'uncompress f.Z', expect: { exitCode: 1 } },
+            { id: 'UNCOMPRESS_07', description: 'Implicit extension', posixSection: 'uncompress.html', posixRequirement: 'Add .Z', setup: (fs) => zfile(fs, 'f.Z'), command: 'uncompress f', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/f', type: 'file' }] } }, // 'f' -> finds 'f.Z'
+            { id: 'UNCOMPRESS_08', description: 'Multiple files', posixSection: 'uncompress.html', posixRequirement: 'Args', setup: (fs) => { zfile(fs, 'f1.Z'); zfile(fs, 'f2.Z'); }, command: 'uncompress f1.Z f2.Z', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/f1', type: 'file' }, { path: '/home/operator/f2', type: 'file' }] } },
+            { id: 'UNCOMPRESS_09', description: 'Stdout -c keeps file', posixSection: 'uncompress.html', posixRequirement: '-c', setup: (fs) => zfile(fs, 'f.Z'), command: 'uncompress -c f.Z | wc -l', expect: { exitCode: 0, stdout: /20/, filesCreated: [{ path: '/home/operator/f.Z', type: 'file' }] } },
+            { id: 'UNCOMPRESS_10', description: 'Round trip', posixSection: 'uncompress.html', posixRequirement: 'compress | uncompress', setup: (fs) => fs.writeFile('f', 'content\n'.repeat(20), 'w'), command: 'compress -c f | uncompress -c | cmp - f && echo same', expect: { exitCode: 0, stdout: /same/ } }
         ]
     },
     {
         utility: 'zcat',
         htmlFile: 'zcat.html',
         tests: [
-            { id: 'ZCAT_01', description: 'Cat compressed', posixSection: 'zcat.html', posixRequirement: 'Uncompress to stdout', setup: (fs) => fs.writeFile('f.Z', 'z', 'w'), command: 'zcat f.Z', expect: { exitCode: 0, stdout: /content/ } },
-            { id: 'ZCAT_02', description: 'Multiple', posixSection: 'zcat.html', posixRequirement: 'Concat', command: 'zcat f1.Z f2.Z', expect: { exitCode: 0 } },
+            { id: 'ZCAT_01', description: 'Cat compressed', posixSection: 'zcat.html', posixRequirement: 'Uncompress to stdout', setup: (fs) => zfile(fs, 'f.Z'), command: 'zcat f.Z | head -n 1', expect: { exitCode: 0, stdout: /^content$/ } },
+            { id: 'ZCAT_02', description: 'Multiple', posixSection: 'zcat.html', posixRequirement: 'Concat', setup: (fs) => { zfile(fs, 'f1.Z'); zfile(fs, 'f2.Z'); }, command: 'zcat f1.Z f2.Z | wc -l', expect: { exitCode: 0, stdout: /40/ } },
             { id: 'ZCAT_03', description: 'Fail missing', posixSection: 'zcat.html', posixRequirement: 'Error', command: 'zcat missing', expect: { exitCode: 1 } },
-            { id: 'ZCAT_04', description: 'Fail bad format', posixSection: 'zcat.html', posixRequirement: 'Error', command: 'zcat f.txt', expect: { exitCode: 1 } },
-            { id: 'ZCAT_05', description: 'Stdin', posixSection: 'zcat.html', posixRequirement: '-', command: 'cat f.Z | zcat', expect: { exitCode: 0 } },
-            { id: 'ZCAT_06', description: 'Implicit .Z (stub)', posixSection: 'zcat.html', posixRequirement: 'Add .Z', command: 'zcat f', expect: { exitCode: 0 } },
-            { id: 'ZCAT_07', description: 'File preserved', posixSection: 'zcat.html', posixRequirement: 'No delete', command: 'zcat f.Z', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/f.Z', type: 'file' }] } },
-            { id: 'ZCAT_08', description: 'Non .Z files (Ext)', posixSection: 'zcat.html', posixRequirement: 'Pass through?', command: 'zcat f.txt', expect: { exitCode: 0 } }, // Some zcats pass through
-            { id: 'ZCAT_09', description: 'Output check', posixSection: 'zcat.html', posixRequirement: 'Content', command: 'zcat f.Z', expect: { stdout: /z/ } }, // Mocked content z
-            { id: 'ZCAT_10', description: 'Consistency', posixSection: 'zcat.html', posixRequirement: 'Stable', command: 'zcat f.Z', expect: { exitCode: 0 } }
+            { id: 'ZCAT_04', description: 'Fail bad format', posixSection: 'zcat.html', posixRequirement: 'Error', setup: (fs) => fs.writeFile('f.txt', 'plain', 'w'), command: 'zcat f.txt', expect: { exitCode: 1 } },
+            { id: 'ZCAT_05', description: 'Stdin', posixSection: 'zcat.html', posixRequirement: 'No operands: stdin', setup: (fs) => zfile(fs, 'f.Z'), command: 'cat f.Z | zcat | wc -l', expect: { exitCode: 0, stdout: /20/ } },
+            { id: 'ZCAT_06', description: 'Implicit .Z', posixSection: 'zcat.html', posixRequirement: 'Add .Z', setup: (fs) => zfile(fs, 'f.Z'), command: 'zcat f | head -n 1', expect: { exitCode: 0, stdout: /^content$/ } },
+            { id: 'ZCAT_07', description: 'File preserved', posixSection: 'zcat.html', posixRequirement: 'No delete', setup: (fs) => zfile(fs, 'f.Z'), command: 'zcat f.Z > /dev/null', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/f.Z', type: 'file' }] } },
+            { id: 'ZCAT_08', description: 'Continue after bad operand', posixSection: 'zcat.html', posixRequirement: 'Diagnose and continue', setup: (fs) => { fs.writeFile('f.txt', 'plain', 'w'); zfile(fs, 'f.Z'); }, command: 'zcat f.txt f.Z | wc -l', expect: { stdout: /20/ } }, // Some zcats pass through
+            { id: 'ZCAT_09', description: 'Output check', posixSection: 'zcat.html', posixRequirement: 'Content', setup: (fs) => zfile(fs, 'f.Z'), command: 'zcat f.Z | head -n 1', expect: { stdout: /content/ } }, // Mocked content z
+            { id: 'ZCAT_10', description: 'Empty file', posixSection: 'zcat.html', posixRequirement: 'Empty input', setup: (fs) => fs.writeFile('empty', '', 'w'), command: 'compress -cf empty > e.Z; zcat e.Z | wc -c', expect: { exitCode: 0, stdout: /^\s*0$/ } }
         ]
     },
     {
@@ -1362,7 +1378,7 @@ const SUITES: UtilitySuite[] = [
             { id: 'NL_04', description: 'Width -w', posixSection: 'nl.html', posixRequirement: '-w width', command: 'nl -w 3 f', expect: { exitCode: 0 } },
             { id: 'NL_05', description: 'Style -b a', posixSection: 'nl.html', posixRequirement: '-b a all', command: 'echo "\n" | nl -b a', expect: { exitCode: 0, stdout: /1/ } }, // number empty
             { id: 'NL_06', description: 'Style -b t', posixSection: 'nl.html', posixRequirement: '-b t text', command: 'echo "\n" | nl -b t', expect: { exitCode: 0, stdout: /^\s*$/ } }, // no number empty
-            { id: 'NL_07', description: 'Format -n ln', posixSection: 'nl.html', posixRequirement: '-n format', command: 'nl -n ln f', expect: { exitCode: 0, stdout: /^1   a/ } }, // left justified
+            { id: 'NL_07', description: 'Format -n ln', posixSection: 'nl.html', posixRequirement: '-n format', command: 'nl -n ln f', expect: { exitCode: 0, stdout: /^1 +\ta/ }}, // left justified
             { id: 'NL_08', description: 'Stdin', posixSection: 'nl.html', posixRequirement: '-', command: 'echo x | nl', expect: { exitCode: 0 } },
             { id: 'NL_09', description: 'Fail missing', posixSection: 'nl.html', posixRequirement: 'Error', command: 'nl missing', expect: { exitCode: 1 } },
             { id: 'NL_10', description: 'Reset -p', posixSection: 'nl.html', posixRequirement: '-p no reset', command: 'nl -p f', expect: { exitCode: 0 } }
@@ -1390,7 +1406,7 @@ const SUITES: UtilitySuite[] = [
         tests: [
             { id: 'TSORT_01', description: 'Sort dependency', posixSection: 'tsort.html', posixRequirement: 'Order', setup: (fs) => fs.writeFile('f', 'a b\nb c', 'w'), command: 'tsort f', expect: { exitCode: 0, stdout: /a\nb\nc/ } },
             { id: 'TSORT_02', description: 'Stdin', posixSection: 'tsort.html', posixRequirement: '-', command: 'echo "a b" | tsort', expect: { exitCode: 0, stdout: /a\nb/ } },
-            { id: 'TSORT_03', description: 'Cycle detect', posixSection: 'tsort.html', posixRequirement: 'Cycle warn', command: 'echo "a b\nb a" | tsort', expect: { exitCode: 0, stdout: /cycle/ } }, // or stderr
+            { id: 'TSORT_03', description: 'Cycle detect', posixSection: 'tsort.html', posixRequirement: 'Cycle warn', command: 'printf "a b\\nb a\\n" | tsort 2>&1', expect: { exitCode: 1, stdout: /input contains a loop/ }}, // or stderr
             { id: 'TSORT_04', description: 'Fail missing', posixSection: 'tsort.html', posixRequirement: 'Error', command: 'tsort missing', expect: { exitCode: 1 } },
             { id: 'TSORT_05', description: 'Empty', posixSection: 'tsort.html', posixRequirement: 'Empty', command: 'tsort /dev/null', expect: { exitCode: 0, stdout: /^$/ } },
             { id: 'TSORT_06', description: 'Single item', posixSection: 'tsort.html', posixRequirement: 'Item', command: 'echo "a a" | tsort', expect: { exitCode: 0, stdout: /a/ } }, // Self loop allowed?
@@ -2919,11 +2935,13 @@ async function runSuite() {
 
         suiteReport += `UTILITY: ${suite.utility}\n`;
 
+        const suiteSetups: NonNullable<ComprehensiveTestCase['setup']>[] = [];
         let currentSuitePassed = 0;
         let currentSuiteFailed = 0;
         let currentSuite127s = 0;
 
         for (const test of suite.tests) {
+            if (ONLY && !ONLY.some((o: string) => test.id === o || test.id.startsWith(o + '_'))) { if (test.setup) suiteSetups.push(test.setup); continue; }
             totalTests++;
             let testFailed = false;
             let failureReasons: string[] = [];
@@ -2934,11 +2952,13 @@ async function runSuite() {
 
             const { executor } = ShellFactory.create(testFs);
             testExecutor = executor;
+            // Every test runs on a fully installed system (/etc, /dev, /usr/bin, ...).
+            new SystemInstaller().install(service, TEST_HOST);
 
             // Utility tests write all over the tree (/foo, /f, ...), so they run as the
             // superuser, as conformance suites do; permission behaviour is tested separately.
             // Identity utilities are tested as the regular login user.
-            const asOperator = IDENTITY_UTILITIES.has(suite.utility) || test.id === 'CHOWN_08';
+            const asOperator = IDENTITY_UTILITIES.has(suite.utility) || test.id === 'CHOWN_08' || /permission/i.test(test.description);
             const testState = asOperator
                 ? createInitialTerminalState()
                 : { ...createInitialTerminalState(), user: { uid: 0, gid: 0, groups: [0] } };
@@ -2951,9 +2971,14 @@ async function runSuite() {
                 service.mkdir('/usr/bin');
             } catch (ignore) { }
 
-            if (test.setup) {
+            // Tests were written as if fixtures carried over within a suite: a test
+            // without its own setup reuses the suite's most recent one.
+            // Without its own setup, a test sees everything earlier tests set up.
+            const setups = test.setup ? [test.setup] : [...suiteSetups];
+            if (test.setup) suiteSetups.push(test.setup);
+            if (setups.length) {
                 try {
-                    test.setup(service);
+                    for (const setup of setups) setup(fixtureService(service, '/home/operator'));
                 } catch (err) {
                     console.log(`${RED}[ERR ]${RESET} ${test.id} SETUP FAILED: ${err}`);
                     continue;
@@ -2962,6 +2987,7 @@ async function runSuite() {
 
             try {
                 const response = await testExecutor.execute(test.command, testState);
+                if (ONLY) console.log(`${CYAN}${test.id}${RESET} $ ${test.command}\n${GRAY}${JSON.stringify(response.output)} [exit ${response.exitCode}]${RESET}`);
 
                 // Exit Code
                 if (test.expect.exitCode !== undefined) {
@@ -3177,8 +3203,33 @@ async function runSuite() {
 
     suiteReport += summaryText;
 
-    fsNode.writeFileSync(REPORT_FILE, suiteReport);
+    if (!ONLY) fsNode.writeFileSync(REPORT_FILE, suiteReport);
     console.log(`\nDetailed report written to ${REPORT_FILE}`);
+}
+
+/** Arguments (by method) that are paths; relative ones resolve against the test cwd. */
+const PATH_ARGS: Record<string, number[]> = {
+    writeFile: [0], mkdir: [0], mkdirp: [0], createFile: [0], createDirectory: [0], mkfifo: [0],
+    chmod: [0], chown: [0], deleteNode: [0], symlink: [1], link: [0, 1], rename: [0, 1],
+};
+
+/** The FileSystemService as seen by fixture code: relative paths are relative to `cwd`. */
+function fixtureService(service: FileSystemService, cwd: string): FileSystemService {
+    return new Proxy(service, {
+        get(target, prop, receiver) {
+            const value = Reflect.get(target, prop, receiver);
+            const idx = PATH_ARGS[prop as string];
+            if (typeof value !== 'function' || !idx) return typeof value === 'function' ? value.bind(target) : value;
+            return (...args: any[]) => {
+                // Fixture mkdir means "ensure the directory exists".
+                if (prop === 'mkdir' && target.resolve(String(args[0]).startsWith('/') ? args[0] : `${cwd}/${args[0]}`)) return;
+                for (const i of idx) {
+                    if (typeof args[i] === 'string' && !args[i].startsWith('/')) args[i] = `${cwd}/${args[i]}`;
+                }
+                return value.apply(target, args);
+            };
+        },
+    });
 }
 
 function setupStateCwd(state: any): string {

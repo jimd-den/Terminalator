@@ -8,7 +8,10 @@ UTILITY: mkdir
 [PASS] MKDIR_07
 [PASS] MKDIR_08
 [PASS] MKDIR_09
-[PASS] MKDIR_10
+[FAIL] MKDIR_10: Complex nested creation
+       -> Exit Code: Expected 0, got 1
+       -> Missing File: Expected /root/sub1/sub2 to be created.
+       -> Missing File: Expected /root/other to be created.
 UTILITY: cd
 [PASS] CD_01
 [PASS] CD_02
@@ -146,8 +149,7 @@ UTILITY: wc
 [PASS] WC_02
 [PASS] WC_03
 [PASS] WC_04
-[FAIL] WC_05: Chars -m
-       -> Exit Code: Expected 0, got 1
+[PASS] WC_05
 [PASS] WC_06
 [PASS] WC_07
 [PASS] WC_08
@@ -425,16 +427,13 @@ UTILITY: file
 [PASS] FILE_02
 [PASS] FILE_03
 [PASS] FILE_04
-[FAIL] FILE_05: Brief -b (stub)
-       -> Exit Code: Expected 0, got 1
+[PASS] FILE_05
 [FAIL] FILE_06: Helpers -h (stub)
        -> Exit Code: Expected 0, got 1
-[FAIL] FILE_07: Mime -i (Ext)
-       -> Exit Code: Expected 0, got 1
+[PASS] FILE_07
 [PASS] FILE_08
 [PASS] FILE_09
-[FAIL] FILE_10: Special (stub)
-       -> Exit Code: Expected 0, got 1
+[PASS] FILE_10
 UTILITY: join
 [PASS] JOIN_01
 [PASS] JOIN_02
@@ -444,8 +443,7 @@ UTILITY: join
        -> Exit Code: Expected 0, got 1
 [PASS] JOIN_06
 [PASS] JOIN_07
-[FAIL] JOIN_08: Unsorted input check (stub)
-       -> Exit Code: Expected 0, got 1
+[PASS] JOIN_08
 [PASS] JOIN_09
 [PASS] JOIN_10
 UTILITY: paste
@@ -467,17 +465,12 @@ UTILITY: split
 [FAIL] SPLIT_03: Bytes -b
        -> Exit Code: Expected 0, got 1
        -> Missing File: Expected /home/operator/xab to be created.
-[FAIL] SPLIT_04: Prefix option
-       -> Exit Code: Expected 0, got 1
-       -> Missing File: Expected /home/operator/outaa to be created.
-[FAIL] SPLIT_05: Suffix length -a
-       -> Exit Code: Expected 0, got 1
-       -> Missing File: Expected /home/operator/xaaa to be created.
+[PASS] SPLIT_04
+[PASS] SPLIT_05
 [PASS] SPLIT_06
 [PASS] SPLIT_07
 [PASS] SPLIT_08
 [FAIL] SPLIT_09: Numeric suffix -d (Ext)
-       -> Exit Code: Expected 0, got 1
        -> Missing File: Expected /home/operator/x00 to be created.
 [FAIL] SPLIT_10: Split empty?
        -> Exit Code: Expected 0, got 1
@@ -513,49 +506,25 @@ UTILITY: comm
 UTILITY: cmp
 [PASS] CMP_01
 [PASS] CMP_02
-[FAIL] CMP_03: Verbose -l
-       -> Exit Code: Expected 1, got 2
-       -> Stdout Regex Mismatch.
-   Expected: /1/
-   Got: "cmp: No such file or directory"
-[FAIL] CMP_04: Silent -s
-       -> Exit Code: Expected 1, got 2
-       -> Stdout Regex Mismatch.
-   Expected: /^$/
-   Got: "cmp: No such file or directory"
-[FAIL] CMP_05: Skip initial bytes
-       -> Exit Code: Expected 0, got 1
+[PASS] CMP_03
+[PASS] CMP_04
+[PASS] CMP_05
 [PASS] CMP_06
-[FAIL] CMP_07: Limit bytes -n (Ext)
-       -> Exit Code: Expected 1, got 2
-[FAIL] CMP_08: Stdin
-       -> Exit Code: Expected 0, got 2
+[PASS] CMP_07
+[PASS] CMP_08
 [PASS] CMP_09
 [PASS] CMP_10
 UTILITY: od
 [PASS] OD_01
-[FAIL] OD_02: Hex -x
-       -> Exit Code: Expected 0, got 1
-[FAIL] OD_03: Char -c
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /a/
-   Got: "od: /f: No such file"
-[FAIL] OD_04: Decimal -d
-       -> Exit Code: Expected 0, got 1
-[FAIL] OD_05: Skip bytes -j
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /a/
-   Got: "od: 1: No such file"
-[FAIL] OD_06: Length -N
-       -> Exit Code: Expected 0, got 1
+[PASS] OD_02
+[PASS] OD_03
+[PASS] OD_04
+[PASS] OD_05
+[PASS] OD_06
 [PASS] OD_07
 [PASS] OD_08
-[FAIL] OD_09: Multiple files
-       -> Exit Code: Expected 0, got 1
-[FAIL] OD_10: Format -t
-       -> Exit Code: Expected 0, got 1
+[PASS] OD_09
+[PASS] OD_10
 UTILITY: expr
 [PASS] EXPR_01
 [PASS] EXPR_02
@@ -574,15 +543,9 @@ UTILITY: printf
 [PASS] PRINTF_04
 [PASS] PRINTF_05
 [PASS] PRINTF_06
-[FAIL] PRINTF_07: Hex escape (stub)
-       -> Stdout Regex Mismatch.
-   Expected: /A/
-   Got: "\x41"
+[PASS] PRINTF_07
 [PASS] PRINTF_08
-[FAIL] PRINTF_09: Backslash c
-       -> Stdout Regex Mismatch.
-   Expected: /^a$/
-   Got: "a\cb"
+[PASS] PRINTF_09
 [PASS] PRINTF_10
 UTILITY: test
 [PASS] TEST_01
@@ -593,7 +556,8 @@ UTILITY: test
 [PASS] TEST_06
 [PASS] TEST_07
 [PASS] TEST_08
-[PASS] TEST_09
+[FAIL] TEST_09: AND -a (XSI)
+       -> Exit Code: Expected 1, got 0
 [PASS] TEST_10
 UTILITY: [
 [PASS] BRACKET_01
@@ -715,8 +679,7 @@ UTILITY: make
 [PASS] MAKE_04
 [PASS] MAKE_05
 [PASS] MAKE_06
-[FAIL] MAKE_07: Touch -t
-       -> Exit Code: Expected 0, got 2
+[PASS] MAKE_07
 [FAIL] MAKE_08: Env override -e
        -> Exit Code: Expected 0, got 2
 [PASS] MAKE_09
@@ -726,8 +689,7 @@ UTILITY: sh
 [PASS] SH_02
 [PASS] SH_03
 [PASS] SH_04
-[FAIL] SH_05: Syntax check -n (stub)
-       -> Exit Code: Expected 0, got 127
+[PASS] SH_05
 [PASS] SH_06
 [FAIL] SH_07: Positional args
        -> Stdout Regex Mismatch.
@@ -740,20 +702,14 @@ UTILITY: sh
 UTILITY: strings
 [PASS] STRINGS_01
 [PASS] STRINGS_02
-[FAIL] STRINGS_03: Offset -t
-       -> Exit Code: Expected 0, got 1
-[FAIL] STRINGS_04: All -a
-       -> Exit Code: Expected 0, got 1
+[PASS] STRINGS_03
+[PASS] STRINGS_04
 [PASS] STRINGS_05
-[FAIL] STRINGS_06: Multiple files
-       -> Exit Code: Expected 0, got 1
+[PASS] STRINGS_06
 [PASS] STRINGS_07
-[FAIL] STRINGS_08: Empty file
-       -> Exit Code: Expected 0, got 1
-[FAIL] STRINGS_09: Encoding -e (Ext)
-       -> Exit Code: Expected 0, got 1
-[FAIL] STRINGS_10: Default len 4
-       -> Exit Code: Expected 0, got 1
+[PASS] STRINGS_08
+[PASS] STRINGS_09
+[PASS] STRINGS_10
 UTILITY: time
 [PASS] TIME_01
 [PASS] TIME_02
@@ -771,36 +727,24 @@ UTILITY: fold
 [PASS] FOLD_01
 [PASS] FOLD_02
 [PASS] FOLD_03
-[FAIL] FOLD_04: Space break -s
-       -> Stdout Regex Mismatch.
-   Expected: /a b\nc d/
-   Got: "a b\n c \nd\n"
+[PASS] FOLD_04
 [PASS] FOLD_05
-[FAIL] FOLD_06: Multiple files
-       -> Exit Code: Expected 0, got 1
-[FAIL] FOLD_07: Stdin
-       -> Exit Code: Expected 0, got 1
-[FAIL] FOLD_08: Empty
-       -> Exit Code: Expected 0, got 1
+[PASS] FOLD_06
+[PASS] FOLD_07
+[PASS] FOLD_08
 [PASS] FOLD_09
-[FAIL] FOLD_10: Zero width?
-       -> Exit Code: Expected 1, got 0
+[PASS] FOLD_10
 UTILITY: cksum
 [PASS] CKSUM_01
 [PASS] CKSUM_02
-[FAIL] CKSUM_03: Multiple files
-       -> Exit Code: Expected 0, got 1
+[PASS] CKSUM_03
 [PASS] CKSUM_04
 [PASS] CKSUM_05
-[FAIL] CKSUM_06: Binary
-       -> Exit Code: Expected 0, got 1
-[FAIL] CKSUM_07: Deterministic
-       -> Exit Code: Expected 0, got 1
+[PASS] CKSUM_06
+[PASS] CKSUM_07
 [PASS] CKSUM_08
-[FAIL] CKSUM_09: Help?
-       -> Exit Code: Expected 1, got 0
-[FAIL] CKSUM_10: Check algo (stub)
-       -> Exit Code: Expected 0, got 1
+[PASS] CKSUM_09
+[PASS] CKSUM_10
 UTILITY: du
 [PASS] DU_01
 [PASS] DU_02
@@ -808,7 +752,7 @@ UTILITY: du
 [FAIL] DU_04: Human readable -h (Ext)
        -> Stdout Regex Mismatch.
    Expected: /[KMG]/
-   Got: "8	/home/operator\n16	/home\n8	/bin\n8	/usr/bin\n16	/usr\n8	/tmp\n8	/var/mail\n16	/var\n72	/"
+   Got: "9	/home/operator\n17	/home\n185	/usr/bin\n8	/usr/sbin\n8	/usr/lib\n8	/usr/local/bin\n8	/usr/local/lib\n24	/usr/local\n8	/usr/include\n8	/usr/share/doc\n8	/usr/share/man/man1\n16	/usr/share/man\n8	/usr/share/dict\n40	/usr/share\n281	/usr\n8	/tmp\n8	/var/mail\n11	/var/log\n8	/var/tmp\n8	/var/spool/cron\n16	/var/spool\n8	/var/lib\n8	/var/cache\n8	/var/www\n8	/var/backups\n83	/var\n9	/etc/ssh\n8	/etc/cron.d\n9	/etc/skel\n52	/etc\n9	/root\n8	/run\n8	/dev/pts\n8	/dev/shm\n32	/dev\n11	/proc/sys/kernel\n19	/proc/sys\n9	/proc/net\n44	/proc\n8	/sys\n8	/mnt\n8	/media\n8	/opt\n8	/srv\n8	/boot\n590	/"
 [PASS] DU_05
 [PASS] DU_06
 [PASS] DU_07
@@ -844,29 +788,22 @@ UTILITY: mesg
        -> Exit Code: Expected 1, got 0
 [PASS] MESG_10
 UTILITY: uudecode
-[FAIL] UUDECODE_01: Decode file
-       -> Exit Code: Expected 0, got 1
-       -> Missing File: Expected /home/operator/f to be created.
+[PASS] UUDECODE_01
 [FAIL] UUDECODE_02: Stdout -o
        -> Exit Code: Expected 0, got 1
 [PASS] UUDECODE_03
 [PASS] UUDECODE_04
-[PASS] UUDECODE_05
-[FAIL] UUDECODE_06: Mode check
-       -> Exit Code: Expected 0, got 1
+[FAIL] UUDECODE_05: Fail strict
+       -> Exit Code: Expected 1, got 0
+[PASS] UUDECODE_06
 [FAIL] UUDECODE_07: Base64 -m (Ext)
        -> Exit Code: Expected 0, got 1
 [FAIL] UUDECODE_08: Output flag (Ext)
        -> Exit Code: Expected 0, got 1
 [PASS] UUDECODE_09
-[FAIL] UUDECODE_10: Consistency
-       -> Exit Code: Expected 0, got 1
+[PASS] UUDECODE_10
 UTILITY: uuencode
-[FAIL] UUENCODE_01: Encode file
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /begin 644 f_remote/
-   Got: "uuencode: f: No such file"
+[PASS] UUENCODE_01
 [PASS] UUENCODE_02
 [FAIL] UUENCODE_03: Base64 -m
        -> Exit Code: Expected 0, got 1
@@ -874,81 +811,45 @@ UTILITY: uuencode
    Expected: /begin-base64/
    Got: "uuencode: missing operand"
 [PASS] UUENCODE_04
-[FAIL] UUENCODE_05: Decode name
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /decode_name/
-   Got: "uuencode: f: No such file"
-[FAIL] UUENCODE_06: Mode preservation (Ext)
-       -> Exit Code: Expected 0, got 1
+[PASS] UUENCODE_05
+[PASS] UUENCODE_06
 [PASS] UUENCODE_07
 [PASS] UUENCODE_08
-[FAIL] UUENCODE_09: Empty file
-       -> Exit Code: Expected 0, got 1
-[FAIL] UUENCODE_10: Consistency
-       -> Exit Code: Expected 0, got 1
+[PASS] UUENCODE_09
+[PASS] UUENCODE_10
 UTILITY: compress
-[FAIL] COMPRESS_01: Compress file
-       -> Exit Code: Expected 0, got 1
-       -> Missing File: Expected /home/operator/f.Z to be created.
-[FAIL] COMPRESS_02: Force -f
-       -> Exit Code: Expected 0, got 1
-[FAIL] COMPRESS_03: Verbose -v
-       -> Exit Code: Expected 0, got 1
-[FAIL] COMPRESS_04: Stdout -c
-       -> Exit Code: Expected 0, got 1
-[FAIL] COMPRESS_05: Bits -b
-       -> Exit Code: Expected 0, got 1
+[PASS] COMPRESS_01
+[PASS] COMPRESS_02
+[PASS] COMPRESS_03
+[PASS] COMPRESS_04
+[PASS] COMPRESS_05
 [PASS] COMPRESS_06
-[FAIL] COMPRESS_07: Recursion -r (Ext)
-       -> Exit Code: Expected 0, got 1
+[PASS] COMPRESS_07
 [PASS] COMPRESS_08
-[FAIL] COMPRESS_09: Multiple files
-       -> Exit Code: Expected 0, got 1
-[FAIL] COMPRESS_10: Check magic (stub)
-       -> Exit Code: Expected 0, got 1
+[PASS] COMPRESS_09
+[PASS] COMPRESS_10
 UTILITY: uncompress
-[FAIL] UNCOMPRESS_01: Uncompress file
-       -> Exit Code: Expected 0, got 1
-       -> Missing File: Expected /home/operator/f to be created.
-[FAIL] UNCOMPRESS_02: Stdin -c
-       -> Exit Code: Expected 0, got 1
+[PASS] UNCOMPRESS_01
+[PASS] UNCOMPRESS_02
 [PASS] UNCOMPRESS_03
 [PASS] UNCOMPRESS_04
-[FAIL] UNCOMPRESS_05: Force -f (stub)
-       -> Exit Code: Expected 0, got 1
-[FAIL] UNCOMPRESS_06: Verbose -v
-       -> Exit Code: Expected 0, got 1
-[FAIL] UNCOMPRESS_07: Implicit extension
-       -> Exit Code: Expected 0, got 1
-[FAIL] UNCOMPRESS_08: Multiple files
-       -> Exit Code: Expected 0, got 1
-[FAIL] UNCOMPRESS_09: Stdout
-       -> Exit Code: Expected 0, got 1
-[FAIL] UNCOMPRESS_10: Consistency
-       -> Exit Code: Expected 0, got 1
+[PASS] UNCOMPRESS_05
+[PASS] UNCOMPRESS_06
+[PASS] UNCOMPRESS_07
+[PASS] UNCOMPRESS_08
+[PASS] UNCOMPRESS_09
+[PASS] UNCOMPRESS_10
 UTILITY: zcat
-[FAIL] ZCAT_01: Cat compressed
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /content/
-   Got: "zcat: f.Z: No such file or directory"
-[FAIL] ZCAT_02: Multiple
-       -> Exit Code: Expected 0, got 1
+[PASS] ZCAT_01
+[PASS] ZCAT_02
 [PASS] ZCAT_03
 [PASS] ZCAT_04
-[FAIL] ZCAT_05: Stdin
-       -> Exit Code: Expected 0, got 1
-[FAIL] ZCAT_06: Implicit .Z (stub)
-       -> Exit Code: Expected 0, got 1
-[FAIL] ZCAT_07: File preserved
-       -> Exit Code: Expected 0, got 1
-       -> Missing File: Expected /home/operator/f.Z to be created.
-[FAIL] ZCAT_08: Non .Z files (Ext)
-       -> Exit Code: Expected 0, got 1
+[PASS] ZCAT_05
+[PASS] ZCAT_06
+[PASS] ZCAT_07
+[PASS] ZCAT_08
 [PASS] ZCAT_09
-[FAIL] ZCAT_10: Consistency
-       -> Exit Code: Expected 0, got 1
+[PASS] ZCAT_10
 UTILITY: gzip
 [FAIL] GZIP_01: Compress
        -> Missing File: Expected /home/operator/f.gz to be created.
@@ -1026,24 +927,15 @@ UTILITY: pax
 [PASS] PAX_09
 [PASS] PAX_10
 UTILITY: dd
-[FAIL] DD_01: Copy file
-       -> Exit Code: Expected 0, got 1
-       -> Missing File: Expected /home/operator/out to be created.
-[FAIL] DD_02: Block size bs
-       -> Exit Code: Expected 0, got 1
-[FAIL] DD_03: Count
-       -> Exit Code: Expected 0, got 1
-[FAIL] DD_04: Seek output
-       -> Exit Code: Expected 0, got 1
-[FAIL] DD_05: Skip input
-       -> Exit Code: Expected 0, got 1
-[FAIL] DD_06: Conv ucase (Ext)
-       -> Exit Code: Expected 0, got 1
-[FAIL] DD_07: Conv lcase (Ext)
-       -> Exit Code: Expected 0, got 1
+[PASS] DD_01
+[PASS] DD_02
+[PASS] DD_03
+[PASS] DD_04
+[PASS] DD_05
+[PASS] DD_06
+[PASS] DD_07
 [PASS] DD_08
-[FAIL] DD_09: Stderr stats
-       -> Exit Code: Expected 0, got 1
+[PASS] DD_09
 [PASS] DD_10
 UTILITY: cal
 [PASS] CAL_01
@@ -1059,9 +951,7 @@ UTILITY: cal
 [PASS] CAL_09
 [PASS] CAL_10
 UTILITY: link
-[FAIL] LINK_01: Create link
-       -> Exit Code: Expected 0, got 1
-       -> Missing File: Expected /home/operator/lnk to be created.
+[PASS] LINK_01
 [FAIL] LINK_02: Content check
        -> Stdout Regex Mismatch.
    Expected: /x/
@@ -1074,22 +964,13 @@ UTILITY: link
 [PASS] LINK_08
 [FAIL] LINK_09: Verify count (stub)
        -> Exit Code: Expected 0, got 1
-[FAIL] LINK_10: Unlink source
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /x/
-   Got: "link: cannot create link 'lnk' to 'f': link: cannot access '/home/operator/f': No such file or directory\nrm: cannot remove 'f': No such file or directory\ncat: lnk: No such file or directory"
+[PASS] LINK_10
 UTILITY: ln
-[FAIL] LN_01: Hard link
-       -> Exit Code: Expected 0, got 1
-       -> Missing File: Expected /home/operator/glnk to be created.
-[FAIL] LN_02: Symbolic -s
-       -> Missing File: Expected /home/operator/slnk to be created.
+[PASS] LN_01
+[PASS] LN_02
 [FAIL] LN_03: Force -f
        -> Exit Code: Expected 0, got 1
-[FAIL] LN_04: Dir target
-       -> Exit Code: Expected 0, got 1
-       -> Missing File: Expected /home/operator/d/f to be created.
+[PASS] LN_04
 [PASS] LN_05
 [PASS] LN_06
 [PASS] LN_07
@@ -1101,40 +982,18 @@ UTILITY: ln
 [FAIL] LN_10: Interact -i
        -> Exit Code: Expected 0, got 1
 UTILITY: nl
-[FAIL] NL_01: Number lines
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /1.*a/
-   Got: "nl: f: No such file"
-[FAIL] NL_02: Increment -i
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /1.*a\s+3.*b/
-   Got: "nl: 2: No such file"
-[FAIL] NL_03: Separator -s
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /1 \) a/
-   Got: "nl:  ) : No such file"
-[FAIL] NL_04: Width -w
-       -> Exit Code: Expected 0, got 1
+[PASS] NL_01
+[PASS] NL_02
+[PASS] NL_03
+[PASS] NL_04
 [PASS] NL_05
 [PASS] NL_06
-[FAIL] NL_07: Format -n ln
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /^1   a/
-   Got: "nl: ln: No such file"
+[PASS] NL_07
 [PASS] NL_08
 [PASS] NL_09
-[FAIL] NL_10: Reset -p
-       -> Exit Code: Expected 0, got 1
+[PASS] NL_10
 UTILITY: pr
-[FAIL] PR_01: Paginate
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /x/
-   Got: "pr: f: No such file"
+[PASS] PR_01
 [FAIL] PR_02: Columns -2
        -> Exit Code: Expected 0, got 1
 [FAIL] PR_03: Header -h
@@ -1162,29 +1021,16 @@ UTILITY: pr
        -> Exit Code: Expected 0, got 1
 [PASS] PR_10
 UTILITY: tsort
-[FAIL] TSORT_01: Sort dependency
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /a\nb\nc/
-   Got: "tsort: f: No such file\n"
+[PASS] TSORT_01
 [PASS] TSORT_02
-[FAIL] TSORT_03: Cycle detect
-       -> Stdout Regex Mismatch.
-   Expected: /cycle/
-   Got: "a\nb"
+[PASS] TSORT_03
 [PASS] TSORT_04
-[FAIL] TSORT_05: Empty
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /^$/
-   Got: "tsort: /dev/null: No such file"
+[PASS] TSORT_05
 [PASS] TSORT_06
 [PASS] TSORT_07
 [PASS] TSORT_08
-[FAIL] TSORT_09: Consistency
-       -> Exit Code: Expected 0, got 1
-[FAIL] TSORT_10: Large input
-       -> Exit Code: Expected 0, got 1
+[PASS] TSORT_09
+[PASS] TSORT_10
 UTILITY: man
 [PASS] MAN_01
 [FAIL] MAN_02: Fail missing
@@ -1202,11 +1048,7 @@ UTILITY: man
 [PASS] MAN_09
 [PASS] MAN_10
 UTILITY: more
-[FAIL] MORE_01: Show file
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /x/
-   Got: "more: f: No such file or directory"
+[PASS] MORE_01
 [FAIL] MORE_02: Lines -n
        -> Exit Code: Expected 0, got 1
 [PASS] MORE_03
@@ -1219,36 +1061,20 @@ UTILITY: more
 [FAIL] MORE_07: Clear -c
        -> Exit Code: Expected 0, got 1
 [PASS] MORE_08
-[FAIL] MORE_09: Multiple files
-       -> Exit Code: Expected 0, got 1
+[PASS] MORE_09
 [FAIL] MORE_10: Help -h
        -> Exit Code: Expected 0, got 1
 UTILITY: expand
-[FAIL] EXPAND_01: Expand tabs
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /        /
-   Got: "expand: f: No such file"
-[FAIL] EXPAND_02: Tab stops -t
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /  /
-   Got: "expand: f: No such file"
-[FAIL] EXPAND_03: Initial only -i
-       -> Exit Code: Expected 0, got 1
+[PASS] EXPAND_01
+[PASS] EXPAND_02
+[PASS] EXPAND_03
 [PASS] EXPAND_04
 [PASS] EXPAND_05
-[FAIL] EXPAND_06: Multiple files
-       -> Exit Code: Expected 0, got 1
-[FAIL] EXPAND_07: Empty file
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /^$/
-   Got: "expand: /dev/null: No such file"
+[PASS] EXPAND_06
+[PASS] EXPAND_07
 [PASS] EXPAND_08
 [PASS] EXPAND_09
-[FAIL] EXPAND_10: Consistency
-       -> Exit Code: Expected 0, got 1
+[PASS] EXPAND_10
 UTILITY: command
 [PASS] COMMAND_01
 [PASS] COMMAND_02
@@ -1570,7 +1396,7 @@ UTILITY: who
 [FAIL] WHO_02: Headers -H
        -> Stdout Regex Mismatch.
    Expected: /NAME/
-   Got: "operator   tty1   2026-10-04 17:40"
+   Got: "operator   tty1   2026-10-04 18:43"
 [PASS] WHO_03
 [PASS] WHO_04
 [PASS] WHO_05
@@ -1745,50 +1571,29 @@ UTILITY: m4
 [PASS] M4_09
 [PASS] M4_10
 UTILITY: lex
-[FAIL] LEX_01: Gen C
-       -> Exit Code: Expected 0, got 1
-       -> Missing File: Expected /home/operator/lex.yy.c to be created.
-[FAIL] LEX_02: Output -t
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /int/
-   Got: "lex: l: No such file or directory"
-[FAIL] LEX_03: Verbose -v
-       -> Exit Code: Expected 0, got 1
+[PASS] LEX_01
+[PASS] LEX_02
+[PASS] LEX_03
 [PASS] LEX_04
 [PASS] LEX_05
-[FAIL] LEX_06: Compile check (stub)
-       -> Exit Code: Expected 0, got 1
+[PASS] LEX_06
 [FAIL] LEX_07: Fail syntax
        -> Exit Code: Expected 1, got 0
-[FAIL] LEX_08: Legacy -l?
-       -> Exit Code: Expected 0, got 1
-[FAIL] LEX_09: Consistency
-       -> Exit Code: Expected 0, got 1
-[FAIL] LEX_10: Simple
-       -> Exit Code: Expected 0, got 1
+[PASS] LEX_08
+[PASS] LEX_09
+[PASS] LEX_10
 UTILITY: yacc
-[FAIL] YACC_01: Gen C
-       -> Exit Code: Expected 0, got 1
-       -> Missing File: Expected /home/operator/y.tab.c to be created.
-[FAIL] YACC_02: Output -d
-       -> Exit Code: Expected 0, got 1
-       -> Missing File: Expected /home/operator/y.tab.h to be created.
-[FAIL] YACC_03: Prefix -b
-       -> Exit Code: Expected 0, got 1
-       -> Missing File: Expected /home/operator/p.tab.c to be created.
+[PASS] YACC_01
+[PASS] YACC_02
+[PASS] YACC_03
 [PASS] YACC_04
-[FAIL] YACC_05: Graph -g (Ext)
-       -> Exit Code: Expected 0, got 1
-[FAIL] YACC_06: Verbose -v
-       -> Exit Code: Expected 0, got 1
+[PASS] YACC_05
+[PASS] YACC_06
 [PASS] YACC_07
 [FAIL] YACC_08: Fail syntax
        -> Exit Code: Expected 1, got 0
-[FAIL] YACC_09: Consistency
-       -> Exit Code: Expected 0, got 1
-[FAIL] YACC_10: Simple
-       -> Exit Code: Expected 0, got 1
+[PASS] YACC_09
+[PASS] YACC_10
 UTILITY: nm
 [PASS] NM_01
 [PASS] NM_02
@@ -1833,8 +1638,7 @@ UTILITY: ctags
 [PASS] CTAGS_09
 [PASS] CTAGS_10
 UTILITY: asa
-[FAIL] ASA_01: Fortran fmt
-       -> Exit Code: Expected 0, got 1
+[PASS] ASA_01
 [PASS] ASA_02
 [PASS] ASA_03
 [PASS] ASA_04
@@ -1842,16 +1646,11 @@ UTILITY: asa
        -> Stdout Regex Mismatch.
    Expected: /\f/
    Got: "NewPage"
-[FAIL] ASA_06: Double space
-       -> Exit Code: Expected 0, got 1
-[FAIL] ASA_07: Overprint
-       -> Exit Code: Expected 0, got 1
-[FAIL] ASA_08: Fail format
-       -> Exit Code: Expected 0, got 1
-[FAIL] ASA_09: Consistency
-       -> Exit Code: Expected 0, got 1
-[FAIL] ASA_10: Multiple
-       -> Exit Code: Expected 0, got 1
+[PASS] ASA_06
+[PASS] ASA_07
+[PASS] ASA_08
+[PASS] ASA_09
+[PASS] ASA_10
 UTILITY: chgrp
 [PASS] CHGRP_01
 [PASS] CHGRP_02
@@ -1882,31 +1681,33 @@ UTILITY: rmdir
 [PASS] RMDIR_05
 [PASS] RMDIR_06
 [PASS] RMDIR_07
-[FAIL] RMDIR_08: Fail cwd
-       -> Exit Code: Expected 1, got 0
+[PASS] RMDIR_08
 [PASS] RMDIR_09
 [PASS] RMDIR_10
 UTILITY: mkfifo
 [PASS] MKFIFO_01
 [PASS] MKFIFO_02
-[FAIL] MKFIFO_03: Fail exists
-       -> Exit Code: Expected 1, got 0
+[PASS] MKFIFO_03
 [PASS] MKFIFO_04
 [PASS] MKFIFO_05
 [PASS] MKFIFO_06
-[PASS] MKFIFO_07
-[PASS] MKFIFO_08
-[PASS] MKFIFO_09
+[FAIL] MKFIFO_07: Consistency
+       -> Exit Code: Expected 0, got 1
+[FAIL] MKFIFO_08: Verify type (stub)
+       -> Stdout Regex Mismatch.
+   Expected: /^p/
+   Got: "mkfifo: cannot create fifo 'p': File exists\n-rw-r--r-- 1 operator operator 0 Oct  4 18:43 p"
+[FAIL] MKFIFO_09: Permissions check
+       -> Exit Code: Expected 0, got 1
 [PASS] MKFIFO_10
 UTILITY: unlink
-[FAIL] UNLINK_01: Unlink file
-       -> Exit Code: Expected 0, got 1
+[PASS] UNLINK_01
 [PASS] UNLINK_02
 [PASS] UNLINK_03
 [PASS] UNLINK_04
-[PASS] UNLINK_05
-[FAIL] UNLINK_06: Consistency
-       -> Exit Code: Expected 0, got 1
+[FAIL] UNLINK_05: Fail mult args
+       -> Exit Code: Expected 1, got 0
+[PASS] UNLINK_06
 [PASS] UNLINK_07
 [PASS] UNLINK_08
 [PASS] UNLINK_09
@@ -1948,10 +1749,9 @@ UTILITY: readlink
 UTILITY: realpath
 [PASS] REALPATH_01
 [FAIL] REALPATH_02: Resolve symlink
-       -> Exit Code: Expected 0, got 1
        -> Stdout Regex Mismatch.
    Expected: /\/f/
-   Got: "realpath: l: No such file or directory"
+   Got: "/home/operator/l"
 [PASS] REALPATH_03
 [FAIL] REALPATH_04: Ignore missing -m
        -> Exit Code: Expected 0, got 1
@@ -2079,39 +1879,7 @@ UTILITY: admin
 [FAIL] ADMIN_10: New
        -> Exit Code: Expected 0, got 1
 UTILITY: delta
-[FAIL] DELTA_02: List -p
-       -> Exit Code: Expected 0, got 1
-[PASS] DELTA_03
-[PASS] DELTA_04
-[FAIL] DELTA_05: Comment -y
-       -> Exit Code: Expected 0, got 1
-[FAIL] DELTA_06: SID -r
-       -> Exit Code: Expected 0, got 1
-[FAIL] DELTA_07: Silent -s
-       -> Exit Code: Expected 0, got 1
-[FAIL] DELTA_08: G-file -g
-       -> Exit Code: Expected 0, got 1
-[FAIL] DELTA_09: Consistency
-       -> Exit Code: Expected 0, got 1
-[FAIL] DELTA_10: Retain -n
-       -> Exit Code: Expected 0, got 1
 UTILITY: get
-[FAIL] GET_02: Edit -e
-       -> Exit Code: Expected 0, got 1
-[FAIL] GET_03: Stdout -p
-       -> Exit Code: Expected 0, got 1
-[PASS] GET_04
-[PASS] GET_05
-[FAIL] GET_06: SID -r
-       -> Exit Code: Expected 0, got 1
-[FAIL] GET_07: Suppress -s
-       -> Exit Code: Expected 0, got 1
-[FAIL] GET_08: Key -k
-       -> Exit Code: Expected 0, got 1
-[FAIL] GET_09: Consistency
-       -> Exit Code: Expected 0, got 1
-[FAIL] GET_10: Info -g
-       -> Exit Code: Expected 0, got 1
 UTILITY: prs
 [FAIL] PRS_01: Print logic
        -> Exit Code: Expected 0, got 1
@@ -2268,7 +2036,8 @@ UTILITY: ipcs
 UTILITY: iconv
 [PASS] ICONV_01
 [PASS] ICONV_02
-[PASS] ICONV_03
+[FAIL] ICONV_03: Fail codeset
+       -> Exit Code: Expected 1, got 0
 [PASS] ICONV_04
 [PASS] ICONV_05
 [PASS] ICONV_06
@@ -2369,12 +2138,9 @@ UTILITY: gencat
 [PASS] GENCAT_05
 [PASS] GENCAT_06
 [PASS] GENCAT_07
-[FAIL] GENCAT_08: Consistency
-       -> Exit Code: Expected 0, got 1
-[FAIL] GENCAT_09: Output check
-       -> Exit Code: Expected 0, got 1
-[FAIL] GENCAT_10: Multiple inputs
-       -> Exit Code: Expected 0, got 1
+[PASS] GENCAT_08
+[PASS] GENCAT_09
+[PASS] GENCAT_10
 UTILITY: getconf
 [PASS] GETCONF_01
 [PASS] GETCONF_02
@@ -2471,23 +2237,15 @@ UTILITY: pathchk
 [PASS] PATHCHK_09
 [PASS] PATHCHK_10
 UTILITY: unexpand
-[FAIL] UNEXPAND_01: Convert spaces
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /\tt/
-   Got: "unexpand: f: No such file"
-[FAIL] UNEXPAND_02: All -a
-       -> Exit Code: Expected 0, got 1
-[FAIL] UNEXPAND_03: Tabs -t
-       -> Exit Code: Expected 0, got 1
+[PASS] UNEXPAND_01
+[PASS] UNEXPAND_02
+[PASS] UNEXPAND_03
 [PASS] UNEXPAND_04
 [PASS] UNEXPAND_05
 [PASS] UNEXPAND_06
-[FAIL] UNEXPAND_07: Consistency
-       -> Exit Code: Expected 0, got 1
+[PASS] UNEXPAND_07
 [PASS] UNEXPAND_08
-[FAIL] UNEXPAND_09: Multiple files
-       -> Exit Code: Expected 0, got 1
+[PASS] UNEXPAND_09
 [PASS] UNEXPAND_10
 UTILITY: uucp
 [FAIL] UUCP_01: Copy file
@@ -2562,7 +2320,7 @@ UTILITY: xgettext
 === COMPLIANCE SUMMARY ===
 UTILITY       | TESTS | PASS | FAIL | COMPLIANCE
 --------------|-------|------|------|-----------
-mkdir         |    10 |   10 |    0 |    100.0%
+mkdir         |    10 |    9 |    1 |     90.0%
 cd            |    10 |   10 |    0 |    100.0%
 ls            |    10 |   10 |    0 |    100.0%
 touch         |    10 |   10 |    0 |    100.0%
@@ -2575,7 +2333,7 @@ pwd           |    10 |   10 |    0 |    100.0%
 grep          |    10 |   10 |    0 |    100.0%
 head          |    10 |   10 |    0 |    100.0%
 tail          |    10 |   10 |    0 |    100.0%
-wc            |    10 |    9 |    1 |     90.0%
+wc            |    10 |   10 |    0 |    100.0%
 chmod         |    10 |   10 |    0 |    100.0%
 awk           |    10 |   10 |    0 |    100.0%
 sed           |    10 |    9 |    1 |     90.0%
@@ -2599,17 +2357,17 @@ false         |    10 |    9 |    1 |     90.0%
 true          |    10 |   10 |    0 |    100.0%
 basename      |    10 |   10 |    0 |    100.0%
 dirname       |    10 |    9 |    1 |     90.0%
-file          |    10 |    6 |    4 |     60.0%
-join          |    10 |    8 |    2 |     80.0%
+file          |    10 |    9 |    1 |     90.0%
+join          |    10 |    9 |    1 |     90.0%
 paste         |    10 |    8 |    2 |     80.0%
-split         |    10 |    5 |    5 |     50.0%
+split         |    10 |    7 |    3 |     70.0%
 csplit        |    10 |    5 |    5 |     50.0%
 comm          |    10 |    9 |    1 |     90.0%
-cmp           |    10 |    5 |    5 |     50.0%
-od            |    10 |    3 |    7 |     30.0%
+cmp           |    10 |   10 |    0 |    100.0%
+od            |    10 |   10 |    0 |    100.0%
 expr          |    10 |   10 |    0 |    100.0%
-printf        |    10 |    8 |    2 |     80.0%
-test          |    10 |   10 |    0 |    100.0%
+printf        |    10 |   10 |    0 |    100.0%
+test          |    10 |    9 |    1 |     90.0%
 [             |    10 |    7 |    3 |     70.0%
 read          |    10 |   10 |    0 |    100.0%
 xargs         |    10 |   10 |    0 |    100.0%
@@ -2618,35 +2376,35 @@ uname         |    10 |    8 |    2 |     80.0%
 logname       |    10 |   10 |    0 |    100.0%
 env           |    10 |    5 |    5 |     50.0%
 ar            |    10 |    4 |    6 |     40.0%
-make          |    10 |    8 |    2 |     80.0%
-sh            |    11 |    9 |    2 |     81.8%
-strings       |    10 |    4 |    6 |     40.0%
+make          |    10 |    9 |    1 |     90.0%
+sh            |    11 |   10 |    1 |     90.9%
+strings       |    10 |   10 |    0 |    100.0%
 time          |    10 |    8 |    2 |     80.0%
-fold          |    10 |    5 |    5 |     50.0%
-cksum         |    10 |    5 |    5 |     50.0%
+fold          |    10 |   10 |    0 |    100.0%
+cksum         |    10 |   10 |    0 |    100.0%
 du            |    10 |    9 |    1 |     90.0%
 df            |    10 |    9 |    1 |     90.0%
 mesg          |    10 |    5 |    5 |     50.0%
-uudecode      |    10 |    4 |    6 |     40.0%
-uuencode      |    10 |    4 |    6 |     40.0%
-compress      |    10 |    2 |    8 |     20.0%
-uncompress    |    10 |    2 |    8 |     20.0%
-zcat          |    10 |    3 |    7 |     30.0%
+uudecode      |    10 |    6 |    4 |     60.0%
+uuencode      |    10 |    9 |    1 |     90.0%
+compress      |    10 |   10 |    0 |    100.0%
+uncompress    |    10 |   10 |    0 |    100.0%
+zcat          |    10 |   10 |    0 |    100.0%
 gzip          |    10 |    7 |    3 |     70.0%
 gunzip        |    10 |    7 |    3 |     70.0%
 tar           |    10 |    6 |    4 |     60.0%
 cpio          |    10 |    8 |    2 |     80.0%
 pax           |    10 |    7 |    3 |     70.0%
-dd            |    10 |    2 |    8 |     20.0%
+dd            |    10 |   10 |    0 |    100.0%
 cal           |    10 |    8 |    2 |     80.0%
-link          |    10 |    6 |    4 |     60.0%
-ln            |    10 |    4 |    6 |     40.0%
-nl            |    10 |    4 |    6 |     40.0%
-pr            |    10 |    1 |    9 |     10.0%
-tsort         |    10 |    5 |    5 |     50.0%
+link          |    10 |    8 |    2 |     80.0%
+ln            |    10 |    7 |    3 |     70.0%
+nl            |    10 |   10 |    0 |    100.0%
+pr            |    10 |    2 |    8 |     20.0%
+tsort         |    10 |   10 |    0 |    100.0%
 man           |    10 |    7 |    3 |     70.0%
-more          |    10 |    2 |    8 |     20.0%
-expand        |    10 |    4 |    6 |     40.0%
+more          |    10 |    4 |    6 |     40.0%
+expand        |    10 |   10 |    0 |    100.0%
 command       |    10 |    9 |    1 |     90.0%
 fc            |    10 |    9 |    1 |     90.0%
 getopts       |    10 |   10 |    0 |    100.0%
@@ -2684,17 +2442,17 @@ bc            |    10 |    9 |    1 |     90.0%
 lp            |    10 |    9 |    1 |     90.0%
 mailx         |    10 |    9 |    1 |     90.0%
 m4            |    10 |    5 |    5 |     50.0%
-lex           |    10 |    2 |    8 |     20.0%
-yacc          |    10 |    2 |    8 |     20.0%
+lex           |    10 |    9 |    1 |     90.0%
+yacc          |    10 |    9 |    1 |     90.0%
 nm            |    10 |    7 |    3 |     70.0%
 strip         |    10 |    7 |    3 |     70.0%
 ctags         |    10 |    6 |    4 |     60.0%
-asa           |    10 |    3 |    7 |     30.0%
+asa           |    10 |    9 |    1 |     90.0%
 chgrp         |    10 |   10 |    0 |    100.0%
 chown         |    10 |   10 |    0 |    100.0%
-rmdir         |    10 |    9 |    1 |     90.0%
-mkfifo        |    10 |    9 |    1 |     90.0%
-unlink        |    10 |    8 |    2 |     80.0%
+rmdir         |    10 |   10 |    0 |    100.0%
+mkfifo        |    10 |    7 |    3 |     70.0%
+unlink        |    10 |    9 |    1 |     90.0%
 patch         |    10 |    8 |    2 |     80.0%
 readlink      |    10 |    5 |    5 |     50.0%
 realpath      |    10 |    8 |    2 |     80.0%
@@ -2707,8 +2465,8 @@ exit          |    10 |   10 |    0 |    100.0%
 readonly      |    10 |    9 |    1 |     90.0%
 return        |    10 |   10 |    0 |    100.0%
 admin         |    10 |    2 |    8 |     20.0%
-delta         |    10 |    2 |    7 |     20.0%
-get           |    10 |    2 |    7 |     20.0%
+delta         |    10 |    0 |    0 |      0.0%
+get           |    10 |    0 |    0 |      0.0%
 prs           |    10 |    2 |    8 |     20.0%
 rmdel         |    10 |    5 |    5 |     50.0%
 sact          |    10 |    3 |    7 |     30.0%
@@ -2718,27 +2476,27 @@ val           |    10 |    9 |    1 |     90.0%
 what          |    10 |    6 |    4 |     60.0%
 ipcrm         |    10 |    7 |    3 |     70.0%
 ipcs          |    10 |    9 |    1 |     90.0%
-iconv         |    10 |    9 |    1 |     90.0%
+iconv         |    10 |    8 |    2 |     80.0%
 locale        |    10 |    7 |    3 |     70.0%
 localedef     |    10 |    8 |    2 |     80.0%
 c17           |    10 |    3 |    7 |     30.0%
 cflow         |    10 |   10 |    0 |    100.0%
 cxref         |    10 |    9 |    1 |     90.0%
 fuser         |    10 |   10 |    0 |    100.0%
-gencat        |    10 |    7 |    3 |     70.0%
+gencat        |    10 |   10 |    0 |    100.0%
 getconf       |    10 |   10 |    0 |    100.0%
 gettext       |    10 |   10 |    0 |    100.0%
 msgfmt        |    10 |    4 |    6 |     40.0%
 newgrp        |    10 |    7 |    3 |     70.0%
 ngettext      |    10 |    3 |    7 |     30.0%
 pathchk       |    10 |    9 |    1 |     90.0%
-unexpand      |    10 |    5 |    5 |     50.0%
+unexpand      |    10 |   10 |    0 |    100.0%
 uucp          |    10 |    2 |    8 |     20.0%
 uustat        |    10 |    9 |    1 |     90.0%
 uux           |    10 |    2 |    8 |     20.0%
 xgettext      |    10 |    6 |    4 |     60.0%
 
-TOTAL COMPLIANCE: 74.7% (1309/1752)
+TOTAL COMPLIANCE: 81.7% (1432/1752)
 
 === MISSING UTILITIES (Implemented but failing) ===
 None

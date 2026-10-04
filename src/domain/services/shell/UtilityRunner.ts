@@ -6,6 +6,7 @@ import { TerminalState } from '../../entities/TerminalState';
 import { IShellExecutor } from '../../interfaces/IShellExecutor';
 import { NetworkMap } from '../NetworkMap';
 import { IOContext, isTty } from './io/IOContext';
+import { binaryStringToBytes, bytesToStreamText } from './io/OutputSink';
 import { ShellResult } from './ShellRuntime';
 import { ShellRuntime } from './ShellRuntime';
 
@@ -82,10 +83,21 @@ export class UtilityRunner {
         const status = response.exitCode ?? 0;
 
         const streamed = stdout.getContents();
+        if (response.binary) {
+            const bytes = binaryStringToBytes(streamed + (response.output ?? ''));
+            if (io.stdout.writeBytes) io.stdout.writeBytes(bytes);
+            else io.stdout.write(bytesToStreamText(bytes));
+            io.stderr.write(stderr.getContents() + (response.stderr ?? ''));
+            return this.finish(response, state, status);
+        }
         const { out, err } = this.route(name, response.output ?? '', status);
         io.stdout.write(streamed + out);
         io.stderr.write(stderr.getContents() + (response.stderr ?? '') + err);
 
+        return this.finish(response, state, status);
+    }
+
+    private finish(response: CommandResponse, state: TerminalState, status: number): { result: ShellResult; response: CommandResponse } {
         const newState: TerminalState = { ...state, ...(response.newState || {}), lastExitCode: status };
         return {
             result: {

@@ -99,8 +99,27 @@ export class IOContext {
     }
 }
 
-export function inputFromString(data: string): IStream {
+export function inputFromString(data: string, binary = false): IStream {
     const s = new StringStream(data);
     s.close();
+    if (binary) (s as BinaryMarked).binary = true;
     return s;
+}
+
+type BinaryMarked = IStream & { binary?: boolean; fileSize?: number };
+
+/** Input redirected from a regular file (`< file`): what fstat() would report as its size. */
+export function inputFromFile(data: string, size: number): IStream {
+    const s = inputFromString(data) as BinaryMarked;
+    s.fileSize = size;
+    return s;
+}
+
+export function regularFileSize(stream: IStream): number | undefined {
+    return (stream as BinaryMarked).fileSize;
+}
+
+/** Whether a stream carries a byte string (see OutputSink stream convention). */
+export function isBinaryStream(stream: IStream): boolean {
+    return (stream as BinaryMarked).binary === true;
 }

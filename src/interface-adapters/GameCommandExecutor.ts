@@ -25,6 +25,7 @@ import { SettingsCommand } from './commands/game/SettingsCommand';
 import { TutorCommand } from './commands/game/TutorCommand';
 import { CommandRegistry } from '../domain/commands/CommandRegistry';
 import { CoreUtilsModule } from '../domain/modules/CoreUtilsModule';
+import { GnuUtilsModule } from '../domain/modules/GnuUtilsModule';
 import { SystemUtilsModule } from '../domain/modules/SystemUtilsModule';
 import { ConnectCommand } from './commands/game/ConnectCommand';
 import { NetworkMap } from '../domain/services/NetworkMap';
@@ -52,6 +53,7 @@ export class GameCommandExecutor implements IShellExecutor {
         // 1. Register Core Modules
         new CoreUtilsModule(fsService.fileSystem, identityService).register(this.registry);
         new SystemUtilsModule(fsService).register(this.registry);
+        new GnuUtilsModule().register(this.registry);
 
         // 2. Compose Domain Engine
         this.engine = new ExecuteCommand(

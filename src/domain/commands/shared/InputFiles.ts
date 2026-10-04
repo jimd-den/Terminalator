@@ -1,4 +1,6 @@
 import { ProcessContext, getStdinAsString } from '../../entities/ProcessContext';
+import { streamToBytes } from '../../services/shell/io/OutputSink';
+import { isBinaryStream } from '../../services/shell/io/IOContext';
 import { statPath, canAccess } from './FileInfo';
 
 export type InputResult = { ok: true; name: string; data: string } | { ok: false; name: string; error: string };
@@ -63,4 +65,18 @@ export function getopt(args: string[], spec: string): { opts: Map<string, string
         }
     }
     return { opts, operands: args.slice(i) };
+}
+
+export type BytesResult = { ok: true; name: string; data: Uint8Array } | { ok: false; name: string; error: string };
+
+/** Like readInput, but binary-safe: file bytes as stored, stdin as a byte string. */
+export function readInputBytes(context: ProcessContext, operand?: string): BytesResult {
+    if (operand === undefined || operand === '-') {
+        return { ok: true, name: operand ?? '-', data: streamToBytes(getStdinAsString(context) ?? '', isBinaryStream(context.stdin)) };
+    }
+    const info = statPath(context, operand);
+    if (!info) return { ok: false, name: operand, error: `${operand}: No such file or directory` };
+    if (info.kind === 'directory') return { ok: false, name: operand, error: `${operand}: Is a directory` };
+    if (!canAccess(context, info, 4)) return { ok: false, name: operand, error: `${operand}: Permission denied` };
+    return { ok: true, name: operand, data: context.fileSystemService.readFileBuffer(info.path, '/', context.user) };
 }

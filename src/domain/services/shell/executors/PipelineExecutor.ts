@@ -31,7 +31,7 @@ export class PipelineExecutor implements NodeExecutor {
                 const sink = isLast ? io.stdout : new BufferSink();
                 last = await this.runtime.visit(parts[i], state, io.withStdin(input).withStdout(sink));
                 if (last.status !== 0) failed = last.status;
-                if (!isLast) input = inputFromString((sink as BufferSink).contents());
+                if (!isLast) input = inputFromString((sink as BufferSink).contents(), (sink as BufferSink).binary);
             }
         } finally {
             if (pipe.negate) this.runtime.conditionDepth--;

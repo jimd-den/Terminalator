@@ -18,6 +18,11 @@ export class FileSink implements OutputSink {
         this.fs.writeFile(path, '', append ? 'a' : 'w', user.uid, user.gid, '/', user);
     }
 
+    writeBytes(data: Uint8Array): void {
+        if (!data.length) return;
+        this.fs.writeFile(this.path, data, 'a', this.user.uid, this.user.gid, '/', this.user);
+    }
+
     write(data: string): void {
         if (!data) return;
         this.fs.writeFile(this.path, data, 'a', this.user.uid, this.user.gid, '/', this.user);

@@ -2,6 +2,7 @@ import { FileSystem } from '../entities/FileSystem';
 import { FileSystemService } from '../services/FileSystemService';
 import { CommandRegistry } from '../commands/CommandRegistry';
 import { CoreUtilsModule } from '../modules/CoreUtilsModule';
+import { GnuUtilsModule } from '../modules/GnuUtilsModule';
 import { SystemUtilsModule } from '../modules/SystemUtilsModule';
 import { ExecuteCommand } from '../usecases/ExecuteCommand';
 import { TelemetryPort } from '../ports/TelemetryPort';
@@ -18,6 +19,7 @@ export class ShellFactory {
         // Register Modules
         new CoreUtilsModule(fileSystem, identityService).register(registry);
         new SystemUtilsModule(fsService).register(registry);
+        new GnuUtilsModule().register(registry);
 
         const executor = new ExecuteCommand(fsService, telemetry, registry);
 
