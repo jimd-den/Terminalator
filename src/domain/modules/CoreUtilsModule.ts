@@ -303,7 +303,9 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('bc', new BcCommand(fsService));
         registry.register('getconf', new GetconfCommand(fsService));
         registry.register('logger', new LoggerCommand(fsService));
-        registry.register('man', new ManCommand(fsService));
+        registry.register('man', new ManCommand('man'));
+        registry.register('apropos', new ManCommand('apropos'));
+        registry.register('whatis', new ManCommand('whatis'));
         registry.register('tabs', new TabsCommand(fsService));
         registry.register('tput', new TputCommand(fsService));
 
