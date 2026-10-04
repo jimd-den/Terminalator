@@ -41,8 +41,12 @@ export interface TerminalState {
     shellPid?: number;
     /** $! */
     lastBackgroundPid?: number;
+    /** Nice value of the shell (inherited by the commands it runs). */
+    niceIncrement?: number;
     /** File mode creation mask (umask). */
     umask?: number;
+    /** Resource limits set with ulimit, keyed by option letter (null = unlimited). */
+    limits?: Record<string, { soft: number | null; hard: number | null }>;
     /** Saved values for `local` variables, one frame per active function call (null = was unset). */
     localFrames?: Array<Record<string, string | null>>;
 }

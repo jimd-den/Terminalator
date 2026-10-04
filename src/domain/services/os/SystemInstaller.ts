@@ -87,7 +87,7 @@ export class SystemInstaller {
         this.installUtilities(fs, profile.utilities ?? DEFAULT_UTILITIES);
         this.installAccounts(fs, profile);
         this.installEtc(fs, profile, os);
-        this.installDevices(fs);
+        this.installDevices(fs, users[0]?.uid ?? 0);
         this.installProc(fs, profile, os, bootTime);
         this.installHomes(fs, users);
         this.installLogs(fs, profile, os, bootTime);
@@ -228,7 +228,7 @@ export class SystemInstaller {
 
     // --- /dev ----------------------------------------------------------------
 
-    private installDevices(fs: FileSystemService) {
+    private installDevices(fs: FileSystemService, loginUid: number) {
         const devices: [string, number, number, number, number?][] = [
             ['null', 1, 3, 0o666], ['zero', 1, 5, 0o666], ['full', 1, 7, 0o666],
             ['random', 1, 8, 0o666], ['urandom', 1, 9, 0o666],
@@ -239,6 +239,8 @@ export class SystemInstaller {
             if (fs.resolve(path, '/', false)) continue;
             fs.mknod(path, S_IFCHR | mode, makedev(maj, min), 0, gid ?? 0, '/');
         }
+        // The login session's pseudo-terminal: owned by the user, group tty, writable by tty (mesg y).
+        if (!fs.resolve('/dev/pts/0', '/', false)) fs.mknod('/dev/pts/0', S_IFCHR | 0o620, makedev(136, 0), loginUid, 5, '/');
         const links: [string, string][] = [
             ['/dev/fd', '/proc/self/fd'], ['/dev/stdin', '/proc/self/fd/0'],
             ['/dev/stdout', '/proc/self/fd/1'], ['/dev/stderr', '/proc/self/fd/2'],

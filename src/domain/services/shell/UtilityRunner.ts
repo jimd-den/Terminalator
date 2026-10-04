@@ -6,6 +6,7 @@ import { TerminalState } from '../../entities/TerminalState';
 import { IShellExecutor } from '../../interfaces/IShellExecutor';
 import { NetworkMap } from '../NetworkMap';
 import { IOContext, inputFromString, isTty } from './io/IOContext';
+import { processTableFor } from '../../entities/ProcessTable';
 import { binaryStringToBytes, bytesToStreamText } from './io/OutputSink';
 import { ShellResult } from './ShellRuntime';
 import { ShellRuntime } from './ShellRuntime';
@@ -47,6 +48,10 @@ export class UtilityRunner {
     ): Promise<{ result: ShellResult; response: CommandResponse }> {
         const stdout = new StringStream();
         const stderr = new StringStream();
+        const processes = processTableFor(this.runtime.fsService.fileSystem);
+        const shellPid = state.shellPid ?? 4242;
+        processes.ensureShell(shellPid, state.user);
+        const proc = processes.spawn(shellPid, state.user, [name, ...args].join(' '), 'pts/0', state.niceIncrement ?? 0);
         const stdin = io.stdin;
         let legacyStdin: string | undefined;
         let legacyRead = false;
@@ -66,6 +71,8 @@ export class UtilityRunner {
             networkMap: this.networkMap,
             stdoutIsTty: io.isatty(1),
             argv0: name,
+            pid: proc.pid,
+            processes,
             spawn: async (argv, options = {}) => {
                 const [child, ...childArgs] = argv;
                 if (!child) return 0;
@@ -75,6 +82,7 @@ export class UtilityRunner {
                     environment: { ...childEnv },
                     exportedVars: Object.keys(childEnv),
                     currentDirectory: options.cwd ?? state.currentDirectory,
+                    niceIncrement: (state.niceIncrement ?? 0) + (options.nice ?? 0),
                 };
                 const childIo = options.stdin !== undefined ? io.withStdin(inputFromString(options.stdin)) : io;
                 const res = await this.runtime.invoke(child, childArgs, childState, childIo, { skipFunctions: true });
@@ -93,7 +101,12 @@ export class UtilityRunner {
             },
         });
 
-        const response = await command.execute(args, context, state);
+        let response: CommandResponse;
+        try {
+            response = await command.execute(args, context, state);
+        } finally {
+            processes.exit(proc.pid);
+        }
         const status = response.exitCode ?? 0;
 
         const streamed = stdout.getContents();

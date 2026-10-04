@@ -88,7 +88,7 @@ export class Redirector {
             case '/dev/stdin': case '/dev/fd/0': return io.get(0);
             case '/dev/stdout': case '/dev/fd/1': return io.get(1);
             case '/dev/stderr': case '/dev/fd/2': return io.get(2);
-            case '/dev/tty': return io.get(TTY_FD) ?? io.get(1);
+            case '/dev/tty': case '/dev/pts/0': return io.get(TTY_FD) ?? io.get(1);
             case '/dev/zero': return isInput ? { input: inputFromString('\0'.repeat(4096)) } : { output: new NullSink() };
         }
         return undefined;

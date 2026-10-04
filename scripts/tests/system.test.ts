@@ -87,4 +87,23 @@ test('home directory and profile', async () => {
     expectEqual((await sh('cd; pwd; [ -f .profile ] && echo profile')).out, '/home/operator\nprofile\n');
 });
 
+test('process table: ps, kill permissions, renice', async () => {
+    const { sh } = machine();
+    expectEqual((await sh('ps -o pid= -p 1; ps -p $$ -o comm=')).out, '    1\nsh\n');
+    expectEqual(await sh('kill -0 1'), { out: '', err: 'kill: (1) - Operation not permitted\n', status: 1 });
+    expectEqual((await sh('kill -0 1', ROOT)).status, 0);
+    expectEqual((await sh('renice -n 3 -p $$; ps -o ni= -p $$')).out, '4242 (process ID) old priority 0, new priority 3\n  3\n');
+    expectEqual((await sh('renice -n -1 -p $$')).status, 1);
+});
+
+test('terminal device: tty, mesg, ulimit', async () => {
+    const { sh } = machine();
+    expectEqual((await sh('tty; ls -l /dev/pts/0 | cut -c1-10')).out, '/dev/pts/0\ncrw--w----\n');
+    expectEqual(await sh('mesg n; mesg'), { out: 'is n\n', err: '', status: 1 });
+    expectEqual((await sh('mesg y; ls -l /dev/pts/0 | cut -c1-10')).out, 'crw--w----\n');
+    expectEqual((await sh('mesg </dev/null')).status, 2);
+    expectEqual((await sh('ulimit -f 100; ulimit -f; ulimit -f 200')).status, 2);
+    expectEqual((await sh('ulimit -H -n; ulimit -c')).out, '1048576\n0\n');
+});
+
 run('Installed system');

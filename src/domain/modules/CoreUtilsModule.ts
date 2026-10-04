@@ -131,7 +131,6 @@ import { HashCommand } from '../commands/core/HashCommand';
 import { TrapCommand } from '../commands/core/TrapCommand';
 import { GetoptsCommand } from '../commands/core/GetoptsCommand';
 import { SttyCommand } from '../commands/core/SttyCommand';
-import { UlimitCommand } from '../commands/core/UlimitCommand';
 import { FcCommand } from '../commands/core/FcCommand';
 import { FgCommand } from '../commands/core/FgCommand';
 import { BgCommand } from '../commands/core/BgCommand';
@@ -273,11 +272,11 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('false', new FalseCommand());
         // Time, Nohup, Nice need command provider
         registry.register('time', new TimeCommand(fsService, (name) => registry.get(name)));
-        registry.register('nohup', new NohupCommand(fsService, (name) => registry.get(name)));
-        registry.register('nice', new NiceCommand(fsService, (name) => registry.get(name)));
+        registry.register('nohup', new NohupCommand(fsService));
+        registry.register('nice', new NiceCommand(fsService));
         registry.register('mkfifo', new MkfifoCommand(fsService));
         registry.register('file', new FileCommand(fsService));
-        registry.register('timeout', new TimeoutCommand(fsService, (name) => registry.get(name)));
+        registry.register('timeout', new TimeoutCommand(fsService));
         registry.register('chgrp', new ChgrpCommand(fsService, this.identityService));
         registry.register('alias', new AliasCommand(fsService));
         registry.register('unalias', new UnaliasCommand(fsService));
@@ -324,7 +323,6 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('trap', new TrapCommand());
         registry.register('getopts', new GetoptsCommand());
         registry.register('stty', new SttyCommand());
-        registry.register('ulimit', new UlimitCommand());
         registry.register('fc', new FcCommand());
         registry.register('fg', new FgCommand());
         registry.register('bg', new BgCommand());

@@ -4,6 +4,7 @@ import { IShellExecutor } from '../interfaces/IShellExecutor';
 import { IStream } from './Stream';
 import { JobControlService } from '../services/JobControlService';
 import { NetworkMap } from '../services/NetworkMap';
+import { ProcessTable } from './ProcessTable';
 
 /**
  * ProcessContext Entity - Domain Layer
@@ -93,6 +94,10 @@ export interface ProcessContext {
      * Resolves to the exit status (127 not found, 126 not executable).
      */
     spawn?: (argv: string[], options?: SpawnOptions) => Promise<number>;
+
+    /** This process's id and the host's process table (ps, kill, nice...). */
+    pid?: number;
+    processes?: ProcessTable;
 }
 
 export interface SpawnOptions {
@@ -102,6 +107,8 @@ export interface SpawnOptions {
     stdin?: string;
     /** Working directory (default: inherited). */
     cwd?: string;
+    /** Nice value increment for the child (nice). */
+    nice?: number;
 }
 
 

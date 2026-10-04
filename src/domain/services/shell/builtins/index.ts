@@ -11,6 +11,7 @@ import { AliasBuiltin, UnaliasBuiltin } from './AliasBuiltins';
 import { CdBuiltin, PwdBuiltin } from './CdBuiltin';
 import { ShBuiltin } from './ShBuiltin';
 import { UmaskBuiltin } from './UmaskBuiltin';
+import { UlimitBuiltin } from './UlimitBuiltin';
 import { FcBuiltin, HistoryBuiltin } from './HistoryBuiltins';
 
 /** The shell's builtin utilities (special builtins per XCU §2.14 plus regular builtins). */
@@ -43,6 +44,7 @@ export function createDefaultBuiltins(): BuiltinRegistry {
         .register(PwdBuiltin)
         .register(ShBuiltin)
         .register(UmaskBuiltin)
+        .register(UlimitBuiltin)
         .register(FcBuiltin)
         .register(HistoryBuiltin);
 }

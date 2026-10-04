@@ -6,7 +6,7 @@ import { TerminalState } from '../../entities/TerminalState';
  * (they are builtins there): found even if PATH is empty or /usr/bin is
  * damaged, and reported by `type` as shell builtins.
  */
-export const BUILTIN_UTILITIES = new Set(['echo', 'printf', 'test', '[', 'kill', 'true', 'false', 'pwd', 'jobs', 'fg', 'bg', 'wait', 'times', 'ulimit']);
+export const BUILTIN_UTILITIES = new Set(['echo', 'printf', 'test', '[', 'kill', 'true', 'false', 'pwd', 'jobs', 'fg', 'bg', 'wait', 'times']);
 
 /** Marker written into /bin stubs: the file is backed by a registry utility. */
 export const UTILITY_STUB_PREFIX = '#!/bin/sh\n# terminalator-utility: ';

@@ -15,6 +15,7 @@ import { DirectoryNode } from '../../entities/filesystem/DirectoryNode';
 import { UserDatabase } from '../../services/UserDatabase';
 import { FileInfo, kindOf, statPath, canAccess } from '../shared/FileInfo';
 import { S_ISUID, S_ISGID, S_ISVTX } from '../../entities/FileSystem';
+import { major, minor } from '../../entities/filesystem/Devices';
 
 interface Entry {
     name: string;   // as displayed (operand text or directory entry name)
@@ -120,7 +121,7 @@ export class LsCommand extends CommandBase {
             if (!f('g')) cols.push((f('n') ? String(ino.uid) : users.userName(ino.uid)).padEnd(widths[3]));
             if (!f('o')) cols.push((f('n') ? String(ino.gid) : users.groupName(ino.gid)).padEnd(widths[4]));
             const size = e.info.kind === 'char' || e.info.kind === 'block'
-                ? `${(ino as any).major ?? 1}, ${(ino as any).minor ?? 3}`
+                ? `${major(ino.rdev ?? 0)}, ${minor(ino.rdev ?? 0)}`
                 : f('h') ? humanSize(ino.size) : String(ino.size);
             cols.push(size.padStart(widths[5]));
             cols.push(lsDate(timeOf(e)));

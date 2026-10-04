@@ -31,6 +31,7 @@ export const CHAR_DEVICES = new Map<number, CharDevice>([
     [makedev(1, 8), { name: 'random', read: () => randomBytes(CHUNK), write: () => { /* entropy accepted */ } }],
     [makedev(1, 9), { name: 'urandom', read: () => randomBytes(CHUNK), write: () => { /* entropy accepted */ } }],
     [makedev(5, 0), { name: 'tty', read: () => '', write: () => { /* handled by the shell's tty fd */ } }],
+    [makedev(136, 0), { name: 'pts/0', read: () => '', write: () => { /* the session's terminal */ } }],
     [makedev(5, 1), { name: 'console', read: () => '', write: () => { /* kernel console */ } }],
 ]);
 

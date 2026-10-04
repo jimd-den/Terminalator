@@ -1,57 +1,34 @@
-/**
- * NiceCommand - Core Command
- *
- * Invoke a utility with an altered nice value.
- *
- * Pillar: The Four-Fold Shield (Strict Architecture)
- * Pillar: The Swift Stream (Performance)
- *
- * Intent:
- * Scheduling priority (simulated).
- */
-
-import { ICommand } from '../ICommand';
-import { ProcessContext } from '../../../domain/entities/ProcessContext';
-import { FileSystemService } from '../../../domain/services/FileSystemService';
+/** nice - invoke a utility with an altered nice value (POSIX): `nice [-n increment] utility [argument...]` */
+import { CommandResponse } from '../ICommand';
+import { ProcessContext } from '../../entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../entities/Command';
+import { FileSystemService } from '../../services/FileSystemService';
+import { Utility } from '../shared/Utility';
 
-import { FileSystem } from '../../entities/FileSystem';
+export class NiceCommand extends Utility {
+    readonly utility = 'nice';
 
-export class NiceCommand implements ICommand {
-    constructor(
-        private fs: FileSystemService,
-        private commandProvider: (name: string) => ICommand | undefined
-    ) { }
+    constructor(private fs?: FileSystemService) { super(); }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        // nice [-n increment] utility [argument...]
         let increment = 10;
-        let cmdIndex = 0;
-
-        if (args.length > 0 && args[0] === '-n') {
-            increment = parseInt(args[1]) || 10;
-            cmdIndex = 2;
+        let i = 0;
+        if (args[0] === '-n') { increment = Number(args[1]); i = 2; }
+        else if (/^-n-?[0-9]+$/.test(args[0] ?? '')) { increment = Number(args[0].substring(2)); i = 1; }
+        else if (/^-[0-9]+$/.test(args[0] ?? '')) { increment = Number(args[0].substring(1)); i = 1; }
+        else if (/^--[0-9]+$/.test(args[0] ?? '')) { increment = -Number(args[0].substring(2)); i = 1; }
+        else if (args[0]?.startsWith('-') && args[0] !== '--') return this.usage(state, `invalid option -- '${args[0].substring(1)}'`, 125);
+        if (args[i] === '--') i++;
+        if (!Number.isInteger(increment)) return this.usage(state, `invalid adjustment '${args[1]}'`, 125);
+        const argv = args.slice(i);
+        const current = state.niceIncrement ?? 0;
+        if (!argv.length) return this.respond(state, `${current}\n`);
+        const errors: string[] = [];
+        if (increment < 0 && context.user.uid !== 0) {
+            errors.push('cannot set niceness: Permission denied');
+            increment = 0;
         }
-
-        if (cmdIndex >= args.length) {
-            // print current niceness? usually 0.
-            return { output: '0', newState: state, exitCode: 0 };
-        }
-
-        const cmdName = args[cmdIndex];
-        const utilityArgs = args.slice(cmdIndex + 1);
-
-        const command = this.commandProvider(cmdName);
-        if (!command) {
-            return { output: `nice: ${cmdName}: No such file or directory`, newState: state, exitCode: 127 };
-        }
-
-        // Just run it. We don't have a scheduler.
-        try {
-            return await command.execute(utilityArgs, context, state);
-        } catch (e: any) {
-            return { output: `nice: ${cmdName}: ${e.message}`, newState: state, exitCode: 1 }; // or 126/127
-        }
+        const status = await context.spawn!(argv, { nice: increment });
+        return this.respond(state, '', errors, status);
     }
 }
