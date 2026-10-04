@@ -295,7 +295,7 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('batch', new AtCommand('batch'));
         registry.register('atq', new AtCommand('atq'));
         registry.register('atrm', new AtCommand('atrm'));
-        registry.register('crontab', new CrontabCommand(fsService));
+        registry.register('crontab', new CrontabCommand());
         registry.register('mailx', new MailxCommand(fsService));
         registry.register('mesg', new MesgCommand(fsService));
         registry.register('talk', new TalkCommand(fsService));
