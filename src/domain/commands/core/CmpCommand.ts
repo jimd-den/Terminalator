@@ -1,4 +1,3 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * CmpCommand - Core Command
  *
@@ -22,7 +21,6 @@ export class CmpCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = getStdinAsString(context);
         // POSIX: cmp [options] file1 file2 [skip1 [skip2]]
         // Simplified: cmp file1 file2
 

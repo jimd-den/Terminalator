@@ -1,64 +1,38 @@
-import { ASTNode, NodeType, IfNode, ForNode, WhileNode, SubshellNode, BlockNode, FunctionDefNode, CommandNode, RedirectNode } from '../../interfaces/ShellAST';
+import { ASTNode, NodeType, ForNode } from '../../interfaces/ShellAST';
 import { TokenType } from '../ShellLexer';
 import { IStatementParser } from './IStatementParser';
 import { IShellParserFacade } from './IShellParserFacade';
+import { parseDoGroup } from './DoGroup';
 
-/**
- * ForParser - Domain Layer
- * 
- * Parses FOR-IN-DO-DONE constructs.
- *
- * Pillar: The Balanced Scale (SRP) - Isolated parsing of 'for' loops.
- */
+/** for name [linebreak in word... (';' | NEWLINE)] linebreak do_group */
 export class ForParser implements IStatementParser {
     canHandle(facade: IShellParserFacade): boolean {
-        const token = facade.peek();
-        return token.type === TokenType.WORD && token.value === 'for';
+        return facade.isWord('for');
     }
 
     parse(facade: IShellParserFacade): ASTNode {
         facade.advance(); // for
-        const nameToken = facade.advance(); // variable name
-        if (nameToken.type !== TokenType.WORD) {
-            throw new Error(`Syntax Error: Expected variable name after 'for' at position ${nameToken.position}`);
+        const name = facade.peek();
+        if (name.type !== TokenType.WORD || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(name.value)) {
+            facade.syntaxError("bad for loop variable");
         }
+        facade.advance();
 
-        let items: string[] = [];
-        if (facade.peek().value === 'in') {
-            facade.advance(); // in
-            while (facade.peek().type === TokenType.WORD && !facade.isReservedWord(facade.peek().value)) {
-                items.push(facade.advance().value);
-            }
-            if (facade.peek().type === TokenType.SEMI || facade.peek().type === TokenType.NEWLINE) {
-                facade.advance();
-            }
-        }
-
-        while (facade.peek().type === TokenType.NEWLINE || facade.peek().type === TokenType.SEMI) {
+        let items: string[] | undefined;
+        facade.skipNewlines();
+        if (facade.isWord('in')) {
+            facade.advance();
+            items = [];
+            while (facade.peek().type === TokenType.WORD) items.push(facade.advance().value);
+            const sep = facade.peek().type;
+            if (sep !== TokenType.SEMI && sep !== TokenType.NEWLINE) facade.syntaxError("expected ';' or newline in for loop");
+            facade.advance();
+        } else if (facade.peek().type === TokenType.SEMI) {
             facade.advance();
         }
+        facade.skipNewlines();
 
-        if (facade.peek().value !== 'do') {
-            throw new Error(`Syntax Error: Expected 'do' at position ${facade.peek().position}`);
-        }
-        facade.advance(); // do
-
-        const body = facade.parseList();
-
-        while (facade.peek().type === TokenType.NEWLINE || facade.peek().type === TokenType.SEMI) {
-            facade.advance();
-        }
-
-        if (facade.peek().value !== 'done') {
-            throw new Error(`Syntax Error: Expected 'done' at position ${facade.peek().position}`);
-        }
-        facade.advance(); // done
-
-        return {
-            type: NodeType.FOR,
-            variable: nameToken.value,
-            items: items,
-            body: body!
-        } as ForNode;
+        const body = parseDoGroup(facade);
+        return { type: NodeType.FOR, variable: name.value, items, body } as ForNode;
     }
 }

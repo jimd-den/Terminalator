@@ -1,207 +1,223 @@
 import { NodeExecutor } from '../NodeExecutor';
-import { ASTNode, CommandNode, NodeType, FunctionDefNode } from '../../ShellParser';
+import { ASTNode, CommandNode, FunctionDefNode } from '../../../interfaces/ShellAST';
 import { TerminalState } from '../../../entities/TerminalState';
-import { CommandResponse } from '../../../entities/Command';
-import { ShellExpansionService } from '../../ShellExpansionService';
-import { CommandRegistry } from '../../../commands/CommandRegistry';
-import { JobControlService } from '../../JobControlService';
-import { FileSystemService } from '../../FileSystemService';
-import { FileSystem } from '../../../entities/FileSystem';
-import { RedirectionService } from '../../RedirectionService';
-import { IBinaryRunner } from '../../../interfaces/IBinaryRunner';
-import { IShellExecutor } from '../../../interfaces/IShellExecutor';
-import { ProcessContext } from '../../../entities/ProcessContext';
-import { createStdinStream, createOutputStream } from '../../../entities/Stream';
-import { mergeState, fail } from '../../../utils/TerminalStateUtils';
-import { NetworkMap } from '../../NetworkMap';
+import { IOContext } from '../io/IOContext';
+import { ShellResult, ShellRuntime } from '../ShellRuntime';
+import { ExpansionError, ExpansionScope } from '../expansion/WordExpander';
+import { RedirectionError } from '../io/Redirector';
+import {
+    exportedEnvironment, getOption, ReadonlyVariableError, setVariable
+} from '../expansion/ShellVariables';
+import { BuiltinRegistry, ShellBuiltin } from '../builtins/ShellBuiltin';
+import { CommandResolver } from '../CommandResolver';
+import { UtilityRunner } from '../UtilityRunner';
+import { ProgramLoader } from '../ProgramLoader';
 import { SimulationBus, GameEventType, CommandExecutedPayload } from '../../SimulationBus';
 
+type Assignment = [name: string, value: string];
+
+/**
+ * CommandExecutor - simple commands (XCU §2.9.1).
+ *
+ * Expansion order: words, then redirections, then assignments. Lookup
+ * order: special builtins, functions, regular builtins, PATH search
+ * (with the utility registry as a last-resort fallback).
+ */
 export class CommandExecutor implements NodeExecutor {
+    private resolver: CommandResolver;
+
     constructor(
-        private expansionService: ShellExpansionService,
-        private registry: CommandRegistry,
-        private jobControl: JobControlService,
-        private fsService: FileSystemService,
-        private fs: FileSystem,
-        private redirectionService: RedirectionService,
-        private bus?: SimulationBus,
-        private binaryRunner?: IBinaryRunner,
-        private executorFactory?: () => IShellExecutor,
-        private networkMap?: NetworkMap
-    ) { }
+        private runtime: ShellRuntime,
+        private builtins: BuiltinRegistry,
+        private utilities: UtilityRunner,
+        private loader: ProgramLoader,
+        private bus?: SimulationBus
+    ) {
+        this.resolver = new CommandResolver(runtime.fsService);
+    }
 
-    async execute(
-        node: ASTNode,
-        state: TerminalState,
-        visitor: (node: ASTNode, state: TerminalState, stdin?: string) => Promise<CommandResponse>,
-        stdin?: string
-    ): Promise<CommandResponse> {
-        if (node.type !== NodeType.COMMAND) {
-            throw new Error('CommandExecutor can only handle COMMAND nodes');
-        }
+    async execute(node: ASTNode, state: TerminalState, io: IOContext): Promise<ShellResult> {
+        const cmd = node as CommandNode;
+        const scope = this.runtime.newScope(state, io);
 
-        const cmdNode = node as CommandNode;
-
-        // 1. Expansion
-        const expandedArgs: string[] = [];
-        for (const arg of cmdNode.args) {
-            const tokens = this.expansionService.expandToken(arg, state.environment, state.currentDirectory);
-            expandedArgs.push(...tokens);
-        }
-        cmdNode.args = expandedArgs;
-
-        const commandName = cmdNode.command;
-
-        // 2. Function Check
-        if (state.functions && state.functions.has(commandName)) {
-            const res = await this.executeFunction(commandName, expandedArgs, state, visitor, stdin, cmdNode);
-            this.emitCommandExecuted(commandName, expandedArgs, res, state.currentDirectory);
-            return res;
-        }
-
-        // 3. Command Registry Check
-        const command = this.registry.get(commandName);
-        if (command) {
-            try {
-                const context: ProcessContext = {
-                    fs: this.fs,
-                    fileSystemService: this.fsService,
-                    env: state.environment,
-                    cwd: state.currentDirectory,
-                    user: state.user,
-                    stdin: createStdinStream(stdin),
-                    stdout: createOutputStream(),
-                    stderr: createOutputStream(),
-                    stdinLegacy: stdin,
-                    executor: this.executorFactory ? this.executorFactory() : {
-                        execute: async (i, s) => {
-                            throw new Error("Recursive execution not fully accessible in Interpreter context yet");
-                        },
-                        getRegistry: () => this.registry
-                    } as IShellExecutor,
-                    jobControl: this.jobControl,
-                    networkMap: this.networkMap
-                };
-
-                const res = await command.execute(expandedArgs, context, state);
-                const finalRes = this.redirectionService.handleRedirections(res, cmdNode.redirects, state);
-                this.emitCommandExecuted(commandName, expandedArgs, finalRes, state.currentDirectory);
-                return finalRes;
-            } catch (error: any) {
-                const res = fail(state, `sh: ${commandName}: ${error.message}`);
-                this.emitCommandExecuted(commandName, expandedArgs, res, state.currentDirectory);
-                return res;
+        let fields: string[];
+        let cmdIo: IOContext;
+        const assignments: Assignment[] = [];
+        try {
+            const words = cmd.command === '' ? cmd.args : [cmd.command, ...cmd.args];
+            fields = await this.runtime.expander.expandWords(words, scope);
+            cmdIo = await this.runtime.redirector.apply(cmd.redirects, scope, io);
+            for (const a of cmd.assignments) {
+                const eq = a.indexOf('=');
+                assignments.push([a.substring(0, eq), await this.runtime.expander.expandAssignmentValue(a.substring(eq + 1), scope)]);
             }
+        } catch (e: any) {
+            return this.failure(e, scope.state, io);
+        }
+        state = scope.state;
+
+        if (getOption(state, 'xtrace')) {
+            const ps4 = state.environment.PS4 ?? '+ ';
+            io.stderr.write(ps4 + [...assignments.map(([n, v]) => `${n}=${v}`), ...fields].join(' ') + '\n');
         }
 
-        // 4. File Execution
-        if (commandName.startsWith('/') || commandName.startsWith('./') || commandName.startsWith('../')) {
-            const res = await this.executeFile(commandName, expandedArgs, state, stdin);
-            this.emitCommandExecuted(commandName, expandedArgs, res, state.currentDirectory);
-            return res;
+        if (fields.length === 0) {
+            try {
+                for (const [name, value] of assignments) state = setVariable(state, name, value);
+            } catch (e: any) {
+                return this.failure(e, state, io);
+            }
+            const status = scope.lastSubstitutionStatus ?? 0;
+            return { status, state: { ...state, lastExitCode: status } };
         }
 
-        const finalFail = fail(state, `sh: command not found: ${commandName}`, 127);
-        this.emitCommandExecuted(commandName, expandedArgs, finalFail, state.currentDirectory);
-        return finalFail;
+        const [name, ...args] = fields;
+        const result = await this.dispatch(name, args, assignments, state, cmdIo);
+        return { ...result, errexitEligible: result.status !== 0, state: { ...result.state, lastExitCode: result.status } };
     }
 
-    private emitCommandExecuted(command: string, args: string[], response: CommandResponse, cwd: string) {
-        if (this.bus) {
-            const payload: CommandExecutedPayload = {
-                command,
-                args,
-                exitCode: response.exitCode || 0,
-                output: response.output || '',
-                cwd
-            };
-            this.bus.emit(GameEventType.COMMAND_EXECUTED, payload);
+    /** Command search and execution for an already-expanded command. */
+    async dispatch(name: string, args: string[], assignments: Assignment[], state: TerminalState, io: IOContext, skipFunctions = false): Promise<ShellResult> {
+        const builtin = this.builtins.get(name);
+
+        if (builtin?.special) {
+            try {
+                for (const [n, v] of assignments) state = setVariable(state, n, v);
+            } catch (e: any) {
+                return this.failure(e, state, io);
+            }
+            return this.runBuiltin(builtin, name, args, state, io);
+        }
+
+        const fn = skipFunctions ? undefined : state.functions?.get(name) as FunctionDefNode | undefined;
+        if (fn) return this.withTemporaryAssignments(assignments, state, s => this.runFunction(fn, args, s, io));
+
+        if (builtin) return this.withTemporaryAssignments(assignments, state, s => this.runBuiltin(builtin, name, args, s, io));
+
+        return this.withTemporaryAssignments(assignments, state, s => this.runExternal(name, args, assignments, s, io));
+    }
+
+    private async runBuiltin(builtin: ShellBuiltin, name: string, args: string[], state: TerminalState, io: IOContext): Promise<ShellResult> {
+        try {
+            const r = await builtin.run({ name, args, state, io, runtime: this.runtime });
+            return { status: r.status, state: r.state ?? state, flow: r.flow, effects: r.effects };
+        } catch (e: any) {
+            return this.failure(e, state, io, name);
         }
     }
 
-    private async executeFunction(
-        name: string,
-        args: string[],
-        state: TerminalState,
-        visitor: (node: ASTNode, state: TerminalState, stdin?: string) => Promise<CommandResponse>,
-        stdin: string | undefined,
-        node: CommandNode
-    ): Promise<CommandResponse> {
-        const funcNode = state.functions?.get(name) as FunctionDefNode;
-
-        const newEnv = { ...state.environment };
-        // Positional Params
-        args.forEach((arg, i) => newEnv[(i + 1).toString()] = arg);
-        newEnv['#'] = args.length.toString();
-        newEnv['@'] = args.join(' ');
-        newEnv['*'] = args.join(' ');
-
-        const funcState = mergeState(state, {
-            environment: newEnv,
-            callStackDepth: (state.callStackDepth || 0) + 1
-        });
-
-        const res = await visitor(funcNode.body, funcState, stdin);
-
-        // Restore Environment
-        const restoredEnv = { ...res.newState?.environment || state.environment };
-        for (let i = 1; i <= 9; i++) {
-            const key = i.toString();
-            if (state.environment[key]) restoredEnv[key] = state.environment[key];
-            else delete restoredEnv[key];
+    private async runFunction(fn: FunctionDefNode, args: string[], state: TerminalState, io: IOContext): Promise<ShellResult> {
+        const depth = state.callStackDepth || 0;
+        if (depth > 200) {
+            io.stderr.write(`sh: ${fn.name}: maximum function nesting level exceeded\n`);
+            return { status: 2, state };
         }
+        const callerParams = state.positionalParams;
+        const frames = state.localFrames ?? [];
+        const res = await this.runtime.visit(fn.body, {
+            ...state, positionalParams: args, callStackDepth: depth + 1, localFrames: [...frames, {}],
+        }, io);
+        const flow = res.flow?.kind === 'exit' ? res.flow : undefined;
 
-        const finalState = mergeState(state, {
-            ...res.newState,
-            environment: restoredEnv
-        });
-
-        const flow = res.controlFlow === 'RETURN' ? undefined : res.controlFlow;
-
-        let finalRes: CommandResponse = {
+        // Restore variables declared `local` in this call.
+        const environment = { ...res.state.environment };
+        const frame = res.state.localFrames?.[frames.length] ?? {};
+        for (const [name, saved] of Object.entries(frame)) {
+            if (saved === null) delete environment[name];
+            else environment[name] = saved;
+        }
+        return {
             ...res,
-            newState: finalState,
-            controlFlow: flow
+            flow,
+            state: { ...res.state, environment, positionalParams: callerParams, callStackDepth: depth, localFrames: frames },
         };
-
-        if (funcNode.redirects) finalRes = this.redirectionService.handleRedirections(finalRes, funcNode.redirects, state);
-        return this.redirectionService.handleRedirections(finalRes, node.redirects, state);
     }
 
-    private async executeFile(path: string, args: string[], state: TerminalState, stdin?: string): Promise<CommandResponse> {
-        const dentry = this.fsService.resolve(path, state.currentDirectory, true, state.user);
+    private async runExternal(name: string, args: string[], assignments: Assignment[], state: TerminalState, io: IOContext): Promise<ShellResult> {
+        const resolved = this.resolver.resolve(name, state);
+        const env = { ...exportedEnvironment(state) };
+        for (const [n, v] of assignments) env[n] = v;
 
-        if (dentry && !this.fsService.isDirectory(dentry)) {
-            let content: Uint8Array;
-            try {
-                content = this.fsService.readFileBuffer(this.fsService.getAbsolutePath(dentry));
-            } catch (e) {
-                return fail(state, `sh: ${path}: cannot read file`, 126);
-            }
-
-            const isWasm = (content.length >= 4 && content[0] === 0x00 && content[1] === 0x61 && content[2] === 0x73 && content[3] === 0x6d);
-            const isElf = (content.length >= 4 && content[0] === 0x7f && content[1] === 0x45 && content[2] === 0x4c && content[3] === 0x46);
-
-            if (isWasm || isElf) {
-                if (this.binaryRunner) {
-                    try {
-                        const res = await this.binaryRunner.run(content, args, {
-                            stdin: createStdinStream(stdin),
-                            stdout: createOutputStream(),
-                            stderr: createOutputStream(),
-                            fs: this.fsService,
-                            env: state.environment
-                        });
-                        return { ...res, newState: mergeState(state, res.newState) };
-                    } catch (e: any) {
-                        return fail(state, `sh: ${path}: cannot execute binary: ${e.message}`, 126);
-                    }
-                }
-                return fail(state, `sh: ${path}: cannot execute binary file (No Runner)`, 126);
-            } else {
-                return fail(state, `sh: ${path}: Shell Scripts not supported in Interpreter directly yet (Needs recursive parsing)`, 126);
-            }
+        if (resolved.kind === 'file') {
+            const utility = resolved.utility ? this.runtime.registry.get(resolved.utility) : undefined;
+            if (utility) return this.runUtility(resolved.utility!, args, env, state, io);
+            return this.loader.exec(resolved.path, name, args, state, io);
         }
-        return fail(state, `sh: ${path}: No such file or directory`, 127);
+
+        // Registry fallback keeps utilities reachable even if /bin was damaged.
+        if (!name.includes('/') && this.runtime.registry.get(name)) {
+            return this.runUtility(name, args, env, state, io);
+        }
+
+        switch (resolved.kind) {
+            case 'not-executable':
+                io.stderr.write(`sh: ${name}: Permission denied\n`);
+                return { status: 126, state };
+            case 'is-directory':
+                io.stderr.write(`sh: ${name}: Is a directory\n`);
+                return { status: 126, state };
+            default:
+                io.stderr.write(name.includes('/') ? `sh: ${name}: No such file or directory\n` : `sh: ${name}: not found\n`);
+                this.emit(name, args, 127, '', state.currentDirectory);
+                return { status: 127, state };
+        }
+    }
+
+    private async runUtility(name: string, args: string[], env: Record<string, string>, state: TerminalState, io: IOContext): Promise<ShellResult> {
+        const command = this.runtime.registry.get(name)!;
+        try {
+            const { result, response } = await this.utilities.run(name, command, args, env, state, io);
+            this.emit(name, args, result.status, (response.output ?? '') + (response.stderr ?? ''), state.currentDirectory);
+            return result;
+        } catch (e: any) {
+            if (e?.name === 'OutputLimitExceeded') throw e;
+            return this.failure(e, state, io, name);
+        }
+    }
+
+    /**
+     * Prefix assignments for non-special commands affect only that command:
+     * apply them, run, then restore the previous values.
+     */
+    private async withTemporaryAssignments(
+        assignments: Assignment[],
+        state: TerminalState,
+        run: (s: TerminalState) => Promise<ShellResult>
+    ): Promise<ShellResult> {
+        if (assignments.length === 0) return run(state);
+        const environment = { ...state.environment };
+        for (const [n, v] of assignments) environment[n] = v;
+        // Prefix assignments are placed in the command's environment, i.e. exported.
+        const exportedVars = state.exportedVars && Array.from(new Set([...state.exportedVars, ...assignments.map(([n]) => n)]));
+        const res = await run({ ...state, environment, exportedVars });
+
+        const restored = { ...res.state.environment };
+        for (const [n] of assignments) {
+            if (n in state.environment) restored[n] = state.environment[n];
+            else delete restored[n];
+        }
+        return { ...res, state: { ...res.state, environment: restored, exportedVars: state.exportedVars } };
+    }
+
+    private failure(e: any, state: TerminalState, io: IOContext, name = 'sh'): ShellResult {
+        if (e?.name === 'OutputLimitExceeded') throw e;
+        const message = e?.message ?? String(e);
+        if (e instanceof ExpansionError) {
+            io.stderr.write(`sh: ${message}\n`);
+            return { status: e.status, state, errexitEligible: true };
+        }
+        if (e instanceof RedirectionError || e instanceof ReadonlyVariableError) {
+            io.stderr.write(`sh: ${message}\n`);
+            // dash reports redirection and readonly failures with status 2.
+            return { status: 2, state, errexitEligible: true };
+        }
+        io.stderr.write(`${name}: ${message}\n`);
+        return { status: 1, state, errexitEligible: true };
+    }
+
+    private emit(command: string, args: string[], exitCode: number, output: string, cwd: string) {
+        if (!this.bus) return;
+        const payload: CommandExecutedPayload = { command, args, exitCode, output, cwd };
+        this.bus.emit(GameEventType.COMMAND_EXECUTED, payload);
     }
 }

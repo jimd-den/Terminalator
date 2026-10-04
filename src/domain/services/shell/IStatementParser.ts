@@ -3,19 +3,12 @@ import { IShellParserFacade } from './IShellParserFacade';
 
 /**
  * IStatementParser - Domain Layer
- * 
- * Strategy interface for parsing specific shell grammar constructs (If, For, While, etc.).
  *
- * Pillar: The Balanced Scale (SOLID) - OCP: New constructs only require new implementations.
+ * Strategy for one grammar construct (if, for, case, ...). New constructs
+ * are added by registering a new strategy (OCP).
  */
 export interface IStatementParser {
-    /**
-     * Determines if this parser can handle the current token stream.
-     */
+    /** Whether this strategy recognises the construct at the current token. */
     canHandle(facade: IShellParserFacade): boolean;
-
-    /**
-     * Parses the construct and returns an AST node.
-     */
     parse(facade: IShellParserFacade): ASTNode | null;
 }

@@ -1,4 +1,3 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * FileCommand - Core Command
  *
@@ -23,7 +22,6 @@ export class FileCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = getStdinAsString(context);
         if (args.length === 0) {
             return { output: 'usage: file file...', newState: state, exitCode: 1 };
         }

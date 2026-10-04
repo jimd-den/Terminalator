@@ -1,4 +1,3 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file GettextCommand.ts
  * @description The 'gettext' command. Retrieve text string from the message database.
@@ -12,7 +11,6 @@ export class GettextCommand implements ICommand {
     constructor() { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = getStdinAsString(context);
         let expand = false;
         let noNewline = false; // standard doesn't strictly specify -n for gettext but it's common in echo/printf. 
         // Actually gettext usually just outputs the string.

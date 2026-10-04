@@ -1,4 +1,3 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * DuCommand - Core Command
  *
@@ -25,7 +24,6 @@ export class DuCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = getStdinAsString(context);
         const files = args.filter(arg => !arg.startsWith('-'));
 
         // POSIX default: 512-byte units.

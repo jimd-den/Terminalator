@@ -14,6 +14,14 @@ import { IStructuredCommand, CommandCapability } from './IStructuredCommand';
 import { ProcessContext } from '../entities/ProcessContext';
 import { TerminalState } from '../entities/TerminalState';
 
+/** Default argument builder for structured commands: flags followed by a path. */
+export function defaultBuildArgs(requirements: Record<string, any>): string[] {
+    const args: string[] = [];
+    if (requirements.flags) args.push(...requirements.flags);
+    if (requirements.path) args.push(requirements.path);
+    return args;
+}
+
 export abstract class CommandBase implements IStructuredCommand {
     /**
      * Protocol Requirements
@@ -52,10 +60,7 @@ export abstract class CommandBase implements IStructuredCommand {
      * Default implementation handles basic flags and a single path.
      */
     public buildArgs(requirements: Record<string, any>): string[] {
-        const args: string[] = [];
-        if (requirements.flags) args.push(...requirements.flags);
-        if (requirements.path) args.push(requirements.path);
-        return args;
+        return defaultBuildArgs(requirements);
     }
 
     /**

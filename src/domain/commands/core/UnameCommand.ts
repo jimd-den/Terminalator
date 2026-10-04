@@ -1,4 +1,3 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * UnameCommand - Core Command
  *
@@ -23,7 +22,6 @@ export class UnameCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = getStdinAsString(context);
         let all = false;
         if (args.includes('-a')) all = true;
 

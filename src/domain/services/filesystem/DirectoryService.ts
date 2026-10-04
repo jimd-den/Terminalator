@@ -81,7 +81,7 @@ export class DirectoryService {
             if (existing) {
                 lastDentry = existing;
                 const inode = this.inodeTable.get(lastDentry.inodeId);
-                if (inode && !(inode.mode & S_IFDIR)) {
+                if (inode && (inode.mode & 0o170000) !== S_IFDIR) {
                     throw new Error(`mkdirp: cannot create directory '${currentPath}': Not a directory`);
                 }
             } else {
@@ -115,7 +115,7 @@ export class DirectoryService {
         if (!inode) throw new Error('Corrupt filesystem');
 
         // Directory not empty check
-        if (inode.mode & S_IFDIR) {
+        if ((inode.mode & 0o170000) === S_IFDIR) {
             if (dentry.isDirectory()) {
                 const dirNode = dentry as DirectoryNode;
                 if (dirNode.children.size > 0) {

@@ -1,182 +1,292 @@
-
-import { ShellLexer, Token, TokenType } from './ShellLexer';
+import { ShellLexer, Token, TokenType, REDIRECT_TOKENS } from './ShellLexer';
 import { IShellParserFacade } from './shell/IShellParserFacade';
 import { IStatementParser } from './shell/IStatementParser';
 import { IfParser } from './shell/IfParser';
 import { ForParser } from './shell/ForParser';
 import { WhileParser } from './shell/WhileParser';
+import { CaseParser } from './shell/CaseParser';
 import { SubshellParser } from './shell/SubshellParser';
 import { BlockParser } from './shell/BlockParser';
 import { FunctionDefParser } from './shell/FunctionDefParser';
 import { SimpleCommandParser } from './shell/SimpleCommandParser';
-import { 
-    ASTNode, NodeType, ListNode, PipelineNode, RedirectNode 
+import { IncompleteInputError, ShellSyntaxError } from './shell/ShellSyntaxError';
+import {
+    ASTNode, NodeType, ListNode, PipelineNode, RedirectNode, RedirectOp, AsyncNode, RedirectedNode
 } from '../interfaces/ShellAST';
 
-export { ASTNode, NodeType, ListNode, PipelineNode, RedirectNode, CommandNode, FunctionDefNode, BlockNode, SubshellNode, IfNode, ForNode, WhileNode } from '../interfaces/ShellAST';
+export {
+    ASTNode, NodeType, ListNode, PipelineNode, RedirectNode, CommandNode, FunctionDefNode, BlockNode,
+    SubshellNode, IfNode, ForNode, WhileNode, CaseNode, AsyncNode, RedirectedNode
+} from '../interfaces/ShellAST';
+
+/** Words that close a compound_list when they appear in command position. */
+const LIST_TERMINATORS = new Set(['then', 'else', 'elif', 'fi', 'do', 'done', 'esac', '}']);
+
+const REDIRECT_OPS: Partial<Record<TokenType, RedirectOp>> = {
+    [TokenType.LESS]: '<',
+    [TokenType.GREAT]: '>',
+    [TokenType.DGREAT]: '>>',
+    [TokenType.CLOBBER]: '>|',
+    [TokenType.LESSGREAT]: '<>',
+    [TokenType.LESSAND]: '<&',
+    [TokenType.GREATAND]: '>&',
+    [TokenType.DLESS]: '<<',
+    [TokenType.DLESSDASH]: '<<-',
+};
 
 /**
  * ShellParser - Domain Layer
- * 
- * Orchestrates the parsing of shell tokens into an AST using a Strategy-based
- * Recursive Descent approach. Implements IShellParserFacade to allow
- * specialized rules to interact with the shared parsing state.
  *
- * Pillar: The Four-Fold Shield (Strict Architecture)
- * Pillar: The Master’s Tool (Pragmatic Design Patterns) - Strategy Pattern
- * Pillar: The Balanced Scale (SOLID) - SRP & OCP adherence.
+ * Recursive-descent parser for the POSIX shell grammar (XCU §2.10.2).
+ * Compound commands are delegated to IStatementParser strategies (OCP);
+ * this class owns the list / and-or / pipeline levels and alias substitution.
  */
 export class ShellParser implements IShellParserFacade {
-    private lexer: ShellLexer;
+    private lexer = new ShellLexer();
     private tokens: Token[] = [];
-    private pos: number = 0;
-    private statementParsers: IStatementParser[] = [];
+    private pos = 0;
+    private aliases: Record<string, string> = {};
+    private readonly statementParsers: IStatementParser[] = [
+        new FunctionDefParser(),
+        new SubshellParser(),
+        new BlockParser(),
+        new IfParser(),
+        new ForParser(),
+        new WhileParser(),
+        new CaseParser(),
+        new SimpleCommandParser(),
+    ];
 
-    constructor() {
-        this.lexer = new ShellLexer();
-        this.registerStrategies();
-    }
-
-    private registerStrategies() {
-        // Order matters for precedence/lookahead
-        this.statementParsers = [
-            new FunctionDefParser(),
-            new SubshellParser(),
-            new BlockParser(),
-            new IfParser(),
-            new ForParser(),
-            new WhileParser(),
-            new SimpleCommandParser() // Catch-all
-        ];
-    }
-
-    public parse(input: string): ASTNode | null {
-        if (!input.trim()) return null;
+    /**
+     * Parses a complete program. Returns null for empty input.
+     * @throws IncompleteInputError when more input is needed (PS2 continuation)
+     * @throws ShellSyntaxError on malformed input
+     */
+    public parse(input: string, aliases: Record<string, string> = {}): ASTNode | null {
         this.tokens = this.lexer.tokenize(input);
         this.pos = 0;
+        this.aliases = aliases;
 
-        return this.parseList();
+        this.skipNewlines();
+        const program = this.parseCompoundList();
+        this.skipNewlines();
+        if (this.peek().type !== TokenType.EOF) {
+            this.syntaxError(`unexpected '${this.peek().value}'`);
+        }
+        return program;
     }
 
-    public peek(offset: number = 0): Token {
+    /** Starts incremental parsing of a program (see `parseNext`). */
+    public begin(input: string): void {
+        this.tokens = this.lexer.tokenize(input);
+        this.pos = 0;
+    }
+
+    /**
+     * Parses the next complete_command (up to an unquoted newline), using the
+     * aliases in effect *now*, as shells do when reading a script.
+     * Returns undefined at end of input.
+     */
+    public parseNext(aliases: Record<string, string> = {}): ASTNode | undefined {
+        this.aliases = aliases;
+        this.skipNewlines();
+        if (this.peek().type === TokenType.EOF) return undefined;
+
+        let result: ASTNode | null = null;
+        while (this.peek().type !== TokenType.EOF && this.peek().type !== TokenType.NEWLINE) {
+            if (this.atListEnd()) this.syntaxError(`unexpected '${this.peek().value}'`);
+            let item: ASTNode | null = this.parseAndOr();
+            if (!item) this.syntaxError('expected command');
+            if (this.peek().type === TokenType.AMP) {
+                this.advance();
+                item = { type: NodeType.ASYNC, body: item } as AsyncNode;
+            } else if (this.peek().type === TokenType.SEMI) {
+                this.advance();
+            } else if (this.peek().type !== TokenType.NEWLINE && this.peek().type !== TokenType.EOF) {
+                this.syntaxError('expected separator');
+            }
+            result = result
+                ? { type: NodeType.LIST, operator: ';', left: result, right: item! } as ListNode
+                : item;
+        }
+        return result ?? undefined;
+    }
+
+    // --- Facade primitives -------------------------------------------------
+
+    public peek(offset = 0): Token {
         return this.tokens[this.pos + offset] || { type: TokenType.EOF, value: '', position: -1 };
     }
 
     public advance(): Token {
-        return this.tokens[this.pos++] || { type: TokenType.EOF, value: '', position: -1 };
+        const token = this.peek();
+        if (this.pos < this.tokens.length) this.pos++;
+        return token;
     }
 
-    public match(type: TokenType): boolean {
-        if (this.peek().type === type) {
-            this.advance();
-            return true;
+    public isWord(word: string, offset = 0): boolean {
+        const t = this.peek(offset);
+        return t.type === TokenType.WORD && !t.quoted && t.value === word;
+    }
+
+    public expectWord(word: string): void {
+        if (!this.isWord(word)) this.syntaxError(`expected '${word}'`);
+        this.advance();
+    }
+
+    public skipNewlines(): void {
+        while (this.peek().type === TokenType.NEWLINE) this.advance();
+    }
+
+    public syntaxError(what: string): never {
+        const t = this.peek();
+        if (t.type === TokenType.EOF) throw new IncompleteInputError(`unexpected end of file (${what})`);
+        const shown = t.type === TokenType.NEWLINE ? 'newline' : t.value;
+        throw new ShellSyntaxError(`${what}: unexpected '${shown}'`);
+    }
+
+    public isRedirect(token: Token): boolean {
+        // The lexer only emits IO_NUMBER directly before '<' or '>'.
+        return REDIRECT_TOKENS.has(token.type) || token.type === TokenType.IO_NUMBER;
+    }
+
+    public parseRedirect(): RedirectNode {
+        let fd: number | undefined;
+        if (this.peek().type === TokenType.IO_NUMBER) fd = parseInt(this.advance().value, 10);
+        const opToken = this.advance();
+        const op = REDIRECT_OPS[opToken.type];
+        if (!op) this.syntaxError('expected redirection operator');
+        const target = this.peek();
+        if (target.type !== TokenType.WORD) this.syntaxError(`missing target for '${opToken.value}'`);
+        this.advance();
+
+        const node: RedirectNode = { type: NodeType.REDIRECT, op: op!, file: target.value };
+        if (fd !== undefined) node.fd = fd;
+        if (op === '<<' || op === '<<-') {
+            node.heredoc = target.heredoc ?? { body: '', quoted: false };
         }
-        return false;
+        return node;
     }
 
-    public isReservedWord(word: string): boolean {
-        return ['then', 'else', 'elif', 'fi', 'do', 'done', '}', 'esac'].includes(word);
+    // --- Grammar levels ----------------------------------------------------
+
+    /** True when the current token ends a compound_list. */
+    private atListEnd(): boolean {
+        const t = this.peek();
+        if (t.type === TokenType.EOF || t.type === TokenType.RPAREN || t.type === TokenType.DSEMI) return true;
+        return t.type === TokenType.WORD && !t.quoted && LIST_TERMINATORS.has(t.value);
     }
 
-    // --- Recursive Descent Levels ---
+    /**
+     * compound_list / program: and_or { (';' | '&' | NEWLINE) and_or }.
+     * `&` wraps the preceding and_or in an AsyncNode.
+     */
+    public parseCompoundList(): ASTNode | null {
+        this.skipNewlines();
+        let result: ASTNode | null = null;
 
-    // Level 1: Sequence (;)
-    public parseList(): ASTNode | null {
-        let left = this.parseLogicList();
+        while (!this.atListEnd()) {
+            let item: ASTNode | null = this.parseAndOr();
+            if (!item) this.syntaxError('expected command');
 
-        while (left && (this.peek().type === TokenType.SEMI || this.peek().type === TokenType.NEWLINE)) {
-            this.advance(); // consume ; or \n
-
-            const next = this.peek();
-            if (next.type === TokenType.EOF ||
-                next.type === TokenType.RPAREN ||
-                (next.type === TokenType.WORD && this.isReservedWord(next.value))) {
-                return left;
-            }
-
-            const right = this.parseLogicList();
-            if (!right) return left;
-
-            left = {
-                type: NodeType.LIST,
-                operator: ';',
-                left: left,
-                right: right
-            } as ListNode;
-        }
-        return left;
-    }
-
-    // Level 2: Logic (&&, ||)
-    private parseLogicList(): ASTNode | null {
-        let left = this.parsePipeline();
-
-        while (left && (this.peek().type === TokenType.AND_IF || this.peek().type === TokenType.OR_IF)) {
-            const opToken = this.advance();
-            const right = this.parsePipeline();
-            if (!right) {
-                throw new Error("Syntax Error: Unexpected end of input after " + opToken.value);
-            }
-
-            left = {
-                type: NodeType.LIST,
-                operator: opToken.value as '&&' | '||',
-                left: left,
-                right: right
-            } as ListNode;
-        }
-        return left;
-    }
-
-    // Level 3: Pipeline (|)
-    private parsePipeline(): ASTNode | null {
-        let left = this.parseCommand();
-
-        if (left && this.peek().type === TokenType.PIPE) {
-            const parts = [left];
-            while (this.peek().type === TokenType.PIPE) {
+            const sep = this.peek().type;
+            if (sep === TokenType.AMP) {
                 this.advance();
-                const right = this.parseCommand();
-                if (!right) {
-                    throw new Error("Syntax Error: Missing command after pipe");
-                }
-                parts.push(right);
+                item = { type: NodeType.ASYNC, body: item } as AsyncNode;
+            } else if (sep === TokenType.SEMI) {
+                this.advance();
+            } else if (sep !== TokenType.NEWLINE && !this.atListEnd()) {
+                this.syntaxError('expected separator');
             }
-            return {
-                type: NodeType.PIPELINE,
-                parts: parts
-            } as PipelineNode;
-        }
+            this.skipNewlines();
 
+            result = result
+                ? { type: NodeType.LIST, operator: ';', left: result, right: item! } as ListNode
+                : item;
+        }
+        return result;
+    }
+
+    /** and_or: pipeline { ('&&' | '||') linebreak pipeline } */
+    private parseAndOr(): ASTNode | null {
+        let left = this.parsePipeline();
+        while (left && (this.peek().type === TokenType.AND_IF || this.peek().type === TokenType.OR_IF)) {
+            const op = this.advance().value as '&&' | '||';
+            this.skipNewlines();
+            const right = this.parsePipeline();
+            if (!right) this.syntaxError(`expected command after '${op}'`);
+            left = { type: NodeType.LIST, operator: op, left, right: right! } as ListNode;
+        }
         return left;
     }
 
-    // Level 4: Command (Delegated to strategies)
+    /** pipeline: ['!'] command { '|' linebreak command } */
+    private parsePipeline(): ASTNode | null {
+        let negate = false;
+        while (this.isWord('!')) {
+            this.advance();
+            negate = !negate;
+        }
+
+        const first = this.parseCommand();
+        if (!first) {
+            if (negate) this.syntaxError("expected command after '!'");
+            return null;
+        }
+        const parts = [first];
+        while (this.peek().type === TokenType.PIPE) {
+            this.advance();
+            this.skipNewlines();
+            const next = this.parseCommand();
+            if (!next) this.syntaxError("expected command after '|'");
+            parts.push(next!);
+        }
+
+        if (parts.length === 1 && !negate) return first;
+        return { type: NodeType.PIPELINE, parts, negate } as PipelineNode;
+    }
+
+    /** command: function_definition | compound_command [redirect_list] | simple_command */
     public parseCommand(): ASTNode | null {
+        this.substituteAlias();
         for (const strategy of this.statementParsers) {
-            if (strategy.canHandle(this)) {
-                return strategy.parse(this);
+            if (!strategy.canHandle(this)) continue;
+            const node = strategy.parse(this);
+            if (node && !(strategy instanceof SimpleCommandParser) && node.type !== NodeType.FUNCTION_DEF) {
+                return this.parseTrailingRedirects(node);
             }
+            return node;
         }
         return null;
     }
 
-    // Helper utilities for strategies
-    public isRedirect(token: Token): boolean {
-        return (token.type === TokenType.WORD && (token.value === '>' || token.value === '>>' || token.value === '<'));
+    private parseTrailingRedirects(node: ASTNode): ASTNode {
+        const redirects: RedirectNode[] = [];
+        while (this.isRedirect(this.peek())) redirects.push(this.parseRedirect());
+        return redirects.length ? { type: NodeType.REDIRECTED, body: node, redirects } as RedirectedNode : node;
     }
 
-    public parseRedirect(): RedirectNode {
-        const op = this.advance().value;
-        if (this.peek().type !== TokenType.WORD) {
-            throw new Error(`Syntax Error: Missing filename after redirection ${op}`);
+    /**
+     * Alias substitution (XCU §2.3.1): an unquoted command-name word that
+     * names an alias is replaced by the tokens of its value. A value ending
+     * in a blank also makes the following word eligible.
+     */
+    private substituteAlias(seen: Set<string> = new Set()) {
+        const t = this.peek();
+        if (t.type !== TokenType.WORD || t.quoted || seen.has(t.value)) return;
+        const value = this.aliases[t.value];
+        if (value === undefined) return;
+
+        seen.add(t.value);
+        const replacement = this.lexer.tokenize(value).filter(tok => tok.type !== TokenType.EOF);
+        this.tokens.splice(this.pos, 1, ...replacement);
+        this.substituteAlias(seen);
+
+        if (/[ \t]$/.test(value)) {
+            const savedPos = this.pos;
+            this.pos += replacement.length;
+            this.substituteAlias(new Set());
+            this.pos = savedPos;
         }
-        const file = this.advance().value;
-        return {
-            type: NodeType.REDIRECT,
-            op: op,
-            file: file
-        };
     }
 }
-

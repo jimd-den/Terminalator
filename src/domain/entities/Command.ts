@@ -11,6 +11,8 @@ import { TerminalState } from './TerminalState';
 
 export interface CommandResponse {
     output: string;
+    /** Diagnostics destined for file descriptor 2 (optional; legacy commands put them in `output`). */
+    stderr?: string;
     exitCode: number;
     newState?: Partial<TerminalState>; // Commands can request state updates
     uiAction?: 'CLEAR'; // Special actions for the UI
@@ -20,6 +22,8 @@ export interface CommandResponse {
         params?: any;
     };
     controlFlow?: 'RETURN' | 'BREAK' | 'CONTINUE' | 'EXIT';
+    /** True when the input was syntactically incomplete (show the PS2 continuation prompt). */
+    incomplete?: boolean;
     command?: string; // [NEW] Context: The command that produced this response
     utility?: string; // [NEW] Context: The semantic utility name (e.g., 'grep')
     metadata?: {

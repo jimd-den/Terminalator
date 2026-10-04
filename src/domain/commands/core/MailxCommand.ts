@@ -1,4 +1,3 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * MailxCommand - Core Command
  *
@@ -23,7 +22,6 @@ export class MailxCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = getStdinAsString(context);
         // Checking mail
         // Check /var/mail/operator?
         // Simulated: "No mail for operator"

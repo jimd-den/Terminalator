@@ -1,4 +1,3 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * WhoCommand - Core Command
  *
@@ -22,7 +21,6 @@ export class WhoCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = getStdinAsString(context);
         const user = state.environment['USER'] || 'operator';
         const line = 'tty1';
         const date = new Date().toISOString().slice(0, 16).replace('T', ' '); // Simplified date

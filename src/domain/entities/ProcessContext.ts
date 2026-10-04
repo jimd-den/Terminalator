@@ -76,6 +76,16 @@ export interface ProcessContext {
      * Network Map for cross-system operations (e.g., scp)
      */
     networkMap?: NetworkMap;
+
+    /**
+     * Whether stdout is the interactive terminal (isatty(1)). Utilities such
+     * as `ls` change their format when writing to a pipe or file.
+     * Undefined means unknown (treated as a terminal).
+     */
+    stdoutIsTty?: boolean;
+
+    /** The name the utility was invoked as (argv[0]), e.g. `[` vs `test`. */
+    argv0?: string;
 }
 
 

@@ -1,4 +1,3 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * NiceCommand - Core Command
  *
@@ -26,7 +25,6 @@ export class NiceCommand implements ICommand {
     ) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = getStdinAsString(context);
         // nice [-n increment] utility [argument...]
         let increment = 10;
         let cmdIndex = 0;

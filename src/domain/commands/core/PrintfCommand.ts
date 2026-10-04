@@ -1,115 +1,216 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
- * PrintfCommand - Core Command
+ * printf - write formatted output (POSIX XCU printf).
  *
- * Write formatted output.
- *
- * Pillar: The Four-Fold Shield (Strict Architecture)
- * Pillar: The Swift Stream (Performance)
- *
- * Intent:
- * Format and print data.
+ * Format escapes (\n, \t, \ddd...), conversions %d %i %o %u %x %X %f %F
+ * %e %E %g %G %c %s %b %% with flags (-+ #0), width and precision
+ * (including `*`). The format is reused while arguments remain.
+ * Numeric arguments may be C constants (0x1f, 017) or 'c / "c (char code).
  */
-
-import { ICommand } from '../ICommand';
-import { ProcessContext } from '../../../domain/entities/ProcessContext';
-import { FileSystemService } from '../../../domain/services/FileSystemService';
+import { ICommand, CommandResponse } from '../ICommand';
+import { ProcessContext } from '../../entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../entities/Command';
+import { FileSystemService } from '../../services/FileSystemService';
 
-import { FileSystem } from '../../entities/FileSystem';
+const ESCAPES: Record<string, string> = {
+    '\\': '\\', a: '\x07', b: '\b', f: '\f', n: '\n', r: '\r', t: '\t', v: '\v', '"': '"', "'": "'",
+};
+
+/** Expands backslash escapes. `bMode` is %b semantics (\0ddd octal, \c stops). */
+export function expandEscapes(s: string, bMode = false): { text: string; stop: boolean } {
+    let out = '';
+    for (let i = 0; i < s.length; i++) {
+        const c = s[i];
+        if (c !== '\\' || i + 1 >= s.length) { out += c; continue; }
+        const n = s[i + 1];
+        if (bMode && n === 'c') return { text: out, stop: true };
+        if (/[0-7]/.test(n)) {
+            const max = bMode && n === '0' ? 4 : 3;
+            let j = i + 1;
+            let digits = '';
+            while (j < s.length && digits.length < max && /[0-7]/.test(s[j])) digits += s[j++];
+            out += String.fromCharCode(parseInt(digits, 8) & 0xff);
+            i = j - 1;
+            continue;
+        }
+        if (ESCAPES[n] !== undefined) { out += ESCAPES[n]; i++; continue; }
+        out += c;
+    }
+    return { text: out, stop: false };
+}
+
+interface Spec {
+    flags: string;
+    width?: number;
+    precision?: number;
+    conv: string;
+}
 
 export class PrintfCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+    constructor(private fs?: FileSystemService) { }
 
-    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = getStdinAsString(context);
+    execute(args: string[], _context: ProcessContext, state: TerminalState): CommandResponse {
         if (args.length === 0) {
-            return { output: 'printf: usage: printf format [arguments...]', newState: state, exitCode: 1 };
+            return { output: '', stderr: 'printf: usage: printf format [argument...]\n', exitCode: 2, newState: state };
         }
-
         const format = args[0];
         const params = args.slice(1);
+        const errors: string[] = [];
+        let index = 0;
         let output = '';
-        let paramIndex = 0;
 
-        // Simple loop to handle format reuse if more params than specs
-        // Loop at least once
+        const next = (): string | undefined => (index < params.length ? params[index++] : undefined);
+        const num = (raw: string | undefined, integer: boolean): number => {
+            if (raw === undefined || raw === '') return 0;
+            if (/^['"]/.test(raw)) return raw.length > 1 ? raw.codePointAt(1)! : 0;
+            const t = raw.trim();
+            let v: number;
+            if (integer) {
+                const m = /^([-+]?)(0[xX][0-9a-fA-F]+|0[0-7]*|[1-9][0-9]*)/.exec(t);
+                if (!m) { errors.push(`printf: '${raw}': expected numeric value`); return 0; }
+                const body = m[2];
+                v = /^0[xX]/.test(body) ? parseInt(body, 16) : body.length > 1 && body[0] === '0' ? parseInt(body, 8) : parseInt(body, 10);
+                if (m[1] === '-') v = -v;
+                if (m[0].length !== t.length) errors.push(`printf: '${raw}': value not completely converted`);
+            } else {
+                v = parseFloat(t);
+                if (isNaN(v)) { errors.push(`printf: '${raw}': expected numeric value`); return 0; }
+            }
+            return v;
+        };
+
         do {
-            const startParamIndex = paramIndex;
-            let i = 0;
-            // Unescape the format string first?
-            // POSIX: interpreted sequences like \n, \t
-            let currentFormat = this.unescape(format);
-            // Actually, we should parse % specifiers and consume params.
-            // But we must also unescape.
-            // Let's iterate through the unescaped string looking for %.
-            // Note: \\ is escape for backslash. %% is escape for %.
-
-            let result = '';
-            for (let j = 0; j < currentFormat.length; j++) {
-                if (currentFormat[j] === '%' && currentFormat[j + 1] !== '%') {
-                    // Specifier found
-                    const spec = currentFormat[j + 1]; // Simplified: assume 1 char spec like %s, %d. No width/precision yet.
-                    // TODO: Improve specifier parsing for flags/width/precision.
-                    let replacement = '';
-
-                    if (paramIndex < params.length) {
-                        const arg = params[paramIndex++];
-                        if (spec === 's') {
-                            replacement = arg;
-                        } else if (spec === 'd' || spec === 'i') {
-                            const val = parseInt(arg);
-                            replacement = isNaN(val) ? '0' : val.toString();
-                        } else {
-                            // Unsupported spec, ignore or print literal?
-                            replacement = `%${spec}`;
-                            paramIndex--; // didn't consume arg
-                        }
-                    } else {
-                        // Missing arg: empty string for %s, 0 for %d
-                        if (spec === 's') replacement = '';
-                        else if (spec === 'd' || spec === 'i') replacement = '0';
-                    }
-                    result += replacement;
-                    j++; // Skip spec char
-                } else if (currentFormat[j] === '%' && currentFormat[j + 1] === '%') {
-                    result += '%';
-                    j++;
-                } else {
-                    result += currentFormat[j];
-                }
-            }
-            if (paramIndex === 0 && params.length > 0 && result === currentFormat) {
-                // Optimization: If format has no specifiers, it just prints the format string. 
-                // If we have args left, normally we'd loop forever printing the format string.
-                // POSIX says "results are unspecified", usually we stop.
-                break;
-            }
-
-            // Infinite loop protection: If we didn't consume any params this iteration,
-            // and we still have params left, we must break to avoid hanging.
-            if (paramIndex === startParamIndex && paramIndex < params.length) {
-                break;
-            }
-
-            output += result;
-
-        } while (paramIndex < params.length);
+            const start = index;
+            const { text, stop } = this.render(format, next, num);
+            output += text;
+            if (stop) break;
+            if (index === start) break; // format consumes no arguments
+        } while (index < params.length);
 
         return {
-            output: output,
+            output,
+            stderr: errors.length ? errors.join('\n') + '\n' : undefined,
+            exitCode: errors.length ? 1 : 0,
             newState: state,
-            exitCode: 0
         };
     }
 
-    private unescape(str: string): string {
-        return str
-            .replace(/\\n/g, '\n')
-            .replace(/\\t/g, '\t')
-            .replace(/\\\\/g, '\\')
-            .replace(/\\'/g, '\'')
-            .replace(/\\"/g, '"');
+    private render(
+        format: string,
+        next: () => string | undefined,
+        num: (raw: string | undefined, integer: boolean) => number
+    ): { text: string; stop: boolean } {
+        let out = '';
+        for (let i = 0; i < format.length; i++) {
+            const c = format[i];
+            if (c === '\\') {
+                // One escape at a time so that \c etc. are handled in place.
+                let j = i + 1;
+                if (/[0-7]/.test(format[j] ?? '')) { while (j < format.length && j < i + 4 && /[0-7]/.test(format[j])) j++; }
+                else j++;
+                out += expandEscapes(format.substring(i, j)).text;
+                i = j - 1;
+                continue;
+            }
+            if (c !== '%') { out += c; continue; }
+            if (format[i + 1] === '%') { out += '%'; i++; continue; }
+
+            const m = /^%([-+ #0]*)(\*|[0-9]+)?(?:\.(\*|[0-9]*))?([diouxXfFeEgGcsb])/.exec(format.substring(i));
+            if (!m) { out += c; continue; }
+            i += m[0].length - 1;
+
+            const spec: Spec = { flags: m[1], conv: m[4] };
+            if (m[2] === '*') spec.width = num(next(), true);
+            else if (m[2] !== undefined) spec.width = parseInt(m[2], 10);
+            if (m[3] === '*') spec.precision = num(next(), true);
+            else if (m[3] !== undefined) spec.precision = m[3] === '' ? 0 : parseInt(m[3], 10);
+            if (spec.width !== undefined && spec.width < 0) { spec.flags += '-'; spec.width = -spec.width; }
+
+            if (spec.conv === 'b') {
+                const r = expandEscapes(next() ?? '', true);
+                out += this.pad(this.truncate(r.text, spec), spec, false);
+                if (r.stop) return { text: out, stop: true };
+                continue;
+            }
+            out += this.convert(spec, next, num);
+        }
+        return { text: out, stop: false };
+    }
+
+    private truncate(s: string, spec: Spec): string {
+        return spec.precision !== undefined ? s.substring(0, spec.precision) : s;
+    }
+
+    private pad(body: string, spec: Spec, numeric: boolean, sign = ''): string {
+        const width = spec.width ?? 0;
+        const len = sign.length + body.length;
+        if (len >= width) return sign + body;
+        if (spec.flags.includes('-')) return sign + body + ' '.repeat(width - len);
+        if (numeric && spec.flags.includes('0') && !(spec.precision !== undefined && /[diouxX]/.test(spec.conv))) {
+            return sign + '0'.repeat(width - len) + body;
+        }
+        return ' '.repeat(width - len) + sign + body;
+    }
+
+    private convert(spec: Spec, next: () => string | undefined, num: (raw: string | undefined, integer: boolean) => number): string {
+        const { conv, flags } = spec;
+        if (conv === 's') return this.pad(this.truncate(next() ?? '', spec), spec, false);
+        if (conv === 'c') return this.pad((next() ?? '').charAt(0), spec, false);
+
+        if (/[diouxX]/.test(conv)) {
+            let v = Math.trunc(num(next(), true));
+            let sign = '';
+            let digits: string;
+            if (conv === 'd' || conv === 'i') {
+                if (v < 0) { sign = '-'; v = -v; }
+                else if (flags.includes('+')) sign = '+';
+                else if (flags.includes(' ')) sign = ' ';
+                digits = String(v);
+            } else {
+                const u = v < 0 ? BigInt.asUintN(64, BigInt(v)) : BigInt(v);
+                digits = conv === 'o' ? u.toString(8) : conv === 'u' ? u.toString(10) : u.toString(16);
+                if (conv === 'X') digits = digits.toUpperCase();
+                if (flags.includes('#') && u !== 0n) {
+                    if (conv === 'o' && !digits.startsWith('0')) digits = '0' + digits;
+                    if (conv === 'x') sign = '0x';
+                    if (conv === 'X') sign = '0X';
+                }
+            }
+            if (spec.precision !== undefined) {
+                digits = spec.precision === 0 && digits === '0' ? '' : digits.padStart(spec.precision, '0');
+            }
+            return this.pad(digits, spec, true, sign);
+        }
+
+        // Floating point
+        let v = num(next(), false);
+        let sign = '';
+        if (v < 0 || Object.is(v, -0)) { sign = '-'; v = -v; }
+        else if (flags.includes('+')) sign = '+';
+        else if (flags.includes(' ')) sign = ' ';
+        const p = spec.precision ?? 6;
+        let body: string;
+        if (!isFinite(v)) body = isNaN(v) ? 'nan' : 'inf';
+        else if (conv === 'f' || conv === 'F') body = v.toFixed(p);
+        else if (conv === 'e' || conv === 'E') body = this.exp(v, p);
+        else body = this.general(v, p === 0 ? 1 : p, flags.includes('#'));
+        if (conv === 'F' || conv === 'E' || conv === 'G') body = body.toUpperCase();
+        return this.pad(body, spec, true, sign);
+    }
+
+    /** C-style %e: mantissa with p decimals and an at-least-two-digit exponent. */
+    private exp(v: number, p: number): string {
+        const [m, e] = v.toExponential(p).split('e');
+        const n = parseInt(e, 10);
+        return `${m}e${n < 0 ? '-' : '+'}${String(Math.abs(n)).padStart(2, '0')}`;
+    }
+
+    private general(v: number, p: number, alt: boolean): string {
+        if (v === 0) return alt ? (0).toFixed(p - 1) : '0';
+        const x = Math.floor(Math.log10(Math.abs(Number(v.toExponential(p - 1)))));
+        let s = x < -4 || x >= p ? this.exp(v, p - 1) : v.toFixed(Math.max(0, p - 1 - x));
+        if (!alt) {
+            s = s.replace(/(\.[0-9]*?)0+(e|$)/, '$1$2').replace(/\.(e|$)/, '$1');
+        }
+        return s;
     }
 }

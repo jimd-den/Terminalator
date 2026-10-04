@@ -1,4 +1,3 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * EchoCommand - Core Command
  *
@@ -87,7 +86,6 @@ export class EchoCommand implements ICommand {
      * Executes the echo command.
      */
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = getStdinAsString(context);
         const timestamp = new Date().toISOString();
         this.log(`[${timestamp}] EchoCommand.execute(args=${JSON.stringify(args)})`);
 

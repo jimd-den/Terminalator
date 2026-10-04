@@ -1,4 +1,3 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * UnaliasCommand - Core Command
  *
@@ -23,7 +22,6 @@ export class UnaliasCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = getStdinAsString(context);
         const newState = { ...state, aliases: { ...state.aliases } };
         let all = false;
 

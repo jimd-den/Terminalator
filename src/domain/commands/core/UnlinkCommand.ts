@@ -48,7 +48,7 @@ export class UnlinkCommand extends CommandBase {
             }
 
             const inode = this.fs.getInode(node.inodeId);
-            if (inode!.mode & 0o040000) {
+            if ((inode!.mode & 0o170000) === 0o040000) {
                 return { output: `unlink: cannot unlink '${file}': Is a directory`, newState: state, exitCode: 1 };
             }
 

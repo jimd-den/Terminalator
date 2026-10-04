@@ -89,9 +89,9 @@ export class FindCommand implements ICommand {
                         evaluate: async (node) => {
                             const inode = this.fs.getInode(node.inodeId);
                             if (!inode) return false;
-                            if (type === 'f') return (inode.mode & S_IFREG) !== 0;
-                            if (type === 'd') return (inode.mode & S_IFDIR) !== 0;
-                            if (type === 'l') return (inode.mode & S_IFLNK) !== 0;
+                            if (type === 'f') return ((inode.mode & 0o170000) === S_IFREG);
+                            if (type === 'd') return ((inode.mode & 0o170000) === S_IFDIR);
+                            if (type === 'l') return ((inode.mode & 0o170000) === S_IFLNK);
                             return false;
                         },
                         isAction: () => false

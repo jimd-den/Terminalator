@@ -1,4 +1,3 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file ArCommand.ts
  * @description The 'ar' command. Create, modify, and extract from archives.
@@ -36,7 +35,6 @@ export class ArCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = getStdinAsString(context);
         // this.fs = state.fs; // Removed: FS injected via constructor or context
 
         let mode = '';

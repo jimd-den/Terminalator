@@ -1,4 +1,3 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * MesgCommand - Core Command
  *
@@ -23,7 +22,6 @@ export class MesgCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = getStdinAsString(context);
         if (args.length === 0) {
             return { output: 'is y', newState: state, exitCode: 0 };
         }

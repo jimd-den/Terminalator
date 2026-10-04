@@ -1,4 +1,3 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * ReadlinkCommand - Core Command
  *
@@ -23,7 +22,6 @@ export class ReadlinkCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = getStdinAsString(context);
         const files = args.filter(a => !a.startsWith('-'));
         if (files.length === 0) {
             return { output: 'readlink: missing operand', newState: state, exitCode: 1 };

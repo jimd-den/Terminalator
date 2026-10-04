@@ -38,7 +38,7 @@ export const TheatricalCanvas: React.FC = () => {
                     console.log(`[TheatricalCanvas] Animation COMPLETE for: ${payload.command}`);
                     bus.emit(GameEventType.TUTOR_EVENT, { type: 'ANIMATION_COMPLETE', payload: { command: payload.command } });
                 }, duration);
-            } else if (typeStr === 'MISTAKE' && payload.type === 'SHADOW_BLOCK') {
+            } else if (type === 'MISTAKE' && payload.type === 'SHADOW_BLOCK') {
                 setIsCriticalError(true);
                 Animated.sequence([
                     Animated.timing(shakeAnim, { toValue: 20, duration: 50, useNativeDriver }),

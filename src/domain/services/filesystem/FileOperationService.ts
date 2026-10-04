@@ -131,7 +131,7 @@ export class FileOperationService {
         const inode = this.inodeTable.get(dentry.inodeId);
         if (!inode) throw new Error('Corrupt filesystem');
 
-        if (inode.mode & S_IFDIR) throw new Error('Is a directory');
+        if ((inode.mode & 0o170000) === S_IFDIR) throw new Error('Is a directory');
 
         if (actingUser && !this.permissions.hasAccess(inode.id, actingUser, requiredBit)) {
             throw new Error('Permission denied');

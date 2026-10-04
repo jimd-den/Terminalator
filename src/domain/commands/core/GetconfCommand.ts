@@ -1,4 +1,3 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * GetconfCommand - Core Command
  *
@@ -23,7 +22,6 @@ export class GetconfCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = getStdinAsString(context);
         // Parse args
         let showAll = false;
         let spec = '';

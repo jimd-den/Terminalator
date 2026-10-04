@@ -61,6 +61,11 @@ export class TrCommand extends CommandBase {
             options.set2 = this.expandSet(operands[1]);
         }
 
+        const needsSet2 = !options.delete && !(options.squeeze && operands.length === 1);
+        if (needsSet2 && operands.length < 2) {
+            return { output: '', stderr: `tr: missing operand after '${operands[0]}'\n`, newState: state, exitCode: 1 };
+        }
+
         if (input === undefined) {
             return { output: '', newState: state, exitCode: 0 };
         }

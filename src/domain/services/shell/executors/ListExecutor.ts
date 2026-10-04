@@ -1,56 +1,36 @@
 import { NodeExecutor } from '../NodeExecutor';
-import { ASTNode, ListNode, NodeType } from '../../ShellParser';
+import { ASTNode, ListNode } from '../../../interfaces/ShellAST';
 import { TerminalState } from '../../../entities/TerminalState';
-import { CommandResponse } from '../../../entities/Command';
-import { mergeState } from '../../../utils/TerminalStateUtils';
+import { IOContext } from '../io/IOContext';
+import { ShellResult, ShellRuntime, mergeEffects, withStatus } from '../ShellRuntime';
 
+/**
+ * ListExecutor - sequential lists (`;`) and AND-OR lists (`&&`, `||`).
+ * The left operand of `&&`/`||` is a "tested" context for `set -e`.
+ */
 export class ListExecutor implements NodeExecutor {
-    async execute(
-        node: ASTNode,
-        state: TerminalState,
-        visitor: (node: ASTNode, state: TerminalState, stdin?: string) => Promise<CommandResponse>,
-        stdin?: string
-    ): Promise<CommandResponse> {
-        if (node.type !== NodeType.LIST) {
-            throw new Error('ListExecutor can only handle LIST nodes');
+    constructor(private runtime: ShellRuntime) { }
+
+    async execute(node: ASTNode, state: TerminalState, io: IOContext): Promise<ShellResult> {
+        const list = node as ListNode;
+        const tested = list.operator !== ';';
+
+        if (tested) this.runtime.conditionDepth++;
+        let left: ShellResult;
+        try {
+            left = withStatus(await this.runtime.visit(list.left, state, io));
+        } finally {
+            if (tested) this.runtime.conditionDepth--;
         }
+        if (left.flow) return left;
 
-        const listNode = node as ListNode;
-        const leftRes = await visitor(listNode.left, state, stdin);
+        const runRight =
+            list.operator === ';' ||
+            (list.operator === '&&' && left.status === 0) ||
+            (list.operator === '||' && left.status !== 0);
+        if (!runRight) return { ...left, errexitEligible: false };
 
-        // Control flow check (Break/Continue/Return)
-        if (leftRes.controlFlow) return leftRes;
-
-        let runRight = false;
-        if (listNode.operator === ';') runRight = true;
-        else if (listNode.operator === '&&') runRight = (leftRes.exitCode === 0);
-        else if (listNode.operator === '||') runRight = (leftRes.exitCode !== 0);
-
-        if (runRight) {
-            const effectiveLeftState = mergeState(state, leftRes.newState);
-            // Persist exit code logic should be in mergeState or handled here?
-            // In ShellInterpreter it was: if (leftRes.newState) effectiveLeftState.lastExitCode = leftRes.exitCode;
-            // Let's replicate exact logic.
-            if (leftRes.newState) {
-                effectiveLeftState.lastExitCode = leftRes.exitCode;
-            } else {
-                // If not in newState, update it explicitly in effective state
-                effectiveLeftState.lastExitCode = leftRes.exitCode;
-            }
-
-            const rightRes = await visitor(listNode.right, effectiveLeftState, stdin);
-
-            return {
-                output: [leftRes.output, rightRes.output].filter(s => s).join(''),
-                newState: mergeState(effectiveLeftState, rightRes.newState),
-                exitCode: rightRes.exitCode,
-                uiAction: rightRes.uiAction || leftRes.uiAction,
-                navigationAction: rightRes.navigationAction || leftRes.navigationAction,
-                controlFlow: rightRes.controlFlow,
-                command: rightRes.command // Propagate command
-            };
-        }
-
-        return leftRes;
+        const right = withStatus(await this.runtime.visit(list.right, left.state, io));
+        return { ...right, effects: mergeEffects(left.effects, right.effects) };
     }
 }

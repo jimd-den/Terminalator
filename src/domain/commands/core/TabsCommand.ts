@@ -1,4 +1,3 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * TabsCommand - Core Command
  *
@@ -23,7 +22,6 @@ export class TabsCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = getStdinAsString(context);
         return {
             output: '', // Sets tabs silently
             newState: state,

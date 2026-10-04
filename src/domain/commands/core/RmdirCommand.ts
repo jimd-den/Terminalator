@@ -100,7 +100,7 @@ export class RmdirCommand extends CommandBase {
         }
 
         const inode = this.fs.getInode(node.inodeId);
-        if (!inode || !(inode.mode & S_IFDIR)) {
+        if (!inode || (inode.mode & 0o170000) !== S_IFDIR) {
             throw new Error('Not a directory');
         }
 

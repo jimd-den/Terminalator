@@ -1,4 +1,3 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file GunzipCommand.ts
  * @description The 'gunzip' command. Decompress files.
@@ -10,7 +9,6 @@ import { TerminalState } from '../../entities/TerminalState';
 
 export class GunzipCommand implements ICommand {
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = getStdinAsString(context);
          if (args.length === 0) {
              return { output: '', newState: state, exitCode: 0 };
         }

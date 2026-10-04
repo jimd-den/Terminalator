@@ -232,7 +232,7 @@ export class FileSystemService {
     isDirectory(dentry: Dentry): boolean {
         // Pure state check, fine to keep here or move to Dentry extension
         const inode = this.getInode(dentry.inodeId);
-        return inode ? (inode.mode & S_IFDIR) === S_IFDIR : false;
+        return inode ? (inode.mode & S_IFMT) === S_IFDIR : false;
     }
 
     getUsage(): number {
@@ -251,9 +251,10 @@ export class FileSystemService {
             mtime: inode.mtime,
             atime: inode.atime,
             ctime: inode.ctime,
-            isDirectory: (inode.mode & S_IFDIR) === S_IFDIR,
-            isFile: (inode.mode & S_IFREG) === S_IFREG,
-            isSymlink: (inode.mode & S_IFLNK) === S_IFLNK
+            // Compare the whole type field: S_IFLNK shares bits with S_IFREG and S_IFDIR.
+            isDirectory: (inode.mode & S_IFMT) === S_IFDIR,
+            isFile: (inode.mode & S_IFMT) === S_IFREG,
+            isSymlink: (inode.mode & S_IFMT) === S_IFLNK
         };
     }
 
@@ -290,7 +291,7 @@ export class FileSystemService {
         const dentry = this.resolve(path, cwd, false);
         if (!dentry) throw new Error(`readlink: cannot access '${path}': No such file or directory`);
         const inode = this.getInode(dentry.inodeId)!;
-        if (!(inode.mode & S_IFLNK)) throw new Error(`readlink: '${path}': Invalid argument`);
+        if ((inode.mode & S_IFMT) !== S_IFLNK) throw new Error(`readlink: '${path}': Invalid argument`);
         return inode.target || '';
     }
 
@@ -300,7 +301,7 @@ export class FileSystemService {
         if (!oldDentry) throw new Error(`link: cannot access '${oldPath}': No such file or directory`);
         const inode = this.getInode(oldDentry.inodeId);
         if (!inode) throw new Error('Corrupt filesystem');
-        if (inode.mode & S_IFDIR) throw new Error(`link: '${oldPath}': Hard link to directory not allowed`);
+        if ((inode.mode & S_IFMT) === S_IFDIR) throw new Error(`link: '${oldPath}': Hard link to directory not allowed`);
 
         const absPath = this.resolveAbsolutePath(newPath, cwd);
         const parentPath = absPath.substring(0, absPath.lastIndexOf('/')) || '/';

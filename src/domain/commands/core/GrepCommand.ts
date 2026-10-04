@@ -255,7 +255,7 @@ export class GrepCommand extends CommandBase {
                         const inode = fs.getInode(node.inodeId);
                         if (!inode) return;
 
-                        if (inode.mode & S_IFDIR) {
+                        if ((inode.mode & 0o170000) === S_IFDIR) {
                             if (options.recursive) {
                                 for (const [name, child] of (node as DirectoryNode).children) {
                                     const childPath = path === '/' ? `/${name}` : `${path}/${name}`;

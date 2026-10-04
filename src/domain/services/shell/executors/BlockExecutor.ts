@@ -1,18 +1,14 @@
 import { NodeExecutor } from '../NodeExecutor';
-import { ASTNode, NodeType } from '../../ShellParser';
+import { ASTNode, BlockNode } from '../../../interfaces/ShellAST';
 import { TerminalState } from '../../../entities/TerminalState';
-import { CommandResponse } from '../../../entities/Command';
+import { IOContext } from '../io/IOContext';
+import { ShellResult, ShellRuntime } from '../ShellRuntime';
 
+/** BlockExecutor - `{ list; }`: runs in the current environment. */
 export class BlockExecutor implements NodeExecutor {
-    async execute(
-        node: ASTNode,
-        state: TerminalState,
-        visitor: (node: ASTNode, state: TerminalState, stdin?: string) => Promise<CommandResponse>,
-        stdin?: string
-    ): Promise<CommandResponse> {
-        if (node.type !== NodeType.BLOCK) throw new Error('BlockExecutor handles BLOCK only');
+    constructor(private runtime: ShellRuntime) { }
 
-        // Block is just a wrapper around a body
-        return visitor((node as any).body, state, stdin);
+    execute(node: ASTNode, state: TerminalState, io: IOContext): Promise<ShellResult> {
+        return this.runtime.visit((node as BlockNode).body, state, io);
     }
 }

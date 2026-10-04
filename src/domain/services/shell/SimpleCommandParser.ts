@@ -1,54 +1,42 @@
-import { ASTNode, NodeType, IfNode, ForNode, WhileNode, SubshellNode, BlockNode, FunctionDefNode, CommandNode, RedirectNode } from '../../interfaces/ShellAST';
+import { ASTNode, NodeType, CommandNode, RedirectNode } from '../../interfaces/ShellAST';
 import { TokenType } from '../ShellLexer';
 import { IStatementParser } from './IStatementParser';
 import { IShellParserFacade } from './IShellParserFacade';
 
+const ASSIGNMENT = /^[A-Za-z_][A-Za-z0-9_]*=/;
+
 /**
- * SimpleCommandParser - Domain Layer
- * 
- * The default parser for simple commands and redirections (e.g., 'ls -la > out.txt').
- *
- * Pillar: The Balanced Scale (SRP) - Isolated parsing of simple commands.
+ * simple_command: cmd_prefix [cmd_word [cmd_suffix]] | cmd_name [cmd_suffix]
+ * Assignments are only recognised before the command name.
  */
 export class SimpleCommandParser implements IStatementParser {
     canHandle(facade: IShellParserFacade): boolean {
-        const token = facade.peek();
-        return token.type === TokenType.WORD || facade.isRedirect(token);
+        const t = facade.peek();
+        return t.type === TokenType.WORD || facade.isRedirect(t);
     }
 
-    parse(facade: IShellParserFacade): ASTNode {
-        const token = facade.peek();
-
-        // Check if it's a reserved word that shouldn't be parsed as a command
-        if (token.value === '}') return null as any;
-
-        const args: string[] = [];
+    parse(facade: IShellParserFacade): ASTNode | null {
+        const assignments: string[] = [];
+        const words: string[] = [];
         const redirects: RedirectNode[] = [];
 
-        while (facade.peek().type === TokenType.WORD || facade.isRedirect(facade.peek())) {
+        while (true) {
             const t = facade.peek();
-
-            // If it's a reserved word and we already have a command, it's a delimiter
-            if (args.length > 0 && t.type === TokenType.WORD && facade.isReservedWord(t.value)) {
-                break;
-            }
-
             if (facade.isRedirect(t)) {
                 redirects.push(facade.parseRedirect());
+            } else if (t.type === TokenType.WORD) {
+                if (words.length === 0 && ASSIGNMENT.test(t.value)) {
+                    assignments.push(facade.advance().value);
+                } else {
+                    words.push(facade.advance().value);
+                }
             } else {
-                args.push(facade.advance().value);
+                break;
             }
         }
 
-        if (args.length === 0 && redirects.length === 0) return null as any;
-
-        const cmdName = args.length > 0 ? args.shift()! : '';
-
-        return {
-            type: NodeType.COMMAND,
-            command: cmdName,
-            args: args,
-            redirects: redirects
-        } as CommandNode;
+        if (!words.length && !assignments.length && !redirects.length) return null;
+        const [command = '', ...args] = words;
+        return { type: NodeType.COMMAND, assignments, command, args, redirects } as CommandNode;
     }
 }

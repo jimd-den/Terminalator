@@ -60,7 +60,7 @@ export class CatCommand extends CommandBase {
                 try {
                     const node = fsService.resolve(path);
                     const inode = node ? fsService.getInode(node.inodeId) : undefined;
-                    if (node && inode && (inode.mode & 0o040000)) { // S_IFDIR
+                    if (node && inode && ((inode.mode & 0o170000) === 0o040000)) { // S_IFDIR
                         return { output: `cat: ${filename}: Is a directory`, newState: state, exitCode: 1 };
                     }
                     const content = fsService.readFile(path);
