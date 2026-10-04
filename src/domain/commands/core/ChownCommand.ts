@@ -85,9 +85,9 @@ export class ChownCommand extends CommandBase {
         for (const file of files) {
             try {
                 if (recursive) {
-                    this.chownRecursive(file, uid, gid, state.currentDirectory, context.user);
+                    this.chownRecursive(context.fileSystemService, file, uid, gid, state.currentDirectory, context.user);
                 } else {
-                    this.fs.chown(file, uid, gid, state.currentDirectory, context.user);
+                    context.fileSystemService.chown(file, uid, gid, state.currentDirectory, context.user);
                 }
             } catch (e: any) {
                 errors.push(`chown: ${file}: ${e.message}`);
@@ -101,20 +101,20 @@ export class ChownCommand extends CommandBase {
         };
     }
 
-    private chownRecursive(path: string, uid: number, gid: number, cwd: string, user: any): void {
-        const dentry = this.fs.resolve(path, cwd, true, user);
+    private chownRecursive(fs: FileSystemService, path: string, uid: number, gid: number, cwd: string, user: any): void {
+        const dentry = fs.resolve(path, cwd, true, user);
         if (!dentry) throw new Error(`${path}: No such file or directory`);
 
-        this.applyChownRecursive(dentry, uid, gid, user);
+        this.applyChownRecursive(fs, dentry, uid, gid, user);
     }
 
-    private applyChownRecursive(dentry: any, uid: number, gid: number, user: any): void {
-        const path = this.fs.getAbsolutePath(dentry);
-        this.fs.chown(path, uid, gid, '/', user);
+    private applyChownRecursive(fs: FileSystemService, dentry: any, uid: number, gid: number, user: any): void {
+        const path = fs.getAbsolutePath(dentry);
+        fs.chown(path, uid, gid, '/', user);
 
         if (dentry.children) {
             for (const child of dentry.children.values()) {
-                this.applyChownRecursive(child, uid, gid, user);
+                this.applyChownRecursive(fs, child, uid, gid, user);
             }
         }
     }

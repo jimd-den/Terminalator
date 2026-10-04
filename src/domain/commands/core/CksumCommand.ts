@@ -45,7 +45,7 @@ export class CksumCommand implements ICommand {
 
         for (const file of files) {
             try {
-                const content = this.fs.readFile(this.resolvePath(file, state));
+                const content = context.fileSystemService.readFile(this.resolvePath(file, state));
                 const crc = this.crc32(content);
                 const size = content.length;
                 lines.push(`${crc} ${size} ${file}`);

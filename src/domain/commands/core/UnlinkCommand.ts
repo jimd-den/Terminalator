@@ -42,17 +42,17 @@ export class UnlinkCommand extends CommandBase {
 
         try {
             const path = this.resolvePath(file, state);
-            const node = this.fs.resolve(path);
+            const node = context.fileSystemService.resolve(path);
             if (!node) {
                 return { output: `unlink: cannot unlink '${file}': No such file or directory`, newState: state, exitCode: 1 };
             }
 
-            const inode = this.fs.getInode(node.inodeId);
+            const inode = context.fileSystemService.getInode(node.inodeId);
             if ((inode!.mode & 0o170000) === 0o040000) {
                 return { output: `unlink: cannot unlink '${file}': Is a directory`, newState: state, exitCode: 1 };
             }
 
-            this.fs.deleteNode(path);
+            context.fileSystemService.deleteNode(path);
 
         } catch (e: any) {
             return { output: `unlink: cannot unlink '${file}': ${e.message}`, newState: state, exitCode: 1 };

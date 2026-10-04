@@ -63,7 +63,7 @@ export class LsCommand extends CommandBase {
     constructor(private fsService: FileSystemService) { super(); }
 
     executeInternal(_args: string[], flags: Set<string>, operands: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const fs = context.fileSystemService || this.fsService;
+        const fs = context.fileSystemService || context.fileSystemService;
         const users = new UserDatabase(fs);
         const f = (c: string) => flags.has(c);
         const unknown = [...flags].find(c => !'ACFHLRSacdfgiklmnopqrstux1h'.includes(c));

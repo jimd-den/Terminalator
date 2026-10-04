@@ -30,7 +30,7 @@ export class PrCommand implements ICommand {
 
         if (file) {
             try {
-                content = this.fs.readFile(this.resolvePath(file, state));
+                content = context.fileSystemService.readFile(this.resolvePath(file, state));
             } catch (e) {
                 return { output: `pr: ${file}: No such file`, newState: state, exitCode: 1 };
             }

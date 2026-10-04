@@ -37,7 +37,7 @@ export class MkdirCommand extends CommandBase {
         context: ProcessContext,
         state: TerminalState
     ): Promise<CommandResponse> {
-        const fsService = context.fileSystemService || this.fs;
+        const fsService = context.fileSystemService || context.fileSystemService;
         
         const parents = flags.has('p');
         const modeStr = this.options.get('m');

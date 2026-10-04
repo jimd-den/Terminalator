@@ -50,7 +50,7 @@ export class FoldCommand extends CommandBase {
             for (const file of files) {
                 try {
                     const path = this.resolvePath(file, state);
-                    content += this.fs.readFile(path);
+                    content += context.fileSystemService.readFile(path);
                 } catch (e) {
                     return { output: `fold: ${file}: No such file`, newState: state, exitCode: 1 };
                 }

@@ -48,7 +48,7 @@ export class ExpandCommand extends CommandBase {
         if (files.length > 0) {
             for (const file of files) {
                 try {
-                    content += this.fs.readFile(this.resolvePath(file, state));
+                    content += context.fileSystemService.readFile(this.resolvePath(file, state));
                 } catch (e) {
                     return { output: `expand: ${file}: No such file`, newState: state, exitCode: 1 };
                 }

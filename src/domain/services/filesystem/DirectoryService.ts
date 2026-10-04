@@ -36,6 +36,7 @@ export class DirectoryService {
 
         const fullMode = S_IFDIR | mode;
         const inode = this.inodeTable.allocate(fullMode, uid, gid);
+        inode.links = 2; // the entry in the parent, plus its own "."
 
         // Standard overhead for a directory (e.g. 4KB block)
         this.updateUsage(4096);
@@ -108,6 +109,13 @@ export class DirectoryService {
                     !this.permissions.hasAccess(parentInode.id, actingUser, S_IXUSR)) {
                     throw new Error('Permission denied');
                 }
+                // Sticky directory (e.g. /tmp): only the owner of the entry or the
+                // directory (or root) may remove it.
+                const target = this.inodeTable.get(dentry.inodeId);
+                if ((parentInode.mode & 0o1000) && actingUser.uid !== 0 &&
+                    target && target.uid !== actingUser.uid && parentInode.uid !== actingUser.uid) {
+                    throw new Error('Operation not permitted');
+                }
             }
         }
 
@@ -127,7 +135,13 @@ export class DirectoryService {
         // Perform Removal
         const parent = dentry.parent as DirectoryNode;
         parent.removeChild(dentry.name);
-        inode.links--;
+        if ((inode.mode & 0o170000) === S_IFDIR) {
+            inode.links = 0; // "." goes with it
+            const p = this.inodeTable.get(parent.inodeId);
+            if (p) p.links--; // its ".." no longer points at the parent
+        } else {
+            inode.links--;
+        }
 
         // Update Parent time
         const parentInode = this.inodeTable.get(parent.inodeId);

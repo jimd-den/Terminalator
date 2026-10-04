@@ -38,20 +38,20 @@ export class MoreCommand implements ICommand {
         let exitCode = 0;
 
         for (const file of args) {
-            const resolved = this.fs.resolve(file, state.currentDirectory);
+            const resolved = context.fileSystemService.resolve(file, state.currentDirectory);
             if (!resolved) {
                 output += `more: ${file}: No such file or directory\n`;
                 exitCode = 1;
                 continue;
             }
-            if (this.fs.isDirectory(resolved)) {
+            if (context.fileSystemService.isDirectory(resolved)) {
                 output += `more: ${file}: Is a directory\n`;
                 exitCode = 1;
                 continue;
             }
             // Read content via service
             try {
-                const content = this.fs.readFile(file, state.currentDirectory);
+                const content = context.fileSystemService.readFile(file, state.currentDirectory);
                 output += content;
             } catch (e: any) {
                 output += `more: ${file}: ${e.message}\n`;

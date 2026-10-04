@@ -124,7 +124,7 @@ export class GrepCommand extends CommandBase {
         state: TerminalState
     ): Promise<CommandResponse> {
         const input = getStdinAsString(context);
-        const fs = context.fileSystemService || this.fs;
+        const fs = context.fileSystemService || context.fileSystemService;
 
         const options: GrepOptions = {
             extended: flags.has('E'),

@@ -41,7 +41,7 @@ export class CdCommand extends CommandBase {
         context: ProcessContext,
         state: TerminalState
     ): Promise<CommandResponse> {
-        const fsService = context.fileSystemService || this.fs;
+        const fsService = context.fileSystemService || context.fileSystemService;
         const target = operands.length > 0 ? operands[0] : '~';
         let newPath = target;
 

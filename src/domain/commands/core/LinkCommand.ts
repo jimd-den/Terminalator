@@ -45,7 +45,7 @@ export class LinkCommand extends CommandBase {
             const sourcePath = this.resolvePath(source, state);
             const targetPath = this.resolvePath(target, state);
 
-            this.fs.link(sourcePath, targetPath);
+            context.fileSystemService.link(sourcePath, targetPath);
 
         } catch (e: any) {
             return { output: `link: cannot create link '${target}' to '${source}': ${e.message}`, newState: state, exitCode: 1 };

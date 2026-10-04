@@ -89,7 +89,7 @@ export class CutCommand extends CommandBase {
                 }
                 try {
                     const resolvedPath = this.resolvePath(file, state);
-                    inputContent += this.fs.readFile(resolvedPath) + '\n';
+                    inputContent += context.fileSystemService.readFile(resolvedPath) + '\n';
                 } catch (e) {
                     return {
                         output: `cut: ${file}: No such file or directory`,

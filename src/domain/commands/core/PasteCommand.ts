@@ -61,7 +61,7 @@ export class PasteCommand implements ICommand {
                     fileContents.push((input || '').split('\n'));
                 } else {
                     const path = this.resolvePath(file, state);
-                    const content = this.fs.readFile(path);
+                    const content = context.fileSystemService.readFile(path);
                     const lines = content.split('\n');
                     if (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
                     fileContents.push(lines);

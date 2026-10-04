@@ -6,7 +6,7 @@ import { ShellFactory } from '../../src/domain/factories/ShellFactory';
 import { createInitialTerminalState } from '../../src/domain/entities/TerminalState';
 
 (async () => {
-    const { executor } = ShellFactory.create();
+    const { executor } = process.env.BARE ? ShellFactory.create() : ShellFactory.createSystem();
     let state = createInitialTerminalState();
     for (const line of process.argv.slice(2)) {
         const res = await executor.execute(line, state);

@@ -1,31 +1,23 @@
 /**
- * TtyCommand - Core Command
- *
- * Return user's terminal name.
- *
- * Pillar: The Four-Fold Shield (Strict Architecture)
- * Pillar: The Swift Stream (Performance)
- *
- * Intent:
- * Terminal identification.
+ * tty - return the user's terminal name (POSIX).
+ * Exit 0 if standard input is a terminal, 1 if not, 2 on usage error.
  */
-
 import { ICommand } from '../ICommand';
-import { ProcessContext } from '../../../domain/entities/ProcessContext';
-import { FileSystemService } from '../../../domain/services/FileSystemService';
+import { ProcessContext } from '../../entities/ProcessContext';
+import { FileSystemService } from '../../services/FileSystemService';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
-
-import { FileSystem } from '../../entities/FileSystem';
+import { isTty } from '../../services/shell/io/IOContext';
 
 export class TtyCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+    constructor(private fs?: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        return {
-            output: '/dev/tty1', // Standard simulation value
-            newState: state,
-            exitCode: 0
-        };
+        const silent = args.includes('-s');
+        const bad = args.find(a => a !== '-s');
+        if (bad) return { output: '', stderr: `tty: extra operand '${bad}'\n`, exitCode: 2, newState: state };
+        const terminal = isTty(context.stdin);
+        if (silent) return { output: '', exitCode: terminal ? 0 : 1, newState: state };
+        return { output: terminal ? '/dev/pts/0\n' : 'not a tty\n', exitCode: terminal ? 0 : 1, newState: state };
     }
 }

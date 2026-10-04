@@ -40,7 +40,7 @@ export class UuencodeCommand implements ICommand {
         let content = '';
         if (infile) {
             try {
-                const raw = this.fs.readFile(this.resolvePath(infile, state));
+                const raw = context.fileSystemService.readFile(this.resolvePath(infile, state));
                 content = typeof raw === 'string' ? raw : new TextDecoder().decode(raw);
             } catch (e) {
                 return { output: `uuencode: ${infile}: No such file`, newState: state, exitCode: 1 };

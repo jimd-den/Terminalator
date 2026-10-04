@@ -18,7 +18,8 @@ import { IWorldManager } from '../../interfaces/IWorldManager';
 import { SystemPreparationSpec } from '../../entities/world/SystemPreparationSpec';
 import { FileSystemPopulator } from '../FileSystemPopulator';
 import { FileSystem } from '../../entities/FileSystem';
-import { SystemGenerator } from '../SystemGenerator';
+import { SystemInstaller } from '../os/SystemInstaller';
+import { LOCAL_HOST_PROFILE } from '../os/LocalHost';
 
 export class WorldPatchService {
     constructor(private worldManager: IWorldManager) { }
@@ -100,10 +101,7 @@ export class WorldPatchService {
      * This is used for the initial "Boot" of the user's primary workstation.
      */
     public initializeRootFileSystem(fs: FileSystem) {
-        const fsService = new FileSystemService(fs);
-        if (fs.root && fs.root.children.size === 0) {
-            const generator = new SystemGenerator();
-            generator.populate(fsService, { difficulty: 1 });
-        }
+        new SystemInstaller().install(new FileSystemService(fs), LOCAL_HOST_PROFILE);
     }
+
 }

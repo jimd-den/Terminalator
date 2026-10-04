@@ -40,7 +40,7 @@ export class CxrefCommand implements ICommand {
 
         // 2. Process Files
         for (const file of inputFiles) {
-            const rawContent = this.fs.readFile(file, state.currentDirectory);
+            const rawContent = context.fileSystemService.readFile(file, state.currentDirectory);
             const content = typeof rawContent === 'string' ? rawContent : new TextDecoder().decode(rawContent);
 
             // Syntax Check Hook
@@ -56,7 +56,7 @@ export class CxrefCommand implements ICommand {
 
         // 3. Output
         if (outputFile) {
-            this.fs.writeFile(outputFile, result, 'w', 1000, 1000, state.currentDirectory);
+            context.fileSystemService.writeFile(outputFile, result, 'w', 1000, 1000, state.currentDirectory);
             return { output: '', newState: state, exitCode: 0 };
         }
 

@@ -72,10 +72,10 @@ export class ArCommand implements ICommand {
 
         // Read existing archive
         // Read existing archive
-        const node = this.fs.resolve(archivePath);
-        if (node && !this.fs.isDirectory(node)) {
+        const node = context.fileSystemService.resolve(archivePath);
+        if (node && !context.fileSystemService.isDirectory(node)) {
             try {
-                const content = this.fs.readFile(archivePath);
+                const content = context.fileSystemService.readFile(archivePath);
                 entries = this.parseArchive(content);
             } catch (e) {
                 return {
@@ -111,24 +111,24 @@ export class ArCommand implements ICommand {
                     if (verbose) outputLines.push(`d - ${f}`);
                 }
             }
-            this.writeArchive(archivePath, entries, state.currentDirectory);
+            this.writeArchive(context.fileSystemService, archivePath, entries, state.currentDirectory);
         } else if (mode.includes('x')) { // Extract
             const targets = files.length > 0 ? entries.filter(e => files.includes(e.header.name)) : entries;
             for (const entry of targets) {
                 const outPath = entry.header.name;
-                this.fs.writeFile(outPath, entry.content, 'w', 1000, 1000, state.currentDirectory);
+                context.fileSystemService.writeFile(outPath, entry.content, 'w', 1000, 1000, state.currentDirectory);
                 if (verbose) outputLines.push(`x - ${entry.header.name}`);
             }
         } else if (mode.includes('r') || mode.includes('q')) { // Append/Replace
             for (const f of files) {
                 const srcPath = f.startsWith('/') ? f : state.currentDirectory + '/' + f;
-                const srcNode = this.fs.resolve(srcPath);
-                if (!srcNode || this.fs.isDirectory(srcNode)) {
+                const srcNode = context.fileSystemService.resolve(srcPath);
+                if (!srcNode || context.fileSystemService.isDirectory(srcNode)) {
                     outputLines.push(`ar: ${f}: No such file or directory`);
                     continue;
                 }
-                const content = this.fs.readFile(srcPath);
-                const inode = this.fs.getInode(srcNode.inodeId);
+                const content = context.fileSystemService.readFile(srcPath);
+                const inode = context.fileSystemService.getInode(srcNode.inodeId);
 
                 const newEntry: ArEntry = {
                     header: {
@@ -151,7 +151,7 @@ export class ArCommand implements ICommand {
                     if (verbose) outputLines.push(`a - ${newEntry.header.name}`);
                 }
             }
-            this.writeArchive(archivePath, entries, state.currentDirectory);
+            this.writeArchive(context.fileSystemService, archivePath, entries, state.currentDirectory);
         } else if (mode.includes('p')) { // Print
             const targets = files.length > 0 ? entries.filter(e => files.includes(e.header.name)) : entries;
             for (const entry of targets) {
@@ -177,9 +177,9 @@ export class ArCommand implements ICommand {
         }
     }
 
-    private writeArchive(path: string, entries: ArEntry[], cwd: string) {
+    private writeArchive(fs: FileSystemService, path: string, entries: ArEntry[], cwd: string) {
         const json = JSON.stringify(entries);
-        this.fs.writeFile(path, '!<arch>\n' + json, 'w', 1000, 1000, cwd);
+        fs.writeFile(path, '!<arch>\n' + json, 'w', 1000, 1000, cwd);
     }
 
     private formatVerbose(entry: ArEntry): string {

@@ -1532,21 +1532,12 @@ UTILITY: tput
 UTILITY: tty
 [PASS] TTY_01
 [PASS] TTY_02
-[FAIL] TTY_03: Fail not tty
-       -> Exit Code: Expected 1, got 0
-       -> Stdout Regex Mismatch.
-   Expected: /not a tty/
-   Got: "/dev/tty1"
+[PASS] TTY_03
 [PASS] TTY_04
 [PASS] TTY_05
 [PASS] TTY_06
-[FAIL] TTY_07: Redirected stdin
-       -> Exit Code: Expected 1, got 0
-[FAIL] TTY_08: Silent fail
-       -> Exit Code: Expected 1, got 0
-       -> Stdout Regex Mismatch.
-   Expected: /^$/
-   Got: "/dev/tty1"
+[PASS] TTY_07
+[PASS] TTY_08
 [PASS] TTY_09
 [PASS] TTY_10
 UTILITY: stty
@@ -1579,7 +1570,7 @@ UTILITY: who
 [FAIL] WHO_02: Headers -H
        -> Stdout Regex Mismatch.
    Expected: /NAME/
-   Got: "operator   tty1   2026-10-04 17:22"
+   Got: "operator   tty1   2026-10-04 17:40"
 [PASS] WHO_03
 [PASS] WHO_04
 [PASS] WHO_05
@@ -2677,7 +2668,7 @@ renice        |    10 |    7 |    3 |     70.0%
 nohup         |    10 |    9 |    1 |     90.0%
 logger        |    10 |   10 |    0 |    100.0%
 tput          |    10 |    6 |    4 |     60.0%
-tty           |    10 |    7 |    3 |     70.0%
+tty           |    10 |   10 |    0 |    100.0%
 stty          |    10 |    8 |    2 |     80.0%
 tabs          |    10 |    9 |    1 |     90.0%
 who           |    10 |    8 |    2 |     80.0%
@@ -2747,7 +2738,7 @@ uustat        |    10 |    9 |    1 |     90.0%
 uux           |    10 |    2 |    8 |     20.0%
 xgettext      |    10 |    6 |    4 |     60.0%
 
-TOTAL COMPLIANCE: 74.5% (1306/1752)
+TOTAL COMPLIANCE: 74.7% (1309/1752)
 
 === MISSING UTILITIES (Implemented but failing) ===
 None

@@ -53,18 +53,18 @@ export class ChmodCommand extends CommandBase {
 
         for (const file of files) {
             try {
-                const dentry = this.fs.resolve(file, state.currentDirectory, true, context.user);
+                const dentry = context.fileSystemService.resolve(file, state.currentDirectory, true, context.user);
                 if (!dentry) {
                     errors.push(`chmod: cannot access '${file}': No such file or directory`);
                     continue;
                 }
 
                 if (recursive) {
-                    this.chmodRecursive(dentry, modeSpec, context.user);
+                    this.chmodRecursive(context.fileSystemService, dentry, modeSpec, context.user);
                 } else {
-                    const inode = this.fs.getInode(dentry.inodeId)!;
+                    const inode = context.fileSystemService.getInode(dentry.inodeId)!;
                     const newMode = this.calculateMode(inode.mode, modeSpec);
-                    this.fs.chmod(file, newMode, state.currentDirectory, context.user);
+                    context.fileSystemService.chmod(file, newMode, state.currentDirectory, context.user);
                 }
             } catch (e: any) {
                 errors.push(`chmod: ${file}: ${e.message}`);
@@ -78,16 +78,16 @@ export class ChmodCommand extends CommandBase {
         };
     }
 
-    private chmodRecursive(dentry: any, modeSpec: string, user: any): void {
-        const inode = this.fs.getInode(dentry.inodeId)!;
+    private chmodRecursive(fs: FileSystemService, dentry: any, modeSpec: string, user: any): void {
+        const inode = fs.getInode(dentry.inodeId)!;
         const newMode = this.calculateMode(inode.mode, modeSpec);
-        const path = this.fs.getAbsolutePath(dentry);
+        const path = fs.getAbsolutePath(dentry);
 
-        this.fs.chmod(path, newMode, '/', user);
+        fs.chmod(path, newMode, '/', user);
 
         if (dentry.children) {
             for (const child of dentry.children.values()) {
-                this.chmodRecursive(child, modeSpec, user);
+                this.chmodRecursive(fs, child, modeSpec, user);
             }
         }
     }

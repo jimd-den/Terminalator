@@ -36,7 +36,7 @@ export class TouchCommand extends CommandBase {
         context: ProcessContext,
         state: TerminalState
     ): Promise<CommandResponse> {
-        const fsService = context.fileSystemService || this.fs;
+        const fsService = context.fileSystemService || context.fileSystemService;
         const noCreate = flags.has('c');
 
         if (operands.length === 0) {

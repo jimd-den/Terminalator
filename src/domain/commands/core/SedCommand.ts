@@ -56,7 +56,7 @@ export class SedCommand extends CommandBase {
         const fOptions = this.options.get('f');
         if (fOptions) {
             try {
-                scripts.push(this.fs.readFile(this.resolvePath(fOptions, state)));
+                scripts.push(context.fileSystemService.readFile(this.resolvePath(fOptions, state)));
             } catch (e) {
                 return { output: `sed: cannot read script file ${fOptions}`, newState: state, exitCode: 1 };
             }
@@ -147,10 +147,10 @@ export class SedCommand extends CommandBase {
         for (const filename of files) {
             const path = this.resolvePath(filename, state);
             try {
-                const content = this.fs.readFile(path);
+                const content = context.fileSystemService.readFile(path);
                 const result = processContent(content);
                 if (inPlace) {
-                    this.fs.writeFile(path, result, 'w');
+                    context.fileSystemService.writeFile(path, result, 'w');
                 } else {
                     totalOutput += result;
                 }

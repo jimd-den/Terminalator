@@ -29,7 +29,7 @@ export class TsortCommand implements ICommand {
         let content = '';
         if (file) {
             try {
-                content = this.fs.readFile(this.resolvePath(file, state));
+                content = context.fileSystemService.readFile(this.resolvePath(file, state));
             } catch (e) {
                 return { output: `tsort: ${file}: No such file`, newState: state, exitCode: 1 };
             }

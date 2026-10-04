@@ -36,8 +36,8 @@ export class CmpCommand implements ICommand {
             const path1 = this.resolvePath(file1, state);
             const path2 = this.resolvePath(file2, state);
 
-            const content1 = this.fs.readFile(path1);
-            const content2 = this.fs.readFile(path2);
+            const content1 = context.fileSystemService.readFile(path1);
+            const content2 = context.fileSystemService.readFile(path2);
 
             // Byte by byte comparison
             const len = Math.min(content1.length, content2.length);

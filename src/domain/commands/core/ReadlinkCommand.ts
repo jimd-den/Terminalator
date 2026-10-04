@@ -31,7 +31,7 @@ export class ReadlinkCommand implements ICommand {
 
         try {
             const path = this.resolvePath(file, state);
-            const node = this.fs.resolve(path); // resolveNode typically resolves links?
+            const node = context.fileSystemService.resolve(path); // resolveNode typically resolves links?
             // We need to resolve the node WITHOUT following the link if it is the target.
             // FileSystem might resolve links automatically.
             // We need `lstat` or similar.
@@ -41,7 +41,7 @@ export class ReadlinkCommand implements ICommand {
             // Or `readLink(path)`?
             // Assuming `fs.readLink(path)` exists.
 
-            const target = this.fs.readlink(path);
+            const target = context.fileSystemService.readlink(path);
             if (target) {
                 return {
                     output: target,

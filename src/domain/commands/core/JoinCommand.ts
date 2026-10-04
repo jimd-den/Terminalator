@@ -77,8 +77,8 @@ export class JoinCommand implements ICommand {
         }
 
         try {
-            const content1 = this.readFile(files[0], state, input);
-            const content2 = this.readFile(files[1], state, input);
+            const content1 = this.readFile(context.fileSystemService, files[0], state, input);
+            const content2 = this.readFile(context.fileSystemService, files[1], state, input);
 
             const lines1 = content1.split('\n').filter(l => l !== '');
             const lines2 = content2.split('\n').filter(l => l !== '');
@@ -162,10 +162,10 @@ export class JoinCommand implements ICommand {
         }
     }
 
-    private readFile(pathStr: string, state: TerminalState, input?: string): string {
+    private readFile(fs: FileSystemService, pathStr: string, state: TerminalState, input?: string): string {
         if (pathStr === '-') return input || '';
         const path = this.resolvePath(pathStr, state);
-        return this.fs.readFile(path);
+        return fs.readFile(path);
     }
 
     private resolvePath(path: string, state: TerminalState): string {

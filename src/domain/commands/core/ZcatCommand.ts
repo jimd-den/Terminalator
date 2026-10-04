@@ -30,7 +30,7 @@ export class ZcatCommand implements ICommand {
 
         for (const file of files) {
             try {
-                const content = this.fs.readFile(file, state.currentDirectory);
+                const content = context.fileSystemService.readFile(file, state.currentDirectory);
                 // readFile now returns string automatically (decodes if binary)
 
                 if (content.startsWith('RLE:')) {

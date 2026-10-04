@@ -73,6 +73,22 @@ export class FileSystem {
         this.mkdir('/usr/bin');
         this.mkdir('/tmp');
         this.mkdir('/var/mail');
+
+        // The login user owns their home; /tmp is world-writable with the sticky bit.
+        this.setOwnerAndMode('/home/operator', 1000, 1000, 0o755);
+        this.setOwnerAndMode('/tmp', 0, 0, 0o1777);
+    }
+
+    private setOwnerAndMode(path: string, uid: number, gid: number, perms: number) {
+        let node: DirectoryNode | undefined = this.root;
+        for (const part of path.split('/').filter(Boolean)) {
+            node = node?.getChild(part) as DirectoryNode | undefined;
+        }
+        const inode = node && this.inodeTable.get(node.inodeId);
+        if (!inode) return;
+        inode.uid = uid;
+        inode.gid = gid;
+        inode.mode = (inode.mode & S_IFMT) | perms;
     }
 
     private mkdir(path: string) {

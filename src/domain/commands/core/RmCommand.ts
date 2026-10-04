@@ -29,7 +29,7 @@ export class RmCommand extends CommandBase {
     constructor(private fsService: FileSystemService) { super(); }
 
     executeInternal(args: string[], flags: Set<string>, targets: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const fsService = context.fileSystemService || this.fsService;
+        const fsService = context.fileSystemService || context.fileSystemService;
         const recursive = flags.has('r') || flags.has('R');
         const force = flags.has('f');
 

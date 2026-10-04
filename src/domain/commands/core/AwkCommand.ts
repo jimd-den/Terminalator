@@ -93,7 +93,7 @@ export class AwkCommand extends CommandBase {
                 for (const file of files) {
                     try {
                         const path = file.startsWith('/') ? file : (state.currentDirectory === '/' ? `/${file}` : `${state.currentDirectory}/${file}`);
-                        content += this.fs.readFile(path) + '\n';
+                        content += context.fileSystemService.readFile(path) + '\n';
                     } catch (e: any) {
                         return { output: `awk: ${file}: ${e.message}`, newState: state, exitCode: 1 };
                     }

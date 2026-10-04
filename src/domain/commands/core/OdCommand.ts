@@ -33,7 +33,7 @@ export class OdCommand implements ICommand {
         let content = '';
         if (files.length > 0) {
             try {
-                content = this.fs.readFile(this.resolvePath(files[0], state));
+                content = context.fileSystemService.readFile(this.resolvePath(files[0], state));
             } catch (e) {
                 return { output: `od: ${files[0]}: No such file`, newState: state, exitCode: 1 };
             }

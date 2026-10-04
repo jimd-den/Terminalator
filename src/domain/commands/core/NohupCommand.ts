@@ -50,9 +50,9 @@ export class NohupCommand implements ICommand {
             const path = state.currentDirectory === '/' ? `/${outFile}` : `${state.currentDirectory}/${outFile}`;
 
             let existing = '';
-            try { existing = this.fs.readFile(path); } catch (e) { }
+            try { existing = context.fileSystemService.readFile(path); } catch (e) { }
 
-            this.fs.writeFile(path, existing + response.output + '\n', 'w');
+            context.fileSystemService.writeFile(path, existing + response.output + '\n', 'w');
 
             return {
                 output: `nohup: ignoring input and appending output to '${outFile}'`,

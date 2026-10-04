@@ -40,7 +40,7 @@ export class NlCommand implements ICommand {
         if (files.length > 0) {
             for (const file of files) {
                 try {
-                    content += this.fs.readFile(this.resolvePath(file, state));
+                    content += context.fileSystemService.readFile(this.resolvePath(file, state));
                 } catch (e) {
                     return { output: `nl: ${file}: No such file`, newState: state, exitCode: 1 };
                 }

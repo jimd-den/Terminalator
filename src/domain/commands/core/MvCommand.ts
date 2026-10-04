@@ -27,7 +27,7 @@ export class MvCommand extends CommandBase {
     constructor(private fsService: FileSystemService) { super(); }
 
     executeInternal(args: string[], flags: Set<string>, operands: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const fsService = context.fileSystemService || this.fsService;
+        const fsService = context.fileSystemService || context.fileSystemService;
 
         if (operands.length < 2) {
             return {

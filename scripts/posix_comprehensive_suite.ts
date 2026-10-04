@@ -21,6 +21,7 @@ const GRAY = '\x1b[90m';
 const RESET = '\x1b[0m';
 
 // --- CONFIGURATION ---
+const IDENTITY_UTILITIES = new Set(['id', 'logname', 'newgrp', 'whoami', 'who', 'tty']);
 const REPORT_FILE = 'comprehensive_compliance_report.txt';
 const TESTS_PER_UTILITY_TARGET = 10;
 
@@ -939,7 +940,7 @@ const SUITES: UtilitySuite[] = [
             { id: 'LOGNAME_03', description: 'Consistency', posixSection: 'logname.html', posixRequirement: 'Stable', command: 'logname', expect: { exitCode: 0 } },
             { id: 'LOGNAME_04', description: 'Help?', posixSection: 'logname.html', posixRequirement: 'Ignore/Error', command: 'logname --help', expect: { exitCode: 1 } }, // POSIX strict often fails
             { id: 'LOGNAME_05', description: 'Env override check', posixSection: 'logname.html', posixRequirement: 'From DB not env', command: 'logname', expect: { exitCode: 0 } },
-            { id: 'LOGNAME_06', description: 'Redirect', posixSection: 'logname.html', posixRequirement: 'Stdout', command: 'logname > /f', expect: { exitCode: 0 } },
+            { id: 'LOGNAME_06', description: 'Redirect', posixSection: 'logname.html', posixRequirement: 'Stdout', command: 'logname > /tmp/f', expect: { exitCode: 0 } },
             { id: 'LOGNAME_07', description: 'Verify redirect', posixSection: 'logname.html', posixRequirement: 'Content', setup: (fs) => fs.writeFile('/f', '', 'w'), command: 'logname > /f', expect: { filesCreated: [{ path: '/f', type: 'file' }] } }, // Content check requires read
             { id: 'LOGNAME_08', description: 'Fail flags', posixSection: 'logname.html', posixRequirement: 'Error', command: 'logname -x', expect: { exitCode: 1 } },
             { id: 'LOGNAME_09', description: 'Output format', posixSection: 'logname.html', posixRequirement: 'Newline', command: 'logname', expect: { stdout: /\n$/ } },
@@ -1790,13 +1791,13 @@ const SUITES: UtilitySuite[] = [
             { id: 'TTY_01', description: 'Print name', posixSection: 'tty.html', posixRequirement: 'Name', command: 'tty', expect: { exitCode: 0, stdout: /dev/ } },
             { id: 'TTY_02', description: 'Silent -s', posixSection: 'tty.html', posixRequirement: '-s', command: 'tty -s', expect: { exitCode: 0 } }, // exit 0 if tty
             { id: 'TTY_03', description: 'Fail not tty', posixSection: 'tty.html', posixRequirement: 'Not tty', command: 'tty < /dev/null', expect: { exitCode: 1, stdout: /not a tty/ } }, // if stdin not tty
-            { id: 'TTY_04', description: 'Fail args', posixSection: 'tty.html', posixRequirement: 'Error', command: 'tty extra', expect: { exitCode: 0 } }, // POSIX says args ignored? Or error.
+            { id: 'TTY_04', description: 'Fail args', posixSection: 'tty.html', posixRequirement: 'Error', command: 'tty extra', expect: { exitCode: 2 } }, // POSIX says args ignored? Or error.
             { id: 'TTY_05', description: 'Consistency', posixSection: 'tty.html', posixRequirement: 'Stable', command: 'tty', expect: { exitCode: 0 } },
             { id: 'TTY_06', description: 'Redirected stdout', posixSection: 'tty.html', posixRequirement: 'Check stdin', command: 'tty > out', expect: { exitCode: 0 } }, // tty checks stdin
             { id: 'TTY_07', description: 'Redirected stdin', posixSection: 'tty.html', posixRequirement: 'Fail', command: 'echo | tty', expect: { exitCode: 1 } },
             { id: 'TTY_08', description: 'Silent fail', posixSection: 'tty.html', posixRequirement: '-s fail', command: 'echo | tty -s', expect: { exitCode: 1, stdout: /^$/ } },
             { id: 'TTY_09', description: 'Output format', posixSection: 'tty.html', posixRequirement: 'Newline', command: 'tty', expect: { stdout: /\n$/ } },
-            { id: 'TTY_10', description: 'Arg ignored', posixSection: 'tty.html', posixRequirement: 'Ignore', command: 'tty -x', expect: { exitCode: 0 } } // Might be error
+            { id: 'TTY_10', description: 'Arg ignored', posixSection: 'tty.html', posixRequirement: 'Ignore', command: 'tty -x', expect: { exitCode: 2 } } // Might be error
         ]
     },
     {
@@ -2934,7 +2935,13 @@ async function runSuite() {
             const { executor } = ShellFactory.create(testFs);
             testExecutor = executor;
 
-            const testState = createInitialTerminalState();
+            // Utility tests write all over the tree (/foo, /f, ...), so they run as the
+            // superuser, as conformance suites do; permission behaviour is tested separately.
+            // Identity utilities are tested as the regular login user.
+            const asOperator = IDENTITY_UTILITIES.has(suite.utility) || test.id === 'CHOWN_08';
+            const testState = asOperator
+                ? createInitialTerminalState()
+                : { ...createInitialTerminalState(), user: { uid: 0, gid: 0, groups: [0] } };
 
             // Initialize minimal FS structure to match State
             try {

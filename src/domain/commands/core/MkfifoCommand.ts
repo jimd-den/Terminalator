@@ -59,7 +59,7 @@ export class MkfifoCommand extends CommandBase {
 
         for (const target of operands) {
             try {
-                this.fs.mkfifo(target, mode, 1000, 1000, state.currentDirectory);
+                context.fileSystemService.mkfifo(target, mode, 1000, 1000, state.currentDirectory);
             } catch (error: any) {
                 output += `mkfifo: cannot create fifo '${target}': ${error.message}\n`;
                 finalExitCode = 1;

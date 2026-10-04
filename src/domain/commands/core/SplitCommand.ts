@@ -49,7 +49,7 @@ export class SplitCommand implements ICommand {
                 content = input || '';
             } else {
                 try {
-                    content = this.fs.readFile(this.resolvePath(file, state));
+                    content = context.fileSystemService.readFile(this.resolvePath(file, state));
                 } catch (e) {
                     return { output: `split: ${file}: No such file`, newState: state, exitCode: 1 };
                 }
@@ -84,7 +84,7 @@ export class SplitCommand implements ICommand {
             // Write to CWD
             const path = state.currentDirectory === '/' ? `/${filename}` : `${state.currentDirectory}/${filename}`;
             try {
-                this.fs.writeFile(path, chunkContent, 'w');
+                context.fileSystemService.writeFile(path, chunkContent, 'w');
             } catch (e) {
                 return { output: `split: cannot write ${filename}`, newState: state, exitCode: 1 };
             }

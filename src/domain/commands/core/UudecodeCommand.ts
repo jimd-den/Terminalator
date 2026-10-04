@@ -29,7 +29,7 @@ export class UudecodeCommand implements ICommand {
 
         if (file) {
             try {
-                const raw = this.fs.readFile(this.resolvePath(file, state));
+                const raw = context.fileSystemService.readFile(this.resolvePath(file, state));
                 content = typeof raw === 'string' ? raw : new TextDecoder().decode(raw);
             } catch (e) {
                 return { output: `uudecode: ${file}: No such file`, newState: state, exitCode: 1 };
@@ -93,7 +93,7 @@ export class UudecodeCommand implements ICommand {
         // Write to decodePath
         if (decodePath && output) {
             try {
-                this.fs.writeFile(this.resolvePath(decodePath, state), output, 'w');
+                context.fileSystemService.writeFile(this.resolvePath(decodePath, state), output, 'w');
             } catch (e) {
                 return { output: `uudecode: cannot write ${decodePath}`, newState: state, exitCode: 1 };
             }

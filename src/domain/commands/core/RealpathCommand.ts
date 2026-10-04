@@ -53,7 +53,7 @@ export class RealpathCommand implements ICommand {
             absPath = this.normalize(absPath);
 
             // Check existence? POSIX realpath fails if components don't exist.
-            const node = this.fs.resolve(absPath);
+            const node = context.fileSystemService.resolve(absPath);
             if (!node) {
                 return { output: `realpath: ${file}: No such file or directory`, newState: state, exitCode: 1 };
             }

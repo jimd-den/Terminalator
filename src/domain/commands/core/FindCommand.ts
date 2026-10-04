@@ -87,7 +87,7 @@ export class FindCommand implements ICommand {
                     const type = args[++i];
                     predicates.push({
                         evaluate: async (node) => {
-                            const inode = this.fs.getInode(node.inodeId);
+                            const inode = context.fileSystemService.getInode(node.inodeId);
                             if (!inode) return false;
                             if (type === 'f') return ((inode.mode & 0o170000) === S_IFREG);
                             if (type === 'd') return ((inode.mode & 0o170000) === S_IFDIR);
@@ -161,7 +161,7 @@ export class FindCommand implements ICommand {
                 startPath = state.currentDirectory === '/' ? `/${path}` : `${state.currentDirectory}/${path}`;
             }
 
-            const node = this.fs.resolve(startPath);
+            const node = context.fileSystemService.resolve(startPath);
             if (!node) return this.error(`\`${path}\`: No such file or directory`, state);
 
             await this.traverse(node, path, predicates, results, context, state, 0, maxDepth);
@@ -198,7 +198,7 @@ export class FindCommand implements ICommand {
 
             // Evaluate predicate
             // Note: maxdepth is checked via recursion limit, but its predicate "evaluate" returns true.
-            const res = await p.evaluate(node, currentPath, this.fs, context, state, output);
+            const res = await p.evaluate(node, currentPath, context.fileSystemService, context, state, output);
 
             if (p.type === 'prune' && res) pruned = true;
 
@@ -211,7 +211,7 @@ export class FindCommand implements ICommand {
 
         if (pruned) return;
 
-        if (this.fs.isDirectory(node) && currentDepth < maxDepth) {
+        if (context.fileSystemService.isDirectory(node) && currentDepth < maxDepth) {
             const dirNode = node as DirectoryNode;
             // Sort children for deterministic output (optional but good for tests)
             const children = Array.from(dirNode.children.entries()).sort((a, b) => a[0].localeCompare(b[0]));

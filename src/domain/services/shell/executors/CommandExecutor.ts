@@ -139,6 +139,9 @@ export class CommandExecutor implements NodeExecutor {
         for (const [n, v] of assignments) env[n] = v;
 
         if (resolved.kind === 'file') {
+            // /usr/bin/sh, /usr/bin/cd, ...: executables for utilities the shell implements itself.
+            const asBuiltin = resolved.utility ? this.builtins.get(resolved.utility) : undefined;
+            if (asBuiltin && !asBuiltin.special) return this.runBuiltin(asBuiltin, resolved.utility!, args, state, io);
             const utility = resolved.utility ? this.runtime.registry.get(resolved.utility) : undefined;
             if (utility) return this.runUtility(resolved.utility!, args, env, state, io);
             return this.loader.exec(resolved.path, name, args, state, io);

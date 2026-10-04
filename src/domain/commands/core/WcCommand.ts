@@ -37,7 +37,7 @@ export class WcCommand extends CommandBase {
         state: TerminalState
     ): Promise<CommandResponse> {
         const input = getStdinAsString(context);
-        const fsService = context.fileSystemService || this.fs;
+        const fsService = context.fileSystemService || context.fileSystemService;
 
         let countLines = flags.has('l');
         let countWords = flags.has('w');

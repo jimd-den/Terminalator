@@ -68,7 +68,7 @@ export class UniqCommand extends CommandBase {
         if (options.inputFile && options.inputFile !== '-') {
             try {
                 const resolvedPath = this.resolvePath(options.inputFile, state);
-                content = this.fs.readFile(resolvedPath);
+                content = context.fileSystemService.readFile(resolvedPath);
             } catch (e) {
                 return {
                     output: `uniq: ${options.inputFile}: No such file or directory`,
@@ -168,7 +168,7 @@ export class UniqCommand extends CommandBase {
         if (options.outputFile) {
             try {
                 const resolvedOut = this.resolvePath(options.outputFile, state);
-                this.fs.writeFile(resolvedOut, finalOutput);
+                context.fileSystemService.writeFile(resolvedOut, finalOutput);
                 return { output: '', newState: state, exitCode: 0 };
             } catch (e) {
                 return { output: `uniq: ${options.outputFile}: Cannot write`, newState: state, exitCode: 1 };

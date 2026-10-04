@@ -52,7 +52,8 @@ export class UtilityRunner {
 
         const context: ProcessContext = {
             fs: this.runtime.fsService.fileSystem,
-            fileSystemService: this.runtime.fsService,
+            // The process sees the file system through its own credentials.
+            fileSystemService: this.runtime.fsService.asUser(state.user),
             env,
             cwd: state.currentDirectory,
             user: state.user,

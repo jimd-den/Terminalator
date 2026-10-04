@@ -49,7 +49,7 @@ export class FuserCommand implements ICommand {
 
         // 2. Process Files
         for (const file of files) {
-            const dentry = this.fs.resolve(file, state.currentDirectory);
+            const dentry = context.fileSystemService.resolve(file, state.currentDirectory);
             if (!dentry) return { output: `fuser: ${file}: No such file or directory`, newState: state, exitCode: 1 };
 
             if (!silent) {

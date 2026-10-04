@@ -86,7 +86,7 @@ export class GetconfCommand implements ICommand {
         // Path validation per POSIX
         if (path) {
             if (varName === 'PATH_MAX' || varName === 'NAME_MAX' || varName.includes('_PATH') || varName.includes('_NAME')) {
-                const node = this.fs.resolve(path);
+                const node = context.fileSystemService.resolve(path);
                 if (!node) {
                     return { output: `getconf: ${path}: No such file or directory`, newState: state, exitCode: 1 };
                 }
@@ -96,7 +96,7 @@ export class GetconfCommand implements ICommand {
                 // Actually getconf: "If a path_var is specified, the value... for the file... path"
                 // If not a path var, "the value... for the system"
                 // We'll enforce existence if provided to match tests usually.
-                const node = this.fs.resolve(path);
+                const node = context.fileSystemService.resolve(path);
                 if (!node) {
                     return { output: `getconf: ${path}: No such file or directory`, newState: state, exitCode: 1 };
                 }

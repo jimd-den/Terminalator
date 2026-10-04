@@ -52,9 +52,9 @@ export class LnCommand extends CommandBase {
 
         let finalLinkPath = linkName;
 
-        let linkNode = this.fs.resolve(linkName.startsWith('/') ? linkName : (state.currentDirectory === '/' ? `/${linkName}` : `${state.currentDirectory}/${linkName}`));
+        let linkNode = context.fileSystemService.resolve(linkName.startsWith('/') ? linkName : (state.currentDirectory === '/' ? `/${linkName}` : `${state.currentDirectory}/${linkName}`));
 
-        if (linkNode && this.fs.isDirectory(linkNode)) {
+        if (linkNode && context.fileSystemService.isDirectory(linkNode)) {
             const targetBase = target.substring(target.lastIndexOf('/') + 1);
             finalLinkPath = linkName.endsWith('/') ? `${linkName}${targetBase}` : `${linkName}/${targetBase}`;
         }
@@ -68,7 +68,7 @@ export class LnCommand extends CommandBase {
 
         try {
             if (symbolic) {
-                this.fs.symlink(target, absLinkPath, 1000, 1000, '/');
+                context.fileSystemService.symlink(target, absLinkPath, 1000, 1000, '/');
             } else {
                 let absTarget = target;
                 if (!target.startsWith('/')) {
@@ -76,7 +76,7 @@ export class LnCommand extends CommandBase {
                         ? `/${target}`
                         : `${state.currentDirectory}/${target}`;
                 }
-                this.fs.link(absTarget, absLinkPath, '/');
+                context.fileSystemService.link(absTarget, absLinkPath, '/');
             }
         } catch (e: any) {
             return {

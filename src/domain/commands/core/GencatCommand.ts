@@ -31,7 +31,7 @@ export class GencatCommand implements ICommand {
                     if (input) catalogContent += input + '\n';
                     continue;
                 }
-                const content = this.fs.readFile(file, state.currentDirectory);
+                const content = context.fileSystemService.readFile(file, state.currentDirectory);
                 catalogContent += content + '\n';
             }
         }
@@ -51,7 +51,7 @@ export class GencatCommand implements ICommand {
         }
 
         // Write output
-        this.fs.writeFile(catFile, catalogContent, 'w', 1000, 1000, state.currentDirectory);
+        context.fileSystemService.writeFile(catFile, catalogContent, 'w', 1000, 1000, state.currentDirectory);
 
         return { output: '', newState: state, exitCode: 0 };
     }

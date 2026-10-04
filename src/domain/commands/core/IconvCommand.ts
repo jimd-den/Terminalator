@@ -58,7 +58,7 @@ export class IconvCommand implements ICommand {
         if (inputFile && inputFile !== '-') {
             try {
                 // FileSystemService.readFile resolves path internally
-                content = this.fs.readFile(inputFile, state.currentDirectory);
+                content = context.fileSystemService.readFile(inputFile, state.currentDirectory);
             } catch (e) {
                 if (!silent) return { output: `iconv: ${inputFile}: No such file or directory`, newState: state, exitCode: 1 };
                 return { output: '', newState: state, exitCode: 1 };
@@ -77,7 +77,7 @@ export class IconvCommand implements ICommand {
         if (outputFile) {
             try {
                 // FileSystemService.writeFile resolves path internally
-                this.fs.writeFile(outputFile, content, 'w', 1000, 1000, state.currentDirectory);
+                context.fileSystemService.writeFile(outputFile, content, 'w', 1000, 1000, state.currentDirectory);
             } catch (e) {
                 if (!silent) return { output: `iconv: cannot write to ${outputFile}`, newState: state, exitCode: 1 };
                 return { output: '', newState: state, exitCode: 1 };

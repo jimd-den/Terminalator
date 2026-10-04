@@ -32,14 +32,14 @@ export class FileCommand implements ICommand {
         for (const arg of args) {
             if (arg.startsWith('-')) continue; // Ignore flags for now
 
-            const dentry = this.fs.resolve(arg, state.currentDirectory);
+            const dentry = context.fileSystemService.resolve(arg, state.currentDirectory);
             if (!dentry) {
                 results.push(`${arg}: cannot open '${arg}' (No such file or directory)`);
                 finalExitCode = 1;
                 continue;
             }
 
-            const inode = this.fs.getInode(dentry.inodeId);
+            const inode = context.fileSystemService.getInode(dentry.inodeId);
             if (!inode) {
                 results.push(`${arg}: error reading inode`);
                 finalExitCode = 1;

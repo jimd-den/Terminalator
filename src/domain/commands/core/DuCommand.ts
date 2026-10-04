@@ -46,7 +46,7 @@ export class DuCommand implements ICommand {
                     : `${state.currentDirectory}/${filename}`;
             }
 
-            const node = this.fs.resolve(path);
+            const node = context.fileSystemService.resolve(path);
             if (!node) {
                 return {
                     output: `du: cannot access '${filename}': No such file or directory`,
@@ -103,7 +103,7 @@ export class DuCommand implements ICommand {
             //    - If operand is file -> print.
             //    - If operand is dir -> print it (and recursively subdirs).
 
-            this.traverse(node, path, report, true); // root is operand, always print
+            this.traverse(context.fileSystemService, node, path, report, true); // root is operand, always print
         }
 
         const output = report.map(r => `${r.size}\t${r.path}`).join('\n');
@@ -115,12 +115,12 @@ export class DuCommand implements ICommand {
         };
     }
 
-    private traverse(node: Dentry, path: string, report: { size: number, path: string }[], isOperand: boolean): number {
+    private traverse(fs: FileSystemService, node: Dentry, path: string, report: { size: number, path: string }[], isOperand: boolean): number {
         const BLOCK_SIZE = 512;
 
         let sizeBytes = 0;
 
-        if (this.fs.isDirectory(node)) {
+        if (fs.isDirectory(node)) {
             sizeBytes = 4096; // 4KB for directory metadata structure
             // Children
             // Use 'children' property? FileSystem Dentry doesn't expose children directly if it acts as just a pointer?
@@ -132,7 +132,7 @@ export class DuCommand implements ICommand {
                 const childPath = path === '/' ? `/${name}` : `${path}/${name}`;
                 // Recursively add child size
                 // Pass false for isOperand
-                const childSize = this.traverse(child, childPath, report, false);
+                const childSize = this.traverse(fs, child, childPath, report, false);
                 sizeBytes += childSize * BLOCK_SIZE; // childSize is in blocks
             }
         } else {
@@ -147,7 +147,7 @@ export class DuCommand implements ICommand {
             // We can resolve content by reading? Expensive but works.
             try {
                 // If it's a directory, readFile throws? We checked isDirectory.
-                const content = this.fs.readFile(path);
+                const content = fs.readFile(path);
                 sizeBytes = content.length;
             } catch (e) {
                 // Should not happen if locking/concurrency not issue
@@ -166,7 +166,7 @@ export class DuCommand implements ICommand {
         // Note: Standard du prints children BEFORE parent (post-order).
         // My recursion does this naturally if I push to report AFTER children loop.
 
-        if (this.fs.isDirectory(node) || isOperand) {
+        if (fs.isDirectory(node) || isOperand) {
             report.push({ size: blocks, path: path }); // path usually full path
         }
 
