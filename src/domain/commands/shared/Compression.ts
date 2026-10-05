@@ -1,5 +1,7 @@
 import { ProcessContext } from '../../entities/ProcessContext';
 import { statPath } from './FileInfo';
+import { gzipDecode, isGzip } from '../../utils/Gzip';
+import { isCompressed, lzwDecompress } from '../../utils/Lzw';
 
 /**
  * Replaces `from` by `to` holding `data`, preserving mode and ownership
@@ -21,4 +23,20 @@ export function replaceFile(context: ProcessContext, from: string, to: string, d
 
 export function exists(context: ProcessContext, path: string): boolean {
     return statPath(context, path, false) !== null;
+}
+
+export type Decompressed = { ok: true; data: Uint8Array; method: 'gzip' | 'compress' | null } | { ok: false; error: string };
+
+/**
+ * Transparently expands gzip (.gz) or compress (.Z) data, as GNU tar does
+ * when reading an archive; anything else is returned unchanged.
+ */
+export function autoDecompress(data: Uint8Array): Decompressed {
+    try {
+        if (isGzip(data)) return { ok: true, data: gzipDecode(data).data, method: 'gzip' };
+        if (isCompressed(data)) return { ok: true, data: lzwDecompress(data), method: 'compress' };
+    } catch (e: any) {
+        return { ok: false, error: String(e?.message ?? e) };
+    }
+    return { ok: true, data, method: null };
 }

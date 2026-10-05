@@ -5,7 +5,7 @@ import { WordExpander, ExpansionScope } from '../expansion/WordExpander';
 import { getOption } from '../expansion/ShellVariables';
 import { IOContext, inputFromFile, inputFromString } from './IOContext';
 import { FileSink } from './FileSink';
-import { NullSink } from './OutputSink';
+import { NullSink, decodeStream } from './OutputSink';
 
 export class RedirectionError extends Error {
     constructor(message: string) {
@@ -63,10 +63,10 @@ export class Redirector {
         if (device) return io.with(fd, device);
 
         if (r.op === '<') {
-            const data = this.readFile(target, state);
+            const { text, binary } = decodeStream(this.readBytes(target, state));
             const node = this.fs.resolve(this.fs.resolveAbsolutePath(target, state.currentDirectory), '/');
-            const size = node ? this.fs.getInode(node.inodeId)?.size ?? data.length : data.length;
-            return io.with(fd, { input: inputFromFile(data, size) });
+            const size = node ? this.fs.getInode(node.inodeId)?.size ?? text.length : text.length;
+            return io.with(fd, { input: inputFromFile(text, size, binary) });
         }
         if (r.op === '<>') {
             const path = this.fs.resolveAbsolutePath(target, state.currentDirectory);
@@ -92,6 +92,19 @@ export class Redirector {
             case '/dev/zero': return isInput ? { input: inputFromString('\0'.repeat(4096)) } : { output: new NullSink() };
         }
         return undefined;
+    }
+
+    /** File contents as bytes, so `< file` keeps binary data intact (stream convention). */
+    private readBytes(target: string, state: TerminalState): Uint8Array {
+        const path = this.fs.resolveAbsolutePath(target, state.currentDirectory);
+        const node = this.fs.resolve(path, '/');
+        if (!node) throw new RedirectionError(`${target}: No such file or directory`);
+        if (this.fs.isDirectory(node)) throw new RedirectionError(`${target}: Is a directory`);
+        try {
+            return this.fs.readFileBuffer(path, '/', state.user);
+        } catch (e: any) {
+            throw new RedirectionError(`${target}: ${this.reason(e)}`);
+        }
     }
 
     private readFile(target: string, state: TerminalState): string {

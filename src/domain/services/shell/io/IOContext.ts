@@ -109,8 +109,8 @@ export function inputFromString(data: string, binary = false): IStream {
 type BinaryMarked = IStream & { binary?: boolean; fileSize?: number };
 
 /** Input redirected from a regular file (`< file`): what fstat() would report as its size. */
-export function inputFromFile(data: string, size: number): IStream {
-    const s = inputFromString(data) as BinaryMarked;
+export function inputFromFile(data: string, size: number, binary = false): IStream {
+    const s = inputFromString(data, binary) as BinaryMarked;
     s.fileSize = size;
     return s;
 }

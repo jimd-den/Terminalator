@@ -11,6 +11,11 @@ import { CoreUtilsModule } from '../src/domain/modules/CoreUtilsModule';
 import { SystemUtilsModule } from '../src/domain/modules/SystemUtilsModule';
 
 import { lzwCompress } from '../src/domain/utils/Lzw';
+import { gzipEncode } from '../src/domain/utils/Gzip';
+import { ArchiveEntry } from '../src/domain/utils/ArchiveEntry';
+import { encodeArchive } from '../src/domain/utils/Ustar';
+import { encodeCpio } from '../src/domain/utils/Cpio';
+import { encodeAr } from '../src/domain/utils/ArArchive';
 import { SystemInstaller, HostProfile } from '../src/domain/services/os/SystemInstaller';
 
 const TEST_HOST: HostProfile = {
@@ -22,6 +27,28 @@ const TEST_HOST: HostProfile = {
 /** Fixture: a real .Z file holding 20 lines of "content". */
 function zfile(fs: FileSystemService, path: string) {
     fs.writeFile(path, lzwCompress(new TextEncoder().encode('content\n'.repeat(20))), 'w');
+}
+
+/** Fixture: a real gzip file holding 20 lines of "content". */
+function gzfile(fs: FileSystemService, path: string) {
+    fs.writeFile(path, gzipEncode(new TextEncoder().encode('content\n'.repeat(20)), { name: 'f' }), 'w');
+}
+
+/** Fixture member: regular file "f" holding "x". */
+const memberF = (): ArchiveEntry => ({
+    name: 'f', kind: 'file', mode: 0o644, uid: 1000, gid: 1000, uname: 'operator', gname: 'operator', mtime: 1700000000,
+    data: new TextEncoder().encode('x'), linkname: '', devmajor: 0, devminor: 0, ino: 1, nlink: 1, dev: 0,
+});
+
+/** Fixtures: real ustar, cpio (odc) and ar archives holding the file "f". */
+function tarfile(fs: FileSystemService, path: string) {
+    fs.writeFile(path, encodeArchive([memberF()]), 'w');
+}
+function cpiofile(fs: FileSystemService, path: string) {
+    fs.writeFile(path, encodeCpio([memberF()], 'odc'), 'w');
+}
+function arfile(fs: FileSystemService, path: string) {
+    fs.writeFile(path, encodeAr([{ name: 'f', date: 0, uid: 0, gid: 0, mode: 0o644, data: new TextEncoder().encode('x') }]), 'w');
 }
 
 // --- COLOR CONSTANTS ---
@@ -987,7 +1014,7 @@ const SUITES: UtilitySuite[] = [
         htmlFile: 'ar.html',
         tests: [
             { id: 'AR_01', description: 'Create archive -rc', posixSection: 'ar.html', posixRequirement: '-rc create', setup: (fs) => fs.writeFile('/f', 'x', 'w'), command: 'ar -rc lib.a /f', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/lib.a', type: 'file' }] } },
-            { id: 'AR_02', description: 'List contents -t', posixSection: 'ar.html', posixRequirement: '-t list', command: 'ar -t lib.a', expect: { exitCode: 0, stdout: /f/ } },
+            { id: 'AR_02', description: 'List contents -t', posixSection: 'ar.html', posixRequirement: '-t list', setup: (fs) => { fs.writeFile('/f', 'x', 'w'); arfile(fs, 'lib.a'); }, command: 'ar -t lib.a', expect: { exitCode: 0, stdout: /f/ } },
             { id: 'AR_03', description: 'Verbose list -tv', posixSection: 'ar.html', posixRequirement: '-tv verbose', command: 'ar -tv lib.a', expect: { exitCode: 0 } },
             { id: 'AR_04', description: 'Delete member -d', posixSection: 'ar.html', posixRequirement: '-d delete', command: 'ar -d lib.a /f', expect: { exitCode: 0 } },
             { id: 'AR_05', description: 'Extract -x', posixSection: 'ar.html', posixRequirement: '-x extract', command: 'ar -x lib.a /f', expect: { exitCode: 0 } },
@@ -1229,32 +1256,32 @@ const SUITES: UtilitySuite[] = [
         utility: 'gzip',
         htmlFile: 'gzip.html', // GNU common, not strictly POSIX
         tests: [
-            { id: 'GZIP_01', description: 'Compress', posixSection: 'gzip.html', posixRequirement: 'Replace .gz', command: 'gzip f', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/f.gz', type: 'file' }] } },
-            { id: 'GZIP_02', description: 'Decompress -d', posixSection: 'gzip.html', posixRequirement: '-d = gunzip', command: 'gzip -d f.gz', expect: { exitCode: 0 } },
-            { id: 'GZIP_03', description: 'Stdout -c', posixSection: 'gzip.html', posixRequirement: '-c', command: 'gzip -c f', expect: { exitCode: 0 } },
-            { id: 'GZIP_04', description: 'Fast -1', posixSection: 'gzip.html', posixRequirement: '-1', command: 'gzip -1 f', expect: { exitCode: 0 } },
-            { id: 'GZIP_05', description: 'Best -9', posixSection: 'gzip.html', posixRequirement: '-9', command: 'gzip -9 f', expect: { exitCode: 0 } },
-            { id: 'GZIP_06', description: 'Recursive -r', posixSection: 'gzip.html', posixRequirement: '-r', command: 'gzip -r dir', expect: { exitCode: 0 } },
-            { id: 'GZIP_07', description: 'Test -t', posixSection: 'gzip.html', posixRequirement: '-t integrity', command: 'gzip -t f.gz', expect: { exitCode: 0 } },
-            { id: 'GZIP_08', description: 'Keep -k', posixSection: 'gzip.html', posixRequirement: '-k', command: 'gzip -k f', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/f', type: 'file' }] } },
-            { id: 'GZIP_09', description: 'Force -f', posixSection: 'gzip.html', posixRequirement: '-f', command: 'gzip -f f', expect: { exitCode: 0 } },
-            { id: 'GZIP_10', description: 'Suffix -S', posixSection: 'gzip.html', posixRequirement: '-S .suf', command: 'gzip -S .z f', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/f.z', type: 'file' }] } }
+            { id: 'GZIP_01', description: 'Compress', posixSection: 'gzip.html', posixRequirement: 'Replace .gz', setup: (fs) => fs.writeFile('f', 'content\n'.repeat(20), 'w'), command: 'gzip f', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/f.gz', type: 'file' }] } },
+            { id: 'GZIP_02', description: 'Decompress -d', posixSection: 'gzip.html', posixRequirement: '-d = gunzip', setup: (fs) => gzfile(fs, 'f.gz'), command: 'gzip -d f.gz', expect: { exitCode: 0 } },
+            { id: 'GZIP_03', description: 'Stdout -c', posixSection: 'gzip.html', posixRequirement: '-c', setup: (fs) => fs.writeFile('f', 'content\n'.repeat(20), 'w'), command: 'gzip -c f', expect: { exitCode: 0 } },
+            { id: 'GZIP_04', description: 'Fast -1', posixSection: 'gzip.html', posixRequirement: '-1', setup: (fs) => fs.writeFile('f', 'content\n'.repeat(20), 'w'), command: 'gzip -1 f', expect: { exitCode: 0 } },
+            { id: 'GZIP_05', description: 'Best -9', posixSection: 'gzip.html', posixRequirement: '-9', setup: (fs) => fs.writeFile('f', 'content\n'.repeat(20), 'w'), command: 'gzip -9 f', expect: { exitCode: 0 } },
+            { id: 'GZIP_06', description: 'Recursive -r', posixSection: 'gzip.html', posixRequirement: '-r', setup: (fs) => { fs.mkdir('dir'); fs.writeFile('dir/a', 'content\n'.repeat(20), 'w'); }, command: 'gzip -r dir', expect: { exitCode: 0 } },
+            { id: 'GZIP_07', description: 'Test -t', posixSection: 'gzip.html', posixRequirement: '-t integrity', setup: (fs) => gzfile(fs, 'f.gz'), command: 'gzip -t f.gz', expect: { exitCode: 0 } },
+            { id: 'GZIP_08', description: 'Keep -k', posixSection: 'gzip.html', posixRequirement: '-k', setup: (fs) => fs.writeFile('f', 'content\n'.repeat(20), 'w'), command: 'gzip -k f', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/f', type: 'file' }] } },
+            { id: 'GZIP_09', description: 'Force -f', posixSection: 'gzip.html', posixRequirement: '-f', setup: (fs) => fs.writeFile('f', 'content\n'.repeat(20), 'w'), command: 'gzip -f f', expect: { exitCode: 0 } },
+            { id: 'GZIP_10', description: 'Suffix -S', posixSection: 'gzip.html', posixRequirement: '-S .suf', setup: (fs) => fs.writeFile('f', 'content\n'.repeat(20), 'w'), command: 'gzip -S .z f', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/f.z', type: 'file' }] } }
         ]
     },
     {
         utility: 'gunzip',
         htmlFile: 'gzip.html',
         tests: [
-            { id: 'GUNZIP_01', description: 'Decompress', posixSection: 'gzip.html', posixRequirement: 'Restore', command: 'gunzip f.gz', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/f', type: 'file' }] } },
-            { id: 'GUNZIP_02', description: 'Stdout -c', posixSection: 'gzip.html', posixRequirement: '-c', command: 'gunzip -c f.gz', expect: { exitCode: 0 } },
-            { id: 'GUNZIP_03', description: 'Force -f', posixSection: 'gzip.html', posixRequirement: '-f', command: 'gunzip -f f.gz', expect: { exitCode: 0 } },
-            { id: 'GUNZIP_04', description: 'Test -t', posixSection: 'gzip.html', posixRequirement: '-t', command: 'gunzip -t f.gz', expect: { exitCode: 0 } },
-            { id: 'GUNZIP_05', description: 'Fail bad magic', posixSection: 'gzip.html', posixRequirement: 'Error', command: 'gunzip bad.gz', expect: { exitCode: 1 } },
-            { id: 'GUNZIP_06', description: 'Recursive -r', posixSection: 'gzip.html', posixRequirement: '-r', command: 'gunzip -r dir', expect: { exitCode: 0 } },
-            { id: 'GUNZIP_07', description: 'Multiple files', posixSection: 'gzip.html', posixRequirement: 'Args', command: 'gunzip a.gz b.gz', expect: { exitCode: 0 } },
-            { id: 'GUNZIP_08', description: 'Suffix', posixSection: 'gzip.html', posixRequirement: '-S', command: 'gunzip -S .z f.z', expect: { exitCode: 0 } },
+            { id: 'GUNZIP_01', description: 'Decompress', posixSection: 'gzip.html', posixRequirement: 'Restore', setup: (fs) => gzfile(fs, 'f.gz'), command: 'gunzip f.gz', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/f', type: 'file' }] } },
+            { id: 'GUNZIP_02', description: 'Stdout -c', posixSection: 'gzip.html', posixRequirement: '-c', setup: (fs) => gzfile(fs, 'f.gz'), command: 'gunzip -c f.gz', expect: { exitCode: 0 } },
+            { id: 'GUNZIP_03', description: 'Force -f', posixSection: 'gzip.html', posixRequirement: '-f', setup: (fs) => { gzfile(fs, 'f.gz'); fs.writeFile('f', 'old', 'w'); }, command: 'gunzip -f f.gz', expect: { exitCode: 0 } },
+            { id: 'GUNZIP_04', description: 'Test -t', posixSection: 'gzip.html', posixRequirement: '-t', setup: (fs) => gzfile(fs, 'f.gz'), command: 'gunzip -t f.gz', expect: { exitCode: 0 } },
+            { id: 'GUNZIP_05', description: 'Fail bad magic', posixSection: 'gzip.html', posixRequirement: 'Error', setup: (fs) => fs.writeFile('bad.gz', 'not gzip data', 'w'), command: 'gunzip bad.gz', expect: { exitCode: 1 } },
+            { id: 'GUNZIP_06', description: 'Recursive -r', posixSection: 'gzip.html', posixRequirement: '-r', setup: (fs) => { fs.mkdir('dir'); gzfile(fs, 'dir/a.gz'); }, command: 'gunzip -r dir', expect: { exitCode: 0 } },
+            { id: 'GUNZIP_07', description: 'Multiple files', posixSection: 'gzip.html', posixRequirement: 'Args', setup: (fs) => { gzfile(fs, 'a.gz'); gzfile(fs, 'b.gz'); }, command: 'gunzip a.gz b.gz', expect: { exitCode: 0 } },
+            { id: 'GUNZIP_08', description: 'Suffix', posixSection: 'gzip.html', posixRequirement: '-S', setup: (fs) => gzfile(fs, 'f.z'), command: 'gunzip -S .z f.z', expect: { exitCode: 0 } },
             { id: 'GUNZIP_09', description: 'Fail missing', posixSection: 'gzip.html', posixRequirement: 'Error', command: 'gunzip missing', expect: { exitCode: 1 } },
-            { id: 'GUNZIP_10', description: 'List -l', posixSection: 'gzip.html', posixRequirement: '-l', command: 'gunzip -l f.gz', expect: { exitCode: 0 } }
+            { id: 'GUNZIP_10', description: 'List -l', posixSection: 'gzip.html', posixRequirement: '-l', setup: (fs) => gzfile(fs, 'f.gz'), command: 'gunzip -l f.gz', expect: { exitCode: 0 } }
         ]
     },
     {
@@ -1262,12 +1289,12 @@ const SUITES: UtilitySuite[] = [
         htmlFile: 'tar.html',
         tests: [
             { id: 'TAR_01', description: 'Create -c', posixSection: 'tar.html', posixRequirement: '-c -f file', setup: (fs) => fs.writeFile('f', 'x', 'w'), command: 'tar -cf a.tar f', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/a.tar', type: 'file' }] } },
-            { id: 'TAR_02', description: 'Extract -x', posixSection: 'tar.html', posixRequirement: '-x -f file', command: 'tar -xf a.tar', expect: { exitCode: 0 } },
+            { id: 'TAR_02', description: 'Extract -x', posixSection: 'tar.html', posixRequirement: '-x -f file', setup: (fs) => tarfile(fs, 'a.tar'), command: 'tar -xf a.tar', expect: { exitCode: 0 } },
             { id: 'TAR_03', description: 'List -t', posixSection: 'tar.html', posixRequirement: '-t -f file', command: 'tar -tf a.tar', expect: { exitCode: 0, stdout: /f/ } },
             { id: 'TAR_04', description: 'Verbose -v', posixSection: 'tar.html', posixRequirement: '-v', command: 'tar -cvf a.tar f', expect: { exitCode: 0, stdout: /f/ } },
             { id: 'TAR_05', description: 'Directory', posixSection: 'tar.html', posixRequirement: 'Recursive', setup: (fs) => fs.mkdir('/d', 0o755), command: 'tar -cf d.tar /d', expect: { exitCode: 0 } },
             { id: 'TAR_06', description: 'Update -u', posixSection: 'tar.html', posixRequirement: '-u update', command: 'tar -uf a.tar f', expect: { exitCode: 0 } },
-            { id: 'TAR_07', description: 'Fail missing', posixSection: 'tar.html', posixRequirement: 'Error', command: 'tar -tf missing.tar', expect: { exitCode: 1 } }, // >0
+            { id: 'TAR_07', description: 'Fail missing', posixSection: 'tar.html', posixRequirement: 'Error', command: 'tar -tf missing.tar', expect: { exitCode: 2 }}, // >0
             { id: 'TAR_08', description: 'Gzip -z (Ext)', posixSection: 'tar.html', posixRequirement: '-z', command: 'tar -czf a.tgz f', expect: { exitCode: 0 } },
             { id: 'TAR_09', description: 'Append -r', posixSection: 'tar.html', posixRequirement: '-r', command: 'tar -rf a.tar f', expect: { exitCode: 0 } },
             { id: 'TAR_10', description: 'Change dir -C', posixSection: 'tar.html', posixRequirement: '-C dir', command: 'tar -cf a.tar -C / home', expect: { exitCode: 0 } }
@@ -1281,28 +1308,28 @@ const SUITES: UtilitySuite[] = [
             { id: 'CPIO_02', description: 'In -i', posixSection: 'pax.html', posixRequirement: 'Copy in', command: 'cpio -o < /dev/null > a.cpio; cpio -i < a.cpio', expect: { exitCode: 0 } },
             { id: 'CPIO_03', description: 'Pass -p', posixSection: 'pax.html', posixRequirement: 'Copy pass', command: 'ls | cpio -p /dest', expect: { exitCode: 0 } },
             { id: 'CPIO_04', description: 'Verbose -v', posixSection: 'pax.html', posixRequirement: '-v', command: 'cpio -ov', expect: { exitCode: 0 } },
-            { id: 'CPIO_05', description: 'List -t', posixSection: 'pax.html', posixRequirement: '-t', command: 'cpio -it < a.cpio', expect: { exitCode: 0, stdout: /./ } },
+            { id: 'CPIO_05', description: 'List -t', posixSection: 'pax.html', posixRequirement: '-t', setup: (fs) => cpiofile(fs, 'a.cpio'), command: 'cpio -it < a.cpio', expect: { exitCode: 0, stdout: /^f$/m }},
             { id: 'CPIO_06', description: 'Format -H (Ext)', posixSection: 'pax.html', posixRequirement: '-H format', command: 'cpio -o -H ustar', expect: { exitCode: 0 } },
-            { id: 'CPIO_07', description: 'Make dir -d', posixSection: 'pax.html', posixRequirement: '-d', command: 'cpio -id', expect: { exitCode: 0 } }, // create dirs
-            { id: 'CPIO_08', description: 'Preserve time -m', posixSection: 'pax.html', posixRequirement: '-m', command: 'cpio -im', expect: { exitCode: 0 } },
+            { id: 'CPIO_07', description: 'Make dir -d', posixSection: 'pax.html', posixRequirement: '-d', command: 'mkdir sub && cd sub && cpio -id < ../a.cpio 2>/dev/null && cat f', expect: { exitCode: 0, stdout: /^x$/ }}, // create dirs
+            { id: 'CPIO_08', description: 'Preserve time -m', posixSection: 'pax.html', posixRequirement: '-m', command: 'cpio -im < a.cpio && ls -l f', expect: { exitCode: 0, stdout: /2023 f$/ }},
             { id: 'CPIO_09', description: 'Owner -R (Ext)', posixSection: 'pax.html', posixRequirement: '-R user', command: 'cpio -oR operator', expect: { exitCode: 0 } },
-            { id: 'CPIO_10', description: 'Fail bad input', posixSection: 'pax.html', posixRequirement: 'Error', command: 'cpio -i < /dev/null', expect: { exitCode: 1 } } // empty ok? bad magic?
+            { id: 'CPIO_10', description: 'Fail bad input', posixSection: 'pax.html', posixRequirement: 'Error', command: 'cpio -i < /dev/null', expect: { exitCode: 2 }} // empty ok? bad magic?
         ]
     },
     {
         utility: 'pax',
         htmlFile: 'pax.html',
         tests: [
-            { id: 'PAX_01', description: 'List (default)', posixSection: 'pax.html', posixRequirement: 'List', command: 'pax -f a.tar', expect: { exitCode: 0, stdout: /f/ } },
+            { id: 'PAX_01', description: 'List (default)', posixSection: 'pax.html', posixRequirement: 'List', setup: (fs) => { fs.writeFile('f', 'x', 'w'); tarfile(fs, 'a.tar'); }, command: 'pax -f a.tar', expect: { exitCode: 0, stdout: /f/ } },
             { id: 'PAX_02', description: 'Write -w', posixSection: 'pax.html', posixRequirement: '-w', command: 'pax -w -f a.pax f', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/a.pax', type: 'file' }] } },
-            { id: 'PAX_03', description: 'Read -r', posixSection: 'pax.html', posixRequirement: '-r', command: 'pax -r -f a.pax', expect: { exitCode: 0 } },
-            { id: 'PAX_04', description: 'Copy -rw', posixSection: 'pax.html', posixRequirement: '-rw', command: 'pax -rw . /dest', expect: { exitCode: 0 } },
+            { id: 'PAX_03', description: 'Read -r', posixSection: 'pax.html', posixRequirement: '-r', setup: (fs) => tarfile(fs, 'a.pax'), command: 'pax -r -f a.pax', expect: { exitCode: 0 } },
+            { id: 'PAX_04', description: 'Copy -rw', posixSection: 'pax.html', posixRequirement: '-rw', command: 'mkdir /tmp/dest && pax -rw f /tmp/dest && cat /tmp/dest/f', expect: { exitCode: 0, stdout: /^x$/ }},
             { id: 'PAX_05', description: 'Format -x', posixSection: 'pax.html', posixRequirement: '-x ustar', command: 'pax -w -x ustar f', expect: { exitCode: 0 } },
             { id: 'PAX_06', description: 'Specific file', posixSection: 'pax.html', posixRequirement: 'Filter', command: 'pax -f a.pax f', expect: { exitCode: 0 } },
             { id: 'PAX_07', description: 'Fail missing', posixSection: 'pax.html', posixRequirement: 'Error', command: 'pax -f missing', expect: { exitCode: 1 } },
             { id: 'PAX_08', description: 'Append -a', posixSection: 'pax.html', posixRequirement: '-a', command: 'pax -wa -f a.pax f', expect: { exitCode: 0 } },
-            { id: 'PAX_09', description: 'Verbose -v', posixSection: 'pax.html', posixRequirement: '-v', command: 'pax -v', expect: { exitCode: 0 } },
-            { id: 'PAX_10', description: 'Link -l (Ext)', posixSection: 'pax.html', posixRequirement: '-l', command: 'pax -rwl . dest', expect: { exitCode: 0 } }
+            { id: 'PAX_09', description: 'Verbose -v', posixSection: 'pax.html', posixRequirement: '-v', command: 'pax -w f | pax -v', expect: { exitCode: 0, stdout: /^-rw-r--r-- .* f$/m }},
+            { id: 'PAX_10', description: 'Link -l (Ext)', posixSection: 'pax.html', posixRequirement: '-l', command: 'mkdir dest && pax -rwl f dest && ls -i f dest/f | awk "{print \\$1}" | uniq | wc -l', expect: { exitCode: 0, stdout: /^\s*1$/ }}
         ]
     },
     {
