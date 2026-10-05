@@ -1278,7 +1278,7 @@ UTILITY: who
 [FAIL] WHO_02: Headers -H
        -> Stdout Regex Mismatch.
    Expected: /NAME/
-   Got: "operator   tty1   2026-10-04 19:10"
+   Got: "operator   tty1   2026-10-05 03:06"
 [PASS] WHO_03
 [PASS] WHO_04
 [PASS] WHO_05
@@ -1712,122 +1712,96 @@ UTILITY: return
 [PASS] RETURN_09
 [PASS] RETURN_10
 UTILITY: admin
-[FAIL] ADMIN_01: Create SCCS
-       -> Exit Code: Expected 0, got 1
-[FAIL] ADMIN_02: Init -n
-       -> Exit Code: Expected 0, got 1
+[PASS] ADMIN_01
+[PASS] ADMIN_02
 [PASS] ADMIN_03
 [PASS] ADMIN_04
-[FAIL] ADMIN_05: Comment -y
-       -> Exit Code: Expected 0, got 1
-[FAIL] ADMIN_06: Login -m
-       -> Exit Code: Expected 0, got 1
-[FAIL] ADMIN_07: Release -r
-       -> Exit Code: Expected 0, got 1
-[FAIL] ADMIN_08: Flag -f
-       -> Exit Code: Expected 0, got 1
-[FAIL] ADMIN_09: Consistency
-       -> Exit Code: Expected 0, got 1
-[FAIL] ADMIN_10: New
-       -> Exit Code: Expected 0, got 1
+[PASS] ADMIN_05
+[PASS] ADMIN_06
+[PASS] ADMIN_07
+[PASS] ADMIN_08
+[PASS] ADMIN_09
+[PASS] ADMIN_10
 UTILITY: delta
+[PASS] DELTA_01
+[PASS] DELTA_02
+[PASS] DELTA_03
+[PASS] DELTA_04
+[PASS] DELTA_05
+[PASS] DELTA_06
+[PASS] DELTA_07
+[PASS] DELTA_08
+[PASS] DELTA_09
+[PASS] DELTA_10
 UTILITY: get
+[PASS] GET_01
+[PASS] GET_02
+[PASS] GET_03
+[PASS] GET_04
+[PASS] GET_05
+[PASS] GET_06
+[PASS] GET_07
+[PASS] GET_08
+[PASS] GET_09
+[PASS] GET_10
 UTILITY: prs
-[FAIL] PRS_01: Print logic
-       -> Exit Code: Expected 0, got 1
-[FAIL] PRS_02: Data spec -d
-       -> Exit Code: Expected 0, got 1
+[PASS] PRS_01
+[PASS] PRS_02
 [PASS] PRS_03
 [PASS] PRS_04
-[FAIL] PRS_05: SID -r
-       -> Exit Code: Expected 0, got 1
-[FAIL] PRS_06: Early exit -e
-       -> Exit Code: Expected 0, got 1
-[FAIL] PRS_07: Late -l
-       -> Exit Code: Expected 0, got 1
-[FAIL] PRS_08: Consistency
-       -> Exit Code: Expected 0, got 1
-[FAIL] PRS_09: Suppress -a
-       -> Exit Code: Expected 0, got 1
-[FAIL] PRS_10: Simple
-       -> Exit Code: Expected 0, got 1
+[PASS] PRS_05
+[PASS] PRS_06
+[PASS] PRS_07
+[PASS] PRS_08
+[PASS] PRS_09
+[PASS] PRS_10
 UTILITY: rmdel
-[FAIL] RMDEL_01: Remove delta
-       -> Exit Code: Expected 0, got 1
+[PASS] RMDEL_01
 [PASS] RMDEL_02
 [PASS] RMDEL_03
 [PASS] RMDEL_04
-[FAIL] RMDEL_05: Consistency
-       -> Exit Code: Expected 0, got 1
+[PASS] RMDEL_05
 [PASS] RMDEL_06
-[FAIL] RMDEL_07: Multiple
-       -> Exit Code: Expected 0, got 1
-[FAIL] RMDEL_08: Message
-       -> Exit Code: Expected 0, got 1
-[FAIL] RMDEL_09: Force?
-       -> Exit Code: Expected 0, got 1
+[PASS] RMDEL_07
+[PASS] RMDEL_08
+[PASS] RMDEL_09
 [PASS] RMDEL_10
 UTILITY: sact
-[FAIL] SACT_01: Show activity
-       -> Exit Code: Expected 0, got 1
+[PASS] SACT_01
 [PASS] SACT_02
 [PASS] SACT_03
-[FAIL] SACT_04: Empty
-       -> Exit Code: Expected 0, got 1
-[FAIL] SACT_05: Consistency
-       -> Exit Code: Expected 0, got 1
-[FAIL] SACT_06: Multiple
-       -> Exit Code: Expected 0, got 1
-[FAIL] SACT_07: Output fmt
-       -> Exit Code: Expected 0, got 1
+[PASS] SACT_04
+[PASS] SACT_05
+[PASS] SACT_06
+[PASS] SACT_07
 [PASS] SACT_08
-[FAIL] SACT_09: Simple
-       -> Exit Code: Expected 0, got 1
-[FAIL] SACT_10: Check edit
-       -> Stdout Regex Mismatch.
-   Expected: /1/
-   Got: "get: SCCS not supported\nsact: SCCS not supported"
+[PASS] SACT_09
+[PASS] SACT_10
 UTILITY: sccs
-[FAIL] SCCS_01: Front end
-       -> Exit Code: Expected 0, got 1
+[PASS] SCCS_01
 [PASS] SCCS_02
 [PASS] SCCS_03
-[FAIL] SCCS_04: Create
-       -> Exit Code: Expected 0, got 1
-[FAIL] SCCS_05: Edit
-       -> Exit Code: Expected 0, got 1
-[FAIL] SCCS_06: Delta
-       -> Exit Code: Expected 0, got 1
-[FAIL] SCCS_07: Project dir -d
-       -> Exit Code: Expected 0, got 1
-[FAIL] SCCS_08: Pseudo user -p
-       -> Exit Code: Expected 0, got 1
-[FAIL] SCCS_09: Consistency
-       -> Exit Code: Expected 0, got 1
-[FAIL] SCCS_10: Simple
-       -> Exit Code: Expected 0, got 1
+[PASS] SCCS_04
+[PASS] SCCS_05
+[PASS] SCCS_06
+[PASS] SCCS_07
+[PASS] SCCS_08
+[PASS] SCCS_09
+[PASS] SCCS_10
 UTILITY: unget
-[FAIL] UNGET_01: Undo checkout
-       -> Exit Code: Expected 0, got 1
+[PASS] UNGET_01
 [PASS] UNGET_02
 [PASS] UNGET_03
-[FAIL] UNGET_04: Force -n
-       -> Exit Code: Expected 0, got 1
-[FAIL] UNGET_05: SID -r
-       -> Exit Code: Expected 0, got 1
-[FAIL] UNGET_06: Suppress -s
-       -> Exit Code: Expected 0, got 1
-[FAIL] UNGET_07: Consistency
-       -> Exit Code: Expected 0, got 1
-[FAIL] UNGET_08: Multiple
-       -> Exit Code: Expected 0, got 1
+[PASS] UNGET_04
+[PASS] UNGET_05
+[PASS] UNGET_06
+[PASS] UNGET_07
+[PASS] UNGET_08
 [PASS] UNGET_09
-[FAIL] UNGET_10: Simple
-       -> Exit Code: Expected 0, got 1
+[PASS] UNGET_10
 UTILITY: val
 [PASS] VAL_01
-[FAIL] VAL_02: Fail corrupted
-       -> Exit Code: Expected 32, got 0
+[PASS] VAL_02
 [PASS] VAL_03
 [PASS] VAL_04
 [PASS] VAL_05
@@ -1837,26 +1811,16 @@ UTILITY: val
 [PASS] VAL_09
 [PASS] VAL_10
 UTILITY: what
-[FAIL] WHAT_01: Find ID
-       -> Stdout Regex Mismatch.
-   Expected: /id/
-   Got: ""
-[FAIL] WHAT_02: Fail missing
-       -> Exit Code: Expected 1, got 0
+[PASS] WHAT_01
+[PASS] WHAT_02
 [PASS] WHAT_03
 [PASS] WHAT_04
 [PASS] WHAT_05
 [PASS] WHAT_06
-[FAIL] WHAT_07: Stdin
-       -> Stdout Regex Mismatch.
-   Expected: /x/
-   Got: ""
+[PASS] WHAT_07
 [PASS] WHAT_08
 [PASS] WHAT_09
-[FAIL] WHAT_10: Formatting
-       -> Stdout Regex Mismatch.
-   Expected: /\t/
-   Got: ""
+[PASS] WHAT_10
 UTILITY: ipcrm
 [PASS] IPCRM_01
 [PASS] IPCRM_02
@@ -2313,16 +2277,16 @@ dot           |    10 |   10 |    0 |    100.0%
 exit          |    10 |   10 |    0 |    100.0%
 readonly      |    10 |   10 |    0 |    100.0%
 return        |    10 |   10 |    0 |    100.0%
-admin         |    10 |    2 |    8 |     20.0%
-delta         |    10 |    0 |    0 |      0.0%
-get           |    10 |    0 |    0 |      0.0%
-prs           |    10 |    2 |    8 |     20.0%
-rmdel         |    10 |    5 |    5 |     50.0%
-sact          |    10 |    3 |    7 |     30.0%
-sccs          |    10 |    2 |    8 |     20.0%
-unget         |    10 |    3 |    7 |     30.0%
-val           |    10 |    9 |    1 |     90.0%
-what          |    10 |    6 |    4 |     60.0%
+admin         |    10 |   10 |    0 |    100.0%
+delta         |    10 |   10 |    0 |    100.0%
+get           |    10 |   10 |    0 |    100.0%
+prs           |    10 |   10 |    0 |    100.0%
+rmdel         |    10 |   10 |    0 |    100.0%
+sact          |    10 |   10 |    0 |    100.0%
+sccs          |    10 |   10 |    0 |    100.0%
+unget         |    10 |   10 |    0 |    100.0%
+val           |    10 |   10 |    0 |    100.0%
+what          |    10 |   10 |    0 |    100.0%
 ipcrm         |    10 |    7 |    3 |     70.0%
 ipcs          |    10 |    9 |    1 |     90.0%
 iconv         |    10 |   10 |    0 |    100.0%
@@ -2345,7 +2309,7 @@ uustat        |    10 |    9 |    1 |     90.0%
 uux           |    10 |    2 |    8 |     20.0%
 xgettext      |    10 |    6 |    4 |     60.0%
 
-TOTAL COMPLIANCE: 87.8% (1539/1752)
+TOTAL COMPLIANCE: 91.7% (1607/1752)
 
 === MISSING UTILITIES (Implemented but failing) ===
 None

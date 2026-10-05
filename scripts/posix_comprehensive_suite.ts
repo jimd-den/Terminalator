@@ -2418,11 +2418,11 @@ const SUITES: UtilitySuite[] = [
             { id: 'ADMIN_02', description: 'Init -n', posixSection: 'admin.html', posixRequirement: '-n', setup: (fs) => { fs.writeFile('f', 'x', 'w'); }, command: 'admin -n s.f', expect: { exitCode: 0 } },
             { id: 'ADMIN_03', description: 'Fail missing', posixSection: 'admin.html', posixRequirement: 'Error', command: 'admin -i missing s.f', expect: { exitCode: 1 } },
             { id: 'ADMIN_04', description: 'No args', posixSection: 'admin.html', posixRequirement: 'Error', command: 'admin', expect: { exitCode: 1 } },
-            { id: 'ADMIN_05', description: 'Comment -y', posixSection: 'admin.html', posixRequirement: '-y', command: 'admin -y"com" s.f', expect: { exitCode: 0 } },
-            { id: 'ADMIN_06', description: 'Login -m', posixSection: 'admin.html', posixRequirement: '-m', command: 'admin -m ur s.f', expect: { exitCode: 0 } },
-            { id: 'ADMIN_07', description: 'Release -r', posixSection: 'admin.html', posixRequirement: '-r', command: 'admin -r 2 s.f', expect: { exitCode: 0 } },
-            { id: 'ADMIN_08', description: 'Flag -f', posixSection: 'admin.html', posixRequirement: '-f', command: 'admin -f i s.f', expect: { exitCode: 0 } },
-            { id: 'ADMIN_09', description: 'Consistency', posixSection: 'admin.html', posixRequirement: 'Stable', command: 'admin s.f', expect: { exitCode: 0 } },
+            { id: 'ADMIN_05', description: 'Comment -y', posixSection: 'admin.html', posixRequirement: '-y', command: 'admin -n -y"com" s.f && prs -d:C: s.f', expect: { exitCode: 0, stdout: /^com\n\n$/ }},
+            { id: 'ADMIN_06', description: 'Login -m', posixSection: 'admin.html', posixRequirement: '-m', command: 'admin -n -fv -m ur s.f && prs -d:MR: s.f', expect: { exitCode: 0, stdout: /^ur\n\n$/ }},
+            { id: 'ADMIN_07', description: 'Release -r', posixSection: 'admin.html', posixRequirement: '-r', command: 'admin -if -r 2 s.f 2>/dev/null && prs -d:I: s.f', expect: { exitCode: 0, stdout: /^2\.1$/ }},
+            { id: 'ADMIN_08', description: 'Flag -f', posixSection: 'admin.html', posixRequirement: '-f', command: 'admin -n s.f; admin -f i s.f && prs -d:KF: s.f', expect: { exitCode: 0, stdout: /^yes$/ }},
+            { id: 'ADMIN_09', description: 'Consistency', posixSection: 'admin.html', posixRequirement: 'Stable', command: 'admin -n s.f; admin s.f', expect: { exitCode: 0 } },
             { id: 'ADMIN_10', description: 'New', posixSection: 'admin.html', posixRequirement: 'New', command: 'admin -n s.new', expect: { exitCode: 0 } }
         ]
     },
@@ -2430,94 +2430,94 @@ const SUITES: UtilitySuite[] = [
         utility: 'delta',
         htmlFile: 'delta.html',
         tests: [
-            { id: 'DELTA_01', description: 'Commit', posixSection: 'delta.html', posixRequirement: 'Commit', setup: (fs) => { fs.writeFile('SCCS/s.f', '...', 'w'); }, command: 'delta s.f', expect: { exitCode: 0 } }, // needs SCCS file
-            { id: 'DELTA_02', description: 'List -p', posixSection: 'delta.html', posixRequirement: '-p', command: 'delta -p s.f', expect: { exitCode: 0 } },
+            { id: 'DELTA_01', description: 'Commit', posixSection: 'delta.html', posixRequirement: 'Commit', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; echo y >> f; delta s.f', expect: { exitCode: 0 } }, // needs SCCS file
+            { id: 'DELTA_02', description: 'List -p', posixSection: 'delta.html', posixRequirement: '-p', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; echo y >> f; delta -p -yc s.f', expect: { exitCode: 0, stdout: /^1\.2\n1a2\n> y\n1 inserted/ }},
             { id: 'DELTA_03', description: 'Fail missing', posixSection: 'delta.html', posixRequirement: 'Error', command: 'delta missing', expect: { exitCode: 1 } },
             { id: 'DELTA_04', description: 'No args', posixSection: 'delta.html', posixRequirement: 'Error', command: 'delta', expect: { exitCode: 1 } },
-            { id: 'DELTA_05', description: 'Comment -y', posixSection: 'delta.html', posixRequirement: '-y', command: 'delta -y"c" s.f', expect: { exitCode: 0 } },
-            { id: 'DELTA_06', description: 'SID -r', posixSection: 'delta.html', posixRequirement: '-r', command: 'delta -r 1.2 s.f', expect: { exitCode: 0 } },
-            { id: 'DELTA_07', description: 'Silent -s', posixSection: 'delta.html', posixRequirement: '-s', command: 'delta -s s.f', expect: { exitCode: 0 } },
-            { id: 'DELTA_08', description: 'G-file -g', posixSection: 'delta.html', posixRequirement: '-g', command: 'delta -g list s.f', expect: { exitCode: 0 } },
-            { id: 'DELTA_09', description: 'Consistency', posixSection: 'delta.html', posixRequirement: 'Stable', command: 'delta s.f', expect: { exitCode: 0 } },
-            { id: 'DELTA_10', description: 'Retain -n', posixSection: 'delta.html', posixRequirement: '-n', command: 'delta -n s.f', expect: { exitCode: 0 } }
+            { id: 'DELTA_05', description: 'Comment -y', posixSection: 'delta.html', posixRequirement: '-y', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; echo y >> f; delta -y"c" s.f && prs -d:C: s.f', expect: { exitCode: 0, stdout: /\nc\n\n$/ }},
+            { id: 'DELTA_06', description: 'SID -r', posixSection: 'delta.html', posixRequirement: '-r', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; echo y >> f; delta -r 1.2 -yc s.f', expect: { exitCode: 0 } },
+            { id: 'DELTA_07', description: 'Silent -s', posixSection: 'delta.html', posixRequirement: '-s', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; echo y >> f; delta -s -yc s.f', expect: { exitCode: 0, stdout: /^$/ }},
+            { id: 'DELTA_08', description: 'G-file -g', posixSection: 'delta.html', posixRequirement: '-g', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; echo y >> f; delta -g 1.1 -yc s.f && prs -d:Dg: s.f', expect: { exitCode: 0, stdout: /\n1\.1\n$/ }},
+            { id: 'DELTA_09', description: 'Consistency', posixSection: 'delta.html', posixRequirement: 'Stable', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; echo y >> f; delta -yc s.f', expect: { exitCode: 0, filesDeleted: ['/home/operator/f'] }},
+            { id: 'DELTA_10', description: 'Retain -n', posixSection: 'delta.html', posixRequirement: '-n', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; echo y >> f; delta -n -yc s.f', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/f', type: 'file' }] }}
         ]
     },
     {
         utility: 'get',
         htmlFile: 'get.html',
         tests: [
-            { id: 'GET_01', description: 'Checkout', posixSection: 'get.html', posixRequirement: 'Retrieve', setup: (fs) => { fs.writeFile('SCCS/s.f', '...', 'w'); }, command: 'get s.f', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/f', type: 'file' }] } },
-            { id: 'GET_02', description: 'Edit -e', posixSection: 'get.html', posixRequirement: '-e', command: 'get -e s.f', expect: { exitCode: 0 } }, // lock
-            { id: 'GET_03', description: 'Stdout -p', posixSection: 'get.html', posixRequirement: '-p', command: 'get -p s.f', expect: { exitCode: 0 } },
+            { id: 'GET_01', description: 'Checkout', posixSection: 'get.html', posixRequirement: 'Retrieve', command: 'echo "x %I%" > f; admin -if s.f; rm f; get s.f', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/f', type: 'file' }] } },
+            { id: 'GET_02', description: 'Edit -e', posixSection: 'get.html', posixRequirement: '-e', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e s.f && cat p.f', expect: { exitCode: 0, stdout: /new delta 1\.2\n1 lines\n1\.1 1\.2 root / }}, // lock
+            { id: 'GET_03', description: 'Stdout -p', posixSection: 'get.html', posixRequirement: '-p', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -p s.f 2>/dev/null', expect: { exitCode: 0, stdout: /^x 1\.1$/ }},
             { id: 'GET_04', description: 'Fail missing', posixSection: 'get.html', posixRequirement: 'Error', command: 'get missing', expect: { exitCode: 1 } },
             { id: 'GET_05', description: 'No args', posixSection: 'get.html', posixRequirement: 'Error', command: 'get', expect: { exitCode: 1 } },
-            { id: 'GET_06', description: 'SID -r', posixSection: 'get.html', posixRequirement: '-r', command: 'get -r 1.1 s.f', expect: { exitCode: 0 } },
-            { id: 'GET_07', description: 'Suppress -s', posixSection: 'get.html', posixRequirement: '-s', command: 'get -s s.f', expect: { exitCode: 0 } },
-            { id: 'GET_08', description: 'Key -k', posixSection: 'get.html', posixRequirement: '-k', command: 'get -k s.f', expect: { exitCode: 0 } },
-            { id: 'GET_09', description: 'Consistency', posixSection: 'get.html', posixRequirement: 'Stable', command: 'get s.f', expect: { exitCode: 0 } },
-            { id: 'GET_10', description: 'Info -g', posixSection: 'get.html', posixRequirement: '-g', command: 'get -g s.f', expect: { exitCode: 0 } }
+            { id: 'GET_06', description: 'SID -r', posixSection: 'get.html', posixRequirement: '-r', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; echo y >> f; delta -s -yc s.f; get -p -r 1.1 s.f 2>/dev/null', expect: { exitCode: 0, stdout: /^x 1\.1$/ }},
+            { id: 'GET_07', description: 'Suppress -s', posixSection: 'get.html', posixRequirement: '-s', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -s s.f', expect: { exitCode: 0, stdout: /^$/ }},
+            { id: 'GET_08', description: 'Key -k', posixSection: 'get.html', posixRequirement: '-k', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -k -s s.f; cat f', expect: { exitCode: 0, stdout: /^x %I%$/ }},
+            { id: 'GET_09', description: 'Consistency', posixSection: 'get.html', posixRequirement: 'Stable', command: 'echo "x %I%" > f; admin -if s.f; rm f; get s.f', expect: { exitCode: 0 } },
+            { id: 'GET_10', description: 'Info -g', posixSection: 'get.html', posixRequirement: '-g', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -g s.f', expect: { exitCode: 0, stdout: /^1\.1$/ }}
         ]
     },
     {
         utility: 'prs',
         htmlFile: 'prs.html',
         tests: [
-            { id: 'PRS_01', description: 'Print logic', posixSection: 'prs.html', posixRequirement: 'Info', command: 'prs s.f', expect: { exitCode: 0 } },
-            { id: 'PRS_02', description: 'Data spec -d', posixSection: 'prs.html', posixRequirement: '-d spec', command: 'prs -d :I: s.f', expect: { exitCode: 0 } },
+            { id: 'PRS_01', description: 'Print logic', posixSection: 'prs.html', posixRequirement: 'Info', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; echo y >> f; delta -s -yc s.f; prs s.f', expect: { exitCode: 0 } },
+            { id: 'PRS_02', description: 'Data spec -d', posixSection: 'prs.html', posixRequirement: '-d spec', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; echo y >> f; delta -s -yc s.f; prs -d :I: s.f', expect: { exitCode: 0, stdout: /^1\.2$/ }},
             { id: 'PRS_03', description: 'Fail missing', posixSection: 'prs.html', posixRequirement: 'Error', command: 'prs missing', expect: { exitCode: 1 } },
             { id: 'PRS_04', description: 'No args', posixSection: 'prs.html', posixRequirement: 'Error', command: 'prs', expect: { exitCode: 1 } },
-            { id: 'PRS_05', description: 'SID -r', posixSection: 'prs.html', posixRequirement: '-r', command: 'prs -r 1.1 s.f', expect: { exitCode: 0 } },
-            { id: 'PRS_06', description: 'Early exit -e', posixSection: 'prs.html', posixRequirement: '-e', command: 'prs -e s.f', expect: { exitCode: 0 } },
-            { id: 'PRS_07', description: 'Late -l', posixSection: 'prs.html', posixRequirement: '-l', command: 'prs -l s.f', expect: { exitCode: 0 } },
-            { id: 'PRS_08', description: 'Consistency', posixSection: 'prs.html', posixRequirement: 'Stable', command: 'prs s.f', expect: { exitCode: 0 } },
-            { id: 'PRS_09', description: 'Suppress -a', posixSection: 'prs.html', posixRequirement: '-a', command: 'prs -a s.f', expect: { exitCode: 0 } },
-            { id: 'PRS_10', description: 'Simple', posixSection: 'prs.html', posixRequirement: 'Works', command: 'prs s.f', expect: { exitCode: 0 } }
+            { id: 'PRS_05', description: 'SID -r', posixSection: 'prs.html', posixRequirement: '-r', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; echo y >> f; delta -s -yc s.f; prs -r1.1 -d:I: s.f', expect: { exitCode: 0, stdout: /^1\.1$/ }},
+            { id: 'PRS_06', description: 'Early exit -e', posixSection: 'prs.html', posixRequirement: '-e', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; echo y >> f; delta -s -yc s.f; prs -e -d:I: s.f', expect: { exitCode: 0, stdout: /^1\.2\n1\.1\n$/ }},
+            { id: 'PRS_07', description: 'Late -l', posixSection: 'prs.html', posixRequirement: '-l', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; echo y >> f; delta -s -yc s.f; prs -l -r1.1 -d:I: s.f', expect: { exitCode: 0, stdout: /^1\.2\n1\.1\n$/ }},
+            { id: 'PRS_08', description: 'Consistency', posixSection: 'prs.html', posixRequirement: 'Stable', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; echo y >> f; delta -s -yc s.f; prs s.f', expect: { exitCode: 0 } },
+            { id: 'PRS_09', description: 'Suppress -a', posixSection: 'prs.html', posixRequirement: '-a', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; echo y >> f; delta -s -yc s.f; rmdel -r1.2 s.f; prs -a -e -d:DT: s.f', expect: { exitCode: 0, stdout: /^R\nD\n$/ }},
+            { id: 'PRS_10', description: 'Simple', posixSection: 'prs.html', posixRequirement: 'Works', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; echo y >> f; delta -s -yc s.f; prs s.f', expect: { exitCode: 0 } }
         ]
     },
     {
         utility: 'rmdel',
         htmlFile: 'rmdel.html',
         tests: [
-            { id: 'RMDEL_01', description: 'Remove delta', posixSection: 'rmdel.html', posixRequirement: 'Remove', command: 'rmdel -r 1.2 s.f', expect: { exitCode: 0 } },
+            { id: 'RMDEL_01', description: 'Remove delta', posixSection: 'rmdel.html', posixRequirement: 'Remove', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; echo y >> f; delta -s -yc s.f; rmdel -r 1.2 s.f', expect: { exitCode: 0 } },
             { id: 'RMDEL_02', description: 'Fail missing', posixSection: 'rmdel.html', posixRequirement: 'Error', command: 'rmdel -r 1.2 missing', expect: { exitCode: 1 } },
             { id: 'RMDEL_03', description: 'No args', posixSection: 'rmdel.html', posixRequirement: 'Error', command: 'rmdel', expect: { exitCode: 1 } },
-            { id: 'RMDEL_04', description: 'Missing SID', posixSection: 'rmdel.html', posixRequirement: 'Error', command: 'rmdel s.f', expect: { exitCode: 1 } },
-            { id: 'RMDEL_05', description: 'Consistency', posixSection: 'rmdel.html', posixRequirement: 'Stable', command: 'rmdel -r 1.1 s.f', expect: { exitCode: 0 } },
-            { id: 'RMDEL_06', description: 'Fail bad SID', posixSection: 'rmdel.html', posixRequirement: 'Error', command: 'rmdel -r 9.9 s.f', expect: { exitCode: 1 } },
-            { id: 'RMDEL_07', description: 'Multiple', posixSection: 'rmdel.html', posixRequirement: 'Args', command: 'rmdel -r 1.2 s.f s.g', expect: { exitCode: 0 } },
-            { id: 'RMDEL_08', description: 'Message', posixSection: 'rmdel.html', posixRequirement: 'Msg', command: 'rmdel -r 1.2 s.f', expect: { exitCode: 0 } },
-            { id: 'RMDEL_09', description: 'Force?', posixSection: 'rmdel.html', posixRequirement: 'Perm', command: 'rmdel -r 1.1 s.f', expect: { exitCode: 0 } },
-            { id: 'RMDEL_10', description: 'Simple', posixSection: 'rmdel.html', posixRequirement: 'Works', command: 'rmdel -r 1.x s.f', expect: { exitCode: 1 } }
+            { id: 'RMDEL_04', description: 'Missing SID', posixSection: 'rmdel.html', posixRequirement: 'Error', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; echo y >> f; delta -s -yc s.f; rmdel s.f', expect: { exitCode: 1 } },
+            { id: 'RMDEL_05', description: 'Consistency', posixSection: 'rmdel.html', posixRequirement: 'Stable', command: 'echo "x %I%" > f; admin -if s.f; rm f; rmdel -r 1.1 s.f', expect: { exitCode: 0 } },
+            { id: 'RMDEL_06', description: 'Fail bad SID', posixSection: 'rmdel.html', posixRequirement: 'Error', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; echo y >> f; delta -s -yc s.f; rmdel -r 9.9 s.f', expect: { exitCode: 1 } },
+            { id: 'RMDEL_07', description: 'Multiple', posixSection: 'rmdel.html', posixRequirement: 'Args', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; echo y >> f; delta -s -yc s.f; echo "g %I%" > g; admin -ig s.g; rm g; get -e -s s.g; echo z >> g; delta -s -yc s.g; rmdel -r 1.2 s.f s.g', expect: { exitCode: 0 } },
+            { id: 'RMDEL_08', description: 'Message', posixSection: 'rmdel.html', posixRequirement: 'Msg', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; echo y >> f; delta -s -yc s.f; rmdel -r 1.2 s.f; get -p s.f 2>/dev/null', expect: { exitCode: 0, stdout: /^x 1\.1$/ }},
+            { id: 'RMDEL_09', description: 'Force?', posixSection: 'rmdel.html', posixRequirement: 'Perm', command: 'echo "x %I%" > f; admin -if s.f; rm f; rmdel -r 1.1 s.f', expect: { exitCode: 0 } },
+            { id: 'RMDEL_10', description: 'Simple', posixSection: 'rmdel.html', posixRequirement: 'Works', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; echo y >> f; delta -s -yc s.f; rmdel -r 1.x s.f', expect: { exitCode: 1 } }
         ]
     },
     {
         utility: 'sact',
         htmlFile: 'sact.html',
         tests: [
-            { id: 'SACT_01', description: 'Show activity', posixSection: 'sact.html', posixRequirement: 'Info', command: 'sact s.f', expect: { exitCode: 0, stdout: /./ } },
+            { id: 'SACT_01', description: 'Show activity', posixSection: 'sact.html', posixRequirement: 'Info', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; sact s.f', expect: { exitCode: 0, stdout: /./ } },
             { id: 'SACT_02', description: 'Fail missing', posixSection: 'sact.html', posixRequirement: 'Error', command: 'sact missing', expect: { exitCode: 1 } },
             { id: 'SACT_03', description: 'No args', posixSection: 'sact.html', posixRequirement: 'Error', command: 'sact', expect: { exitCode: 1 } },
-            { id: 'SACT_04', description: 'Empty', posixSection: 'sact.html', posixRequirement: 'None', command: 'sact s.f', expect: { exitCode: 0 } },
-            { id: 'SACT_05', description: 'Consistency', posixSection: 'sact.html', posixRequirement: 'Stable', command: 'sact s.f', expect: { exitCode: 0 } },
-            { id: 'SACT_06', description: 'Multiple', posixSection: 'sact.html', posixRequirement: 'Args', command: 'sact s.f s.g', expect: { exitCode: 0 } },
-            { id: 'SACT_07', description: 'Output fmt', posixSection: 'sact.html', posixRequirement: 'Format', command: 'sact s.f', expect: { exitCode: 0 } },
+            { id: 'SACT_04', description: 'Empty', posixSection: 'sact.html', posixRequirement: 'None', command: 'echo "x %I%" > f; admin -if s.f; rm f; sact s.f', expect: { exitCode: 0, stdout: /^$/ }},
+            { id: 'SACT_05', description: 'Consistency', posixSection: 'sact.html', posixRequirement: 'Stable', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; sact s.f', expect: { exitCode: 0 } },
+            { id: 'SACT_06', description: 'Multiple', posixSection: 'sact.html', posixRequirement: 'Args', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; echo "g %I%" > g; admin -ig s.g; rm g; sact s.f s.g', expect: { exitCode: 0 } },
+            { id: 'SACT_07', description: 'Output fmt', posixSection: 'sact.html', posixRequirement: 'Format', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; sact s.f', expect: { exitCode: 0, stdout: /^1\.1 1\.2 root \d\d\/\d\d\/\d\d \d\d:\d\d:\d\d$/ }},
             { id: 'SACT_08', description: 'Fail not SCCS', posixSection: 'sact.html', posixRequirement: 'Error', command: 'echo x > f; sact f', expect: { exitCode: 1 } },
-            { id: 'SACT_09', description: 'Simple', posixSection: 'sact.html', posixRequirement: 'Works', command: 'sact s.f', expect: { exitCode: 0 } },
-            { id: 'SACT_10', description: 'Check edit', posixSection: 'sact.html', posixRequirement: 'State', command: 'get -e s.f; sact s.f', expect: { stdout: /1/ } }
+            { id: 'SACT_09', description: 'Simple', posixSection: 'sact.html', posixRequirement: 'Works', command: 'echo "x %I%" > f; admin -if s.f; rm f; sact s.f', expect: { exitCode: 0 } },
+            { id: 'SACT_10', description: 'Check edit', posixSection: 'sact.html', posixRequirement: 'State', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e s.f; sact s.f', expect: { stdout: /1/ } }
         ]
     },
     {
         utility: 'sccs',
         htmlFile: 'sccs.html',
         tests: [
-            { id: 'SCCS_01', description: 'Front end', posixSection: 'sccs.html', posixRequirement: 'Wrapper', command: 'sccs get s.f', expect: { exitCode: 0 } },
+            { id: 'SCCS_01', description: 'Front end', posixSection: 'sccs.html', posixRequirement: 'Wrapper', command: 'mkdir -p SCCS; echo "x %I%" > f; admin -if SCCS/s.f; rm f; sccs get s.f', expect: { exitCode: 0 } },
             { id: 'SCCS_02', description: 'Fail invalid cmd', posixSection: 'sccs.html', posixRequirement: 'Error', command: 'sccs unknown', expect: { exitCode: 1 } },
             { id: 'SCCS_03', description: 'No args', posixSection: 'sccs.html', posixRequirement: 'Error', command: 'sccs', expect: { exitCode: 1 } },
-            { id: 'SCCS_04', description: 'Create', posixSection: 'sccs.html', posixRequirement: 'Wrapper', command: 'sccs create f', expect: { exitCode: 0 } },
-            { id: 'SCCS_05', description: 'Edit', posixSection: 'sccs.html', posixRequirement: 'Wrapper', command: 'sccs edit s.f', expect: { exitCode: 0 } },
-            { id: 'SCCS_06', description: 'Delta', posixSection: 'sccs.html', posixRequirement: 'Wrapper', command: 'sccs delta s.f', expect: { exitCode: 0 } },
-            { id: 'SCCS_07', description: 'Project dir -d', posixSection: 'sccs.html', posixRequirement: '-d', command: 'sccs -d SCCS get s.f', expect: { exitCode: 0 } },
-            { id: 'SCCS_08', description: 'Pseudo user -p', posixSection: 'sccs.html', posixRequirement: '-p', command: 'sccs -p s.f', expect: { exitCode: 0 } }, // ? info on paths?
+            { id: 'SCCS_04', description: 'Create', posixSection: 'sccs.html', posixRequirement: 'Wrapper', command: 'echo "x %I%" > f; sccs create f', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/SCCS/s.f', type: 'file' }, { path: '/home/operator/,f', type: 'file' }] }},
+            { id: 'SCCS_05', description: 'Edit', posixSection: 'sccs.html', posixRequirement: 'Wrapper', command: 'mkdir -p SCCS; echo "x %I%" > f; admin -if SCCS/s.f; rm f; sccs edit s.f', expect: { exitCode: 0 } },
+            { id: 'SCCS_06', description: 'Delta', posixSection: 'sccs.html', posixRequirement: 'Wrapper', command: 'mkdir -p SCCS; echo "x %I%" > f; admin -if SCCS/s.f; rm f; sccs edit f; echo y >> f; sccs delta -yc f', expect: { exitCode: 0 } },
+            { id: 'SCCS_07', description: 'Project dir -d', posixSection: 'sccs.html', posixRequirement: '-d', command: 'mkdir -p proj/SCCS; echo "x %I%" > f; admin -if proj/SCCS/s.f; rm f; sccs -d proj get f', expect: { exitCode: 0 } },
+            { id: 'SCCS_08', description: 'Pseudo user -p', posixSection: 'sccs.html', posixRequirement: '-p', command: 'mkdir SC; echo "x %I%" > f; admin -if SC/s.f; rm f; sccs -p SC get f', expect: { exitCode: 0 } }, // ? info on paths?
             { id: 'SCCS_09', description: 'Consistency', posixSection: 'sccs.html', posixRequirement: 'Stable', command: 'sccs info', expect: { exitCode: 0 } },
             { id: 'SCCS_10', description: 'Simple', posixSection: 'sccs.html', posixRequirement: 'Works', command: 'sccs help', expect: { exitCode: 0 } }
         ]
@@ -2526,32 +2526,32 @@ const SUITES: UtilitySuite[] = [
         utility: 'unget',
         htmlFile: 'unget.html',
         tests: [
-            { id: 'UNGET_01', description: 'Undo checkout', posixSection: 'unget.html', posixRequirement: 'Undo', command: 'unget s.f', expect: { exitCode: 0 } },
+            { id: 'UNGET_01', description: 'Undo checkout', posixSection: 'unget.html', posixRequirement: 'Undo', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; unget s.f', expect: { exitCode: 0 } },
             { id: 'UNGET_02', description: 'Fail missing', posixSection: 'unget.html', posixRequirement: 'Error', command: 'unget missing', expect: { exitCode: 1 } },
             { id: 'UNGET_03', description: 'No args', posixSection: 'unget.html', posixRequirement: 'Error', command: 'unget', expect: { exitCode: 1 } },
-            { id: 'UNGET_04', description: 'Force -n', posixSection: 'unget.html', posixRequirement: '-n', command: 'unget -n s.f', expect: { exitCode: 0 } }, // keep file
-            { id: 'UNGET_05', description: 'SID -r', posixSection: 'unget.html', posixRequirement: '-r', command: 'unget -r 1.2 s.f', expect: { exitCode: 0 } },
-            { id: 'UNGET_06', description: 'Suppress -s', posixSection: 'unget.html', posixRequirement: '-s', command: 'unget -s s.f', expect: { exitCode: 0 } },
-            { id: 'UNGET_07', description: 'Consistency', posixSection: 'unget.html', posixRequirement: 'Stable', command: 'unget s.f', expect: { exitCode: 0 } },
-            { id: 'UNGET_08', description: 'Multiple', posixSection: 'unget.html', posixRequirement: 'Args', command: 'unget s.f s.g', expect: { exitCode: 0 } },
-            { id: 'UNGET_09', description: 'Fail not checked out', posixSection: 'unget.html', posixRequirement: 'Error', command: 'unget s.f', expect: { exitCode: 1 } },
-            { id: 'UNGET_10', description: 'Simple', posixSection: 'unget.html', posixRequirement: 'Works', command: 'unget s.f', expect: { exitCode: 0 } }
+            { id: 'UNGET_04', description: 'Force -n', posixSection: 'unget.html', posixRequirement: '-n', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; unget -n s.f', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/f', type: 'file' }] }}, // keep file
+            { id: 'UNGET_05', description: 'SID -r', posixSection: 'unget.html', posixRequirement: '-r', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; unget -r 1.2 s.f', expect: { exitCode: 0 } },
+            { id: 'UNGET_06', description: 'Suppress -s', posixSection: 'unget.html', posixRequirement: '-s', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; unget -s s.f', expect: { exitCode: 0, stdout: /^$/ }},
+            { id: 'UNGET_07', description: 'Consistency', posixSection: 'unget.html', posixRequirement: 'Stable', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; unget s.f', expect: { exitCode: 0 } },
+            { id: 'UNGET_08', description: 'Multiple', posixSection: 'unget.html', posixRequirement: 'Args', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; echo "g %I%" > g; admin -ig s.g; rm g; get -e -s s.g; unget s.f s.g', expect: { exitCode: 0 } },
+            { id: 'UNGET_09', description: 'Fail not checked out', posixSection: 'unget.html', posixRequirement: 'Error', command: 'echo "x %I%" > f; admin -if s.f; rm f; unget s.f', expect: { exitCode: 1 } },
+            { id: 'UNGET_10', description: 'Simple', posixSection: 'unget.html', posixRequirement: 'Works', command: 'echo "x %I%" > f; admin -if s.f; rm f; get -e -s s.f; unget s.f', expect: { exitCode: 0, stdout: /^1\.2$/ }}
         ]
     },
     {
         utility: 'val',
         htmlFile: 'val.html',
         tests: [
-            { id: 'VAL_01', description: 'Validate SCCS', posixSection: 'val.html', posixRequirement: 'Valid', setup: (fs) => fs.writeFile('/home/operator/s.f', '@(#)test 1.1', 'w'), command: 'val s.f', expect: { exitCode: 0 } },
+            { id: 'VAL_01', description: 'Validate SCCS', posixSection: 'val.html', posixRequirement: 'Valid', command: 'echo "x %I%" > f; admin -if s.f; rm f; val s.f', expect: { exitCode: 0 } },
             { id: 'VAL_02', description: 'Fail corrupted', posixSection: 'val.html', posixRequirement: 'Exit 0x20', setup: (fs) => fs.writeFile('/home/operator/s.bad', 'bad corrupted data', 'w'), command: 'val s.bad', expect: { exitCode: 32 } },
             { id: 'VAL_03', description: 'Fail missing', posixSection: 'val.html', posixRequirement: 'Exit 0x10', command: 'val missing', expect: { exitCode: 16 } },
             { id: 'VAL_04', description: 'No args', posixSection: 'val.html', posixRequirement: 'Exit 0x80', command: 'val', expect: { exitCode: 128 } },
-            { id: 'VAL_05', description: 'SID -r valid', posixSection: 'val.html', posixRequirement: '-r SID', setup: (fs) => fs.writeFile('/home/operator/s.f', '@(#)test 1.1', 'w'), command: 'val -r 1.1 s.f', expect: { exitCode: 0 } },
-            { id: 'VAL_06', description: 'Module -m', posixSection: 'val.html', posixRequirement: '-m name', setup: (fs) => fs.writeFile('/home/operator/s.f', '%M% = test', 'w'), command: 'val -m test s.f', expect: { exitCode: 0 } },
-            { id: 'VAL_07', description: 'Type -y', posixSection: 'val.html', posixRequirement: '-y type', setup: (fs) => fs.writeFile('/home/operator/s.f', '%Y% = source', 'w'), command: 'val -y source s.f', expect: { exitCode: 0 } },
+            { id: 'VAL_05', description: 'SID -r valid', posixSection: 'val.html', posixRequirement: '-r SID', command: 'echo "x %I%" > f; admin -if s.f; rm f; val -r 1.1 s.f', expect: { exitCode: 0 } },
+            { id: 'VAL_06', description: 'Module -m', posixSection: 'val.html', posixRequirement: '-m name', command: 'admin -n -fmtest s.f; val -m test s.f', expect: { exitCode: 0 } },
+            { id: 'VAL_07', description: 'Type -y', posixSection: 'val.html', posixRequirement: '-y type', command: 'admin -n -ftsource s.f; val -y source s.f', expect: { exitCode: 0 } },
             { id: 'VAL_08', description: 'Silent -s', posixSection: 'val.html', posixRequirement: '-s', command: 'val -s missing', expect: { exitCode: 16, stdout: /^$/ } },
-            { id: 'VAL_09', description: 'Multiple files', posixSection: 'val.html', posixRequirement: 'Aggregate', setup: (fs) => { fs.writeFile('/home/operator/s.a', '@(#)a', 'w'); fs.writeFile('/home/operator/s.b', '@(#)b', 'w'); }, command: 'val s.a s.b', expect: { exitCode: 0 } },
-            { id: 'VAL_10', description: 'Stdin mode -', posixSection: 'val.html', posixRequirement: 'val -', setup: (fs) => fs.writeFile('/home/operator/s.f', '@(#)test', 'w'), command: 'echo s.f | val -', expect: { exitCode: 0 } }
+            { id: 'VAL_09', description: 'Multiple files', posixSection: 'val.html', posixRequirement: 'Aggregate', command: 'admin -n s.a s.b; val s.a s.b', expect: { exitCode: 0 } },
+            { id: 'VAL_10', description: 'Stdin mode -', posixSection: 'val.html', posixRequirement: 'val -', command: 'admin -n s.f; echo s.f | val -', expect: { exitCode: 0 } }
         ]
 
 
@@ -2562,14 +2562,14 @@ const SUITES: UtilitySuite[] = [
         tests: [
             { id: 'WHAT_01', description: 'Find ID', posixSection: 'what.html', posixRequirement: 'Find', setup: (fs) => fs.writeFile('f', '@(#)id', 'w'), command: 'what f', expect: { exitCode: 0, stdout: /id/ } },
             { id: 'WHAT_02', description: 'Fail missing', posixSection: 'what.html', posixRequirement: 'Error', command: 'what missing', expect: { exitCode: 1 } },
-            { id: 'WHAT_03', description: 'No info', posixSection: 'what.html', posixRequirement: 'Empty', setup: (fs) => fs.writeFile('f', 'data', 'w'), command: 'what f', expect: { exitCode: 0, stdout: /^$/ } }, // or filename
-            { id: 'WHAT_04', description: 'Single -s', posixSection: 'what.html', posixRequirement: '-s', command: 'what -s f', expect: { exitCode: 0 } },
-            { id: 'WHAT_05', description: 'Multiple', posixSection: 'what.html', posixRequirement: 'Args', command: 'what f f', expect: { exitCode: 0 } },
-            { id: 'WHAT_06', description: 'No args', posixSection: 'what.html', posixRequirement: 'Stdin?', command: 'what', expect: { exitCode: 0 } },
+            { id: 'WHAT_03', description: 'No info', posixSection: 'what.html', posixRequirement: 'Empty', setup: (fs) => fs.writeFile('f', 'data', 'w'), command: 'what f', expect: { exitCode: 1, stdout: /^f:$/ }}, // or filename
+            { id: 'WHAT_04', description: 'Single -s', posixSection: 'what.html', posixRequirement: '-s', command: 'echo "@(#)a" > f; echo "@(#)b" >> f; what -s f', expect: { exitCode: 0, stdout: /^f:\n\ta\n$/ }},
+            { id: 'WHAT_05', description: 'Multiple', posixSection: 'what.html', posixRequirement: 'Args', command: 'echo "@(#)v1" > f; what f f', expect: { exitCode: 0, stdout: /^f:\n\tv1\nf:\n\tv1\n$/ }},
+            { id: 'WHAT_06', description: 'No args', posixSection: 'what.html', posixRequirement: 'Stdin?', command: 'what </dev/null', expect: { exitCode: 1 }},
             { id: 'WHAT_07', description: 'Stdin', posixSection: 'what.html', posixRequirement: '-', command: 'echo "@(#)x" | what', expect: { stdout: /x/ } },
-            { id: 'WHAT_08', description: 'Consistency', posixSection: 'what.html', posixRequirement: 'Stable', command: 'what f', expect: { exitCode: 0 } },
-            { id: 'WHAT_09', description: 'Binary', posixSection: 'what.html', posixRequirement: 'Search', command: 'what /bin/ls', expect: { exitCode: 0 } },
-            { id: 'WHAT_10', description: 'Formatting', posixSection: 'what.html', posixRequirement: 'Tabs', command: 'what f', expect: { stdout: /\t/ } }
+            { id: 'WHAT_08', description: 'Consistency', posixSection: 'what.html', posixRequirement: 'Stable', command: 'echo "@(#)v1" > f; what f', expect: { exitCode: 0 } },
+            { id: 'WHAT_09', description: 'Binary', posixSection: 'what.html', posixRequirement: 'Search', command: 'printf "\\177ELF\\001\\000\\000@(#)prog 1.0\\000rest\\377" > b; what b', expect: { exitCode: 0, stdout: /^b:\n\tprog 1\.0\n$/ }},
+            { id: 'WHAT_10', description: 'Formatting', posixSection: 'what.html', posixRequirement: 'Tabs', command: 'echo "@(#)v1" > f; what f', expect: { stdout: /\t/ } }
         ]
     },
     {
