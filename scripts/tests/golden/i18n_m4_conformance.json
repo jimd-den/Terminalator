@@ -219,6 +219,110 @@
     "stdout": "#line 1 \"stdin\"\na\nb\nst=0\n",
     "status": 0
   },
+  "xgettext/c-default": {
+    "stdout": "# SOME DESCRIPTIVE TITLE.\n# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER\n# This file is distributed under the same license as the PACKAGE package.\n# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.\n#\n#: a.c:16\n#, fuzzy\nmsgid \"\"\nmsgstr \"\"\n\"Project-Id-Version: PACKAGE VERSION\\n\"\n\"Report-Msgid-Bugs-To: \\n\"\n\"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\\n\"\n\"Last-Translator: FULL NAME <EMAIL@ADDRESS>\\n\"\n\"Language-Team: LANGUAGE <LL@li.org>\\n\"\n\"Language: \\n\"\n\"MIME-Version: 1.0\\n\"\n\"Content-Type: text/plain; charset=CHARSET\\n\"\n\"Content-Transfer-Encoding: 8bit\\n\"\n\"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\\n\"\n\n#: a.c:4 a.c:6\n#, c-format\nmsgid \"Hello, %s!\\n\"\nmsgstr \"\"\n\n#: a.c:7\n#, c-format\nmsgid \"%d file\"\nmsgid_plural \"%d files\"\nmsgstr[0] \"\"\nmsgstr[1] \"\"\n\n#: a.c:8\nmsgctxt \"menu\"\nmsgid \"Open\"\nmsgstr \"\"\n\n#: a.c:9\nmsgid \"\"\n\"a very long message that goes on and on and on and on and on and on and on \"\n\"and on and on\"\nmsgstr \"\"\n\n#: a.c:10\nmsgid \"\"\n\"multi\\n\"\n\"line\\n\"\n\"text\"\nmsgstr \"\"\n\n#: a.c:11\nmsgid \"tab\\there \\\"quoted\\\" back\\\\slash\"\nmsgstr \"\"\n\n#: a.c:12\nmsgid \"concatenated\"\nmsgstr \"\"\n\n#: a.c:13\nmsgid \"domained\"\nmsgstr \"\"\n\n#: a.c:15\nmsgid \"noop\"\nmsgstr \"\"\n\n#: a.c:17\nmsgid \"100% sure %q\"\nmsgstr \"\"\n\n#: a.c:17\n#, c-format\nmsgid \"50%% off\"\nmsgstr \"\"\nst=0\n",
+    "status": 0
+  },
+  "xgettext/c-keywords-comments": {
+    "stdout": "#: a.c:4 a.c:6\n#, c-format\nmsgid \"Hello, %s!\\n\"\nmsgstr \"\"\n\n#: a.c:5\nmsgid \"underscore\"\nmsgstr \"\"\n\n#: a.c:7\n#, c-format\nmsgid \"%d file\"\nmsgid_plural \"%d files\"\nmsgstr[0] \"\"\nmsgstr[1] \"\"\n\n#: a.c:8\nmsgctxt \"menu\"\nmsgid \"Open\"\nmsgstr \"\"\n\n#: a.c:9\nmsgid \"\"\n\"a very long message that goes on and on and on and on and on and on and on \"\n\"and on and on\"\nmsgstr \"\"\n\n#: a.c:10\nmsgid \"\"\n\"multi\\n\"\n\"line\\n\"\n\"text\"\nmsgstr \"\"\n\n#: a.c:11\nmsgid \"tab\\there \\\"quoted\\\" back\\\\slash\"\nmsgstr \"\"\n\n#: a.c:12\nmsgid \"concatenated\"\nmsgstr \"\"\n\n#: a.c:13\nmsgid \"domained\"\nmsgstr \"\"\n\n#. comment for next\n#: a.c:15\nmsgid \"noop\"\nmsgstr \"\"\n\n#: a.c:16\nmsgid \"\"\nmsgstr \"\"\n\n#: a.c:17\nmsgid \"100% sure %q\"\nmsgstr \"\"\n\n#: a.c:17\n#, c-format\nmsgid \"50%% off\"\nmsgstr \"\"\n\n#: a.c:18\nmsgid \"nn\"\nmsgstr \"\"\nst=0\n",
+    "status": 0
+  },
+  "xgettext/c-tag-nolocation": {
+    "stdout": "#, c-format\nmsgid \"Hello, %s!\\n\"\nmsgstr \"\"\n\n#, c-format\nmsgid \"%d file\"\nmsgid_plural \"%d files\"\nmsgstr[0] \"\"\nmsgstr[1] \"\"\n\nmsgctxt \"menu\"\nmsgid \"Open\"\nmsgstr \"\"\n\nmsgid \"\"\n\"a very long message that goes on and on and on and on and on and on and on \"\n\"and on and on\"\nmsgstr \"\"\n\nmsgid \"\"\n\"multi\\n\"\n\"line\\n\"\n\"text\"\nmsgstr \"\"\n\nmsgid \"tab\\there \\\"quoted\\\" back\\\\slash\"\nmsgstr \"\"\n\nmsgid \"concatenated\"\nmsgstr \"\"\n\nmsgid \"domained\"\nmsgstr \"\"\n\nmsgid \"noop\"\nmsgstr \"\"\n\nmsgid \"\"\nmsgstr \"\"\n\nmsgid \"100% sure %q\"\nmsgstr \"\"\n\n#, c-format\nmsgid \"50%% off\"\nmsgstr \"\"\n",
+    "status": 0
+  },
+  "xgettext/c-sort-width": {
+    "stdout": "#: a.c:16\nmsgid \"\"\nmsgstr \"\"\n\n#: a.c:7\n#, c-format\nmsgid \"%d file\"\nmsgid_plural \"%d files\"\nmsgstr[0] \"\"\nmsgstr[1] \"\"\n\n#: a.c:17\nmsgid \"100% sure %q\"\nmsgstr \"\"\n\n#: a.c:17\n#, c-format\nmsgid \"50%% off\"\nmsgstr \"\"\n\n#: a.c:4 a.c:6\n#, c-format\nmsgid \"Hello, %s!\\n\"\nmsgstr \"\"\n\n#: a.c:8\nmsgctxt \"menu\"\nmsgid \"Open\"\nmsgstr \"\"\n\n#: a.c:9\nmsgid \"\"\n\"a very long message that goes on and on and on and on and on and on and on \"\n\"and on and on\"\nmsgstr \"\"\n\n#: a.c:12\nmsgid \"concatenated\"\nmsgstr \"\"\n\n#: a.c:13\nmsgid \"domained\"\nmsgstr \"\"\n\n#: a.c:10\nmsgid \"\"\n\"multi\\n\"\n\"line\\n\"\n\"text\"\nmsgstr \"\"\n\n#: a.c:15\nmsgid \"noop\"\nmsgstr \"\"\n\n#: a.c:11\nmsgid \"tab\\there \\\"quoted\\\" back\\\\slash\"\nmsgstr \"\"\n#: a.c:4 a.c:6\n#, c-format\nmsgid \"Hello, %s!\\n\"\nmsgstr \"\"\n\n#: a.c:7\n#, c-format\nmsgid \"%d file\"\nmsgid_plural \"%d files\"\nmsgstr[0] \"\"\nmsgstr[1] \"\"\n\n#: a.c:8\nmsgctxt \"menu\"\nmsgid \"Open\"\nmsgstr \"\"\n\n#: a.c:9\nmsgid \"\"\n\"a very long message that \"\n\"goes on and on and on and \"\n\"on and on and on and on and \"\n\"on and on\"\nmsgstr \"\"\n\n#: a.c:10\nmsgid \"\"\n\"multi\\n\"\n\"line\\n\"\n\"text\"\nmsgstr \"\"\n\n#: a.c:11\nmsgid \"\"\n\"tab\\there \\\"quoted\\\" \"\n\"back\\\\slash\"\nmsgstr \"\"\n\n#: a.c:12\nmsgid \"concatenated\"\nmsgstr \"\"\n\n#: a.c:13\nmsgid \"domained\"\nmsgstr \"\"\n\n#: a.c:15\nmsgid \"noop\"\nmsgstr \"\"\n\n#: a.c:16\nmsgid \"\"\nmsgstr \"\"\n\n#: a.c:17\nmsgid \"100% sure %q\"\nmsgstr \"\"\n\n#: a.c:17\n#, c-format\nmsgid \"50%% off\"\nmsgstr \"\"\n",
+    "status": 0
+  },
+  "xgettext/files": {
+    "stdout": "st=0\na.c\nnone.c\nst=0\na.c\nmydom.po\nnone.c\n# SOME DESCRIPTIVE TITLE.\n# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER\n# This file is distributed under the same license as the PACKAGE package.\n# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.\n#\n#: a.c:16\n#, fuzzy\nmsgid \"\"\nmsgstr \"\"\n\"Project-Id-Version: PACKAGE VERSION\\n\"\n\"Report-Msgid-Bugs-To: \\n\"\n\"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\\n\"\n\"Last-Translator: FULL NAME <EMAIL@ADDRESS>\\n\"\n\"Language-Team: LANGUAGE <LL@li.org>\\n\"\n\"Language: \\n\"\n\"MIME-Version: 1.0\\n\"\n\"Content-Type: text/plain; charset=CHARSET\\n\"\n\"Content-Transfer-Encoding: 8bit\\n\"\n\"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\\n\"\n\n#: a.c:4 a.c:6\n#, c-format\nmsgid \"Hello, %s!\\n\"\nmsgstr \"\"\n\n#: a.c:7\n#, c-format\nmsgid \"%d file\"\nmsgid_plural \"%d files\"\nmsgstr[0] \"\"\n",
+    "status": 0
+  },
+  "xgettext/default-output": {
+    "stdout": "st=0\n# SOME DESCRIPTIVE TITLE.\n# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER\n# This file is distributed under the same license as the PACKAGE package.\n# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.\n#\n#, fuzzy\nmsgid \"\"\nmsgstr \"\"\n\"Project-Id-Version: PACKAGE VERSION\\n\"\n\"Report-Msgid-Bugs-To: \\n\"\n\"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\\n\"\n\"Last-Translator: FULL NAME <EMAIL@ADDRESS>\\n\"\n\"Language-Team: LANGUAGE <LL@li.org>\\n\"\n\"Language: \\n\"\n\"MIME-Version: 1.0\\n\"\n\"Content-Type: text/plain; charset=CHARSET\\n\"\n\"Content-Transfer-Encoding: 8bit\\n\"\n\n#: f.c:1\nmsgid \"msg\"\nmsgstr \"\"\nf.c\nmessages.po\nout.po\nst=0\n\n#: f.c:1\nmsgid \"msg\"\nmsgstr \"\"\n\n#: g.c:1\nmsgid \"two\"\nmsgstr \"\"\n",
+    "status": 0
+  },
+  "xgettext/errors": {
+    "stdout": "st=1\nst=1\nst=1\nst=1\nst=1\nf.c\n",
+    "status": 0
+  },
+  "xgettext/shell": {
+    "stdout": "#: s.sh:2\nmsgid \"shell msg\"\nmsgstr \"\"\n\n#: s.sh:3\nmsgid \"single quoted\"\nmsgstr \"\"\n\n#: s.sh:4\nmsgid \"one\"\nmsgid_plural \"many\"\nmsgstr[0] \"\"\nmsgstr[1] \"\"\n\n#: s.sh:5\n#, sh-format\nmsgid \"Value $x\"\nmsgstr \"\"\n\n#: s.sh:6\nmsgid \"dollar quoted\"\nmsgstr \"\"\n\n#: s.sh:7\nmsgid \"-n\"\nmsgstr \"\"\nst=0\n",
+    "status": 0
+  },
+  "xgettext/keyword-spec": {
+    "stdout": "#: k.c:1\nmsgid \"b\"\nmsgstr \"\"\n\n#: k.c:2\nmsgid \"one\"\nmsgid_plural \"many\"\nmsgstr[0] \"\"\nmsgstr[1] \"\"\n\n#: k.c:3\nmsgctxt \"c\"\nmsgid \"m\"\nmsgstr \"\"\n",
+    "status": 0
+  },
+  "xgettext/non-ascii": {
+    "stdout": "st=1\n# SOME DESCRIPTIVE TITLE.\n# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER\n# This file is distributed under the same license as the PACKAGE package.\n# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.\n#\n#, fuzzy\nmsgid \"\"\nmsgstr \"\"\n\"Project-Id-Version: PACKAGE VERSION\\n\"\n\"Report-Msgid-Bugs-To: \\n\"\n\"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\\n\"\n\"Last-Translator: FULL NAME <EMAIL@ADDRESS>\\n\"\n\"Language-Team: LANGUAGE <LL@li.org>\\n\"\n\"Language: \\n\"\n\"MIME-Version: 1.0\\n\"\n\"Content-Type: text/plain; charset=UTF-8\\n\"\n\"Content-Transfer-Encoding: 8bit\\n\"\n\n#: u.c:1\nmsgid \"cafÃ©\"\nmsgstr \"\"\n",
+    "status": 0
+  },
+  "msgfmt/empty": {
+    "stdout": "st=0\nf.po\nst=0\nf.po\n",
+    "status": 0
+  },
+  "msgfmt/header-only": {
+    "stdout": "st=0\n de 12 04 95 00 00 00 00 01 00 00 00 1c 00 00 00\n 24 00 00 00 03 00 00 00 2c 00 00 00 00 00 00 00\n 38 00 00 00 28 00 00 00 39 00 00 00 01 00 00 00\n 00 00 00 00 00 00 00 00 00 43 6f 6e 74 65 6e 74\n 2d 54 79 70 65 3a 20 74 65 78 74 2f 70 6c 61 69\n 6e 3b 20 63 68 61 72 73 65 74 3d 55 54 46 2d 38\n 0a 00\n",
+    "status": 0
+  },
+  "msgfmt/catalog": {
+    "stdout": "st=0\n de 12 04 95 00 00 00 00 05 00 00 00 1c 00 00 00\n 44 00 00 00 07 00 00 00 6c 00 00 00 00 00 00 00\n 88 00 00 00 03 00 00 00 89 00 00 00 0a 00 00 00\n 8d 00 00 00 05 00 00 00 98 00 00 00 09 00 00 00\n 9e 00 00 00 52 00 00 00 a8 00 00 00 03 00 00 00\n fb 00 00 00 10 00 00 00 ff 00 00 00 07 00 00 00\n 10 01 00 00 06 00 00 00 18 01 00 00 01 00 00 00\n 05 00 00 00 00 00 00 00 00 00 00 00 04 00 00 00\n 02 00 00 00 03 00 00 00 00 61 09 62 00 66 69 6c\n 65 00 66 69 6c 65 73 00 68 65 6c 6c 6f 00 6d 65\n 6e 75 04 4f 70 65 6e 00 43 6f 6e 74 65 6e 74 2d\n 54 79 70 65 3a 20 74 65 78 74 2f 70 6c 61 69 6e\n 3b 20 63 68 61 72 73 65 74 3d 55 54 46 2d 38 0a\n 50 6c 75 72 61 6c 2d 46 6f 72 6d 73 3a 20 6e 70\n 6c 75 72 61 6c 73 3d 32 3b 20 70 6c 75 72 61 6c\n 3d 28 6e 20 3e 20 31 29 3b 0a 00 41 09 42 00 66\n 69 63 68 69 65 72 00 66 69 63 68 69 65 72 73 00\n 62 6f 6e 6a 6f 75 72 00 4f 75 76 72 69 72 00\n de 12 04 95 00 00 00 00 05 00 00 00 1c 00 00 00\n 44 00 00 00 00 00 00 00 6c 00 00 00 00 00 00 00\n 6c 00 00 00 03 00 00 00 6d 00 00 00 0a 00 00 00\n 71 00 00 00 05 00 00 00 7c 00 00 00 09 00 00 00\n 82 00 00 00 52 00 00 00 8c 00 00 00 03 00 00 00\n df 00 00 00 10 00 00 00 e3 00 00 00 07 00 00 00\n f4 00 00 00 06 00 00 00 fc 00 00 00 00 61 09 62\n 00 66 69 6c 65 00 66 69 6c 65 73 00 68 65 6c 6c\n 6f 00 6d 65 6e 75 04 4f 70 65 6e 00 43 6f 6e 74\n 65 6e 74 2d 54 79 70 65 3a 20 74 65 78 74 2f 70\n 6c 61 69 6e 3b 20 63 68 61 72 73 65 74 3d 55 54\n 46 2d 38 0a 50 6c 75 72 61 6c 2d 46 6f 72 6d 73\n 3a 20 6e 70 6c 75 72 61 6c 73 3d 32 3b 20 70 6c\n 75 72 61 6c 3d 28 6e 20 3e 20 31 29 3b 0a 00 41\n 09 42 00 66 69 63 68 69 65 72 00 66 69 63 68 69\n 65 72 73 00 62 6f 6e 6a 6f 75 72 00 4f 75 76 72\n 69 72 00\n   r   a   l   =   (   n       >       1   )   ;  \\n  \\0   A  \\t\n   B  \\0   f   i   c   h   i   e   r  \\0   f   i   c   h   i   e\n   r   s  \\0   f   l   o   u  \\0   b   o   n   j   o   u   r  \\0\n   O   u   v   r   i   r  \\0\n",
+    "status": 0
+  },
+  "msgfmt/statistics": {
+    "stdout": "4 translated messages, 1 fuzzy translation, 1 untranslated message.\n4 translated messages, 1 fuzzy translation, 1 untranslated message.\n4 translated messages, 1 fuzzy translation, 1 untranslated message.\nst=0\n",
+    "status": 0
+  },
+  "msgfmt/check": {
+    "stdout": "st=0\nst=1\nst=1\n",
+    "status": 0
+  },
+  "msgfmt/errors": {
+    "stdout": "st=1\nst=1\nst=1\nst=1\nst=1\nst=1\nst=1\nst=1\nb.po\nd.po\nf.po\nm.po\n",
+    "status": 0
+  },
+  "msgfmt/stdin-multi": {
+    "stdout": " 336 022 004 225  \\0  \\0  \\0  \\0 002  \\0  \\0  \\0 034  \\0  \\0  \\0\n   ,  \\0  \\0  \\0 005  \\0  \\0  \\0   <  \\0  \\0  \\0 001  \\0  \\0  \\0\n   P  \\0  \\0  \\0 001  \\0  \\0  \\0   R  \\0  \\0  \\0 001  \\0  \\0  \\0\n   T  \\0  \\0  \\0 001  \\0  \\0  \\0   V  \\0  \\0  \\0  \\0  \\0  \\0  \\0\n  \\0  \\0  \\0  \\0 001  \\0  \\0  \\0 002  \\0  \\0  \\0  \\0  \\0  \\0  \\0\n   a  \\0   b  \\0   A  \\0   B  \\0\n",
+    "status": 0
+  },
+  "gettext/untranslated": {
+    "stdout": "msg\nmsg\nmsgst=0\nst=0\n'v'\nmsg\n",
+    "status": 0
+  },
+  "gettext/args": {
+    "stdout": "st=1\nst=1\n\nst=0\na b|\na b c\nst=1\nmsg\n\n-x\n",
+    "status": 0
+  },
+  "gettext/escapes": {
+    "stdout": "a\nb|\nxy\n|\nx\ny z w|\nx\\ny|\n0000000   A  \\b   2   \\   \\   q\n0000006\n",
+    "status": 0
+  },
+  "ngettext/untranslated": {
+    "stdout": "s\np\np\np\np\np\np\ns\ns\np\ns\ns\n0000000   a  \\n\n0000002\n",
+    "status": 0
+  },
+  "ngettext/args": {
+    "stdout": "st=1\nst=1\nst=1\n",
+    "status": 0
+  },
+  "gettext/catalog-C": {
+    "stdout": "hello\nhello\nhello\n",
+    "status": 0
+  },
+  "gettext/catalog-fr": {
+    "stdout": "== \nbonjour\nbonjour world fz untranslated\n== fr\nbonjour\nbonjour world fz untranslated\n== fr_FR\nbonjour\nbonjour world fz untranslated\n== de:fr\nbonjour\nbonjour world fz untranslated\n== de\nhello\nhello world fz untranslated\n== C:fr\nhello\nhello world fz untranslated\n== fr_CA.UTF-8\nbonjour\nbonjour world fz untranslated\n",
+    "status": 0
+  },
+  "gettext/catalog-features": {
+    "stdout": "bonjour\nOuvrir\nOpen\nA\tB\nhello\nfichier\nfichier\nfichiers\nfichiers\nnope\nbonjour\n",
+    "status": 0
+  },
+  "gettext/catalog-variants": {
+    "stdout": "salut\nfichier\nbonjour\n",
+    "status": 0
+  },
   "locale/env-C": {
     "stdout": "LANG=\nLANGUAGE=\nLC_CTYPE=\"C\"\nLC_NUMERIC=\"C\"\nLC_TIME=\"C\"\nLC_COLLATE=\"C\"\nLC_MONETARY=\"C\"\nLC_MESSAGES=\"C\"\nLC_PAPER=\"C\"\nLC_NAME=\"C\"\nLC_ADDRESS=\"C\"\nLC_TELEPHONE=\"C\"\nLC_MEASUREMENT=\"C\"\nLC_IDENTIFICATION=\"C\"\nLC_ALL=C\nst=0\n",
     "status": 0

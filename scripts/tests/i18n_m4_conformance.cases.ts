@@ -14,6 +14,74 @@ const ALL_CATS = 'LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES
 const MODELLED = 'LC_NUMERIC LC_MONETARY LC_MESSAGES LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT charmap abday day abmon mon am_pm d_t_fmt d_fmt t_fmt t_fmt_ampm date_fmt first_weekday week-1stday title language territory revision';
 const compile = (loc: string, cm = 'UTF-8') => `mkdir -p loc; localedef -f ${cm} -i ${loc} "$PWD/loc/${loc}.${cm}"; echo st=$?; `;
 
+/** A C source exercising xgettext's default keywords, comments and wrapping. */
+const C_SRC = `cat > a.c <<'EOF'
+#include <stdio.h>
+/* TRANSLATORS: greeting */
+int main() {
+    printf(gettext("Hello, %s!\\n"), "x");
+    puts(_("underscore"));
+    puts(gettext("Hello, %s!\\n"));
+    printf(ngettext("%d file", "%d files", n), n);
+    puts(pgettext("menu", "Open"));
+    puts(gettext("a very long message that goes on and on and on and on and on and on and on and on and on"));
+    puts(gettext("multi\\nline\\ntext"));
+    puts(gettext("tab\\there \\"quoted\\" back\\\\slash"));
+    puts(gettext("concat" "enated"));
+    puts(dgettext("dom", "domained"));
+    // comment for next
+    puts(gettext_noop("noop"));
+    puts(gettext(""));
+    printf(gettext("100% sure %q")); printf(gettext("50%% off"));
+    puts(N_("nn")); x = gettext(variable);
+}
+EOF
+`;
+const SH_SRC = `cat > s.sh <<'EOF'
+#!/bin/sh
+gettext "shell msg"; echo
+echo "$(gettext 'single quoted')"
+ngettext "one" "many" $n
+eval_gettext "Value \\$x"
+echo $"dollar quoted"
+gettext -n "with option"
+EOF
+`;
+const NO_DATE = `grep -v POT-Creation-Date`;
+/** A French catalog compiled with msgfmt into ./fr/LC_MESSAGES/app.mo. */
+const FR_PO = `cat > fr.po <<'EOF'
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\\n"
+
+msgid "hello"
+msgstr "bonjour"
+
+msgid "file"
+msgid_plural "files"
+msgstr[0] "fichier"
+msgstr[1] "fichiers"
+
+msgctxt "menu"
+msgid "Open"
+msgstr "Ouvrir"
+
+msgid "a\\tb"
+msgstr "A\\tB"
+
+#, fuzzy
+msgid "fz"
+msgstr "flou"
+
+msgid "untranslated"
+msgstr ""
+EOF
+mkdir -p fr/LC_MESSAGES de/LC_MESSAGES; msgfmt -o fr/LC_MESSAGES/app.mo fr.po; `;
+/** gettext with the French locale compiled into LOCPATH and catalogs under $PWD. */
+const FR_ENV = `${'env -i PATH="$PATH"'} LOCPATH="$PWD/loc" TEXTDOMAINDIR="$PWD"`;
+const FR_LOCALE = `mkdir -p loc; localedef -f UTF-8 -i fr_FR "$PWD/loc/fr_FR.UTF-8"; `;
+
 const m4 = (name: string, program: string, opts = '') =>
     ({ name: `m4/${name}`, script: `m4 ${opts} <<'EOF'\n${program}\nEOF\necho st=$?` });
 
@@ -75,6 +143,35 @@ export const I18N_M4_CASES: DifferentialCase[] = [
     { name: 'm4/bad-option', script: `m4 -z </dev/null 2>/dev/null; echo st=$?; m4 --version | head -1; m4 --nosuch </dev/null 2>/dev/null; echo st=$?` },
     { name: 'm4/synclines', script: `printf 'a\\nb\\n' | m4 -s; echo st=$?` },
 
+    // ---- xgettext ----
+    { name: 'xgettext/c-default', script: `${C_SRC}xgettext -o - a.c | ${NO_DATE}; echo st=$?` },
+    { name: 'xgettext/c-keywords-comments', script: `${C_SRC}xgettext -k_ -kN_ -c -o - --omit-header a.c; echo st=$?` },
+    { name: 'xgettext/c-tag-nolocation', script: `${C_SRC}xgettext -cTRANSLATORS: -o - --omit-header --no-location a.c` },
+    { name: 'xgettext/c-sort-width', script: `${C_SRC}xgettext -s -o - --omit-header a.c; xgettext -o - --omit-header -w 30 a.c` },
+    { name: 'xgettext/files', script: `${C_SRC}echo 'int x;' > none.c; xgettext none.c 2>/dev/null; echo st=$?; ls; xgettext -d mydom a.c 2>/dev/null; echo st=$?; ls; ${NO_DATE} mydom.po | head -30` },
+    { name: 'xgettext/default-output', script: `printf 'gettext("msg");' > f.c; xgettext f.c; echo st=$?; ${NO_DATE} messages.po; xgettext -o out.po f.c; ls; printf 'gettext("two");' > g.c; xgettext -j g.c 2>/dev/null; echo st=$?; ${NO_DATE} messages.po | tail -8` },
+    { name: 'xgettext/errors', script: `printf 'gettext("msg");' > f.c; xgettext missing 2>/dev/null; echo st=$?; xgettext 2>/dev/null; echo st=$?; xgettext -k _ f.c 2>/dev/null; echo st=$?; xgettext --nosuch f.c 2>/dev/null; echo st=$?; xgettext -L Klingon f.c 2>/dev/null; echo st=$?; ls` },
+    { name: 'xgettext/shell', script: `${SH_SRC}xgettext -o - --omit-header s.sh 2>/dev/null; echo st=$?` },
+    { name: 'xgettext/keyword-spec', script: `printf 'tr("a", "b");\\nmy_ngettext(1, "one", "many");\\nctx("c", "m");\\n' > k.c; xgettext -k -ktr:2 -kmy_ngettext:2,3 -kctx:1c,2 --omit-header -o - k.c` },
+    { name: 'xgettext/non-ascii', script: `printf 'gettext("caf\\303\\251");' > u.c; xgettext -o - u.c >/dev/null 2>&1; echo st=$?; xgettext --from-code=UTF-8 -o - u.c | ${NO_DATE}` },
+    // ---- msgfmt ----
+    { name: 'msgfmt/empty', script: `: > f.po; msgfmt f.po; echo st=$?; ls; msgfmt -o out.mo f.po; echo st=$?; ls` },
+    { name: 'msgfmt/header-only', script: `printf 'msgid ""\\nmsgstr "Content-Type: text/plain; charset=UTF-8\\\\n"\\n' > h.po; msgfmt h.po; echo st=$?; od -An -tx1 messages.mo` },
+    { name: 'msgfmt/catalog', script: `${FR_PO}echo st=$?; od -An -tx1 fr/LC_MESSAGES/app.mo; msgfmt --no-hash -o - fr.po | od -An -tx1; msgfmt -f -o - fr.po | od -An -c | tail -4` },
+    { name: 'msgfmt/statistics', script: `${FR_PO}msgfmt --statistics -o x.mo fr.po 2>&1; msgfmt -v -o x.mo fr.po 2>&1; msgfmt -f --statistics -o x.mo fr.po 2>&1; echo st=$?` },
+    { name: 'msgfmt/check', script: `${FR_PO}msgfmt -c -o x.mo fr.po 2>/dev/null; echo st=$?; printf 'msgid "a\\\\n"\\nmsgstr "b"\\n' > bad.po; msgfmt -c bad.po 2>/dev/null; echo st=$?; msgfmt bad.po; echo st=$?` },
+    { name: 'msgfmt/errors', script: `msgfmt missing 2>/dev/null; echo st=$?; msgfmt 2>/dev/null; echo st=$?; echo x > b.po; msgfmt b.po 2>/dev/null; echo st=$?; msgfmt a b 2>/dev/null; echo st=$?; : > f.po; msgfmt --java f.po 2>/dev/null; echo st=$?; msgfmt -z f.po 2>/dev/null; echo st=$?; printf 'msgid "a"\\nmsgstr "b"\\nmsgid "a"\\nmsgstr "c"\\n' > d.po; msgfmt d.po 2>/dev/null; echo st=$?; printf 'msgid "a"\\n' > m.po; msgfmt m.po 2>/dev/null; echo st=$?; ls` },
+    { name: 'msgfmt/stdin-multi', script: `printf 'msgid "a"\\nmsgstr "A"\\n' > 1.po; printf 'msgid "b"\\nmsgstr "B"\\n' | msgfmt -o - 1.po - | od -An -c` },
+    // ---- gettext / ngettext ----
+    { name: 'gettext/untranslated', script: `gettext msg; echo; gettext -d dom msg; echo; gettext -c LC_MESSAGES msg; echo st=$?; gettext ""; echo st=$?; gettext "'v'"; echo; TEXTDOMAIN=d gettext msg; echo` },
+    { name: 'gettext/args', script: `gettext 2>/dev/null; echo st=$?; gettext a b c 2>/dev/null; echo st=$?; gettext -s; echo st=$?; gettext -n -s a b; echo "|"; gettext -s a b c; gettext -z x 2>/dev/null; echo st=$?; gettext dom msg; echo; gettext msg -d dom; echo; gettext -- -x; echo` },
+    { name: 'gettext/escapes', script: `gettext -e 'a\\nb'; echo "|"; gettext -e 'x\\cy\\n'; echo "|"; gettext -s -e 'x\\ny' 'z\\c' w; echo "|"; gettext -E 'x\\ny'; echo "|"; gettext -e '\\101\\0102\\\\\\q' | od -c` },
+    { name: 'ngettext/untranslated', script: `for n in 1 2 0 100 -1 1x '' ' 1' +1 18446744073709551616; do ngettext s p "$n"; echo; done; ngettext -d d s p 1; echo; ngettext d s p 1; echo; ngettext -e 'a\\n' b 1 | od -c` },
+    { name: 'ngettext/args', script: `ngettext 2>/dev/null; echo st=$?; ngettext a b 2>/dev/null; echo st=$?; ngettext a b 1 2 3 2>/dev/null; echo st=$?` },
+    { name: 'gettext/catalog-C', script: `${FR_PO}${FR_ENV} LC_ALL=C LANGUAGE=fr gettext -d app hello; echo; ${FR_ENV} LC_ALL=C.UTF-8 LANGUAGE=fr gettext -d app hello; echo; ${FR_ENV} LC_ALL=fr_FR.UTF-8 gettext -d app hello; echo` },
+    { name: 'gettext/catalog-fr', script: `${FR_PO}${FR_LOCALE}for lang in "" fr fr_FR de:fr de C:fr fr_CA.UTF-8; do echo "== $lang"; ${FR_ENV} LC_ALL=fr_FR.UTF-8 LANGUAGE=$lang gettext -d app hello; echo; ${FR_ENV} LC_ALL=fr_FR.UTF-8 LANGUAGE=$lang TEXTDOMAIN=app gettext -s hello world fz untranslated; done` },
+    { name: 'gettext/catalog-features', script: `${FR_PO}${FR_LOCALE}F="${FR_ENV} LC_ALL=fr_FR.UTF-8"; $F gettext app hello; echo; $F gettext -d app -c menu Open; echo; $F gettext -d app Open; echo; $F gettext -d app -e 'a\\tb'; echo; $F gettext -d nodomain hello; echo; for n in 0 1 2 5; do $F ngettext -d app file files $n; echo; done; $F ngettext -d app nope nopes 1; echo; LANG=fr_FR.UTF-8 $F gettext -d app hello; echo` },
+    { name: 'gettext/catalog-variants', script: `${FR_PO}${FR_LOCALE}mkdir -p fr_FR/LC_MESSAGES; printf 'msgid "hello"\\nmsgstr "salut"\\n' > v.po; msgfmt -o fr_FR/LC_MESSAGES/app.mo v.po; ${FR_ENV} LC_ALL=fr_FR.UTF-8 gettext -d app hello; echo; ${FR_ENV} LC_ALL=fr_FR.UTF-8 gettext -d app file; echo; ${FR_ENV} LC_MESSAGES=fr_FR.UTF-8 LANGUAGE=fr gettext -d app hello; echo` },
     // ---- locale ----
     { name: 'locale/env-C', script: `${E} LC_ALL=C locale; echo st=$?` },
     { name: 'locale/env-unset', script: `${E} locale` },

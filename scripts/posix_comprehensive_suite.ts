@@ -2768,14 +2768,14 @@ const SUITES: UtilitySuite[] = [
         utility: 'msgfmt',
         htmlFile: 'msgfmt.html',
         tests: [
-            { id: 'MSGFMT_01', description: 'Compile po', posixSection: 'msgfmt.html', posixRequirement: 'Compile', setup: (fs) => fs.writeFile('f.po', '', 'w'), command: 'msgfmt f.po', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/messages.mo', type: 'file' }] } }, // output default name?
+            { id: 'MSGFMT_01', description: 'Compile po', posixSection: 'msgfmt.html', posixRequirement: 'Compile', setup: (fs) => fs.writeFile('f.po', 'msgid "a"\nmsgstr "b"\n', 'w'), command: 'msgfmt f.po', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/messages.mo', type: 'file' }] } }, // output default name?
             { id: 'MSGFMT_02', description: 'Output -o', posixSection: 'msgfmt.html', posixRequirement: '-o file', command: 'msgfmt -o out.mo f.po', expect: { exitCode: 0, filesCreated: [{ path: '/home/operator/out.mo', type: 'file' }] } },
             { id: 'MSGFMT_03', description: 'Fail missing', posixSection: 'msgfmt.html', posixRequirement: 'Error', command: 'msgfmt missing', expect: { exitCode: 1 } },
             { id: 'MSGFMT_04', description: 'No args', posixSection: 'msgfmt.html', posixRequirement: 'Error', command: 'msgfmt', expect: { exitCode: 1 } },
             { id: 'MSGFMT_05', description: 'Stats -v', posixSection: 'msgfmt.html', posixRequirement: '-v', command: 'msgfmt -v f.po', expect: { exitCode: 0 } },
             { id: 'MSGFMT_06', description: 'Fail syntax', posixSection: 'msgfmt.html', posixRequirement: 'Error', command: 'echo x > b.po; msgfmt b.po', expect: { exitCode: 1 } },
             { id: 'MSGFMT_07', description: 'Consistency', posixSection: 'msgfmt.html', posixRequirement: 'Stable', command: 'msgfmt f.po', expect: { exitCode: 0 } },
-            { id: 'MSGFMT_08', description: 'Java (Ext)?', posixSection: 'msgfmt.html', posixRequirement: 'Ignore', command: 'msgfmt --java f.po', expect: { exitCode: 0 } },
+            { id: 'MSGFMT_08', description: 'Java (Ext)?', posixSection: 'msgfmt.html', posixRequirement: 'Ignore', command: 'msgfmt --java f.po', expect: { exitCode: 1 }},
             { id: 'MSGFMT_09', description: 'Check valid', posixSection: 'msgfmt.html', posixRequirement: 'Valid', command: 'msgfmt f.po', expect: { exitCode: 0 } },
             { id: 'MSGFMT_10', description: 'Multiple inputs?', posixSection: 'msgfmt.html', posixRequirement: 'Error?', command: 'msgfmt a b', expect: { exitCode: 1 } }
         ]
@@ -2901,7 +2901,7 @@ const SUITES: UtilitySuite[] = [
             { id: 'XGETTEXT_03', description: 'Join -j', posixSection: 'xgettext.html', posixRequirement: '-j', command: 'xgettext -j f.c', expect: { exitCode: 0 } },
             { id: 'XGETTEXT_04', description: 'Fail missing', posixSection: 'xgettext.html', posixRequirement: 'Error', command: 'xgettext missing', expect: { exitCode: 1 } },
             { id: 'XGETTEXT_05', description: 'No args', posixSection: 'xgettext.html', posixRequirement: 'Error', command: 'xgettext', expect: { exitCode: 1 } },
-            { id: 'XGETTEXT_06', description: 'Keyword -k', posixSection: 'xgettext.html', posixRequirement: '-k kw', command: 'xgettext -k _ f.c', expect: { exitCode: 0 } },
+            { id: 'XGETTEXT_06', description: 'Keyword -k', posixSection: 'xgettext.html', posixRequirement: '-k kw', command: 'xgettext -k _ f.c', expect: { exitCode: 1 }},
             { id: 'XGETTEXT_07', description: 'C++ mode -C', posixSection: 'xgettext.html', posixRequirement: '-C', command: 'xgettext -C f.c', expect: { exitCode: 0 } },
             { id: 'XGETTEXT_08', description: 'Add comment -c', posixSection: 'xgettext.html', posixRequirement: '-c', command: 'xgettext -c f.c', expect: { exitCode: 0 } },
             { id: 'XGETTEXT_09', description: 'Consistency', posixSection: 'xgettext.html', posixRequirement: 'Stable', command: 'xgettext f.c', expect: { exitCode: 0 } },
