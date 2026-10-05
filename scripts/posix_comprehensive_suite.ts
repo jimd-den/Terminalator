@@ -1423,12 +1423,12 @@ const SUITES: UtilitySuite[] = [
         htmlFile: 'man.html',
         tests: [
             { id: 'MAN_01', description: 'Show page', posixSection: 'man.html', posixRequirement: 'Display', command: 'man ls', expect: { exitCode: 0, stdout: /ls/ } },
-            { id: 'MAN_02', description: 'Fail missing', posixSection: 'man.html', posixRequirement: 'Error', command: 'man missing', expect: { exitCode: 1 } },
+            { id: 'MAN_02', description: 'Fail missing', posixSection: 'man.html', posixRequirement: 'Error', command: 'man missing', expect: { exitCode: 16 }},
             { id: 'MAN_03', description: 'Section', posixSection: 'man.html', posixRequirement: 'Section', command: 'man 1 ls', expect: { exitCode: 0 } },
             { id: 'MAN_04', description: 'Keyword -k', posixSection: 'man.html', posixRequirement: '-k found', command: 'man -k list', expect: { exitCode: 0, stdout: /ls/ } },
             { id: 'MAN_05', description: 'Path -w (Ext)', posixSection: 'man.html', posixRequirement: '-w path', command: 'man -w ls', expect: { exitCode: 0 } },
             { id: 'MAN_06', description: 'All -a', posixSection: 'man.html', posixRequirement: '-a', command: 'man -a ls', expect: { exitCode: 0 } },
-            { id: 'MAN_07', description: 'Fail section mismatch', posixSection: 'man.html', posixRequirement: 'Error', command: 'man 5 ls', expect: { exitCode: 1 } }, // ls is 1
+            { id: 'MAN_07', description: 'Fail section mismatch', posixSection: 'man.html', posixRequirement: 'Error', command: 'man 5 ls', expect: { exitCode: 16 }}, // ls is 1
             { id: 'MAN_08', description: 'Pager usage', posixSection: 'man.html', posixRequirement: 'Uses PAGER', command: 'man ls', expect: { exitCode: 0 } },
             { id: 'MAN_09', description: 'Case insensitive?', posixSection: 'man.html', posixRequirement: 'Maybe', command: 'man LS', expect: { exitCode: 0 } },
             { id: 'MAN_10', description: 'No args', posixSection: 'man.html', posixRequirement: 'Error', command: 'man', expect: { exitCode: 1 } }
@@ -1904,7 +1904,7 @@ const SUITES: UtilitySuite[] = [
         tests: [
             { id: 'AT_01', description: 'Schedule job', posixSection: 'at.html', posixRequirement: 'Schedule', command: 'echo "ls" | at now + 1 minute', expect: { exitCode: 0 } },
             { id: 'AT_02', description: 'List jobs -l', posixSection: 'at.html', posixRequirement: '-l', command: 'at -l', expect: { exitCode: 0 } },
-            { id: 'AT_03', description: 'Remove job -r', posixSection: 'at.html', posixRequirement: '-r', command: 'at -r 1', expect: { exitCode: 0 } }, // if 1 exists
+            { id: 'AT_03', description: 'Remove job -r', posixSection: 'at.html', posixRequirement: '-r', command: 'echo ls | at now + 1 minute; at -r 1', expect: { exitCode: 0 } }, // if 1 exists
             { id: 'AT_04', description: 'File input -f', posixSection: 'at.html', posixRequirement: '-f file', setup: (fs) => fs.writeFile('job', 'ls', 'w'), command: 'at -f job now', expect: { exitCode: 0 } },
             { id: 'AT_05', description: 'Queue -q', posixSection: 'at.html', posixRequirement: '-q q', command: 'at -q a now', expect: { exitCode: 0 } },
             { id: 'AT_06', description: 'Mail -m', posixSection: 'at.html', posixRequirement: '-m', command: 'at -m now', expect: { exitCode: 0 } },
@@ -1922,7 +1922,7 @@ const SUITES: UtilitySuite[] = [
             { id: 'BATCH_02', description: 'No args', posixSection: 'batch.html', posixRequirement: 'Stdin', command: 'batch', expect: { exitCode: 0 } }, // wait input
             { id: 'BATCH_03', description: 'Fail syntax', posixSection: 'batch.html', posixRequirement: 'Error', command: 'batch arg', expect: { exitCode: 1 } }, // no args allowed usually
             { id: 'BATCH_04', description: 'Job list?', posixSection: 'batch.html', posixRequirement: 'at -l', command: 'at -l', expect: { exitCode: 0 } }, // batch uses at queue
-            { id: 'BATCH_05', description: 'File input (Ext)', posixSection: 'batch.html', posixRequirement: '-f', command: 'batch -f job', expect: { exitCode: 0 } },
+            { id: 'BATCH_05', description: 'File input (Ext)', posixSection: 'batch.html', posixRequirement: '-f', setup: (fs) => fs.writeFile('job', 'ls\n', 'w'), command: 'batch -f job', expect: { exitCode: 0 } },
             { id: 'BATCH_06', description: 'Quiet -q?', posixSection: 'batch.html', posixRequirement: 'Maybe', command: 'batch', expect: { exitCode: 0 } },
             { id: 'BATCH_07', description: 'Output msg', posixSection: 'batch.html', posixRequirement: 'Msg', command: 'echo ls | batch', expect: { stdout: /job/ } },
             { id: 'BATCH_08', description: 'Fail missing file', posixSection: 'batch.html', posixRequirement: 'Error', command: 'batch -f missing', expect: { exitCode: 1 } },
@@ -1934,15 +1934,15 @@ const SUITES: UtilitySuite[] = [
         utility: 'crontab',
         htmlFile: 'crontab.html',
         tests: [
-            { id: 'CRONTAB_01', description: 'List -l', posixSection: 'crontab.html', posixRequirement: '-l', command: 'crontab -l', expect: { exitCode: 0 } },
-            { id: 'CRONTAB_02', description: 'Remove -r', posixSection: 'crontab.html', posixRequirement: '-r', command: 'crontab -r', expect: { exitCode: 0 } },
+            { id: 'CRONTAB_01', description: 'List -l', posixSection: 'crontab.html', posixRequirement: '-l', command: 'echo "* * * * * ls" | crontab -; crontab -l', expect: { exitCode: 0 } },
+            { id: 'CRONTAB_02', description: 'Remove -r', posixSection: 'crontab.html', posixRequirement: '-r', command: 'echo "* * * * * ls" | crontab -; crontab -r', expect: { exitCode: 0 } },
             { id: 'CRONTAB_03', description: 'Edit -e', posixSection: 'crontab.html', posixRequirement: '-e', command: 'crontab -e', expect: { exitCode: 0 } }, // interactive
-            { id: 'CRONTAB_04', description: 'Load file', posixSection: 'crontab.html', posixRequirement: 'replace', setup: (fs) => fs.writeFile('cron', '* * * * * ls', 'w'), command: 'crontab cron', expect: { exitCode: 0 } },
+            { id: 'CRONTAB_04', description: 'Load file', posixSection: 'crontab.html', posixRequirement: 'replace', setup: (fs) => fs.writeFile('cron', '* * * * * ls\n', 'w'), command: 'crontab cron', expect: { exitCode: 0 } },
             { id: 'CRONTAB_05', description: 'Fail missing', posixSection: 'crontab.html', posixRequirement: 'Error', command: 'crontab missing', expect: { exitCode: 1 } },
             { id: 'CRONTAB_06', description: 'Stdin', posixSection: 'crontab.html', posixRequirement: '-', command: 'echo "* * * * * ls" | crontab -', expect: { exitCode: 0 } },
             { id: 'CRONTAB_07', description: 'Fail invalid line', posixSection: 'crontab.html', posixRequirement: 'Error', command: 'echo "junk" | crontab -', expect: { exitCode: 1 } },
             { id: 'CRONTAB_08', description: 'No args', posixSection: 'crontab.html', posixRequirement: 'Stdin implied?', command: 'crontab', expect: { exitCode: 1 } }, // usually requires file
-            { id: 'CRONTAB_09', description: 'Consistency', posixSection: 'crontab.html', posixRequirement: 'Stable', command: 'crontab -l', expect: { exitCode: 0 } },
+            { id: 'CRONTAB_09', description: 'Consistency', posixSection: 'crontab.html', posixRequirement: 'Stable', command: 'echo "* * * * * ls" | crontab -; crontab -l', expect: { exitCode: 0 } },
             { id: 'CRONTAB_10', description: 'Fail no user', posixSection: 'crontab.html', posixRequirement: 'Auth', command: 'crontab -u nobody -l', expect: { exitCode: 1 } }
         ]
     },
@@ -2016,14 +2016,14 @@ const SUITES: UtilitySuite[] = [
         tests: [
             { id: 'LP_01', description: 'Print file', posixSection: 'lp.html', posixRequirement: 'Queue', setup: (fs) => fs.writeFile('f', 'x', 'w'), command: 'lp f', expect: { exitCode: 0, stdout: /request id/ } },
             { id: 'LP_02', description: 'Copies -n', posixSection: 'lp.html', posixRequirement: '-n num', command: 'lp -n 2 f', expect: { exitCode: 0 } },
-            { id: 'LP_03', description: 'Dest -d', posixSection: 'lp.html', posixRequirement: '-d printer', command: 'lp -d printer f', expect: { exitCode: 0 } }, // if printer exists
+            { id: 'LP_03', description: 'Dest -d', posixSection: 'lp.html', posixRequirement: '-d printer', command: 'lp -d laser f', expect: { exitCode: 0 } }, // if printer exists
             { id: 'LP_04', description: 'Suppress -s', posixSection: 'lp.html', posixRequirement: '-s', command: 'lp -s f', expect: { exitCode: 0 } },
             { id: 'LP_05', description: 'Title -t', posixSection: 'lp.html', posixRequirement: '-t title', command: 'lp -t "My Doc" f', expect: { exitCode: 0 } },
             { id: 'LP_06', description: 'Fail missing', posixSection: 'lp.html', posixRequirement: 'Error', command: 'lp missing', expect: { exitCode: 1 } }, // >0
             { id: 'LP_07', description: 'Stdin', posixSection: 'lp.html', posixRequirement: '-', command: 'echo x | lp', expect: { exitCode: 0 } },
             { id: 'LP_08', description: 'Priority -q (Ext)', posixSection: 'lp.html', posixRequirement: '-q', command: 'lp -q 1 f', expect: { exitCode: 0 } },
             { id: 'LP_09', description: 'Consistency', posixSection: 'lp.html', posixRequirement: 'Stable', command: 'lp f', expect: { exitCode: 0 } },
-            { id: 'LP_10', description: 'No args', posixSection: 'lp.html', posixRequirement: 'Stdin', command: 'lp', expect: { exitCode: 0 } }
+            { id: 'LP_10', description: 'No args', posixSection: 'lp.html', posixRequirement: 'Stdin', command: 'lp', expect: { exitCode: 1 }}
         ]
     },
     {
@@ -2034,7 +2034,7 @@ const SUITES: UtilitySuite[] = [
             { id: 'MAILX_02', description: 'Read mail (stub)', posixSection: 'mailx.html', posixRequirement: 'Read', command: 'mailx', expect: { exitCode: 0 } }, // Interactive?
             { id: 'MAILX_03', description: 'Subject -s', posixSection: 'mailx.html', posixRequirement: '-s', command: 'echo body | mailx -s subj operator', expect: { exitCode: 0 } },
             { id: 'MAILX_04', description: 'CC -c (Ext)', posixSection: 'mailx.html', posixRequirement: '-c', command: 'echo body | mailx -c user operator', expect: { exitCode: 0 } },
-            { id: 'MAILX_05', description: 'Fail no user', posixSection: 'mailx.html', posixRequirement: 'Error', command: 'echo body | mailx', expect: { exitCode: 1 } },
+            { id: 'MAILX_05', description: 'Fail no user', posixSection: 'mailx.html', posixRequirement: 'Error', command: 'echo body | mailx -s subj', expect: { exitCode: 1 } },
             { id: 'MAILX_06', description: 'Fail missing body', posixSection: 'mailx.html', posixRequirement: 'Interactive', command: 'mailx operator', expect: { exitCode: 0 } }, // Waits input
             { id: 'MAILX_07', description: 'Check inbox -H (Ext)', posixSection: 'mailx.html', posixRequirement: '-H', command: 'mailx -H', expect: { exitCode: 0 } },
             { id: 'MAILX_08', description: 'User arg', posixSection: 'mailx.html', posixRequirement: '-u user', command: 'mailx -u operator', expect: { exitCode: 0 } },
@@ -2848,7 +2848,7 @@ const SUITES: UtilitySuite[] = [
         utility: 'uucp',
         htmlFile: 'uucp.html',
         tests: [
-            { id: 'UUCP_01', description: 'Copy file', posixSection: 'uucp.html', posixRequirement: 'Copy', setup: (fs) => fs.writeFile('f', 'x', 'w'), command: 'uucp f sys!dest', expect: { exitCode: 0 } },
+            { id: 'UUCP_01', description: 'Copy file', posixSection: 'uucp.html', posixRequirement: 'Copy', setup: (fs) => fs.writeFile('f', 'x', 'w'), command: 'uucp f relay!dest', expect: { exitCode: 0 } },
             { id: 'UUCP_02', description: 'Fail missing', posixSection: 'uucp.html', posixRequirement: 'Error', command: 'uucp missing dest', expect: { exitCode: 1 } },
             { id: 'UUCP_03', description: 'No args', posixSection: 'uucp.html', posixRequirement: 'Error', command: 'uucp', expect: { exitCode: 1 } },
             { id: 'UUCP_04', description: 'Grade -g', posixSection: 'uucp.html', posixRequirement: '-g', command: 'uucp -g a f dest', expect: { exitCode: 0 } },
@@ -2856,7 +2856,7 @@ const SUITES: UtilitySuite[] = [
             { id: 'UUCP_06', description: 'Recursive -r', posixSection: 'uucp.html', posixRequirement: '-r', command: 'uucp -r f dest', expect: { exitCode: 0 } }, // directory
             { id: 'UUCP_07', description: 'No make dirs -m', posixSection: 'uucp.html', posixRequirement: '-m', command: 'uucp -m f dest', expect: { exitCode: 0 } },
             { id: 'UUCP_08', description: 'Consistency', posixSection: 'uucp.html', posixRequirement: 'Stable', command: 'uucp f dest', expect: { exitCode: 0 } },
-            { id: 'UUCP_09', description: 'Job id -j', posixSection: 'uucp.html', posixRequirement: '-j', command: 'uucp -j f dest', expect: { stdout: /job/ } },
+            { id: 'UUCP_09', description: 'Job id -j', posixSection: 'uucp.html', posixRequirement: '-j', command: 'uucp -j f relay!dest', expect: { exitCode: 0, stdout: /^relayN\w{4}$/ }},
             { id: 'UUCP_10', description: 'Simple', posixSection: 'uucp.html', posixRequirement: 'Works', command: 'uucp f dest', expect: { exitCode: 0 } }
         ]
     },
@@ -2866,10 +2866,10 @@ const SUITES: UtilitySuite[] = [
         tests: [
             { id: 'UUSTAT_01', description: 'List jobs', posixSection: 'uustat.html', posixRequirement: 'List', command: 'uustat', expect: { exitCode: 0 } },
             { id: 'UUSTAT_02', description: 'All -a', posixSection: 'uustat.html', posixRequirement: '-a', command: 'uustat -a', expect: { exitCode: 0 } },
-            { id: 'UUSTAT_03', description: 'System -s', posixSection: 'uustat.html', posixRequirement: '-s sys', command: 'uustat -s sys', expect: { exitCode: 0 } },
+            { id: 'UUSTAT_03', description: 'System -s', posixSection: 'uustat.html', posixRequirement: '-s sys', command: 'uustat -s relay', expect: { exitCode: 0 } },
             { id: 'UUSTAT_04', description: 'User -u', posixSection: 'uustat.html', posixRequirement: '-u user', command: 'uustat -u user', expect: { exitCode: 0 } },
-            { id: 'UUSTAT_05', description: 'Kill -k', posixSection: 'uustat.html', posixRequirement: '-k id', command: 'uustat -k 1', expect: { exitCode: 0 } },
-            { id: 'UUSTAT_06', description: 'Rejuvenate -r', posixSection: 'uustat.html', posixRequirement: '-r id', command: 'uustat -r 1', expect: { exitCode: 0 } },
+            { id: 'UUSTAT_05', description: 'Kill -k', posixSection: 'uustat.html', posixRequirement: '-k id', command: 'uustat -k $(uux -j "relay!date")', expect: { exitCode: 0 } },
+            { id: 'UUSTAT_06', description: 'Rejuvenate -r', posixSection: 'uustat.html', posixRequirement: '-r id', command: 'uustat -r $(uux -j "relay!date")', expect: { exitCode: 0 } },
             { id: 'UUSTAT_07', description: 'Consistency', posixSection: 'uustat.html', posixRequirement: 'Stable', command: 'uustat', expect: { exitCode: 0 } },
             { id: 'UUSTAT_08', description: 'Output fmt', posixSection: 'uustat.html', posixRequirement: 'Format', command: 'uustat', expect: { exitCode: 0 } },
             { id: 'UUSTAT_09', description: 'No jobs', posixSection: 'uustat.html', posixRequirement: 'Empty', command: 'uustat', expect: { stdout: /^$/ } },
@@ -2880,12 +2880,12 @@ const SUITES: UtilitySuite[] = [
         utility: 'uux',
         htmlFile: 'uux.html',
         tests: [
-            { id: 'UUX_01', description: 'Remote exec', posixSection: 'uux.html', posixRequirement: 'Exec', command: 'uux sys!cmd', expect: { exitCode: 0 } },
+            { id: 'UUX_01', description: 'Remote exec', posixSection: 'uux.html', posixRequirement: 'Exec', command: 'uux relay!cmd', expect: { exitCode: 0 } },
             { id: 'UUX_02', description: 'Local', posixSection: 'uux.html', posixRequirement: 'Local', command: 'uux cmd', expect: { exitCode: 0 } },
             { id: 'UUX_03', description: 'Fail missing', posixSection: 'uux.html', posixRequirement: 'Error', command: 'uux', expect: { exitCode: 1 } },
             { id: 'UUX_04', description: 'Stdin -', posixSection: 'uux.html', posixRequirement: '-', command: 'echo x | uux - cmd', expect: { exitCode: 0 } },
             { id: 'UUX_05', description: 'No notify -n', posixSection: 'uux.html', posixRequirement: '-n', command: 'uux -n cmd', expect: { exitCode: 0 } },
-            { id: 'UUX_06', description: 'Job name -j', posixSection: 'uux.html', posixRequirement: '-j', command: 'uux -j cmd', expect: { stdout: /job/ } },
+            { id: 'UUX_06', description: 'Job name -j', posixSection: 'uux.html', posixRequirement: '-j', command: 'uux -j cmd', expect: { exitCode: 0, stdout: /^\w+A\w{4}$/ }},
             { id: 'UUX_07', description: 'Fail syntax', posixSection: 'uux.html', posixRequirement: 'Error', command: 'uux "((("', expect: { exitCode: 1 } },
             { id: 'UUX_08', description: 'Consistency', posixSection: 'uux.html', posixRequirement: 'Stable', command: 'uux cmd', expect: { exitCode: 0 } },
             { id: 'UUX_09', description: 'Files', posixSection: 'uux.html', posixRequirement: 'Args', command: 'uux cmd f', expect: { exitCode: 0 } },

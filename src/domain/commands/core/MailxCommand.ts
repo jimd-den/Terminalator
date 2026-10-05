@@ -56,6 +56,9 @@ export class MailxCommand extends Utility {
         if (error) return reply(state, '', `mailx: ${error}\nusage: mailx [-eiIUdEFntBDNHRV~] [-T FILE] [-u USER] [-h hops] [-r address] [-s SUBJECT] [-a FILE] [-q FILE] [-f FILE] [-A ACCOUNT] [-b USERS] [-c USERS] [-S OPTION] users\n`, 1);
         const spool = new Spool(context);
         if (operands.length && !opts.has('f')) return this.send(spool, context, state, opts, operands);
+        if (opts.has('s') || opts.has('c') || opts.has('b')) {
+            return reply(state, '', 'mailx: You must specify direct recipients with -s, -c, or -b.\n', 1);
+        }
 
         // Receive mode.
         let folder: string;
