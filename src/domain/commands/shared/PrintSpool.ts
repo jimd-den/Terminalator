@@ -71,7 +71,7 @@ export class PrintSpool {
                 id: parseInt(m[1], 10), dest: attrs.get('job-printer') ?? '', user: attrs.get('job-originating-user-name') ?? '',
                 uid: parseInt(attrs.get('job-uid') ?? '0', 10), title: attrs.get('job-name') ?? '',
                 copies: parseInt(attrs.get('copies') ?? '1', 10), priority: parseInt(attrs.get('job-priority') ?? '50', 10),
-                size: parseInt(attrs.get('job-k-octets') ?? '0', 10), time: new Date(parseInt(attrs.get('time-at-creation') ?? '0', 10) * 1000),
+                size: parseInt(attrs.get('job-octets') ?? '0', 10), time: new Date(parseInt(attrs.get('time-at-creation') ?? '0', 10) * 1000),
                 files: parseInt(attrs.get('number-of-documents') ?? '1', 10),
             });
         }
@@ -87,7 +87,7 @@ export class PrintSpool {
         documents.forEach((d, i) => this.spool.write(`${PRINT_SPOOL}/d${num}-${String(i + 1).padStart(3, '0')}`, d, 0o640, 0, 0));
         const attrs: [string, string | number][] = [
             ['job-id', id], ['job-printer', dest], ['job-originating-user-name', this.spool.userName], ['job-uid', uid],
-            ['job-name', title], ['copies', copies], ['job-priority', priority], ['job-k-octets', size],
+            ['job-name', title], ['copies', copies], ['job-priority', priority], ['job-octets', size],
             ['time-at-creation', Math.floor(now.getTime() / 1000)], ['number-of-documents', documents.length],
         ];
         this.spool.write(`${PRINT_SPOOL}/c${num}`, attrs.map(([k, v]) => `${k} ${v}\n`).join(''), 0o600, 0, 0);

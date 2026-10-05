@@ -150,6 +150,8 @@ import { NmCommand } from '../commands/core/NmCommand';
 import { PatchCommand } from '../commands/core/PatchCommand';
 import { PaxCommand } from '../commands/core/PaxCommand';
 import { LpCommand } from '../commands/core/LpCommand';
+import { LpstatCommand } from '../commands/core/LpstatCommand';
+import { CancelCommand } from '../commands/core/CancelCommand';
 import { ReniceCommand } from '../commands/core/ReniceCommand';
 import { AdminCommand } from '../commands/core/AdminCommand';
 import { CflowCommand } from '../commands/core/CflowCommand';
@@ -346,6 +348,8 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('patch', new PatchCommand());
         registry.register('pax', new PaxCommand());
         registry.register('lp', new LpCommand());
+        registry.register('lpstat', new LpstatCommand());
+        registry.register('cancel', new CancelCommand());
         registry.register('renice', new ReniceCommand());
         registry.register('admin', new AdminCommand());
         registry.register('c17', new GccCommand(this.compiler, fsService));

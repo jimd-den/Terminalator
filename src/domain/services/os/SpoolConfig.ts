@@ -9,7 +9,7 @@ import { FileSystemService } from '../FileSystemService';
  */
 export const PRINTCAP = '# /etc/printcap: print queues (first entry is the system default)\n' +
     'lp|line printer:lp=/dev/lp0:sd=/var/spool/cups:\n' +
-    'laser|LaserJet in the operations room:lp=socket://10.0.0.30:9100:sd=/var/spool/cups:\n';
+    'laser|LaserJet in the operations room:lp=/dev/usb/lp0:sd=/var/spool/cups:\n';
 
 export const UUCP_SYSTEMS = ['relay', 'archive', 'mainframe'];
 
