@@ -21,4 +21,5 @@ export const DEFAULT_UTILITIES: string[] = [
     'xgettext', 'gzip', 'gunzip', 'tar', 'cpio', 'gcc', 'xargs', 'whoami', 'date', 'scp',
     'clear', 'sh', 'bash', 'dash', 'read', 'getopts', 'hash', 'seq', 'mail', 'check-comms', 'compile',
     'vim', 'scheme', 'asm', 'settings', 'ssh', 'tutor',
+    'atq', 'atrm', 'apropos', 'whatis', 'lpstat', 'cancel',
 ];

@@ -16,6 +16,7 @@ import { DirectoryNode } from '../../entities/filesystem/DirectoryNode';
 import { S_IFCHR } from '../../entities/FileSystem';
 import { makedev } from '../../entities/filesystem/Devices';
 import { UTILITY_STUB_PREFIX } from '../shell/CommandResolver';
+import { installSpoolConfig } from './SpoolConfig';
 import { DEFAULT_UTILITIES } from './UtilityCatalog';
 import { passwordHash } from './PasswordHash';
 
@@ -87,6 +88,7 @@ export class SystemInstaller {
         this.installUtilities(fs, profile.utilities ?? DEFAULT_UTILITIES);
         this.installAccounts(fs, profile);
         this.installEtc(fs, profile, os);
+        installSpoolConfig(fs);
         this.installDevices(fs, users[0]?.uid ?? 0);
         this.installProc(fs, profile, os, bootTime);
         this.installHomes(fs, users);
