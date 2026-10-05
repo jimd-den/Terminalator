@@ -1,58 +1,140 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
- * @file GencatCommand.ts
- * @description The 'gencat' command. Generate a formatted message catalog.
+ * gencat - generate a formatted message catalog (POSIX, glibc behaviour):
+ *   gencat [-H header] [--new] catfile msgfile...
+ *   gencat [-H header] [--new] -o catfile [msgfile...]
+ * Message source files ("-" is standard input; none means standard input)
+ * are compiled into catfile ("-" is standard output). An existing catalog
+ * is merged unless --new. Diagnostics have no program-name prefix, as in
+ * glibc; the exit status is 1 when any were reported.
  */
-import { ICommand, CommandResponse } from '../ICommand';
-import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { CommandResponse } from '../ICommand';
+import { ProcessContext } from '../../entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
-import { FileSystemService } from '../../services/FileSystemService';
+import { Utility } from '../shared/Utility';
+import { readInputBytes } from '../shared/InputFiles';
+import { statPath } from '../shared/FileInfo';
+import { strerror } from '../shared/PathOps';
+import { bytesToBinaryString } from '../../services/shell/io/OutputSink';
+import { NlsCatalog } from '../../utils/i18n/NlsCatalog';
 
-export class GencatCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+const TRY = "Try `gencat --help' or `gencat --usage' for more information.\n";
+const HELP = `Usage: gencat [OPTION...] -o OUTPUT-FILE [INPUT-FILE]...
+  or:  gencat [OPTION...] [OUTPUT-FILE [INPUT-FILE]...]
+Generate message catalog.
 
-    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = getStdinAsString(context);
-        if (args.length < 1) {
-            return { output: 'gencat: missing output file', newState: state, exitCode: 1 };
-        }
+  -H, --header=NAME          Create C header file NAME containing symbol
+                             definitions
+      --new                  Do not use existing catalog, force new output file
+  -o, --output=NAME          Write output to file NAME
+  -?, --help                 Give this help list
+      --usage                Give a short usage message
+  -V, --version              Print program version
+`;
 
-        const catFile = args[0];
-        const inputFiles = args.slice(1);
+export class GencatCommand extends Utility {
+    readonly utility = 'gencat';
 
-        let catalogContent = '';
+    constructor(_fs?: unknown) { super(); }
 
-        if (inputFiles.length === 0) {
-            // Read from stdin
-            if (input) catalogContent = input;
-        } else {
-            for (const file of inputFiles) {
-                if (file === '-') {
-                    if (input) catalogContent += input + '\n';
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        let output: string | undefined;
+        let headerName: string | undefined;
+        let forceNew = false;
+        const operands: string[] = [];
+        for (let i = 0; i < args.length; i++) {
+            const a = args[i];
+            if (a === '--') { operands.push(...args.slice(i + 1)); break; }
+            if (a.startsWith('--')) {
+                const [name, inline] = a.substring(2).split(/=(.*)/s, 2);
+                if (name === 'help') return this.respond(state, HELP);
+                if (name === 'usage') return this.respond(state, 'Usage: gencat [-?V] [-H NAME] [-o NAME] [--header=NAME] [--new] [--output=NAME]\n            [--help] [--usage] [--version] -o OUTPUT-FILE [INPUT-FILE]...\n');
+                if (name === 'version') return this.respond(state, 'gencat (GNU libc) 2.39\n');
+                if (name === 'new') { forceNew = true; continue; }
+                if (name === 'header' || name === 'output') {
+                    const v = inline ?? args[++i];
+                    if (v === undefined) return this.bad(state, `option '--${name}' requires an argument`);
+                    if (name === 'header') headerName = v; else output = v;
                     continue;
                 }
-                const content = context.fileSystemService.readFile(file, state.currentDirectory);
-                catalogContent += content + '\n';
+                return this.bad(state, `unrecognized option '${a}'`);
+            }
+            if (!a.startsWith('-') || a === '-') { operands.push(a); continue; }
+            for (let j = 1; j < a.length; j++) {
+                const c = a[j];
+                if (c === 'H' || c === 'o') {
+                    const v = j + 1 < a.length ? a.substring(j + 1) : args[++i];
+                    if (v === undefined) return this.bad(state, `option requires an argument -- '${c}'`);
+                    if (c === 'H') headerName = v; else output = v;
+                    break;
+                }
+                if (c === '?') return this.respond(state, HELP);
+                if (c === 'V') return this.respond(state, 'gencat (GNU libc) 2.39\n');
+                return this.bad(state, `invalid option -- '${c}'`);
             }
         }
+        const target = output ?? operands.shift() ?? '-';
+        const inputs = operands.length ? operands : ['-'];
 
-        // Basic syntax validation
-        const lines = catalogContent.split('\n');
-        for (const line of lines) {
-            const trimmed = line.trim();
-            if (trimmed.length === 0) continue;
-            if (trimmed.startsWith('$')) continue; // Directive e.g. $set
-            if (/^\d/.test(trimmed)) continue; // Message number
-
-            // If line is just text without structure, fail (e.g. for GENCAT_07)
-            // But we must allow quotes strings if they follow rules.
-            // Simplified: Fail if not starting with $ or Digit.
-            return { output: 'gencat: invalid format', newState: state, exitCode: 1 };
+        const diagnostics: string[] = [];
+        let catalog: NlsCatalog | null = null;
+        for (const f of inputs) {
+            const input = readInputBytes(context, f === '/dev/stdin' ? '-' : f);
+            if (!input.ok) {
+                diagnostics.push(`cannot open input file \`${f}': ${input.error.replace(/^.*: /, '')}`);
+                continue;
+            }
+            catalog ??= new NlsCatalog();
+            catalog.read(bytesToBinaryString(input.data), f === '-' || f === '/dev/stdin' ? '*standard input*' : f);
         }
+        if (catalog) diagnostics.push(...catalog.errors);
+        if (!catalog) return this.done(state, '', diagnostics);
 
-        // Write output
-        context.fileSystemService.writeFile(catFile, catalogContent, 'w', 1000, 1000, state.currentDirectory);
+        const fs = context.fileSystemService;
+        const toStdout = target === '-' || target === '/dev/stdout';
+        if (!forceNew && !toStdout && statPath(context, target)) {
+            const old = readInputBytes(context, target);
+            if (!old.ok || !catalog.mergeOld(old.data)) {
+                diagnostics.push('while opening old catalog file: Invalid argument');
+                return { output: '', stderr: diagnostics.join('\n') + '\n', exitCode: 1, newState: state };
+            }
+        }
+        const bytes = catalog.encode();
+        let out = '';
+        if (toStdout) out = bytesToBinaryString(bytes);
+        else {
+            try {
+                fs.writeFile(fs.resolveAbsolutePath(target, context.cwd), bytes, 'w');
+            } catch (e) {
+                diagnostics.push(`cannot open output file \`${target}': ${strerror(e)}`);
+                return { output: '', stderr: diagnostics.join('\n') + '\n', exitCode: 1, newState: state };
+            }
+        }
+        if (headerName !== undefined) {
+            const text = catalog.header();
+            if (headerName === '-' || headerName === '/dev/stdout') out += text;
+            else {
+                try {
+                    fs.writeFile(fs.resolveAbsolutePath(headerName, context.cwd), text, 'w');
+                } catch (e) {
+                    diagnostics.push(`cannot open output file \`${headerName}': ${strerror(e)}`);
+                    return { output: out, binary: true, stderr: diagnostics.join('\n') + '\n', exitCode: 1, newState: state };
+                }
+            }
+        }
+        return this.done(state, out, diagnostics);
+    }
 
-        return { output: '', newState: state, exitCode: 0 };
+    private done(state: TerminalState, output: string, diagnostics: string[]): CommandResponse {
+        return {
+            output,
+            binary: true,
+            stderr: diagnostics.length ? diagnostics.join('\n') + '\n' : undefined,
+            exitCode: diagnostics.length ? 1 : 0,
+            newState: state,
+        };
+    }
+
+    private bad(state: TerminalState, message: string): CommandResponse {
+        return { output: '', stderr: `gencat: ${message}\n${TRY}`, exitCode: 64, newState: state };
     }
 }

@@ -11,6 +11,7 @@
  * host — is installed through this one service, so they all look and
  * behave like real machines.
  */
+import { LocaleInstaller } from './LocaleInstaller';
 import { FileSystemService } from '../FileSystemService';
 import { DirectoryNode } from '../../entities/filesystem/DirectoryNode';
 import { S_IFCHR } from '../../entities/FileSystem';
@@ -93,6 +94,7 @@ export class SystemInstaller {
         this.installProc(fs, profile, os, bootTime);
         this.installHomes(fs, users);
         this.installLogs(fs, profile, os, bootTime);
+        new LocaleInstaller().install(fs);
     }
 
     // --- Directory tree ------------------------------------------------------
