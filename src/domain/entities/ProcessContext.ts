@@ -109,6 +109,8 @@ export interface SpawnOptions {
     cwd?: string;
     /** Nice value increment for the child (nice). */
     nice?: number;
+    /** Captures the child's standard output here instead (e.g. awk's `cmd | getline`). */
+    stdout?: IStream;
 }
 
 

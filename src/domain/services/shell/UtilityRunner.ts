@@ -55,6 +55,17 @@ export class UtilityRunner {
         const stdin = io.stdin;
         let legacyStdin: string | undefined;
         let legacyRead = false;
+        // How much of this process's buffered output has already reached fds 1 and 2.
+        let flushedOut = 0;
+        let flushedErr = 0;
+        const flush = () => {
+            const out = stdout.getContents();
+            const err = stderr.getContents();
+            if (out.length > flushedOut) io.stdout.write(out.slice(flushedOut));
+            if (err.length > flushedErr) io.stderr.write(err.slice(flushedErr));
+            flushedOut = out.length;
+            flushedErr = err.length;
+        };
 
         const context: ProcessContext = {
             fs: this.runtime.fsService.fileSystem,
@@ -84,7 +95,16 @@ export class UtilityRunner {
                     currentDirectory: options.cwd ?? state.currentDirectory,
                     niceIncrement: (state.niceIncrement ?? 0) + (options.nice ?? 0),
                 };
-                const childIo = options.stdin !== undefined ? io.withStdin(inputFromString(options.stdin)) : io;
+                let childIo = options.stdin !== undefined ? io.withStdin(inputFromString(options.stdin)) : io;
+                const capture = options.stdout;
+                if (capture) {
+                    childIo = childIo.withStdout({
+                        write: data => capture.write(data),
+                        writeBytes: bytes => capture.write(bytesToStreamText(bytes)),
+                    });
+                }
+                // What this process wrote so far comes before the child's output.
+                flush();
                 const res = await this.runtime.invoke(child, childArgs, childState, childIo, { skipFunctions: true });
                 return res.status;
             },
@@ -109,19 +129,20 @@ export class UtilityRunner {
         }
         const status = response.exitCode ?? 0;
 
-        const streamed = stdout.getContents();
+        const streamed = stdout.getContents().slice(flushedOut);
+        const streamedErr = stderr.getContents().slice(flushedErr);
         if (response.binary) {
             const bytes = binaryStringToBytes(streamed + (response.output ?? ''));
             if (io.stdout.writeBytes) io.stdout.writeBytes(bytes);
             else io.stdout.write(bytesToStreamText(bytes));
-            io.stderr.write(stderr.getContents() + (response.stderr ?? ''));
+            io.stderr.write(streamedErr + (response.stderr ?? ''));
             return this.finish(response, state, status);
         }
         const { out, err } = command.exactOutput
             ? { out: response.output ?? '', err: '' }
             : this.route(name, response.output ?? '', status);
         io.stdout.write(streamed + out);
-        io.stderr.write(stderr.getContents() + (response.stderr ?? '') + err);
+        io.stderr.write(streamedErr + (response.stderr ?? '') + err);
 
         return this.finish(response, state, status);
     }
