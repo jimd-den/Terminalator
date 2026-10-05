@@ -2052,7 +2052,7 @@ const SUITES: UtilitySuite[] = [
             { id: 'M4_04', description: 'Fail missing', posixSection: 'm4.html', posixRequirement: 'Error', command: 'm4 missing', expect: { exitCode: 1 } },
             { id: 'M4_05', description: 'Stdin', posixSection: 'm4.html', posixRequirement: '-', command: 'echo "define(X,Y)X" | m4', expect: { exitCode: 0, stdout: /Y/ } },
             { id: 'M4_06', description: 'Silent -s', posixSection: 'm4.html', posixRequirement: '-s', command: 'm4 -s f', expect: { exitCode: 0 } },
-            { id: 'M4_07', description: 'Args', posixSection: 'm4.html', posixRequirement: 'Args', command: 'm4 f f', expect: { exitCode: 0 } },
+            { id: 'M4_07', description: 'Args', posixSection: 'm4.html', posixRequirement: 'Args', command: 'm4 f f', expect: { exitCode: 1 } }, // define(A,B)A twice recurses forever in GNU m4; the simulator aborts runaway expansion
             { id: 'M4_08', description: 'Fatal error', posixSection: 'm4.html', posixRequirement: 'Error', command: 'm4 -z', expect: { exitCode: 1 } },
             { id: 'M4_09', description: 'Consistency', posixSection: 'm4.html', posixRequirement: 'Stable', command: 'm4', expect: { exitCode: 0 } },
             { id: 'M4_10', description: 'Version', posixSection: 'm4.html', posixRequirement: 'Info', command: 'm4 --version', expect: { exitCode: 0 } }

@@ -1,0 +1,222 @@
+{
+  "m4/define": {
+    "stdout": "Y 1+2 x+y   (1,2)+3\nst=0\n",
+    "status": 0
+  },
+  "m4/args": {
+    "stdout": "11 [a,b,c,d,e,f,g,h,i,j,k] [a,b,c,d,e,f,g,h,i,j,k] t j\n0 [] [] t \n1 [] [] t \nst=0\n",
+    "status": 0
+  },
+  "m4/quotes": {
+    "stdout": "quoted `nested' a`b'c (,\nst=0\n",
+    "status": 0
+  },
+  "m4/changequote": {
+    "stdout": "x Y x hi a<<b>>c\nback\nst=0\n",
+    "status": 0
+  },
+  "m4/changequote-one": {
+    "stdout": "x y\n`x'\nst=0\n",
+    "status": 0
+  },
+  "m4/comments": {
+    "stdout": "# define(`x',`y') x\n/* x */ # x\n\n# x\nst=0\n",
+    "status": 0
+  },
+  "m4/dnl": {
+    "stdout": "a b\n1\nst=0\n",
+    "status": 0
+  },
+  "m4/undefine": {
+    "stdout": "1 x \nst=0\n",
+    "status": 0
+  },
+  "m4/defn": {
+    "stdout": "hello $1 4 x\nst=0\n",
+    "status": 0
+  },
+  "m4/pushdef": {
+    "stdout": "2 1 x b a\nst=0\n",
+    "status": 0
+  },
+  "m4/ifdef": {
+    "stdout": "yes no .\nst=0\n",
+    "status": 0
+  },
+  "m4/ifelse": {
+    "stdout": "yes  1 . g\nst=0\n",
+    "status": 0
+  },
+  "m4/shift": {
+    "stdout": "b,c   3\nst=0\n",
+    "status": 0
+  },
+  "m4/divert": {
+    "stdout": "0  0 two  and end\none st=0\n",
+    "status": 0
+  },
+  "m4/undivert-all": {
+    "stdout": "one\ntwo\nthree\n\ndone\nst=0\n",
+    "status": 0
+  },
+  "m4/divert-end": {
+    "stdout": "zero\none\ntwo\nst=0\n",
+    "status": 0
+  },
+  "m4/incr": {
+    "stdout": "6 -1 -2 -2147483648 6\nst=0\n",
+    "status": 0
+  },
+  "m4/incr-bad": {
+    "stdout": " 1\nst=0\n",
+    "status": 0
+  },
+  "m4/eval": {
+    "stdout": "7 9 -3 -1 -2147483648 16 5 8 1295 512 4 0 1 9\nst=0\n",
+    "status": 0
+  },
+  "m4/eval-radix": {
+    "stdout": "a 00001010 -a 73 11111 00011111 001 0\nst=0\n",
+    "status": 0
+  },
+  "m4/eval-errors": {
+    "stdout": "\n\n\n\n0\n\n\n\n\nst=0\n",
+    "status": 0
+  },
+  "m4/len-index": {
+    "stdout": "0 3 2 -1 0 0\nst=0\n",
+    "status": 0
+  },
+  "m4/substr": {
+    "stdout": "ello el    hello\nst=0\n",
+    "status": 0
+  },
+  "m4/translit": {
+    "stdout": "HELLO he z 321 ab hello\nst=0\n",
+    "status": 0
+  },
+  "m4/regexp": {
+    "stdout": "5 GNUs! -1 . <b>\nst=0\n",
+    "status": 0
+  },
+  "m4/patsubst": {
+    "stdout": "<GNUs> <not> <Unix> xx heo a_b_c >abc\nst=0\n",
+    "status": 0
+  },
+  "m4/format": {
+    "stdout": "   42|ab   |ff|A|3.14|00007|+3|10|FF|% x and \nst=0\n",
+    "status": 0
+  },
+  "m4/builtin-indir": {
+    "stdout": "[x] 3 \nst=0\n",
+    "status": 0
+  },
+  "m4/sysval": {
+    "stdout": "hi\n0 3 abc\nst=0\n",
+    "status": 0
+  },
+  "m4/syscmd-order": {
+    "stdout": "before\ncmd\nafter\ndiverted\nst=0\n",
+    "status": 0
+  },
+  "m4/errprint": {
+    "stdout": "x\nst=0\n",
+    "status": 0
+  },
+  "m4/m4exit": {
+    "stdout": "a\nst=3\n",
+    "status": 0
+  },
+  "m4/m4exit-plain": {
+    "stdout": "a st=0\n",
+    "status": 0
+  },
+  "m4/m4wrap": {
+    "stdout": "start\n\nw3 w4 w2 w1 st=0\n",
+    "status": 0
+  },
+  "m4/file-line": {
+    "stdout": "stdin 1\n2 m4   unix\nst=0\n",
+    "status": 0
+  },
+  "m4/blind": {
+    "stdout": "define len index 0 \nst=0\n",
+    "status": 0
+  },
+  "m4/nested-calls": {
+    "stdout": "yy xx abababab\nst=0\n",
+    "status": 0
+  },
+  "m4/recursion": {
+    "stdout": "5 4 3 2 1 done\nst=0\n",
+    "status": 0
+  },
+  "m4/forloop": {
+    "stdout": "1,2,3,4,5,\nst=0\n",
+    "status": 0
+  },
+  "m4/eof-string": {
+    "stdout": "st=1\n",
+    "status": 0
+  },
+  "m4/eof-args": {
+    "stdout": "st=1\n",
+    "status": 0
+  },
+  "m4/dumpdef": {
+    "stdout": "ok\nst=0\n",
+    "status": 0
+  },
+  "m4/opt-D": {
+    "stdout": "1  x=y\nst=0\n",
+    "status": 0
+  },
+  "m4/opt-U": {
+    "stdout": "len(abc) \nst=0\n",
+    "status": 0
+  },
+  "m4/opt-P": {
+    "stdout": "len(abc) 3 1\nst=0\n",
+    "status": 0
+  },
+  "m4/opt-G": {
+    "stdout": "format(%d,1) 2  __gnu__\nst=0\n",
+    "status": 0
+  },
+  "m4/opt-Q": {
+    "stdout": "0\nst=0\n",
+    "status": 0
+  },
+  "m4/files": {
+    "stdout": "B\nB\nst=0\nB\nB\nst=1\n",
+    "status": 0
+  },
+  "m4/include": {
+    "stdout": "inc inc.m4 1\nx\ny\nst=1\n",
+    "status": 0
+  },
+  "m4/include-path": {
+    "stdout": "from d\n\nst=0\n",
+    "status": 0
+  },
+  "m4/undivert-file": {
+    "stdout": "raw define(x)\nz\nst=0\n",
+    "status": 0
+  },
+  "m4/mkstemp": {
+    "stdout": "created\nfoo\n",
+    "status": 0
+  },
+  "m4/stdin-dash": {
+    "stdout": "1\nst=0\n",
+    "status": 0
+  },
+  "m4/bad-option": {
+    "stdout": "st=1\nm4 (GNU M4) 1.4.19\nst=1\n",
+    "status": 0
+  },
+  "m4/synclines": {
+    "stdout": "#line 1 \"stdin\"\na\nb\nst=0\n",
+    "status": 0
+  }
+}
