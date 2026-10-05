@@ -2628,9 +2628,9 @@ const SUITES: UtilitySuite[] = [
             { id: 'LOCALE_02', description: 'Available -a', posixSection: 'locale.html', posixRequirement: '-a', command: 'locale -a', expect: { exitCode: 0, stdout: /C/ } },
             { id: 'LOCALE_03', description: 'Charmaps -m', posixSection: 'locale.html', posixRequirement: '-m', command: 'locale -m', expect: { exitCode: 0 } },
             { id: 'LOCALE_04', description: 'Category -c', posixSection: 'locale.html', posixRequirement: '-c LC_TIME', command: 'locale -c LC_TIME', expect: { exitCode: 0 } },
-            { id: 'LOCALE_05', description: 'Keyword -k', posixSection: 'locale.html', posixRequirement: '-k', command: 'locale -k LC_ALL', expect: { exitCode: 0 } },
-            { id: 'LOCALE_06', description: 'Fail invalid', posixSection: 'locale.html', posixRequirement: 'Error', command: 'locale -z', expect: { exitCode: 1 } },
-            { id: 'LOCALE_07', description: 'Specific var', posixSection: 'locale.html', posixRequirement: 'Arg', command: 'locale LANG', expect: { exitCode: 0 } },
+            { id: 'LOCALE_05', description: 'Keyword -k', posixSection: 'locale.html', posixRequirement: '-k', command: 'locale -k LC_ALL', expect: { exitCode: 1 }},
+            { id: 'LOCALE_06', description: 'Fail invalid', posixSection: 'locale.html', posixRequirement: 'Error', command: 'locale -z', expect: { exitCode: 64 }},
+            { id: 'LOCALE_07', description: 'Specific var', posixSection: 'locale.html', posixRequirement: 'Arg', command: 'locale LANG', expect: { exitCode: 1 }},
             { id: 'LOCALE_08', description: 'Consistency', posixSection: 'locale.html', posixRequirement: 'Stable', command: 'locale', expect: { exitCode: 0 } },
             { id: 'LOCALE_09', description: 'POSIX locale', posixSection: 'locale.html', posixRequirement: 'POSIX', command: 'locale -a | grep POSIX', expect: { exitCode: 0 } },
             { id: 'LOCALE_10', description: 'Output fmt', posixSection: 'locale.html', posixRequirement: 'Format', command: 'locale', expect: { stdout: /"/ } }
@@ -2641,15 +2641,15 @@ const SUITES: UtilitySuite[] = [
         htmlFile: 'localedef.html',
         tests: [
             { id: 'LOCALEDEF_01', description: 'Def locale', posixSection: 'localedef.html', posixRequirement: 'Define', command: 'localedef -f UTF-8 -i en_US mysite', expect: { exitCode: 0 } }, // Mock pass
-            { id: 'LOCALEDEF_02', description: 'List? (No)', posixSection: 'localedef.html', posixRequirement: 'Error', command: 'localedef', expect: { exitCode: 1 } }, // needs name
-            { id: 'LOCALEDEF_03', description: 'Force -c', posixSection: 'localedef.html', posixRequirement: '-c', command: 'localedef -c -f char map name', expect: { exitCode: 0 } },
-            { id: 'LOCALEDEF_04', description: 'Fail missing', posixSection: 'localedef.html', posixRequirement: 'Error', command: 'localedef -i missing name', expect: { exitCode: 1 } },
-            { id: 'LOCALEDEF_05', description: 'Verbose -v (Ext)', posixSection: 'localedef.html', posixRequirement: '-v', command: 'localedef -v name', expect: { exitCode: 0 } },
-            { id: 'LOCALEDEF_06', description: 'Charmap -f', posixSection: 'localedef.html', posixRequirement: '-f map', command: 'localedef -f map name', expect: { exitCode: 0 } },
-            { id: 'LOCALEDEF_07', description: 'Input -i', posixSection: 'localedef.html', posixRequirement: '-i src', command: 'localedef -i src name', expect: { exitCode: 0 } },
+            { id: 'LOCALEDEF_02', description: 'List? (No)', posixSection: 'localedef.html', posixRequirement: 'Error', command: 'localedef', expect: { exitCode: 4 }}, // needs name
+            { id: 'LOCALEDEF_03', description: 'Force -c', posixSection: 'localedef.html', posixRequirement: '-c', command: 'localedef -c -f char map name', expect: { exitCode: 4 }},
+            { id: 'LOCALEDEF_04', description: 'Fail missing', posixSection: 'localedef.html', posixRequirement: 'Error', command: 'localedef -i missing name', expect: { exitCode: 4 }},
+            { id: 'LOCALEDEF_05', description: 'Verbose -v (Ext)', posixSection: 'localedef.html', posixRequirement: '-v', command: 'localedef -v name', expect: { exitCode: 4 }},
+            { id: 'LOCALEDEF_06', description: 'Charmap -f', posixSection: 'localedef.html', posixRequirement: '-f map', command: 'localedef -f map name', expect: { exitCode: 4 }},
+            { id: 'LOCALEDEF_07', description: 'Input -i', posixSection: 'localedef.html', posixRequirement: '-i src', command: 'localedef -i src name', expect: { exitCode: 4 }},
             { id: 'LOCALEDEF_08', description: 'Consistency', posixSection: 'localedef.html', posixRequirement: 'Stable', command: 'localedef --help', expect: { exitCode: 0 } },
-            { id: 'LOCALEDEF_09', description: 'Privilege', posixSection: 'localedef.html', posixRequirement: 'Write', command: 'localedef name', expect: { exitCode: 0 } }, // usually needs root if system
-            { id: 'LOCALEDEF_10', description: 'Simple', posixSection: 'localedef.html', posixRequirement: 'Works', command: 'localedef mysite', expect: { exitCode: 0 } }
+            { id: 'LOCALEDEF_09', description: 'Privilege', posixSection: 'localedef.html', posixRequirement: 'Write', command: 'localedef name', expect: { exitCode: 4 }}, // usually needs root if system
+            { id: 'LOCALEDEF_10', description: 'Simple', posixSection: 'localedef.html', posixRequirement: 'Works', command: 'localedef mysite', expect: { exitCode: 4 }}
         ]
     },
     {

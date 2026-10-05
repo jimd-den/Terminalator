@@ -7,6 +7,13 @@
 import { DifferentialCase } from './differential';
 
 /** Runs an m4 program given on stdin (here-document) and prints the status. */
+/** A clean locale environment (the simulator's login shell exports LANG). */
+const E = 'env -i PATH="$PATH"';
+const ALL_CATS = 'LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT LC_IDENTIFICATION';
+/** Keywords modelled for compiled locales (excludes glibc-internal LC_CTYPE/LC_COLLATE tables). */
+const MODELLED = 'LC_NUMERIC LC_MONETARY LC_MESSAGES LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT charmap abday day abmon mon am_pm d_t_fmt d_fmt t_fmt t_fmt_ampm date_fmt first_weekday week-1stday title language territory revision';
+const compile = (loc: string, cm = 'UTF-8') => `mkdir -p loc; localedef -f ${cm} -i ${loc} "$PWD/loc/${loc}.${cm}"; echo st=$?; `;
+
 const m4 = (name: string, program: string, opts = '') =>
     ({ name: `m4/${name}`, script: `m4 ${opts} <<'EOF'\n${program}\nEOF\necho st=$?` });
 
@@ -67,4 +74,30 @@ export const I18N_M4_CASES: DifferentialCase[] = [
     { name: 'm4/stdin-dash', script: `printf 'define(x,1)' > a; echo x | m4 a -; echo st=$?` },
     { name: 'm4/bad-option', script: `m4 -z </dev/null 2>/dev/null; echo st=$?; m4 --version | head -1; m4 --nosuch </dev/null 2>/dev/null; echo st=$?` },
     { name: 'm4/synclines', script: `printf 'a\\nb\\n' | m4 -s; echo st=$?` },
+
+    // ---- locale ----
+    { name: 'locale/env-C', script: `${E} LC_ALL=C locale; echo st=$?` },
+    { name: 'locale/env-unset', script: `${E} locale` },
+    { name: 'locale/env-mixed', script: `${E} LANG=C.UTF-8 LC_TIME=POSIX LANGUAGE=fr locale` },
+    { name: 'locale/env-invalid', script: `${E} LANG=xx_YY.UTF-8 LC_NUMERIC=C locale 2>/dev/null; echo st=$?; ${E} LC_ALL=xx_YY locale decimal_point 2>/dev/null` },
+    { name: 'locale/k-C', script: `${E} LC_ALL=C locale -k ${ALL_CATS}` },
+    { name: 'locale/k-C.UTF-8', script: `${E} LC_ALL=C.UTF-8 locale -k ${ALL_CATS}` },
+    { name: 'locale/k-POSIX', script: `${E} LC_ALL=POSIX locale -ck LC_TIME LC_MONETARY` },
+    { name: 'locale/plain', script: `${E} LC_ALL=C locale LC_NUMERIC; locale -c LC_PAPER abday era ctype-class-names alt_digits grouping conversion_rate charmap height` },
+    { name: 'locale/keywords', script: `${E} LC_ALL=C locale -k decimal_point thousands_sep grouping LC_PAPER; ${E} LC_ALL=C locale -c decimal_point LC_MEASUREMENT` },
+    { name: 'locale/unknown', script: `${E} LC_ALL=C locale decimal_point nosuch LC_NUMERIC 2>&1; echo st=$?; locale LANG 2>&1; echo st=$?; locale -k LC_ALL 2>&1; echo st=$?` },
+    { name: 'locale/bad-option', script: `locale -z 2>/dev/null; echo st=$?; locale --nosuch 2>/dev/null; echo st=$?` },
+    { name: 'locale/list', script: `locale -a; locale -a -m; locale -a extra; locale -m | grep -c UTF-8` },
+    { name: 'locale/utf8-charmap', script: `${E} LC_ALL=C.UTF-8 locale charmap; ${E} LC_ALL=C locale charmap; ${E} LC_ALL=C.utf8 locale -c LC_IDENTIFICATION | head -3` },
+    // ---- localedef (compiled into a LOCPATH directory, so no root is needed) ----
+    ...['fr_FR', 'de_DE', 'en_US', 'ja_JP'].map(loc => ({
+        name: `localedef/${loc}`,
+        script: `${compile(loc)}ls loc/${loc}.UTF-8; ${E} LOCPATH="$PWD/loc" LC_ALL=${loc}.UTF-8 locale -k ${MODELLED}`,
+    })),
+    { name: 'localedef/locale-name-normalised', script: `${compile('fr_FR')}${E} LOCPATH="$PWD/loc" LC_ALL=fr_FR.utf8 locale charmap 2>/dev/null; ${E} LOCPATH="$PWD/loc" LC_ALL=fr_FR.UTF-8 locale yesstr` },
+    { name: 'localedef/latin1', script: `${compile('en_US', 'ISO-8859-1')}${E} LOCPATH="$PWD/loc" LC_ALL=en_US.ISO-8859-1 locale -k charmap LC_NUMERIC LC_MONETARY d_fmt` },
+    { name: 'localedef/charmap-alias', script: `localedef -f UTF8 -i de_DE "$PWD/de" 2>/dev/null; echo st=$?; localedef -f ISO-8859-15 -i de_DE "$PWD/de15"; echo st=$?; ls de15 | wc -l` },
+    { name: 'localedef/partial-stdin', script: `printf 'LC_TIME\ncopy "POSIX"\nEND LC_TIME\nLC_NUMERIC\ndecimal_point "<U002C>"\nthousands_sep "."\ngrouping 3;3\nEND LC_NUMERIC\n' > src; localedef -f UTF-8 "$PWD/y" < src 2>/dev/null; echo st=$?; ls y; localedef -c "$PWD/y2" < src 2>/dev/null; echo st=$?` },
+    { name: 'localedef/copy', script: `printf 'comment_char %%\nLC_MONETARY\ncopy "fr_FR"\nEND LC_MONETARY\n' > src; localedef -i src -f UTF-8 "$PWD/c" 2>/dev/null; echo st=$?; ls c` },
+    { name: 'localedef/errors', script: `localedef </dev/null 2>/dev/null; echo st=$?; localedef a b </dev/null 2>/dev/null; echo st=$?; localedef -i missing "$PWD/x" 2>/dev/null; echo st=$?; localedef -f nomap -i fr_FR "$PWD/x" 2>/dev/null; echo st=$?; localedef -i src "$PWD/x" 2>/dev/null; echo st=$?; localedef --help | head -1; localedef -z x 2>/dev/null; echo st=$?; ls` },
 ];

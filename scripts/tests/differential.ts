@@ -15,6 +15,7 @@ import { spawnSync } from 'child_process';
 import { test, expectEqual, run } from './harness';
 import { ShellFactory } from '../../src/domain/factories/ShellFactory';
 import { createInitialTerminalState } from '../../src/domain/entities/TerminalState';
+import { FileSystemService } from '../../src/domain/services/FileSystemService';
 
 export interface DifferentialCase {
     name: string;
@@ -38,8 +39,12 @@ function runReference(script: string): { stdout: string; status: number } {
     }
 }
 
-async function runSimulator(script: string): Promise<{ stdout: string; status: number }> {
+/** Extra installation steps for the simulated machine (e.g. locale data). */
+export type SimulatorSetup = (fs: FileSystemService) => void;
+
+async function runSimulator(script: string, setup?: SimulatorSetup): Promise<{ stdout: string; status: number }> {
     const { executor, fsService } = ShellFactory.create();
+    setup?.(fsService);
     const work = '/home/operator/work';
     fsService.mkdirp(work, 0o755, 1000, 1000);
     const state = { ...createInitialTerminalState(), currentDirectory: work };
@@ -51,7 +56,7 @@ async function runSimulator(script: string): Promise<{ stdout: string; status: n
     return { stdout, status: res.exitCode };
 }
 
-export function differentialSuite(title: string, cases: DifferentialCase[], goldenFile: string) {
+export function differentialSuite(title: string, cases: DifferentialCase[], goldenFile: string, setup?: SimulatorSetup) {
     if (process.argv.includes('--update')) {
         const golden: Golden = {};
         for (const c of cases) golden[c.name] = runReference(c.script);
@@ -65,7 +70,7 @@ export function differentialSuite(title: string, cases: DifferentialCase[], gold
         test(c.name, async () => {
             const expected = golden[c.name];
             if (!expected) throw new Error('no golden (run with --update)');
-            expectEqual(await runSimulator(c.script), expected, c.script.replace(/\n/g, '\\n'));
+            expectEqual(await runSimulator(c.script, setup), expected, c.script.replace(/\n/g, '\\n'));
         });
     }
     run(title);
