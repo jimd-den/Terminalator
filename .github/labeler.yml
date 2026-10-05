@@ -1,0 +1,16 @@
+# Labels applied by .github/workflows/label.yml (actions/labeler v5 format).
+shell:
+  - changed-files:
+      - any-glob-to-any-file: 'src/domain/services/shell/**'
+utilities:
+  - changed-files:
+      - any-glob-to-any-file: 'src/domain/commands/**'
+ui:
+  - changed-files:
+      - any-glob-to-any-file: ['src/frameworks-drivers/**', 'src/interface-adapters/**']
+tests:
+  - changed-files:
+      - any-glob-to-any-file: 'scripts/**'
+ci:
+  - changed-files:
+      - any-glob-to-any-file: '.github/**'
