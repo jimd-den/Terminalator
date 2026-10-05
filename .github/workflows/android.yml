@@ -57,7 +57,13 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - uses: android-actions/setup-android@v3
+      # ubuntu-latest ships an Android SDK (ANDROID_HOME) with licenses accepted;
+      # Gradle downloads any missing platform/build-tools itself. (setup-android@v3
+      # fails there: it installs the long-removed 'tools' package by default.)
+      - name: Check Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          test -d "$ANDROID_HOME/platform-tools"
 
       - name: Cache Gradle
         uses: actions/cache@v4
