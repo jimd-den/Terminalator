@@ -172,6 +172,16 @@ export const I18N_M4_CASES: DifferentialCase[] = [
     { name: 'gettext/catalog-fr', script: `${FR_PO}${FR_LOCALE}for lang in "" fr fr_FR de:fr de C:fr fr_CA.UTF-8; do echo "== $lang"; ${FR_ENV} LC_ALL=fr_FR.UTF-8 LANGUAGE=$lang gettext -d app hello; echo; ${FR_ENV} LC_ALL=fr_FR.UTF-8 LANGUAGE=$lang TEXTDOMAIN=app gettext -s hello world fz untranslated; done` },
     { name: 'gettext/catalog-features', script: `${FR_PO}${FR_LOCALE}F="${FR_ENV} LC_ALL=fr_FR.UTF-8"; $F gettext app hello; echo; $F gettext -d app -c menu Open; echo; $F gettext -d app Open; echo; $F gettext -d app -e 'a\\tb'; echo; $F gettext -d nodomain hello; echo; for n in 0 1 2 5; do $F ngettext -d app file files $n; echo; done; $F ngettext -d app nope nopes 1; echo; LANG=fr_FR.UTF-8 $F gettext -d app hello; echo` },
     { name: 'gettext/catalog-variants', script: `${FR_PO}${FR_LOCALE}mkdir -p fr_FR/LC_MESSAGES; printf 'msgid "hello"\\nmsgstr "salut"\\n' > v.po; msgfmt -o fr_FR/LC_MESSAGES/app.mo v.po; ${FR_ENV} LC_ALL=fr_FR.UTF-8 gettext -d app hello; echo; ${FR_ENV} LC_ALL=fr_FR.UTF-8 gettext -d app file; echo; ${FR_ENV} LC_MESSAGES=fr_FR.UTF-8 LANGUAGE=fr gettext -d app hello; echo` },
+    // ---- gencat ----
+    { name: 'gencat/basic', script: `printf '1 quote' > m; gencat cat m; echo st=$?; od -An -tx1 cat` },
+    { name: 'gencat/sets-quotes', script: `printf '$set 2\\n5 hello\\n7 world\\n$set 3\\n1 a\\\\\\nb\\n$quote "\\n2 "quoted msg"   \\n3\\n4 \\n$ comment\\n' > m2; gencat --new c m2; echo st=$?; od -An -tx1 c` },
+    { name: 'gencat/escapes', script: `printf '$quote "\\n1 tab\\\\there\\\\nnl \\\\101\\\\0102 \\\\q \\\\\\\\ \\\\"x\\\\" end\\n2 "unterminated\\n' > e; gencat c e 2>/dev/null; echo st=$?; od -An -c c | tail -3` },
+    { name: 'gencat/symbolic-header', script: `printf 'FOO hello\\n$set BAR\\nBAZ x\\n2 two\\nQUX y\\n$set 5\\nSYM z\\n' > m3; gencat -H h.h c m3; echo st=$?; od -An -tx1 c; cat h.h; gencat -H - -o - m3 | od -An -c | tail -8` },
+    { name: 'gencat/merge', script: `printf '1 one\\n2 two\\n3 three\\n' > a; printf '2 TWO\\n3\\n4 four\\n' > b; gencat c a; gencat c b; echo st=$?; od -An -c c | tail -3; gencat --new c b; od -An -c c | tail -2` },
+    { name: 'gencat/delset', script: `printf '$set 1\\n1 a\\n$set 2\\n1 b\\n$delset 1\\n' > d; gencat c d 2>/dev/null; echo st=$?; od -An -c c | tail -2` },
+    { name: 'gencat/errors', script: `gencat c missing 2>/dev/null; echo st=$?; ls; printf '1 a\\n1 b\\n' > dup; gencat c dup 2>/dev/null; echo st=$?; printf '%%x\\n$bogus\\n$set\\n' > bad; gencat c2 bad 2>/dev/null; echo st=$?; echo x | gencat c3 -; echo st=$?; od -An -c c3; gencat -z c 2>/dev/null; echo st=$?` },
+    { name: 'gencat/stdout-stdin', script: `gencat < /dev/null | od -An -tx1; echo st=$?; echo '1 q' | gencat - | od -An -c; printf '1 m\\n' > m; gencat c m m 2>/dev/null; echo st=$?` },
+    { name: 'gencat/old-not-catalog', script: `printf 'junk' > c; printf '1 a\\n' > m; gencat c m 2>/dev/null; echo st=$?; : > e; gencat e m 2>/dev/null; echo st=$?` },
     // ---- locale ----
     { name: 'locale/env-C', script: `${E} LC_ALL=C locale; echo st=$?` },
     { name: 'locale/env-unset', script: `${E} locale` },
