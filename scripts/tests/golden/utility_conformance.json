@@ -446,5 +446,449 @@
   "iconv/basic": {
     "stdout": " 63 61 66 e9 0a\ncafÃ©\nst=1\nx\n",
     "status": 0
+  },
+  "awk/fields": {
+    "stdout": "alice NY\n3 30\nbob LA\n3 25\ncarol NY\n3 35\ndave SF\n3 40\n",
+    "status": 0
+  },
+  "awk/sum": {
+    "stdout": "130 32.5 4\n",
+    "status": 0
+  },
+  "awk/patterns": {
+    "stdout": "alice 30 NY\ncarol 35 NY\ncarol\ndave\nbob 25 LA\n",
+    "status": 0
+  },
+  "awk/range": {
+    "stdout": "3\n4\n5\nr 7\n2\n3\n4\n5\n6\n",
+    "status": 0
+  },
+  "awk/begin-end": {
+    "stdout": "b\ne 0\n1\nst=0\n",
+    "status": 0
+  },
+  "awk/default-fs": {
+    "stdout": "3:a:b:c\n0:::\n1:x::\n",
+    "status": 0
+  },
+  "awk/fs-char": {
+    "stdout": "4\n[a][b][][c]\n3\n[][x][]\n",
+    "status": 0
+  },
+  "awk/fs-tab": {
+    "stdout": "c|3\na b\n",
+    "status": 0
+  },
+  "awk/fs-regex": {
+    "stdout": "4 a d\nyz\n",
+    "status": 0
+  },
+  "awk/fs-pipe": {
+    "stdout": "b\nc\n",
+    "status": 0
+  },
+  "awk/ofs-ors": {
+    "stdout": "alice-30;bob-25;carol-35;dave-40;\n",
+    "status": 0
+  },
+  "awk/field-assign": {
+    "stdout": "a X c\n3\na b c  e\n5\na:b:c\n",
+    "status": 0
+  },
+  "awk/nf-assign": {
+    "stdout": "a b\n2\na,b,,\n",
+    "status": 0
+  },
+  "awk/record-assign": {
+    "stdout": "3 z\n3\na b \n",
+    "status": 0
+  },
+  "awk/rs-char": {
+    "stdout": "1: a\n2: b\n3: c\nx\ny\n",
+    "status": 0
+  },
+  "awk/rs-paragraph": {
+    "stdout": "1 3 a c\n2 3 d f\n",
+    "status": 0
+  },
+  "awk/no-trailing-newline": {
+    "stdout": "1 a\n2 b\n0\n",
+    "status": 0
+  },
+  "awk/arith": {
+    "stdout": "7 9 3.5 1 -1 1024 512 -4 5 1000 0.75\n",
+    "status": 0
+  },
+  "awk/ofmt-convfmt": {
+    "stdout": "0.3 0.333333 300000 1000000 3\n3.14\n3.14159\n3.142\n17\n",
+    "status": 0
+  },
+  "awk/integers": {
+    "stdout": "2147483648 1099511627776 1000000000000 -3 3 12\n",
+    "status": 0
+  },
+  "awk/assign-ops": {
+    "stdout": "15\n12\n24\n6\n2\n8\n7 7\n",
+    "status": 0
+  },
+  "awk/incdec": {
+    "stdout": "5 6 7 7 5 5\n2\n4 4\n",
+    "status": 0
+  },
+  "awk/unary": {
+    "stdout": "-3 3 0 1 1 0 4\n",
+    "status": 0
+  },
+  "awk/ternary": {
+    "stdout": "odd small\neven mid\nodd mid\neven big\nodd big\n",
+    "status": 0
+  },
+  "awk/logic": {
+    "stdout": "0 1 0 1 0\n",
+    "status": 0
+  },
+  "awk/concat": {
+    "stdout": "ab3\n1 2 34\n-1-2\n",
+    "status": 0
+  },
+  "awk/compare-strnum": {
+    "stdout": "0 0\n0 1\n0 0\n0 1\n0 1\n",
+    "status": 0
+  },
+  "awk/compare-rules": {
+    "stdout": "1 0 1 1 0 1 1\n0 1\n",
+    "status": 0
+  },
+  "awk/uninit": {
+    "stdout": "0 0 []\nabsent\ncreated\n",
+    "status": 0
+  },
+  "awk/regex-match": {
+    "stdout": "1 0 1 1 1\n1 0\n",
+    "status": 0
+  },
+  "awk/regex-ere": {
+    "stdout": "1 color\n1 colour\n2 abab\n3 x+y\n",
+    "status": 0
+  },
+  "awk/regex-brackets": {
+    "stdout": "slash\nbracket\nclass\n",
+    "status": 0
+  },
+  "awk/dynamic-regex": {
+    "stdout": "a.b\nfoo\n",
+    "status": 0
+  },
+  "awk/if-else": {
+    "stdout": "one\ntwo\nmany\nmany\n",
+    "status": 0
+  },
+  "awk/loops": {
+    "stdout": "0 1 2 \nw1 w3 \n5\n4\n",
+    "status": 0
+  },
+  "awk/for-in": {
+    "stdout": "LA 1\nNY 2\nSF 1\n",
+    "status": 0
+  },
+  "awk/delete": {
+    "stdout": "2 0\n2\n",
+    "status": 0
+  },
+  "awk/multi-subscript": {
+    "stdout": "1 2\n1 0\n",
+    "status": 0
+  },
+  "awk/next": {
+    "stdout": "1\n3\n5\n",
+    "status": 0
+  },
+  "awk/exit": {
+    "stdout": "1\n2\nend\nst=3\ne\nst=0\nst=4\n",
+    "status": 0
+  },
+  "awk/exit-in-end": {
+    "stdout": "end\nst=5\n",
+    "status": 0
+  },
+  "awk/functions": {
+    "stdout": "120 3628800\n[]\n",
+    "status": 0
+  },
+  "awk/func-locals": {
+    "stdout": "6 keep 3\n",
+    "status": 0
+  },
+  "awk/func-arrays": {
+    "stdout": "30 9\n",
+    "status": 0
+  },
+  "awk/func-scalar-byvalue": {
+    "stdout": "1\n",
+    "status": 0
+  },
+  "awk/length": {
+    "stdout": "11 11 5 5\n2\n",
+    "status": 0
+  },
+  "awk/substr": {
+    "stdout": "ell|ello|he|lo|||\n",
+    "status": 0
+  },
+  "awk/index": {
+    "stdout": "3 4 0\n",
+    "status": 0
+  },
+  "awk/split": {
+    "stdout": "3 a c\n3 b\n3 c\n0\n1 x\n",
+    "status": 0
+  },
+  "awk/split-strnum": {
+    "stdout": "1\n",
+    "status": 0
+  },
+  "awk/sub-gsub": {
+    "stdout": "3 bbb\nheLlo\n-a-b-c-\nf[o][o] bar\nf&&\n",
+    "status": 0
+  },
+  "awk/gsub-record": {
+    "stdout": "2 x b x x\na c d\n2\n",
+    "status": 0
+  },
+  "awk/gsub-anchor": {
+    "stdout": "Xaa\nabc!\nabc\n",
+    "status": 0
+  },
+  "awk/match": {
+    "stdout": "2 2 2\n0 0 -1\n1 0\n",
+    "status": 0
+  },
+  "awk/case": {
+    "stdout": "ABC1 abc-d\n",
+    "status": 0
+  },
+  "awk/math": {
+    "stdout": "0.8415 1.0000 3.1416 2.7183 2.3026 1.4142\n",
+    "status": 0
+  },
+  "awk/rand": {
+    "stdout": "1\n7\n",
+    "status": 0
+  },
+  "awk/printf-int": {
+    "stdout": "42|   42|42   |00042|+42| 42|007|-3\n",
+    "status": 0
+  },
+  "awk/printf-radix": {
+    "stdout": "10|ff|FF|010|0xff|42\n",
+    "status": 0
+  },
+  "awk/printf-float": {
+    "stdout": "3.141590|2.50|   3.142|2.2     |1.234568e+04|1.23E-04|0.0001|1E-05|1.23457e+08|100\n",
+    "status": 0
+  },
+  "awk/printf-round": {
+    "stdout": "0 2 2 0.12 0.2\n",
+    "status": 0
+  },
+  "awk/printf-str": {
+    "stdout": "abc|       abc|abc       |ab|A|h|%\n",
+    "status": 0
+  },
+  "awk/printf-star": {
+    "stdout": "   42|7   |3.14\n",
+    "status": 0
+  },
+  "awk/sprintf": {
+    "stdout": "007-x 5\n",
+    "status": 0
+  },
+  "awk/printf-parens": {
+    "stdout": "a b\nx y\npq\n",
+    "status": 0
+  },
+  "awk/escapes": {
+    "stdout": "0000000   a  \\t   b   \\   c   \"   d   A  \\n  \\n\n0000012\n",
+    "status": 0
+  },
+  "awk/v-option": {
+    "stdout": "6 a\tb\n6\n",
+    "status": 0
+  },
+  "awk/v-strnum": {
+    "stdout": "1\n",
+    "status": 0
+  },
+  "awk/operand-assign": {
+    "stdout": "1 a\n2 b\nhello\n",
+    "status": 0
+  },
+  "awk/operand-assign-end": {
+    "stdout": "last\n",
+    "status": 0
+  },
+  "awk/argv": {
+    "stdout": "1 f1\n2 x=1\na\n",
+    "status": 0
+  },
+  "awk/filename-fnr": {
+    "stdout": "f1 1 1\nf1 2 2\nf2 3 1\nf1\nf2\n",
+    "status": 0
+  },
+  "awk/stdin-dash": {
+    "stdout": "f\ns\nf\n",
+    "status": 0
+  },
+  "awk/environ": {
+    "stdout": "bar\n",
+    "status": 0
+  },
+  "awk/f-option": {
+    "stdout": "1 2\n",
+    "status": 0
+  },
+  "awk/getline-plain": {
+    "stdout": "after 2 2\nvar 4 3 4\n",
+    "status": 0
+  },
+  "awk/getline-file": {
+    "stdout": "2 l2\nl1 0\n-1\n",
+    "status": 0
+  },
+  "awk/getline-cmd": {
+    "stdout": "hi\nv=a\nv=b\n0\n",
+    "status": 0
+  },
+  "awk/getline-end": {
+    "stdout": "0 x\n",
+    "status": 0
+  },
+  "awk/print-redirect": {
+    "stdout": "one\ntwo\nfour\nthree\n",
+    "status": 0
+  },
+  "awk/print-pipe": {
+    "stdout": "a\nb\nafter\n",
+    "status": 0
+  },
+  "awk/print-pipe-exit": {
+    "stdout": "y\nz\ndone\n",
+    "status": 0
+  },
+  "awk/system": {
+    "stdout": "before\ninside\nafter 3\n",
+    "status": 0
+  },
+  "awk/stderr": {
+    "stdout": "out\n",
+    "status": 0
+  },
+  "awk/comments-newlines": {
+    "stdout": "ok\n",
+    "status": 0
+  },
+  "awk/semicolons": {
+    "stdout": "a\nc\nd\n",
+    "status": 0
+  },
+  "awk/syntax-error": {
+    "stdout": "st=2\nst=2\n",
+    "status": 0
+  },
+  "awk/missing-file": {
+    "stdout": "st=2\n",
+    "status": 0
+  },
+  "awk/regex-pattern-only": {
+    "stdout": "banana\nC:cherry\n",
+    "status": 0
+  },
+  "awk/numeric-output": {
+    "stdout": "0.10 1e2 007\n0.1 100 7\n",
+    "status": 0
+  },
+  "awk/convfmt-key": {
+    "stdout": "0.3\nx\n",
+    "status": 0
+  },
+  "awk/word-count": {
+    "stdout": "1 cat\n1 dog\n1 end\n3 the\n",
+    "status": 0
+  },
+  "awk/columns-csv": {
+    "stdout": "ann   90.0\nbo    85.0\navg 87.5\n",
+    "status": 0
+  },
+  "awk/uniq-lines": {
+    "stdout": "a\nb\nc\n",
+    "status": 0
+  },
+  "awk/reverse-fields": {
+    "stdout": "d c b a\n",
+    "status": 0
+  },
+  "awk/in-precedence": {
+    "stdout": "1\nno y\n",
+    "status": 0
+  },
+  "awk/regex-as-value": {
+    "stdout": "1 0\n",
+    "status": 0
+  },
+  "awk/dollar-expr": {
+    "stdout": "a b c b\n0\n1\n",
+    "status": 0
+  },
+  "awk/nextfile": {
+    "stdout": "f1 a\nf2 c\n",
+    "status": 0
+  },
+  "awk/delete-all": {
+    "stdout": "0\n1\n",
+    "status": 0
+  },
+  "awk/getline-var-strnum": {
+    "stdout": "1\n",
+    "status": 0
+  },
+  "awk/split-dot": {
+    "stdout": "3 b\n",
+    "status": 0
+  },
+  "awk/length-noparen": {
+    "stdout": "abc\n8\n",
+    "status": 0
+  },
+  "awk/printf-c-strnum": {
+    "stdout": "A|B\n",
+    "status": 0
+  },
+  "awk/regex-dynamic-special": {
+    "stdout": "a-b\n_.y\n",
+    "status": 0
+  },
+  "awk/assign-field-nf": {
+    "stdout": "a  c\n3\n",
+    "status": 0
+  },
+  "awk/while-getline-file-count": {
+    "stdout": "15\n",
+    "status": 0
+  },
+  "awk/pipe-to-cat-order": {
+    "stdout": "1\n2\n3\n",
+    "status": 0
+  },
+  "awk/printf-g-big": {
+    "stdout": "1e+100 123456 1.23457e+06 0.000123 1.00000\n",
+    "status": 0
+  },
+  "awk/exp-notation": {
+    "stdout": "1e+301 1e-05 123456789012 1e-06\n",
+    "status": 0
+  },
+  "awk/string-to-num": {
+    "stdout": "4.5 12 0.5 -100 0 4\n",
+    "status": 0
   }
 }
