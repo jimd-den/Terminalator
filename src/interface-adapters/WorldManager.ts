@@ -3,11 +3,13 @@ import { FileSystemService } from '../domain/services/FileSystemService';
 import { WorldGenerator } from '../domain/services/generation/WorldGenerator';
 import { IWorldStateProvider } from '../domain/interfaces/IWorldStateProvider';
 import { IWorldManager } from '../domain/interfaces/IWorldManager';
-import { Location } from '../domain/entities/world/Location';
-import { Device } from '../domain/entities/world/Device';
+import { Location, LocationType } from '../domain/entities/world/Location';
+import { Device, DeviceType } from '../domain/entities/world/Device';
 import { WorldEffectDispatcher } from '../domain/services/world/WorldEffectDispatcher';
 import { FileSystemObserver } from '../domain/services/world/FileSystemObserver';
 import { StateProjector } from '../domain/services/world/StateProjector';
+import { NetworkMap } from '../domain/services/NetworkMap';
+import { IUniverseStrategy } from '../domain/interfaces/IUniverseStrategy';
 
 /**
  * WorldManager - Interface Adapter
@@ -26,15 +28,29 @@ export class WorldManager implements IWorldStateProvider, IWorldManager {
     private observer: FileSystemObserver;
     private projector: StateProjector;
     private generator: WorldGenerator;
+    private universe: IUniverseStrategy;
 
-    constructor() {
+    constructor(
+        private networkMap?: NetworkMap,
+        private fsServiceProvider?: (fs: FileSystem) => FileSystemService,
+        seed: string = 'prime-station-seed'
+    ) {
         this.generator = new WorldGenerator();
+        this.universe = this.generator.createUniverse(seed);
+
+        // The NetworkMap is a projection of this universe, not a rival source of
+        // truth -- attaching it here is what lets commands reach coordinates
+        // that were never booted.
+        this.networkMap?.attachUniverse(this.universe);
+
         this.dispatcher = new WorldEffectDispatcher(this.devices, this.locations);
         this.observer = new FileSystemObserver(this.dispatcher);
         this.projector = new StateProjector(Array.from(this.devices.values()));
         
-        // Generate initial world
-        this.generateAndRegisterWorld('prime-station', 'RESEARCH');
+        // Register initial hosts from the universe
+        this.universe.getInitialHosts().forEach(hostname => {
+            this.getHostFileSystem(hostname);
+        });
     }
 
     /**
@@ -44,6 +60,37 @@ export class WorldManager implements IWorldStateProvider, IWorldManager {
         this.hostFileSystems.set(hostname, service);
         this.observer.observe(hostname, service);
         this.projector.project(hostname, service);
+        
+        // Synchronize with NetworkMap (Phase 10 integration)
+        if (this.networkMap) {
+            this.networkMap.registerSystem(hostname, service.fileSystem);
+        }
+
+        // --- Diegetic Projection (Lazy Entity Mapping) ---
+        const locId = `loc_${hostname}`;
+        if (!this.locations.has(locId)) {
+            this.locations.set(locId, {
+                id: locId,
+                name: `${hostname.toUpperCase()} AREA`,
+                type: LocationType.ROOM,
+                description: `Procedurally mapped area for ${hostname}`,
+                controllingHost: hostname,
+                state: { owner: 'GENERIC' }
+            });
+
+            this.devices.set(`dev_${hostname}`, {
+                id: `dev_${hostname}`,
+                name: hostname,
+                type: DeviceType.TERMINAL,
+                path: `/dev/${hostname}`,
+                locationId: locId,
+                hostId: hostname,
+                state: 'ACTIVE'
+            });
+
+            // Re-initialize projector to include new device
+            this.projector = new StateProjector(Array.from(this.devices.values()));
+        }
     }
 
     /**
@@ -52,17 +99,13 @@ export class WorldManager implements IWorldStateProvider, IWorldManager {
      */
     public getHostFileSystem(hostname: string): FileSystemService | null {
         if (!this.hostFileSystems.has(hostname)) {
-            // Lazy Provisioning for Mission Targets
-            const fs = new FileSystem();
-            const service = new FileSystemService(fs);
+            const fs = this.universe.mountFilesystem(hostname);
             
-            // Basic OS scaffolding
-            service.mkdirp('/bin');
-            service.mkdirp('/home/admin');
-            service.mkdirp('/var/log');
-            service.mkdirp('/dev');
-            service.writeFile('/var/log/syslog', 'System initialized (Lazy Provision)...\n');
-
+            // Resolve service via provider or fallback
+            const service = this.fsServiceProvider 
+                ? this.fsServiceProvider(fs)
+                : new FileSystemService(fs);
+            
             this.registerHost(hostname, service);
         }
         return this.hostFileSystems.get(hostname) || null;
@@ -70,6 +113,13 @@ export class WorldManager implements IWorldStateProvider, IWorldManager {
 
     public getAllHosts(): string[] {
         return Array.from(this.hostFileSystems.keys());
+    }
+
+    /**
+     * The strategy that defines what exists in this world.
+     */
+    public getUniverse(): IUniverseStrategy {
+        return this.universe;
     }
 
     /**
@@ -82,40 +132,7 @@ export class WorldManager implements IWorldStateProvider, IWorldManager {
     }
 
     private generateAndRegisterWorld(seed: string, theme: any) {
-        const world = this.generator.generateStation(seed, theme);
-        
-        // 1. Store World Data
-        world.locations.forEach(l => this.locations.set(l.id, l));
-        world.devices.forEach(d => this.devices.set(d.id, d));
-        
-        // 2. Create FileSystems for new Hosts
-        // Group devices by host
-        const hosts = new Set(world.devices.map(d => d.hostId));
-        
-        hosts.forEach(hostname => {
-            if (hostname === 'terminalator') return; // Don't overwrite local
-
-            const fs = new FileSystem();
-            const service = new FileSystemService(fs);
-            
-            // Basic OS scaffolding for remote host
-            service.mkdirp('/bin');
-            service.mkdirp('/home/admin');
-            service.mkdirp('/var/log');
-            service.mkdirp('/dev');
-            service.writeFile('/var/log/syslog', 'System initialized...\n');
-
-            this.registerHost(hostname, service);
-        });
-
-        // 3. Update Projector with new devices
-        this.projector = new StateProjector(Array.from(this.devices.values()));
-        
-        // 4. Initial Projection
-        hosts.forEach(h => {
-            const fs = this.hostFileSystems.get(h);
-            if (fs) this.projector.project(h, fs);
-        });
+        // Deprecated: Now handled lazily by the UniverseStrategy
     }
 
     // IWorldStateProvider Implementation

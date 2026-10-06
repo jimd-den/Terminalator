@@ -17,7 +17,8 @@ import { CommandBase } from '../CommandBase';
 import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../entities/Command';
+import { CommandResponse, CommandMetadata } from '../../entities/Command';
+import { TheatricalVerb } from '../../services/PresentationDirector';
 
 import { FileSystemService } from '../../services/FileSystemService';
 
@@ -29,6 +30,13 @@ export class TouchCommand extends CommandBase {
         super();
     }
 
+    public getMetadata(): CommandMetadata {
+        return {
+            verb: TheatricalVerb.SYNTHESIZE,
+            style: 'NORMAL'
+        };
+    }
+
     protected async executeInternal(
         rawArgs: string[],
         flags: Set<string>,
@@ -36,7 +44,7 @@ export class TouchCommand extends CommandBase {
         context: ProcessContext,
         state: TerminalState
     ): Promise<CommandResponse> {
-        const fsService = context.fileSystemService || this.fs;
+        const fsService = context.fileSystemService || context.fileSystemService;
         const noCreate = flags.has('c');
 
         if (operands.length === 0) {

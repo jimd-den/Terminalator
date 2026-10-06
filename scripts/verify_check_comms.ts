@@ -3,6 +3,7 @@ import { FileSystem } from '../src/domain/entities/FileSystem';
 import { NetworkMap } from '../src/domain/services/NetworkMap';
 import { ConsoleTelemetryAdapter } from '../src/infrastructure/telemetry/ConsoleTelemetryAdapter';
 import { SimulationBus } from '../src/domain/services/SimulationBus';
+import { RhythmConductor } from '../src/domain/services/RhythmConductor';
 import { CheckCommsCommand } from '../src/interface-adapters/commands/game/CheckCommsCommand';
 import { TerminalState, createInitialTerminalState } from '../src/domain/entities/TerminalState';
 
@@ -15,7 +16,8 @@ async function verifyCheckComms() {
     const networkMap = new NetworkMap();
     const telemetry = new ConsoleTelemetryAdapter();
     const bus = new SimulationBus(telemetry);
-    const gameManager = DependencyContainer.createGameManager(fs, networkMap, telemetry, bus);
+    const conductor = new RhythmConductor(bus);
+    const gameManager = DependencyContainer.createGameManager(fs, networkMap, telemetry, bus, conductor);
     
     const command = new CheckCommsCommand(gameManager);
     const state = createInitialTerminalState();

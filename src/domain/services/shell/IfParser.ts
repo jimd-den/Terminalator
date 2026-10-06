@@ -1,64 +1,32 @@
-import { ASTNode, NodeType, IfNode, ForNode, WhileNode, SubshellNode, BlockNode, FunctionDefNode, CommandNode, RedirectNode } from '../../interfaces/ShellAST';
-import { TokenType } from '../ShellLexer';
+import { ASTNode, NodeType, IfNode } from '../../interfaces/ShellAST';
 import { IStatementParser } from './IStatementParser';
 import { IShellParserFacade } from './IShellParserFacade';
 
-/**
- * IfParser - Domain Layer
- * 
- * Parses IF-THEN-ELSE-FI constructs. Supports ELIF nesting.
- *
- * Pillar: The Balanced Scale (SRP) - Isolated parsing of 'if' statements.
- */
+/** if compound_list then compound_list { elif ... then ... } [else compound_list] fi */
 export class IfParser implements IStatementParser {
     canHandle(facade: IShellParserFacade): boolean {
-        const token = facade.peek();
-        return token.type === TokenType.WORD && token.value === 'if';
+        return facade.isWord('if');
     }
 
     parse(facade: IShellParserFacade): ASTNode {
-        facade.advance(); // if
-        const condition = facade.parseList();
-
-        while (facade.peek().type === TokenType.NEWLINE || facade.peek().type === TokenType.SEMI) {
-            facade.advance();
-        }
-
-        if (facade.peek().value !== 'then') {
-            throw new Error(`Syntax Error: Expected 'then' at position ${facade.peek().position}`);
-        }
-        facade.advance(); // then
-
-        const thenBody = facade.parseList();
+        facade.advance(); // if | elif
+        const condition = facade.parseCompoundList();
+        if (!condition) facade.syntaxError("expected condition after 'if'");
+        facade.expectWord('then');
+        const thenBody = facade.parseCompoundList();
+        if (!thenBody) facade.syntaxError("expected command after 'then'");
 
         let elseBody: ASTNode | undefined;
-        while (facade.peek().type === TokenType.NEWLINE || facade.peek().type === TokenType.SEMI) {
+        if (facade.isWord('elif')) {
+            // `elif` shares the closing `fi`, so parse it as a nested if without consuming `fi` twice.
+            return { type: NodeType.IF, condition: condition!, thenBody: thenBody!, elseBody: this.parse(facade) } as IfNode;
+        }
+        if (facade.isWord('else')) {
             facade.advance();
+            elseBody = facade.parseCompoundList() ?? undefined;
+            if (!elseBody) facade.syntaxError("expected command after 'else'");
         }
-
-        const nextWord = facade.peek().value;
-        if (nextWord === 'else') {
-            facade.advance(); // else
-            elseBody = facade.parseList() || undefined;
-        } else if (nextWord === 'elif') {
-            // Recursive delegation for elif
-            elseBody = this.parse(facade);
-        }
-
-        while (facade.peek().type === TokenType.NEWLINE || facade.peek().type === TokenType.SEMI) {
-            facade.advance();
-        }
-
-        if (facade.peek().value !== 'fi') {
-            throw new Error(`Syntax Error: Expected 'fi' at position ${facade.peek().position}`);
-        }
-        facade.advance(); // fi
-
-        return {
-            type: NodeType.IF,
-            condition: condition!,
-            thenBody: thenBody!,
-            elseBody: elseBody
-        } as IfNode;
+        facade.expectWord('fi');
+        return { type: NodeType.IF, condition: condition!, thenBody: thenBody!, elseBody } as IfNode;
     }
 }

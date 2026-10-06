@@ -4,6 +4,8 @@ import { IShellExecutor } from '../interfaces/IShellExecutor';
 import { IStream } from './Stream';
 import { JobControlService } from '../services/JobControlService';
 import { NetworkMap } from '../services/NetworkMap';
+import { ProcessTable } from './ProcessTable';
+import { EconomyService } from '../services/EconomyService';
 
 /**
  * ProcessContext Entity - Domain Layer
@@ -22,6 +24,11 @@ export interface ProcessContext {
      * FileSystem Service for high-level operations
      */
     fileSystemService: FileSystemService;
+
+    /**
+     * Local FileSystem Service (always the primary workstation)
+     */
+    localFileSystemService?: FileSystemService;
 
     /**
      * Environment variables for the process
@@ -76,6 +83,43 @@ export interface ProcessContext {
      * Network Map for cross-system operations (e.g., scp)
      */
     networkMap?: NetworkMap;
+
+    /**
+     * Whether stdout is the interactive terminal (isatty(1)). Utilities such
+     * as `ls` change their format when writing to a pipe or file.
+     * Undefined means unknown (treated as a terminal).
+     */
+    stdoutIsTty?: boolean;
+
+    /** The name the utility was invoked as (argv[0]), e.g. `[` vs `test`. */
+    argv0?: string;
+
+    /**
+     * Runs another utility as a child process (fork+exec): PATH search, no
+     * shell functions. Its output goes to this process's stdout/stderr.
+     * Resolves to the exit status (127 not found, 126 not executable).
+     */
+    spawn?: (argv: string[], options?: SpawnOptions) => Promise<number>;
+
+    /** This process's id and the host's process table (ps, kill, nice...). */
+    pid?: number;
+    processes?: ProcessTable;
+
+    /** Economy Service for transactions (e.g., buy, mine). */
+    economy?: EconomyService;
+}
+
+export interface SpawnOptions {
+    /** Complete environment for the child (default: this process's). */
+    env?: Record<string, string>;
+    /** Data for the child's standard input (default: inherited). */
+    stdin?: string;
+    /** Working directory (default: inherited). */
+    cwd?: string;
+    /** Nice value increment for the child (nice). */
+    nice?: number;
+    /** Captures the child's standard output here instead (e.g. awk's `cmd | getline`). */
+    stdout?: IStream;
 }
 
 

@@ -57,6 +57,8 @@ import { UnexpandCommand } from '../commands/core/UnexpandCommand';
 import { TsortCommand } from '../commands/core/TsortCommand';
 import { RmdirCommand } from '../commands/core/RmdirCommand';
 import { LinkCommand } from '../commands/core/LinkCommand';
+import { NetLinkCommand } from '../commands/core/NetLinkCommand';
+import { NetScanCommand } from '../commands/core/NetScanCommand';
 import { UnlinkCommand } from '../commands/core/UnlinkCommand';
 import { ReadlinkCommand } from '../commands/core/ReadlinkCommand';
 import { RealpathCommand } from '../commands/core/RealpathCommand';
@@ -89,7 +91,6 @@ import { TypeCommand } from '../commands/core/TypeCommand';
 import { PrCommand } from '../commands/core/PrCommand';
 import { CompressCommand } from '../commands/core/CompressCommand';
 import { UncompressCommand } from '../commands/core/UncompressCommand';
-import { ZcatCommand } from '../commands/core/ZcatCommand';
 import { AsaCommand } from '../commands/core/AsaCommand';
 import { DdCommand } from '../commands/core/DdCommand';
 import { IconvCommand } from '../commands/core/IconvCommand';
@@ -98,7 +99,6 @@ import { KillCommand } from '../commands/core/KillCommand';
 import { PsCommand } from '../commands/core/PsCommand';
 import { WaitCommand } from '../commands/core/WaitCommand';
 import { AtCommand } from '../commands/core/AtCommand';
-import { BatchCommand } from '../commands/core/BatchCommand';
 import { CrontabCommand } from '../commands/core/CrontabCommand';
 import { MailxCommand } from '../commands/core/MailxCommand';
 import { MesgCommand } from '../commands/core/MesgCommand';
@@ -131,7 +131,6 @@ import { HashCommand } from '../commands/core/HashCommand';
 import { TrapCommand } from '../commands/core/TrapCommand';
 import { GetoptsCommand } from '../commands/core/GetoptsCommand';
 import { SttyCommand } from '../commands/core/SttyCommand';
-import { UlimitCommand } from '../commands/core/UlimitCommand';
 import { FcCommand } from '../commands/core/FcCommand';
 import { FgCommand } from '../commands/core/FgCommand';
 import { BgCommand } from '../commands/core/BgCommand';
@@ -152,6 +151,8 @@ import { NmCommand } from '../commands/core/NmCommand';
 import { PatchCommand } from '../commands/core/PatchCommand';
 import { PaxCommand } from '../commands/core/PaxCommand';
 import { LpCommand } from '../commands/core/LpCommand';
+import { LpstatCommand } from '../commands/core/LpstatCommand';
+import { CancelCommand } from '../commands/core/CancelCommand';
 import { ReniceCommand } from '../commands/core/ReniceCommand';
 import { AdminCommand } from '../commands/core/AdminCommand';
 import { CflowCommand } from '../commands/core/CflowCommand';
@@ -182,7 +183,6 @@ import { ValCommand } from '../commands/core/ValCommand';
 import { WhatCommand } from '../commands/core/WhatCommand';
 import { XgettextCommand } from '../commands/core/XgettextCommand';
 import { GzipCommand } from '../commands/core/GzipCommand';
-import { GunzipCommand } from '../commands/core/GunzipCommand';
 import { TarCommand } from '../commands/core/TarCommand';
 import { CpioCommand } from '../commands/core/CpioCommand';
 import { GccCommand } from '../commands/core/GccCommand';
@@ -249,6 +249,8 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('tsort', new TsortCommand(fsService));
         registry.register('rmdir', new RmdirCommand(fsService));
         registry.register('link', new LinkCommand(fsService));
+        registry.register('net-scan', new NetScanCommand());
+        registry.register('net-link', new NetLinkCommand());
         registry.register('unlink', new UnlinkCommand(fsService));
         registry.register('readlink', new ReadlinkCommand(fsService));
         registry.register('realpath', new RealpathCommand(fsService));
@@ -273,11 +275,11 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('false', new FalseCommand());
         // Time, Nohup, Nice need command provider
         registry.register('time', new TimeCommand(fsService, (name) => registry.get(name)));
-        registry.register('nohup', new NohupCommand(fsService, (name) => registry.get(name)));
-        registry.register('nice', new NiceCommand(fsService, (name) => registry.get(name)));
+        registry.register('nohup', new NohupCommand(fsService));
+        registry.register('nice', new NiceCommand(fsService));
         registry.register('mkfifo', new MkfifoCommand(fsService));
         registry.register('file', new FileCommand(fsService));
-        registry.register('timeout', new TimeoutCommand(fsService, (name) => registry.get(name)));
+        registry.register('timeout', new TimeoutCommand(fsService));
         registry.register('chgrp', new ChgrpCommand(fsService, this.identityService));
         registry.register('alias', new AliasCommand(fsService));
         registry.register('unalias', new UnaliasCommand(fsService));
@@ -285,7 +287,7 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('pr', new PrCommand(fsService));
         registry.register('compress', new CompressCommand());
         registry.register('uncompress', new UncompressCommand());
-        registry.register('zcat', new ZcatCommand(fsService));
+        registry.register('zcat', new GzipCommand('zcat'));
         registry.register('asa', new AsaCommand(fsService));
         registry.register('dd', new DdCommand());
         registry.register('iconv', new IconvCommand(fsService));
@@ -293,17 +295,21 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('kill', new KillCommand(fsService));
         registry.register('ps', new PsCommand(fsService));
         registry.register('wait', new WaitCommand(fsService));
-        registry.register('at', new AtCommand(fsService));
-        registry.register('batch', new BatchCommand(fsService));
-        registry.register('crontab', new CrontabCommand(fsService));
-        registry.register('mailx', new MailxCommand(fsService));
+        registry.register('at', new AtCommand('at'));
+        registry.register('batch', new AtCommand('batch'));
+        registry.register('atq', new AtCommand('atq'));
+        registry.register('atrm', new AtCommand('atrm'));
+        registry.register('crontab', new CrontabCommand());
+        registry.register('mailx', new MailxCommand());
         registry.register('mesg', new MesgCommand(fsService));
         registry.register('talk', new TalkCommand(fsService));
         registry.register('write', new WriteCommand(fsService));
         registry.register('bc', new BcCommand(fsService));
         registry.register('getconf', new GetconfCommand(fsService));
         registry.register('logger', new LoggerCommand(fsService));
-        registry.register('man', new ManCommand(fsService));
+        registry.register('man', new ManCommand('man'));
+        registry.register('apropos', new ManCommand('apropos'));
+        registry.register('whatis', new ManCommand('whatis'));
         registry.register('tabs', new TabsCommand(fsService));
         registry.register('tput', new TputCommand(fsService));
 
@@ -324,7 +330,6 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('trap', new TrapCommand());
         registry.register('getopts', new GetoptsCommand());
         registry.register('stty', new SttyCommand());
-        registry.register('ulimit', new UlimitCommand());
         registry.register('fc', new FcCommand());
         registry.register('fg', new FgCommand());
         registry.register('bg', new BgCommand());
@@ -337,7 +342,7 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('vi', new ViCommand());
         registry.register('ex', new ExCommand());
         registry.register('make', new MakeCommand());
-        registry.register('ar', new ArCommand(fsService));
+        registry.register('ar', new ArCommand());
         registry.register('lex', new LexCommand());
         registry.register('yacc', new YaccCommand());
         registry.register('m4', new M4Command());
@@ -345,6 +350,8 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('patch', new PatchCommand());
         registry.register('pax', new PaxCommand());
         registry.register('lp', new LpCommand());
+        registry.register('lpstat', new LpstatCommand());
+        registry.register('cancel', new CancelCommand());
         registry.register('renice', new ReniceCommand());
         registry.register('admin', new AdminCommand());
         registry.register('c17', new GccCommand(this.compiler, fsService));
@@ -376,7 +383,7 @@ export class CoreUtilsModule implements CommandModule {
         registry.register('what', new WhatCommand());
         registry.register('xgettext', new XgettextCommand());
         registry.register('gzip', new GzipCommand());
-        registry.register('gunzip', new GunzipCommand());
+        registry.register('gunzip', new GzipCommand('gunzip'));
         registry.register('tar', new TarCommand());
         registry.register('cpio', new CpioCommand());
         registry.register('gcc', new GccCommand(this.compiler, fsService));
@@ -392,12 +399,18 @@ export class CoreUtilsModule implements CommandModule {
 
         // Clear (Simple inline)
         registry.register('clear', {
-            execute: (_args, _context, state) => ({
+            name: 'clear',
+            description: 'Clear the terminal screen',
+            execute: (_args: string[], _context: any, state: any) => ({
                 output: '',
                 newState: state,
                 exitCode: 0,
                 uiAction: 'CLEAR'
+            }),
+            getMetadata: () => ({
+                verb: 'CLEAR' as any,
+                style: 'NORMAL'
             })
-        });
+        } as any);
     }
 }

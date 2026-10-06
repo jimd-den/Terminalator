@@ -70,7 +70,7 @@ export class SortCommand extends CommandBase {
                 }
                 try {
                     const resolvedPath = this.resolvePath(file, state);
-                    content += this.fs.readFile(resolvedPath) + '\n';
+                    content += context.fileSystemService.readFile(resolvedPath) + '\n';
                 } catch (e) {
                     return {
                         output: `sort: ${file}: No such file or directory`,
@@ -141,7 +141,7 @@ export class SortCommand extends CommandBase {
         if (options.outputFile) {
             try {
                 const resolvedOut = this.resolvePath(options.outputFile, state);
-                this.fs.writeFile(resolvedOut, result);
+                context.fileSystemService.writeFile(resolvedOut, result);
                 return { output: '', newState: state, exitCode: 0 };
             } catch (e) {
                 return { output: `sort: ${options.outputFile}: Cannot write`, newState: state, exitCode: 1 };

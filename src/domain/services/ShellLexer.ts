@@ -1,22 +1,39 @@
 /**
  * ShellLexer - Domain Layer
- * 
- * Tokenizes raw shell input into a stream of typed tokens.
- * Handles quoting, operators, and comments according to POSIX.
  *
- * Pillar: The Four-Fold Shield (Strict Services)
- * Pillar: Performance & Purity (O(n) State Machine)
+ * Token recognition per POSIX XCU §2.3. Produces operators, IO_NUMBERs,
+ * NEWLINEs and WORDs. Words keep their quoting characters verbatim so that
+ * the expansion phase can apply the quoting rules; nested `$( )`, `$(( ))`,
+ * `${ }` and backquotes are consumed as part of the enclosing word.
+ *
+ * Here-documents: after a NEWLINE, the bodies of all pending `<<`/`<<-`
+ * redirections are read and attached to their delimiter tokens.
  */
+
+import { IncompleteInputError } from './shell/ShellSyntaxError';
+import { SourceScanner } from './shell/SourceScanner';
 
 export enum TokenType {
     WORD = 'WORD',
-    PIPE = 'PIPE',       // |
-    SEMI = 'SEMI',       // ;
-    AND_IF = 'AND_IF',   // &&
-    OR_IF = 'OR_IF',     // ||
-    LPAREN = 'LPAREN',   // (
-    RPAREN = 'RPAREN',   // )
-    NEWLINE = 'NEWLINE', // \n
+    IO_NUMBER = 'IO_NUMBER',
+    PIPE = 'PIPE',           // |
+    SEMI = 'SEMI',           // ;
+    AMP = 'AMP',             // &
+    AND_IF = 'AND_IF',       // &&
+    OR_IF = 'OR_IF',         // ||
+    DSEMI = 'DSEMI',         // ;;
+    LPAREN = 'LPAREN',       // (
+    RPAREN = 'RPAREN',       // )
+    LESS = 'LESS',           // <
+    GREAT = 'GREAT',         // >
+    DLESS = 'DLESS',         // <<
+    DGREAT = 'DGREAT',       // >>
+    LESSAND = 'LESSAND',     // <&
+    GREATAND = 'GREATAND',   // >&
+    LESSGREAT = 'LESSGREAT', // <>
+    DLESSDASH = 'DLESSDASH', // <<-
+    CLOBBER = 'CLOBBER',     // >|
+    NEWLINE = 'NEWLINE',
     EOF = 'EOF'
 }
 
@@ -24,206 +41,204 @@ export interface Token {
     type: TokenType;
     value: string;
     position: number;
+    /** True if the word contains any quoting (', ", \). */
+    quoted?: boolean;
+    /** Filled in on here-doc delimiter words once the body has been read. */
+    heredoc?: { body: string; quoted: boolean };
 }
 
-export class ShellLexer {
-    private input: string = '';
-    private pos: number = 0;
-    private len: number = 0;
+/** Operators, longest first so that greedy matching works. */
+const OPERATORS: [string, TokenType][] = [
+    ['<<-', TokenType.DLESSDASH],
+    ['&&', TokenType.AND_IF],
+    ['||', TokenType.OR_IF],
+    [';;', TokenType.DSEMI],
+    ['<<', TokenType.DLESS],
+    ['>>', TokenType.DGREAT],
+    ['<&', TokenType.LESSAND],
+    ['>&', TokenType.GREATAND],
+    ['<>', TokenType.LESSGREAT],
+    ['>|', TokenType.CLOBBER],
+    ['|', TokenType.PIPE],
+    [';', TokenType.SEMI],
+    ['&', TokenType.AMP],
+    ['(', TokenType.LPAREN],
+    [')', TokenType.RPAREN],
+    ['<', TokenType.LESS],
+    ['>', TokenType.GREAT],
+];
+
+export const REDIRECT_TOKENS = new Set<TokenType>([
+    TokenType.LESS, TokenType.GREAT, TokenType.DLESS, TokenType.DGREAT,
+    TokenType.LESSAND, TokenType.GREATAND, TokenType.LESSGREAT,
+    TokenType.DLESSDASH, TokenType.CLOBBER
+]);
+
+interface PendingHereDoc {
+    token: Token;
+    stripTabs: boolean;
+}
+
+export class ShellLexer extends SourceScanner {
 
     tokenize(input: string): Token[] {
         this.input = input;
         this.pos = 0;
-        this.len = input.length;
         const tokens: Token[] = [];
+        const pending: PendingHereDoc[] = [];
+        let expectHereDelimiter: boolean | null = null; // stripTabs flag when set
 
-        while (this.pos < this.len) {
-            this.skipWhitespace();
-            if (this.pos >= this.len) break;
+        while (true) {
+            this.skipBlanks();
+            if (this.pos >= this.input.length) break;
+            const c = this.input[this.pos];
 
-            const char = this.peek();
-
-            // Comments
-            if (char === '#') {
-                this.skipComment();
+            if (c === '#') {
+                while (this.pos < this.input.length && this.input[this.pos] !== '\n') this.pos++;
                 continue;
             }
 
-            // Operators
-            if (this.isOperatorStart(char)) {
-                const opToken = this.readOperator();
-                if (opToken) {
-                    tokens.push(opToken);
-                    continue;
-                }
-            }
-
-            // Newline
-            if (char === '\n') {
+            if (c === '\n') {
                 tokens.push({ type: TokenType.NEWLINE, value: '\n', position: this.pos++ });
+                if (pending.length > 0) {
+                    for (const doc of pending) this.readHereDocBody(doc);
+                    pending.length = 0;
+                }
                 continue;
             }
 
-            // Words (includes quotes)
-            const word = this.readWord();
-            if (word) {
-                tokens.push(word);
-            } else {
-                // Safety break if stuck
-                this.pos++;
+            const op = this.matchOperator();
+            if (op) {
+                tokens.push(op);
+                if (op.type === TokenType.DLESS || op.type === TokenType.DLESSDASH) {
+                    expectHereDelimiter = op.type === TokenType.DLESSDASH;
+                }
+                continue;
             }
+
+            const word = this.readWord();
+            if (/^[0-9]+$/.test(word.value) && !word.quoted && (this.peekChar() === '<' || this.peekChar() === '>')) {
+                word.type = TokenType.IO_NUMBER;
+            }
+            tokens.push(word);
+
+            if (expectHereDelimiter !== null && word.type === TokenType.WORD) {
+                pending.push({ token: word, stripTabs: expectHereDelimiter });
+                expectHereDelimiter = null;
+            }
+        }
+
+        if (pending.length > 0) {
+            // Bodies that begin on the same line as EOF: read what is left (none).
+            throw new IncompleteInputError('here-document delimited by end-of-file');
         }
 
         tokens.push({ type: TokenType.EOF, value: '', position: this.pos });
         return tokens;
     }
 
-    private peek(offset: number = 0): string {
+    private peekChar(offset = 0): string {
         return this.input[this.pos + offset] || '';
     }
 
-    private skipWhitespace() {
-        while (this.pos < this.len) {
-            const char = this.input[this.pos];
-            if (char === ' ' || char === '\t') {
+    private skipBlanks() {
+        while (this.pos < this.input.length) {
+            const c = this.input[this.pos];
+            if (c === ' ' || c === '\t') {
                 this.pos++;
+            } else if (c === '\\' && this.input[this.pos + 1] === '\n') {
+                this.pos += 2; // line continuation
             } else {
                 break;
             }
         }
     }
 
-    private skipComment() {
-        while (this.pos < this.len) {
-            if (this.input[this.pos] === '\n') break;
-            this.pos++;
+    private matchOperator(): Token | null {
+        for (const [text, type] of OPERATORS) {
+            if (this.input.startsWith(text, this.pos)) {
+                const token = { type, value: text, position: this.pos };
+                this.pos += text.length;
+                return token;
+            }
         }
+        return null;
     }
 
-    private isOperatorStart(char: string): boolean {
-        return /[|;&()]/.test(char);
+    private isWordBreak(c: string): boolean {
+        return c === ' ' || c === '\t' || c === '\n' || c === ';' || c === '&' ||
+            c === '|' || c === '(' || c === ')' || c === '<' || c === '>';
     }
 
-    private readOperator(): Token | null {
-        const c1 = this.peek(0);
-        const c2 = this.peek(1);
+    private readWord(): Token {
         const start = this.pos;
-
-        // Two-char operators: &&, ||
-        if ((c1 === '&' && c2 === '&') || (c1 === '|' && c2 === '|')) {
-            this.pos += 2;
-            return {
-                type: c1 === '&' ? TokenType.AND_IF : TokenType.OR_IF,
-                value: c1 + c2,
-                position: start
-            };
-        }
-
-        // Single-char operators
-        if (c1 === '|') {
-            this.pos++;
-            return { type: TokenType.PIPE, value: '|', position: start };
-        }
-        if (c1 === ';') {
-            this.pos++;
-            return { type: TokenType.SEMI, value: ';', position: start };
-        }
-        if (c1 === '(') {
-            this.pos++;
-            return { type: TokenType.LPAREN, value: '(', position: start };
-        }
-        if (c1 === ')') {
-            this.pos++;
-            return { type: TokenType.RPAREN, value: ')', position: start };
-        }
-
-        return null; // Not an operator
-    }
-
-    private readWord(): Token | null {
         let value = '';
-        const start = this.pos;
-        let inSingleQuote = false;
-        let inDoubleQuote = false;
-        let escaped = false;
-        let parenDepth = 0;
+        let quoted = false;
 
-        while (this.pos < this.len) {
-            const char = this.input[this.pos];
+        while (this.pos < this.input.length) {
+            const c = this.input[this.pos];
 
-            if (escaped) {
-                value += char;
-                escaped = false;
-                this.pos++;
+            if (c === '\\') {
+                if (this.input[this.pos + 1] === '\n') { this.pos += 2; continue; }
+                if (this.pos + 1 >= this.input.length) { value += c; this.pos++; continue; }
+                value += c + this.input[this.pos + 1];
+                this.pos += 2;
+                quoted = true;
                 continue;
             }
-
-            if (char === '\\') {
-                // Backslash logic
-                if (inSingleQuote) {
-                    value += char; // Literal backslash in single quotes
-                } else {
-                    escaped = true; // Next literal
-                }
-                this.pos++;
+            if (c === "'") {
+                const end = this.input.indexOf("'", this.pos + 1);
+                if (end === -1) throw new IncompleteInputError('unterminated quoted string');
+                value += this.input.substring(this.pos, end + 1);
+                this.pos = end + 1;
+                quoted = true;
                 continue;
             }
-
-            if (char === "'" && !inDoubleQuote && parenDepth === 0) {
-                inSingleQuote = !inSingleQuote;
-                // Include quote
-                value += char;
-                this.pos++;
+            if (c === '"') {
+                value += this.readDoubleQuoted();
+                quoted = true;
                 continue;
             }
-
-            if (char === '"' && !inSingleQuote && parenDepth === 0) {
-                inDoubleQuote = !inDoubleQuote;
-                // Include quote
-                value += char;
-                this.pos++;
+            if (c === '`') {
+                value += this.readBackquoted();
                 continue;
             }
-
-            // Word Delimiters (if not quoted and not in expansion)
-            if (!inSingleQuote && !inDoubleQuote) {
-                // Check for expansion start $(
-                if (char === '$' && this.peek(1) === '(') {
-                    parenDepth++;
-                    value += '$(';
-                    this.pos += 2;
-                    continue;
-                }
-
-                if (parenDepth > 0) {
-                    if (char === '(') parenDepth++;
-                    else if (char === ')') parenDepth--;
-
-                    value += char;
-                    this.pos++;
-                    continue;
-                }
-
-                if (char === ' ' || char === '\t' || char === '\n') break;
-                if (this.isOperatorStart(char)) break;
-                // POUND is not a comment here
+            if (c === '$') {
+                value += this.readDollar();
+                continue;
             }
-
-            value += char;
+            if (this.isWordBreak(c)) break;
+            value += c;
             this.pos++;
         }
 
-        if (value.length === 0 && this.pos === start) return null;
+        return { type: TokenType.WORD, value, position: start, quoted };
+    }
 
-        // Check for unclosed quotes?
-        if (inSingleQuote || inDoubleQuote) {
-            throw new Error("Syntax Error: Unclosed quote");
+    private readHereDocBody(doc: PendingHereDoc) {
+        const raw = doc.token.value;
+        const quoted = /['"\\]/.test(raw);
+        const delimiter = raw.replace(/\\(.)/g, '$1').replace(/['"]/g, '');
+        const lines: string[] = [];
+
+        while (true) {
+            if (this.pos >= this.input.length) {
+                throw new IncompleteInputError(`here-document delimited by end-of-file (wanted '${delimiter}')`);
+            }
+            let end = this.input.indexOf('\n', this.pos);
+            const atEof = end === -1;
+            if (atEof) end = this.input.length;
+            let line = this.input.substring(this.pos, end);
+            this.pos = atEof ? end : end + 1;
+
+            if (doc.stripTabs) line = line.replace(/^\t+/, '');
+            if (line === delimiter) break;
+            lines.push(line);
+            if (atEof) throw new IncompleteInputError(`here-document delimited by end-of-file (wanted '${delimiter}')`);
         }
 
-        return {
-            type: TokenType.WORD,
-            value: value,
-            position: start
-        };
+        let body = lines.length ? lines.join('\n') + '\n' : '';
+        if (!quoted) body = body.replace(/\\\n/g, '');
+        doc.token.heredoc = { body, quoted };
     }
 }

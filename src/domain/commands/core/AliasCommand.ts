@@ -1,4 +1,3 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * AliasCommand - Core Command
  *
@@ -23,7 +22,6 @@ export class AliasCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = getStdinAsString(context);
         if (args.length === 0) {
             // print all
             const lines: string[] = [];

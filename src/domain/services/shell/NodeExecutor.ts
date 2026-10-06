@@ -1,26 +1,12 @@
-import { ASTNode, NodeType, IfNode, ForNode, WhileNode, SubshellNode, BlockNode, FunctionDefNode, CommandNode, RedirectNode } from '../../interfaces/ShellAST';
+import { ASTNode } from '../../interfaces/ShellAST';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../entities/Command';
+import { IOContext } from './io/IOContext';
+import { ShellResult } from './ShellRuntime';
 
 /**
- * NodeExecutor Interface
- * 
- * Strategy definition for executing AST Nodes.
- * Part of the Refactoring to Open/Closed Principle.
+ * NodeExecutor - Strategy for executing one kind of AST node (OCP).
+ * Children are executed through the runtime's `visit`.
  */
 export interface NodeExecutor {
-    /**
-     * Executes the given AST Node.
-     * 
-     * @param node - The AST Node to execute
-     * @param state - Current terminal state
-     * @param visitor - Callback to visit child nodes (recursion)
-     * @param stdin - Optional standard input
-     */
-    execute(
-        node: ASTNode,
-        state: TerminalState,
-        visitor: (node: ASTNode, state: TerminalState, stdin?: string) => Promise<CommandResponse>,
-        stdin?: string
-    ): Promise<CommandResponse>;
+    execute(node: ASTNode, state: TerminalState, io: IOContext): Promise<ShellResult>;
 }

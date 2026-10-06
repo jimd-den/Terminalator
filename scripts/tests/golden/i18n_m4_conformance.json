@@ -1,0 +1,454 @@
+{
+  "m4/define": {
+    "stdout": "Y 1+2 x+y   (1,2)+3\nst=0\n",
+    "status": 0
+  },
+  "m4/args": {
+    "stdout": "11 [a,b,c,d,e,f,g,h,i,j,k] [a,b,c,d,e,f,g,h,i,j,k] t j\n0 [] [] t \n1 [] [] t \nst=0\n",
+    "status": 0
+  },
+  "m4/quotes": {
+    "stdout": "quoted `nested' a`b'c (,\nst=0\n",
+    "status": 0
+  },
+  "m4/changequote": {
+    "stdout": "x Y x hi a<<b>>c\nback\nst=0\n",
+    "status": 0
+  },
+  "m4/changequote-one": {
+    "stdout": "x y\n`x'\nst=0\n",
+    "status": 0
+  },
+  "m4/comments": {
+    "stdout": "# define(`x',`y') x\n/* x */ # x\n\n# x\nst=0\n",
+    "status": 0
+  },
+  "m4/dnl": {
+    "stdout": "a b\n1\nst=0\n",
+    "status": 0
+  },
+  "m4/undefine": {
+    "stdout": "1 x \nst=0\n",
+    "status": 0
+  },
+  "m4/defn": {
+    "stdout": "hello $1 4 x\nst=0\n",
+    "status": 0
+  },
+  "m4/pushdef": {
+    "stdout": "2 1 x b a\nst=0\n",
+    "status": 0
+  },
+  "m4/ifdef": {
+    "stdout": "yes no .\nst=0\n",
+    "status": 0
+  },
+  "m4/ifelse": {
+    "stdout": "yes  1 . g\nst=0\n",
+    "status": 0
+  },
+  "m4/shift": {
+    "stdout": "b,c   3\nst=0\n",
+    "status": 0
+  },
+  "m4/divert": {
+    "stdout": "0  0 two  and end\none st=0\n",
+    "status": 0
+  },
+  "m4/undivert-all": {
+    "stdout": "one\ntwo\nthree\n\ndone\nst=0\n",
+    "status": 0
+  },
+  "m4/divert-end": {
+    "stdout": "zero\none\ntwo\nst=0\n",
+    "status": 0
+  },
+  "m4/incr": {
+    "stdout": "6 -1 -2 -2147483648 6\nst=0\n",
+    "status": 0
+  },
+  "m4/incr-bad": {
+    "stdout": " 1\nst=0\n",
+    "status": 0
+  },
+  "m4/eval": {
+    "stdout": "7 9 -3 -1 -2147483648 16 5 8 1295 512 4 0 1 9\nst=0\n",
+    "status": 0
+  },
+  "m4/eval-radix": {
+    "stdout": "a 00001010 -a 73 11111 00011111 001 0\nst=0\n",
+    "status": 0
+  },
+  "m4/eval-errors": {
+    "stdout": "\n\n\n\n0\n\n\n\n\nst=0\n",
+    "status": 0
+  },
+  "m4/len-index": {
+    "stdout": "0 3 2 -1 0 0\nst=0\n",
+    "status": 0
+  },
+  "m4/substr": {
+    "stdout": "ello el    hello\nst=0\n",
+    "status": 0
+  },
+  "m4/translit": {
+    "stdout": "HELLO he z 321 ab hello\nst=0\n",
+    "status": 0
+  },
+  "m4/regexp": {
+    "stdout": "5 GNUs! -1 . <b>\nst=0\n",
+    "status": 0
+  },
+  "m4/patsubst": {
+    "stdout": "<GNUs> <not> <Unix> xx heo a_b_c >abc\nst=0\n",
+    "status": 0
+  },
+  "m4/format": {
+    "stdout": "   42|ab   |ff|A|3.14|00007|+3|10|FF|% x and \nst=0\n",
+    "status": 0
+  },
+  "m4/builtin-indir": {
+    "stdout": "[x] 3 \nst=0\n",
+    "status": 0
+  },
+  "m4/sysval": {
+    "stdout": "hi\n0 3 abc\nst=0\n",
+    "status": 0
+  },
+  "m4/syscmd-order": {
+    "stdout": "before\ncmd\nafter\ndiverted\nst=0\n",
+    "status": 0
+  },
+  "m4/errprint": {
+    "stdout": "x\nst=0\n",
+    "status": 0
+  },
+  "m4/m4exit": {
+    "stdout": "a\nst=3\n",
+    "status": 0
+  },
+  "m4/m4exit-plain": {
+    "stdout": "a st=0\n",
+    "status": 0
+  },
+  "m4/m4wrap": {
+    "stdout": "start\n\nw3 w4 w2 w1 st=0\n",
+    "status": 0
+  },
+  "m4/file-line": {
+    "stdout": "stdin 1\n2 m4   unix\nst=0\n",
+    "status": 0
+  },
+  "m4/blind": {
+    "stdout": "define len index 0 \nst=0\n",
+    "status": 0
+  },
+  "m4/nested-calls": {
+    "stdout": "yy xx abababab\nst=0\n",
+    "status": 0
+  },
+  "m4/recursion": {
+    "stdout": "5 4 3 2 1 done\nst=0\n",
+    "status": 0
+  },
+  "m4/forloop": {
+    "stdout": "1,2,3,4,5,\nst=0\n",
+    "status": 0
+  },
+  "m4/eof-string": {
+    "stdout": "st=1\n",
+    "status": 0
+  },
+  "m4/eof-args": {
+    "stdout": "st=1\n",
+    "status": 0
+  },
+  "m4/dumpdef": {
+    "stdout": "ok\nst=0\n",
+    "status": 0
+  },
+  "m4/opt-D": {
+    "stdout": "1  x=y\nst=0\n",
+    "status": 0
+  },
+  "m4/opt-U": {
+    "stdout": "len(abc) \nst=0\n",
+    "status": 0
+  },
+  "m4/opt-P": {
+    "stdout": "len(abc) 3 1\nst=0\n",
+    "status": 0
+  },
+  "m4/opt-G": {
+    "stdout": "format(%d,1) 2  __gnu__\nst=0\n",
+    "status": 0
+  },
+  "m4/opt-Q": {
+    "stdout": "0\nst=0\n",
+    "status": 0
+  },
+  "m4/files": {
+    "stdout": "B\nB\nst=0\nB\nB\nst=1\n",
+    "status": 0
+  },
+  "m4/include": {
+    "stdout": "inc inc.m4 1\nx\ny\nst=1\n",
+    "status": 0
+  },
+  "m4/include-path": {
+    "stdout": "from d\n\nst=0\n",
+    "status": 0
+  },
+  "m4/undivert-file": {
+    "stdout": "raw define(x)\nz\nst=0\n",
+    "status": 0
+  },
+  "m4/mkstemp": {
+    "stdout": "created\nfoo\n",
+    "status": 0
+  },
+  "m4/stdin-dash": {
+    "stdout": "1\nst=0\n",
+    "status": 0
+  },
+  "m4/bad-option": {
+    "stdout": "st=1\nm4 (GNU M4) 1.4.19\nst=1\n",
+    "status": 0
+  },
+  "m4/synclines": {
+    "stdout": "#line 1 \"stdin\"\na\nb\nst=0\n",
+    "status": 0
+  },
+  "xgettext/c-default": {
+    "stdout": "# SOME DESCRIPTIVE TITLE.\n# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER\n# This file is distributed under the same license as the PACKAGE package.\n# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.\n#\n#: a.c:16\n#, fuzzy\nmsgid \"\"\nmsgstr \"\"\n\"Project-Id-Version: PACKAGE VERSION\\n\"\n\"Report-Msgid-Bugs-To: \\n\"\n\"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\\n\"\n\"Last-Translator: FULL NAME <EMAIL@ADDRESS>\\n\"\n\"Language-Team: LANGUAGE <LL@li.org>\\n\"\n\"Language: \\n\"\n\"MIME-Version: 1.0\\n\"\n\"Content-Type: text/plain; charset=CHARSET\\n\"\n\"Content-Transfer-Encoding: 8bit\\n\"\n\"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\\n\"\n\n#: a.c:4 a.c:6\n#, c-format\nmsgid \"Hello, %s!\\n\"\nmsgstr \"\"\n\n#: a.c:7\n#, c-format\nmsgid \"%d file\"\nmsgid_plural \"%d files\"\nmsgstr[0] \"\"\nmsgstr[1] \"\"\n\n#: a.c:8\nmsgctxt \"menu\"\nmsgid \"Open\"\nmsgstr \"\"\n\n#: a.c:9\nmsgid \"\"\n\"a very long message that goes on and on and on and on and on and on and on \"\n\"and on and on\"\nmsgstr \"\"\n\n#: a.c:10\nmsgid \"\"\n\"multi\\n\"\n\"line\\n\"\n\"text\"\nmsgstr \"\"\n\n#: a.c:11\nmsgid \"tab\\there \\\"quoted\\\" back\\\\slash\"\nmsgstr \"\"\n\n#: a.c:12\nmsgid \"concatenated\"\nmsgstr \"\"\n\n#: a.c:13\nmsgid \"domained\"\nmsgstr \"\"\n\n#: a.c:15\nmsgid \"noop\"\nmsgstr \"\"\n\n#: a.c:17\nmsgid \"100% sure %q\"\nmsgstr \"\"\n\n#: a.c:17\n#, c-format\nmsgid \"50%% off\"\nmsgstr \"\"\nst=0\n",
+    "status": 0
+  },
+  "xgettext/c-keywords-comments": {
+    "stdout": "#: a.c:4 a.c:6\n#, c-format\nmsgid \"Hello, %s!\\n\"\nmsgstr \"\"\n\n#: a.c:5\nmsgid \"underscore\"\nmsgstr \"\"\n\n#: a.c:7\n#, c-format\nmsgid \"%d file\"\nmsgid_plural \"%d files\"\nmsgstr[0] \"\"\nmsgstr[1] \"\"\n\n#: a.c:8\nmsgctxt \"menu\"\nmsgid \"Open\"\nmsgstr \"\"\n\n#: a.c:9\nmsgid \"\"\n\"a very long message that goes on and on and on and on and on and on and on \"\n\"and on and on\"\nmsgstr \"\"\n\n#: a.c:10\nmsgid \"\"\n\"multi\\n\"\n\"line\\n\"\n\"text\"\nmsgstr \"\"\n\n#: a.c:11\nmsgid \"tab\\there \\\"quoted\\\" back\\\\slash\"\nmsgstr \"\"\n\n#: a.c:12\nmsgid \"concatenated\"\nmsgstr \"\"\n\n#: a.c:13\nmsgid \"domained\"\nmsgstr \"\"\n\n#. comment for next\n#: a.c:15\nmsgid \"noop\"\nmsgstr \"\"\n\n#: a.c:16\nmsgid \"\"\nmsgstr \"\"\n\n#: a.c:17\nmsgid \"100% sure %q\"\nmsgstr \"\"\n\n#: a.c:17\n#, c-format\nmsgid \"50%% off\"\nmsgstr \"\"\n\n#: a.c:18\nmsgid \"nn\"\nmsgstr \"\"\nst=0\n",
+    "status": 0
+  },
+  "xgettext/c-tag-nolocation": {
+    "stdout": "#, c-format\nmsgid \"Hello, %s!\\n\"\nmsgstr \"\"\n\n#, c-format\nmsgid \"%d file\"\nmsgid_plural \"%d files\"\nmsgstr[0] \"\"\nmsgstr[1] \"\"\n\nmsgctxt \"menu\"\nmsgid \"Open\"\nmsgstr \"\"\n\nmsgid \"\"\n\"a very long message that goes on and on and on and on and on and on and on \"\n\"and on and on\"\nmsgstr \"\"\n\nmsgid \"\"\n\"multi\\n\"\n\"line\\n\"\n\"text\"\nmsgstr \"\"\n\nmsgid \"tab\\there \\\"quoted\\\" back\\\\slash\"\nmsgstr \"\"\n\nmsgid \"concatenated\"\nmsgstr \"\"\n\nmsgid \"domained\"\nmsgstr \"\"\n\nmsgid \"noop\"\nmsgstr \"\"\n\nmsgid \"\"\nmsgstr \"\"\n\nmsgid \"100% sure %q\"\nmsgstr \"\"\n\n#, c-format\nmsgid \"50%% off\"\nmsgstr \"\"\n",
+    "status": 0
+  },
+  "xgettext/c-sort-width": {
+    "stdout": "#: a.c:16\nmsgid \"\"\nmsgstr \"\"\n\n#: a.c:7\n#, c-format\nmsgid \"%d file\"\nmsgid_plural \"%d files\"\nmsgstr[0] \"\"\nmsgstr[1] \"\"\n\n#: a.c:17\nmsgid \"100% sure %q\"\nmsgstr \"\"\n\n#: a.c:17\n#, c-format\nmsgid \"50%% off\"\nmsgstr \"\"\n\n#: a.c:4 a.c:6\n#, c-format\nmsgid \"Hello, %s!\\n\"\nmsgstr \"\"\n\n#: a.c:8\nmsgctxt \"menu\"\nmsgid \"Open\"\nmsgstr \"\"\n\n#: a.c:9\nmsgid \"\"\n\"a very long message that goes on and on and on and on and on and on and on \"\n\"and on and on\"\nmsgstr \"\"\n\n#: a.c:12\nmsgid \"concatenated\"\nmsgstr \"\"\n\n#: a.c:13\nmsgid \"domained\"\nmsgstr \"\"\n\n#: a.c:10\nmsgid \"\"\n\"multi\\n\"\n\"line\\n\"\n\"text\"\nmsgstr \"\"\n\n#: a.c:15\nmsgid \"noop\"\nmsgstr \"\"\n\n#: a.c:11\nmsgid \"tab\\there \\\"quoted\\\" back\\\\slash\"\nmsgstr \"\"\n#: a.c:4 a.c:6\n#, c-format\nmsgid \"Hello, %s!\\n\"\nmsgstr \"\"\n\n#: a.c:7\n#, c-format\nmsgid \"%d file\"\nmsgid_plural \"%d files\"\nmsgstr[0] \"\"\nmsgstr[1] \"\"\n\n#: a.c:8\nmsgctxt \"menu\"\nmsgid \"Open\"\nmsgstr \"\"\n\n#: a.c:9\nmsgid \"\"\n\"a very long message that \"\n\"goes on and on and on and \"\n\"on and on and on and on and \"\n\"on and on\"\nmsgstr \"\"\n\n#: a.c:10\nmsgid \"\"\n\"multi\\n\"\n\"line\\n\"\n\"text\"\nmsgstr \"\"\n\n#: a.c:11\nmsgid \"\"\n\"tab\\there \\\"quoted\\\" \"\n\"back\\\\slash\"\nmsgstr \"\"\n\n#: a.c:12\nmsgid \"concatenated\"\nmsgstr \"\"\n\n#: a.c:13\nmsgid \"domained\"\nmsgstr \"\"\n\n#: a.c:15\nmsgid \"noop\"\nmsgstr \"\"\n\n#: a.c:16\nmsgid \"\"\nmsgstr \"\"\n\n#: a.c:17\nmsgid \"100% sure %q\"\nmsgstr \"\"\n\n#: a.c:17\n#, c-format\nmsgid \"50%% off\"\nmsgstr \"\"\n",
+    "status": 0
+  },
+  "xgettext/files": {
+    "stdout": "st=0\na.c\nnone.c\nst=0\na.c\nmydom.po\nnone.c\n# SOME DESCRIPTIVE TITLE.\n# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER\n# This file is distributed under the same license as the PACKAGE package.\n# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.\n#\n#: a.c:16\n#, fuzzy\nmsgid \"\"\nmsgstr \"\"\n\"Project-Id-Version: PACKAGE VERSION\\n\"\n\"Report-Msgid-Bugs-To: \\n\"\n\"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\\n\"\n\"Last-Translator: FULL NAME <EMAIL@ADDRESS>\\n\"\n\"Language-Team: LANGUAGE <LL@li.org>\\n\"\n\"Language: \\n\"\n\"MIME-Version: 1.0\\n\"\n\"Content-Type: text/plain; charset=CHARSET\\n\"\n\"Content-Transfer-Encoding: 8bit\\n\"\n\"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\\n\"\n\n#: a.c:4 a.c:6\n#, c-format\nmsgid \"Hello, %s!\\n\"\nmsgstr \"\"\n\n#: a.c:7\n#, c-format\nmsgid \"%d file\"\nmsgid_plural \"%d files\"\nmsgstr[0] \"\"\n",
+    "status": 0
+  },
+  "xgettext/default-output": {
+    "stdout": "st=0\n# SOME DESCRIPTIVE TITLE.\n# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER\n# This file is distributed under the same license as the PACKAGE package.\n# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.\n#\n#, fuzzy\nmsgid \"\"\nmsgstr \"\"\n\"Project-Id-Version: PACKAGE VERSION\\n\"\n\"Report-Msgid-Bugs-To: \\n\"\n\"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\\n\"\n\"Last-Translator: FULL NAME <EMAIL@ADDRESS>\\n\"\n\"Language-Team: LANGUAGE <LL@li.org>\\n\"\n\"Language: \\n\"\n\"MIME-Version: 1.0\\n\"\n\"Content-Type: text/plain; charset=CHARSET\\n\"\n\"Content-Transfer-Encoding: 8bit\\n\"\n\n#: f.c:1\nmsgid \"msg\"\nmsgstr \"\"\nf.c\nmessages.po\nout.po\nst=0\n\n#: f.c:1\nmsgid \"msg\"\nmsgstr \"\"\n\n#: g.c:1\nmsgid \"two\"\nmsgstr \"\"\n",
+    "status": 0
+  },
+  "xgettext/errors": {
+    "stdout": "st=1\nst=1\nst=1\nst=1\nst=1\nf.c\n",
+    "status": 0
+  },
+  "xgettext/shell": {
+    "stdout": "#: s.sh:2\nmsgid \"shell msg\"\nmsgstr \"\"\n\n#: s.sh:3\nmsgid \"single quoted\"\nmsgstr \"\"\n\n#: s.sh:4\nmsgid \"one\"\nmsgid_plural \"many\"\nmsgstr[0] \"\"\nmsgstr[1] \"\"\n\n#: s.sh:5\n#, sh-format\nmsgid \"Value $x\"\nmsgstr \"\"\n\n#: s.sh:6\nmsgid \"dollar quoted\"\nmsgstr \"\"\n\n#: s.sh:7\nmsgid \"-n\"\nmsgstr \"\"\nst=0\n",
+    "status": 0
+  },
+  "xgettext/keyword-spec": {
+    "stdout": "#: k.c:1\nmsgid \"b\"\nmsgstr \"\"\n\n#: k.c:2\nmsgid \"one\"\nmsgid_plural \"many\"\nmsgstr[0] \"\"\nmsgstr[1] \"\"\n\n#: k.c:3\nmsgctxt \"c\"\nmsgid \"m\"\nmsgstr \"\"\n",
+    "status": 0
+  },
+  "xgettext/non-ascii": {
+    "stdout": "st=1\n# SOME DESCRIPTIVE TITLE.\n# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER\n# This file is distributed under the same license as the PACKAGE package.\n# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.\n#\n#, fuzzy\nmsgid \"\"\nmsgstr \"\"\n\"Project-Id-Version: PACKAGE VERSION\\n\"\n\"Report-Msgid-Bugs-To: \\n\"\n\"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\\n\"\n\"Last-Translator: FULL NAME <EMAIL@ADDRESS>\\n\"\n\"Language-Team: LANGUAGE <LL@li.org>\\n\"\n\"Language: \\n\"\n\"MIME-Version: 1.0\\n\"\n\"Content-Type: text/plain; charset=UTF-8\\n\"\n\"Content-Transfer-Encoding: 8bit\\n\"\n\n#: u.c:1\nmsgid \"cafÃ©\"\nmsgstr \"\"\n",
+    "status": 0
+  },
+  "msgfmt/empty": {
+    "stdout": "st=0\nf.po\nst=0\nf.po\n",
+    "status": 0
+  },
+  "msgfmt/header-only": {
+    "stdout": "st=0\n de 12 04 95 00 00 00 00 01 00 00 00 1c 00 00 00\n 24 00 00 00 03 00 00 00 2c 00 00 00 00 00 00 00\n 38 00 00 00 28 00 00 00 39 00 00 00 01 00 00 00\n 00 00 00 00 00 00 00 00 00 43 6f 6e 74 65 6e 74\n 2d 54 79 70 65 3a 20 74 65 78 74 2f 70 6c 61 69\n 6e 3b 20 63 68 61 72 73 65 74 3d 55 54 46 2d 38\n 0a 00\n",
+    "status": 0
+  },
+  "msgfmt/catalog": {
+    "stdout": "st=0\n de 12 04 95 00 00 00 00 05 00 00 00 1c 00 00 00\n 44 00 00 00 07 00 00 00 6c 00 00 00 00 00 00 00\n 88 00 00 00 03 00 00 00 89 00 00 00 0a 00 00 00\n 8d 00 00 00 05 00 00 00 98 00 00 00 09 00 00 00\n 9e 00 00 00 52 00 00 00 a8 00 00 00 03 00 00 00\n fb 00 00 00 10 00 00 00 ff 00 00 00 07 00 00 00\n 10 01 00 00 06 00 00 00 18 01 00 00 01 00 00 00\n 05 00 00 00 00 00 00 00 00 00 00 00 04 00 00 00\n 02 00 00 00 03 00 00 00 00 61 09 62 00 66 69 6c\n 65 00 66 69 6c 65 73 00 68 65 6c 6c 6f 00 6d 65\n 6e 75 04 4f 70 65 6e 00 43 6f 6e 74 65 6e 74 2d\n 54 79 70 65 3a 20 74 65 78 74 2f 70 6c 61 69 6e\n 3b 20 63 68 61 72 73 65 74 3d 55 54 46 2d 38 0a\n 50 6c 75 72 61 6c 2d 46 6f 72 6d 73 3a 20 6e 70\n 6c 75 72 61 6c 73 3d 32 3b 20 70 6c 75 72 61 6c\n 3d 28 6e 20 3e 20 31 29 3b 0a 00 41 09 42 00 66\n 69 63 68 69 65 72 00 66 69 63 68 69 65 72 73 00\n 62 6f 6e 6a 6f 75 72 00 4f 75 76 72 69 72 00\n de 12 04 95 00 00 00 00 05 00 00 00 1c 00 00 00\n 44 00 00 00 00 00 00 00 6c 00 00 00 00 00 00 00\n 6c 00 00 00 03 00 00 00 6d 00 00 00 0a 00 00 00\n 71 00 00 00 05 00 00 00 7c 00 00 00 09 00 00 00\n 82 00 00 00 52 00 00 00 8c 00 00 00 03 00 00 00\n df 00 00 00 10 00 00 00 e3 00 00 00 07 00 00 00\n f4 00 00 00 06 00 00 00 fc 00 00 00 00 61 09 62\n 00 66 69 6c 65 00 66 69 6c 65 73 00 68 65 6c 6c\n 6f 00 6d 65 6e 75 04 4f 70 65 6e 00 43 6f 6e 74\n 65 6e 74 2d 54 79 70 65 3a 20 74 65 78 74 2f 70\n 6c 61 69 6e 3b 20 63 68 61 72 73 65 74 3d 55 54\n 46 2d 38 0a 50 6c 75 72 61 6c 2d 46 6f 72 6d 73\n 3a 20 6e 70 6c 75 72 61 6c 73 3d 32 3b 20 70 6c\n 75 72 61 6c 3d 28 6e 20 3e 20 31 29 3b 0a 00 41\n 09 42 00 66 69 63 68 69 65 72 00 66 69 63 68 69\n 65 72 73 00 62 6f 6e 6a 6f 75 72 00 4f 75 76 72\n 69 72 00\n   r   a   l   =   (   n       >       1   )   ;  \\n  \\0   A  \\t\n   B  \\0   f   i   c   h   i   e   r  \\0   f   i   c   h   i   e\n   r   s  \\0   f   l   o   u  \\0   b   o   n   j   o   u   r  \\0\n   O   u   v   r   i   r  \\0\n",
+    "status": 0
+  },
+  "msgfmt/statistics": {
+    "stdout": "4 translated messages, 1 fuzzy translation, 1 untranslated message.\n4 translated messages, 1 fuzzy translation, 1 untranslated message.\n4 translated messages, 1 fuzzy translation, 1 untranslated message.\nst=0\n",
+    "status": 0
+  },
+  "msgfmt/check": {
+    "stdout": "st=0\nst=1\nst=1\n",
+    "status": 0
+  },
+  "msgfmt/errors": {
+    "stdout": "st=1\nst=1\nst=1\nst=1\nst=1\nst=1\nst=1\nst=1\nb.po\nd.po\nf.po\nm.po\n",
+    "status": 0
+  },
+  "msgfmt/stdin-multi": {
+    "stdout": " 336 022 004 225  \\0  \\0  \\0  \\0 002  \\0  \\0  \\0 034  \\0  \\0  \\0\n   ,  \\0  \\0  \\0 005  \\0  \\0  \\0   <  \\0  \\0  \\0 001  \\0  \\0  \\0\n   P  \\0  \\0  \\0 001  \\0  \\0  \\0   R  \\0  \\0  \\0 001  \\0  \\0  \\0\n   T  \\0  \\0  \\0 001  \\0  \\0  \\0   V  \\0  \\0  \\0  \\0  \\0  \\0  \\0\n  \\0  \\0  \\0  \\0 001  \\0  \\0  \\0 002  \\0  \\0  \\0  \\0  \\0  \\0  \\0\n   a  \\0   b  \\0   A  \\0   B  \\0\n",
+    "status": 0
+  },
+  "gettext/untranslated": {
+    "stdout": "msg\nmsg\nmsgst=0\nst=0\n'v'\nmsg\n",
+    "status": 0
+  },
+  "gettext/args": {
+    "stdout": "st=1\nst=1\n\nst=0\na b|\na b c\nst=1\nmsg\n\n-x\n",
+    "status": 0
+  },
+  "gettext/escapes": {
+    "stdout": "a\nb|\nxy\n|\nx\ny z w|\nx\\ny|\n0000000   A  \\b   2   \\   \\   q\n0000006\n",
+    "status": 0
+  },
+  "ngettext/untranslated": {
+    "stdout": "s\np\np\np\np\np\np\ns\ns\np\ns\ns\n0000000   a  \\n\n0000002\n",
+    "status": 0
+  },
+  "ngettext/args": {
+    "stdout": "st=1\nst=1\nst=1\n",
+    "status": 0
+  },
+  "gettext/catalog-C": {
+    "stdout": "hello\nhello\nhello\n",
+    "status": 0
+  },
+  "gettext/catalog-fr": {
+    "stdout": "== \nbonjour\nbonjour world fz untranslated\n== fr\nbonjour\nbonjour world fz untranslated\n== fr_FR\nbonjour\nbonjour world fz untranslated\n== de:fr\nbonjour\nbonjour world fz untranslated\n== de\nhello\nhello world fz untranslated\n== C:fr\nhello\nhello world fz untranslated\n== fr_CA.UTF-8\nbonjour\nbonjour world fz untranslated\n",
+    "status": 0
+  },
+  "gettext/catalog-features": {
+    "stdout": "bonjour\nOuvrir\nOpen\nA\tB\nhello\nfichier\nfichier\nfichiers\nfichiers\nnope\nbonjour\n",
+    "status": 0
+  },
+  "gettext/catalog-variants": {
+    "stdout": "salut\nfichier\nbonjour\n",
+    "status": 0
+  },
+  "gencat/basic": {
+    "stdout": "st=0\n de 08 04 96 01 00 00 00 01 00 00 00 02 00 00 00\n 01 00 00 00 00 00 00 00 00 00 00 02 00 00 00 01\n 00 00 00 00 71 75 6f 74 65 00\n",
+    "status": 0
+  },
+  "gencat/sets-quotes": {
+    "stdout": "st=0\n de 08 04 96 02 00 00 00 04 00 00 00 04 00 00 00\n 01 00 00 00 00 00 00 00 03 00 00 00 05 00 00 00\n 10 00 00 00 04 00 00 00 02 00 00 00 03 00 00 00\n 03 00 00 00 07 00 00 00 16 00 00 00 04 00 00 00\n 03 00 00 00 0e 00 00 00 00 00 00 00 00 00 00 00\n 00 00 00 00 04 00 00 00 04 00 00 00 0f 00 00 00\n 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 04\n 00 00 00 01 00 00 00 00 00 00 00 03 00 00 00 05\n 00 00 00 10 00 00 00 04 00 00 00 02 00 00 00 03\n 00 00 00 03 00 00 00 07 00 00 00 16 00 00 00 04\n 00 00 00 03 00 00 00 0e 00 00 00 00 00 00 00 00\n 00 00 00 00 00 00 00 04 00 00 00 04 00 00 00 0f\n 00 00 00 00 00 00 00 00 00 00 00 00 61 62 00 71\n 75 6f 74 65 64 20 6d 73 67 00 00 00 68 65 6c 6c\n 6f 00 77 6f 72 6c 64 00\n",
+    "status": 0
+  },
+  "gencat/escapes": {
+    "stdout": "st=1\n   h   e   r   e  \\n   n   l       A   B       q       \\       \"\n   x   \"       e   n   d  \\0   u   n   t   e   r   m   i   n   a\n   t   e   d  \\0\n",
+    "status": 0
+  },
+  "gencat/symbolic-header": {
+    "stdout": "st=0\n de 08 04 96 03 00 00 00 02 00 00 00 06 00 00 00\n 01 00 00 00 00 00 00 00 02 00 00 00 02 00 00 00\n 08 00 00 00 02 00 00 00 01 00 00 00 02 00 00 00\n 02 00 00 00 03 00 00 00 0c 00 00 00 00 00 00 00\n 00 00 00 00 00 00 00 00 02 00 00 00 04 00 00 00\n 0e 00 00 00 00 00 00 06 00 00 00 01 00 00 00 00\n 00 00 00 02 00 00 00 02 00 00 00 08 00 00 00 02\n 00 00 00 01 00 00 00 02 00 00 00 02 00 00 00 03\n 00 00 00 0c 00 00 00 00 00 00 00 00 00 00 00 00\n 00 00 00 02 00 00 00 04 00 00 00 0e 7a 00 68 65\n 6c 6c 6f 00 74 77 6f 00 78 00 79 00\n#define AutomaticSet6SYM 0x1\t/* m3:7 */\n\n#define BARSet 0x1\t/* m3:2 */\n#define BARFOO 0x1\t/* m3:1 */\n#define BARBAZ 0x3\t/* m3:3 */\n#define BARQUX 0x4\t/* m3:5 */\n       *   /  \\n  \\n   #   d   e   f   i   n   e       B   A   R\n   S   e   t       0   x   1  \\t   /   *       m   3   :   2    \n   *   /  \\n   #   d   e   f   i   n   e       B   A   R   F   O\n   O       0   x   1  \\t   /   *       m   3   :   1       *   /\n  \\n   #   d   e   f   i   n   e       B   A   R   B   A   Z    \n   0   x   3  \\t   /   *       m   3   :   3       *   /  \\n   #\n   d   e   f   i   n   e       B   A   R   Q   U   X       0   x\n   4  \\t   /   *       m   3   :   5       *   /  \\n\n",
+    "status": 0
+  },
+  "gencat/merge": {
+    "stdout": "st=0\n  \\0  \\0  \\0 002  \\0  \\0  \\0 004  \\0  \\0  \\0 002  \\0  \\0  \\0 004\n  \\0  \\0  \\0  \\b   o   n   e  \\0   T   W   O  \\0   f   o   u   r\n  \\0\n  \\0  \\0  \\0 002  \\0  \\0  \\0  \\0  \\0  \\0  \\0 002  \\0  \\0  \\0 004\n  \\0  \\0  \\0 005   T   W   O  \\0  \\0   f   o   u   r  \\0\n",
+    "status": 0
+  },
+  "gencat/delset": {
+    "stdout": "st=0\n  \\0  \\0  \\0  \\0  \\0  \\0  \\0 002  \\0  \\0  \\0 001  \\0  \\0  \\0 002\n  \\0  \\0  \\0 003  \\0  \\0  \\0 001  \\0  \\0  \\0  \\0   b  \\0   a  \\0\n",
+    "status": 0
+  },
+  "gencat/errors": {
+    "stdout": "st=1\nst=1\nst=1\nst=0\n 336  \\b 004 226 001  \\0  \\0  \\0 001  \\0  \\0  \\0 002  \\0  \\0  \\0\n 001  \\0  \\0  \\0  \\0  \\0  \\0  \\0  \\0  \\0  \\0 002  \\0  \\0  \\0 001\n  \\0  \\0  \\0  \\0  \\0\nst=64\n",
+    "status": 0
+  },
+  "gencat/stdout-stdin": {
+    "stdout": " de 08 04 96 01 00 00 00 01 00 00 00 00 00 00 00\n 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n 00 00 00 00\nst=0\n 336  \\b 004 226 001  \\0  \\0  \\0 001  \\0  \\0  \\0 002  \\0  \\0  \\0\n 001  \\0  \\0  \\0  \\0  \\0  \\0  \\0  \\0  \\0  \\0 002  \\0  \\0  \\0 001\n  \\0  \\0  \\0  \\0   q  \\0\nst=1\n",
+    "status": 0
+  },
+  "gencat/old-not-catalog": {
+    "stdout": "st=1\nst=1\n",
+    "status": 0
+  },
+  "locale/env-C": {
+    "stdout": "LANG=\nLANGUAGE=\nLC_CTYPE=\"C\"\nLC_NUMERIC=\"C\"\nLC_TIME=\"C\"\nLC_COLLATE=\"C\"\nLC_MONETARY=\"C\"\nLC_MESSAGES=\"C\"\nLC_PAPER=\"C\"\nLC_NAME=\"C\"\nLC_ADDRESS=\"C\"\nLC_TELEPHONE=\"C\"\nLC_MEASUREMENT=\"C\"\nLC_IDENTIFICATION=\"C\"\nLC_ALL=C\nst=0\n",
+    "status": 0
+  },
+  "locale/env-unset": {
+    "stdout": "LANG=\nLANGUAGE=\nLC_CTYPE=\"POSIX\"\nLC_NUMERIC=\"POSIX\"\nLC_TIME=\"POSIX\"\nLC_COLLATE=\"POSIX\"\nLC_MONETARY=\"POSIX\"\nLC_MESSAGES=\"POSIX\"\nLC_PAPER=\"POSIX\"\nLC_NAME=\"POSIX\"\nLC_ADDRESS=\"POSIX\"\nLC_TELEPHONE=\"POSIX\"\nLC_MEASUREMENT=\"POSIX\"\nLC_IDENTIFICATION=\"POSIX\"\nLC_ALL=\n",
+    "status": 0
+  },
+  "locale/env-mixed": {
+    "stdout": "LANG=C.UTF-8\nLANGUAGE=fr\nLC_CTYPE=\"C.UTF-8\"\nLC_NUMERIC=\"C.UTF-8\"\nLC_TIME=POSIX\nLC_COLLATE=\"C.UTF-8\"\nLC_MONETARY=\"C.UTF-8\"\nLC_MESSAGES=\"C.UTF-8\"\nLC_PAPER=\"C.UTF-8\"\nLC_NAME=\"C.UTF-8\"\nLC_ADDRESS=\"C.UTF-8\"\nLC_TELEPHONE=\"C.UTF-8\"\nLC_MEASUREMENT=\"C.UTF-8\"\nLC_IDENTIFICATION=\"C.UTF-8\"\nLC_ALL=\n",
+    "status": 0
+  },
+  "locale/env-invalid": {
+    "stdout": "LANG=xx_YY.UTF-8\nLANGUAGE=\nLC_CTYPE=\"xx_YY.UTF-8\"\nLC_NUMERIC=C\nLC_TIME=\"xx_YY.UTF-8\"\nLC_COLLATE=\"xx_YY.UTF-8\"\nLC_MONETARY=\"xx_YY.UTF-8\"\nLC_MESSAGES=\"xx_YY.UTF-8\"\nLC_PAPER=\"xx_YY.UTF-8\"\nLC_NAME=\"xx_YY.UTF-8\"\nLC_ADDRESS=\"xx_YY.UTF-8\"\nLC_TELEPHONE=\"xx_YY.UTF-8\"\nLC_MEASUREMENT=\"xx_YY.UTF-8\"\nLC_IDENTIFICATION=\"xx_YY.UTF-8\"\nLC_ALL=\nst=0\n.\n",
+    "status": 0
+  },
+  "locale/k-C": {
+    "stdout": "ctype-class-names=\"upper\";\"lower\";\"alpha\";\"digit\";\"xdigit\";\"space\";\"print\";\"graph\";\"blank\";\"cntrl\";\"punct\";\"alnum\"\nctype-map-names=\"toupper\";\"tolower\"\nctype-width=7\nctype-mb-cur-max=1\ncharmap=\"ANSI_X3.4-1968\"\nctype-class-offset=72\nctype-map-offset=84\nctype-indigits_mb-len=1\nctype-indigits0_mb=\"0\"\nctype-indigits1_mb=\"1\"\nctype-indigits2_mb=\"2\"\nctype-indigits3_mb=\"3\"\nctype-indigits4_mb=\"4\"\nctype-indigits5_mb=\"5\"\nctype-indigits6_mb=\"6\"\nctype-indigits7_mb=\"7\"\nctype-indigits8_mb=\"8\"\nctype-indigits9_mb=\"9\"\nctype-indigits_wc-len=1\nctype-outdigit0_mb=\"0\"\nctype-outdigit1_mb=\"1\"\nctype-outdigit2_mb=\"2\"\nctype-outdigit3_mb=\"3\"\nctype-outdigit4_mb=\"4\"\nctype-outdigit5_mb=\"5\"\nctype-outdigit6_mb=\"6\"\nctype-outdigit7_mb=\"7\"\nctype-outdigit8_mb=\"8\"\nctype-outdigit9_mb=\"9\"\nctype-outdigit0_wc=48\nctype-outdigit1_wc=49\nctype-outdigit2_wc=50\nctype-outdigit3_wc=51\nctype-outdigit4_wc=52\nctype-outdigit5_wc=53\nctype-outdigit6_wc=54\nctype-outdigit7_wc=55\nctype-outdigit8_wc=56\nctype-outdigit9_wc=57\nctype-translit-tab-size=1659\nctype-translit-default-missing-len=1\nctype-translit-ignore-len=0\nctype-translit-ignore=\"\"\nmap-to-nonascii=0\nnonascii-case=0\ndecimal_point=\".\"\nthousands_sep=\"\"\ngrouping=-1\nnumeric-decimal-point-wc=46\nnumeric-thousands-sep-wc=0\nnumeric-codeset=\"ANSI_X3.4-1968\"\nabday=\"Sun;Mon;Tue;Wed;Thu;Fri;Sat\"\nday=\"Sunday;Monday;Tuesday;Wednesday;Thursday;Friday;Saturday\"\nabmon=\"Jan;Feb;Mar;Apr;May;Jun;Jul;Aug;Sep;Oct;Nov;Dec\"\nmon=\"January;February;March;April;May;June;July;August;September;October;November;December\"\nam_pm=\"AM;PM\"\nd_t_fmt=\"%a %b %e %H:%M:%S %Y\"\nd_fmt=\"%m/%d/%y\"\nt_fmt=\"%H:%M:%S\"\nt_fmt_ampm=\"%I:%M:%S %p\"\nera=\nera_year=\"\"\nera_d_fmt=\"\"\nalt_digits=\nera_d_t_fmt=\"\"\nera_t_fmt=\"\"\ntime-era-num-entries=0\ntime-era-entries=\"\"\nweek-ndays=7\nweek-1stday=19971130\nweek-1stweek=4\nfirst_weekday=1\nfirst_workday=2\ncal_direction=1\ntimezone=\"\"\ndate_fmt=\"%a %b %e %H:%M:%S %Z %Y\"\ntime-codeset=\"ANSI_X3.4-1968\"\nalt_mon=\"January;February;March;April;May;June;July;August;September;October;November;December\"\nab_alt_mon=\"Jan;Feb;Mar;Apr;May;Jun;Jul;Aug;Sep;Oct;Nov;Dec\"\ncollate-nrules=0\ncollate-rulesets=\"\"\ncollate-symb-hash-sizemb=0\ncollate-codeset=\"ANSI_X3.4-1968\"\nint_curr_symbol=\"\"\ncurrency_symbol=\"\"\nmon_decimal_point=\"\"\nmon_thousands_sep=\"\"\nmon_grouping=-1\npositive_sign=\"\"\nnegative_sign=\"\"\nint_frac_digits=-1\nfrac_digits=-1\np_cs_precedes=-1\np_sep_by_space=-1\nn_cs_precedes=-1\nn_sep_by_space=-1\np_sign_posn=-1\nn_sign_posn=-1\ncrncystr=\"-\"\nint_p_cs_precedes=-1\nint_p_sep_by_space=-1\nint_n_cs_precedes=-1\nint_n_sep_by_space=-1\nint_p_sign_posn=-1\nint_n_sign_posn=-1\nduo_int_curr_symbol=\"\"\nduo_currency_symbol=\"\"\nduo_int_frac_digits=-1\nduo_frac_digits=-1\nduo_p_cs_precedes=-1\nduo_p_sep_by_space=-1\nduo_n_cs_precedes=-1\nduo_n_sep_by_space=-1\nduo_int_p_cs_precedes=-1\nduo_int_p_sep_by_space=-1\nduo_int_n_cs_precedes=-1\nduo_int_n_sep_by_space=-1\nduo_p_sign_posn=-1\nduo_n_sign_posn=-1\nduo_int_p_sign_posn=-1\nduo_int_n_sign_posn=-1\nuno_valid_from=10101\nuno_valid_to=99991231\nduo_valid_from=10101\nduo_valid_to=99991231\nconversion_rate=1;1\nmonetary-decimal-point-wc=0\nmonetary-thousands-sep-wc=0\nmonetary-codeset=\"ANSI_X3.4-1968\"\nyesexpr=\"^[yY]\"\nnoexpr=\"^[nN]\"\nyesstr=\"\"\nnostr=\"\"\nmessages-codeset=\"ANSI_X3.4-1968\"\nheight=297\nwidth=210\npaper-codeset=\"ANSI_X3.4-1968\"\nname_fmt=\"%p%t%g%t%m%t%f\"\nname_gen=\"\"\nname_mr=\"\"\nname_mrs=\"\"\nname_miss=\"\"\nname_ms=\"\"\nname-codeset=\"ANSI_X3.4-1968\"\npostal_fmt=\"%a%N%f%N%d%N%b%N%s %h %e %r%N%C-%z %T%N%c%N\"\ncountry_name=\"\"\ncountry_post=\"\"\ncountry_ab2=\"\"\ncountry_ab3=\"\"\ncountry_car=\"\"\ncountry_num=0\ncountry_isbn=\"\"\nlang_name=\"\"\nlang_ab=\"\"\nlang_term=\"\"\nlang_lib=\"\"\naddress-codeset=\"ANSI_X3.4-1968\"\ntel_int_fmt=\"+%c %a %l\"\ntel_dom_fmt=\"\"\nint_select=\"\"\nint_prefix=\"\"\ntelephone-codeset=\"ANSI_X3.4-1968\"\nmeasurement=1\nmeasurement-codeset=\"ANSI_X3.4-1968\"\ntitle=\"ISO/IEC 14652 i18n FDCC-set\"\nsource=\"ISO/IEC JTC1/SC22/WG20 - internationalization\"\naddress=\"C/o Keld Simonsen, Skt. Jorgens Alle 8, DK-1615 Kobenhavn V\"\ncontact=\"Keld Simonsen\"\nemail=\"keld@dkuug.dk\"\ntel=\"+45 3122-6543\"\nfax=\"+45 3325-6543\"\nlanguage=\"\"\nterritory=\"ISO\"\naudience=\"\"\napplication=\"\"\nabbreviation=\"\"\nrevision=\"1.0\"\ndate=\"1997-12-20\"\ncategory=\"i18n:1999;ANSI_X3.4-1968;;;;;;;;;;;\"\nidentification-codeset=\"ANSI_X3.4-1968\"\n",
+    "status": 0
+  },
+  "locale/k-C.UTF-8": {
+    "stdout": "ctype-class-names=\"upper\";\"lower\";\"alpha\";\"digit\";\"xdigit\";\"space\";\"print\";\"graph\";\"blank\";\"cntrl\";\"punct\";\"alnum\";\"combining\";\"combining_level3\"\nctype-map-names=\"toupper\";\"tolower\";\"totitle\"\nctype-width=16\nctype-mb-cur-max=6\ncharmap=\"UTF-8\"\nctype-class-offset=72\nctype-map-offset=86\nctype-indigits_mb-len=1\nctype-indigits0_mb=\"0\"\nctype-indigits1_mb=\"1\"\nctype-indigits2_mb=\"2\"\nctype-indigits3_mb=\"3\"\nctype-indigits4_mb=\"4\"\nctype-indigits5_mb=\"5\"\nctype-indigits6_mb=\"6\"\nctype-indigits7_mb=\"7\"\nctype-indigits8_mb=\"8\"\nctype-indigits9_mb=\"9\"\nctype-indigits_wc-len=1\nctype-outdigit0_mb=\"0\"\nctype-outdigit1_mb=\"1\"\nctype-outdigit2_mb=\"2\"\nctype-outdigit3_mb=\"3\"\nctype-outdigit4_mb=\"4\"\nctype-outdigit5_mb=\"5\"\nctype-outdigit6_mb=\"6\"\nctype-outdigit7_mb=\"7\"\nctype-outdigit8_mb=\"8\"\nctype-outdigit9_mb=\"9\"\nctype-outdigit0_wc=48\nctype-outdigit1_wc=49\nctype-outdigit2_wc=50\nctype-outdigit3_wc=51\nctype-outdigit4_wc=52\nctype-outdigit5_wc=53\nctype-outdigit6_wc=54\nctype-outdigit7_wc=55\nctype-outdigit8_wc=56\nctype-outdigit9_wc=57\nctype-translit-tab-size=6398\nctype-translit-default-missing-len=1\nctype-translit-ignore-len=0\nctype-translit-ignore=\"\"\nmap-to-nonascii=0\nnonascii-case=0\ndecimal_point=\".\"\nthousands_sep=\"\"\ngrouping=-1\nnumeric-decimal-point-wc=46\nnumeric-thousands-sep-wc=0\nnumeric-codeset=\"UTF-8\"\nabday=\"Sun;Mon;Tue;Wed;Thu;Fri;Sat\"\nday=\"Sunday;Monday;Tuesday;Wednesday;Thursday;Friday;Saturday\"\nabmon=\"Jan;Feb;Mar;Apr;May;Jun;Jul;Aug;Sep;Oct;Nov;Dec\"\nmon=\"January;February;March;April;May;June;July;August;September;October;November;December\"\nam_pm=\"AM;PM\"\nd_t_fmt=\"%a %b %e %H:%M:%S %Y\"\nd_fmt=\"%m/%d/%y\"\nt_fmt=\"%H:%M:%S\"\nt_fmt_ampm=\"%I:%M:%S %p\"\nera=\nera_year=\"\"\nera_d_fmt=\"\"\nalt_digits=\nera_d_t_fmt=\"\"\nera_t_fmt=\"\"\ntime-era-num-entries=0\ntime-era-entries=\"S\"\nweek-ndays=7\nweek-1stday=19971130\nweek-1stweek=4\nfirst_weekday=1\nfirst_workday=2\ncal_direction=1\ntimezone=\"\"\ndate_fmt=\"%a %b %e %H:%M:%S %Z %Y\"\ntime-codeset=\"UTF-8\"\nalt_mon=\"January;February;March;April;May;June;July;August;September;October;November;December\"\nab_alt_mon=\"Jan;Feb;Mar;Apr;May;Jun;Jul;Aug;Sep;Oct;Nov;Dec\"\ncollate-nrules=0\ncollate-rulesets=\"\"\ncollate-symb-hash-sizemb=0\ncollate-codeset=\"UTF-8\"\nint_curr_symbol=\"\"\ncurrency_symbol=\"\"\nmon_decimal_point=\"\"\nmon_thousands_sep=\"\"\nmon_grouping=-1\npositive_sign=\"\"\nnegative_sign=\"\"\nint_frac_digits=-1\nfrac_digits=-1\np_cs_precedes=-1\np_sep_by_space=-1\nn_cs_precedes=-1\nn_sep_by_space=-1\np_sign_posn=-1\nn_sign_posn=-1\ncrncystr=\"-\"\nint_p_cs_precedes=-1\nint_p_sep_by_space=-1\nint_n_cs_precedes=-1\nint_n_sep_by_space=-1\nint_p_sign_posn=-1\nint_n_sign_posn=-1\nduo_int_curr_symbol=\"\"\nduo_currency_symbol=\"\"\nduo_int_frac_digits=-1\nduo_frac_digits=-1\nduo_p_cs_precedes=-1\nduo_p_sep_by_space=-1\nduo_n_cs_precedes=-1\nduo_n_sep_by_space=-1\nduo_int_p_cs_precedes=-1\nduo_int_p_sep_by_space=-1\nduo_int_n_cs_precedes=-1\nduo_int_n_sep_by_space=-1\nduo_p_sign_posn=-1\nduo_n_sign_posn=-1\nduo_int_p_sign_posn=-1\nduo_int_n_sign_posn=-1\nuno_valid_from=10101\nuno_valid_to=99991231\nduo_valid_from=10101\nduo_valid_to=99991231\nconversion_rate=1;1\nmonetary-decimal-point-wc=0\nmonetary-thousands-sep-wc=0\nmonetary-codeset=\"UTF-8\"\nyesexpr=\"^[yY]\"\nnoexpr=\"^[nN]\"\nyesstr=\"\"\nnostr=\"\"\nmessages-codeset=\"UTF-8\"\nheight=297\nwidth=210\npaper-codeset=\"UTF-8\"\nname_fmt=\"%p%t%g%t%m%t%f\"\nname_gen=\"\"\nname_mr=\"\"\nname_mrs=\"\"\nname_miss=\"\"\nname_ms=\"\"\nname-codeset=\"UTF-8\"\npostal_fmt=\"%a%N%f%N%d%N%b%N%s %h %e %r%N%C-%z %T%N%c%N\"\ncountry_name=\"\"\ncountry_post=\"\"\ncountry_ab2=\"\"\ncountry_ab3=\"\"\ncountry_car=\"\"\ncountry_num=0\ncountry_isbn=\"\"\nlang_name=\"\"\nlang_ab=\"\"\nlang_term=\"\"\nlang_lib=\"\"\naddress-codeset=\"UTF-8\"\ntel_int_fmt=\"+%c %a %l\"\ntel_dom_fmt=\"\"\nint_select=\"\"\nint_prefix=\"\"\ntelephone-codeset=\"UTF-8\"\nmeasurement=1\nmeasurement-codeset=\"UTF-8\"\ntitle=\"C locale\"\nsource=\"\"\naddress=\"\"\ncontact=\"\"\nemail=\"bug-glibc-locales@gnu.org\"\ntel=\"\"\nfax=\"\"\nlanguage=\"\"\nterritory=\"\"\naudience=\"\"\napplication=\"\"\nabbreviation=\"\"\nrevision=\"2.1\"\ndate=\"2022-01-30\"\ncategory=\"i18n:2012;UTF-8;;;;;;;;;;;\"\nidentification-codeset=\"UTF-8\"\n",
+    "status": 0
+  },
+  "locale/k-POSIX": {
+    "stdout": "LC_TIME\nabday=\"Sun;Mon;Tue;Wed;Thu;Fri;Sat\"\nday=\"Sunday;Monday;Tuesday;Wednesday;Thursday;Friday;Saturday\"\nabmon=\"Jan;Feb;Mar;Apr;May;Jun;Jul;Aug;Sep;Oct;Nov;Dec\"\nmon=\"January;February;March;April;May;June;July;August;September;October;November;December\"\nam_pm=\"AM;PM\"\nd_t_fmt=\"%a %b %e %H:%M:%S %Y\"\nd_fmt=\"%m/%d/%y\"\nt_fmt=\"%H:%M:%S\"\nt_fmt_ampm=\"%I:%M:%S %p\"\nera=\nera_year=\"\"\nera_d_fmt=\"\"\nalt_digits=\nera_d_t_fmt=\"\"\nera_t_fmt=\"\"\ntime-era-num-entries=0\ntime-era-entries=\"\"\nweek-ndays=7\nweek-1stday=19971130\nweek-1stweek=4\nfirst_weekday=1\nfirst_workday=2\ncal_direction=1\ntimezone=\"\"\ndate_fmt=\"%a %b %e %H:%M:%S %Z %Y\"\ntime-codeset=\"ANSI_X3.4-1968\"\nalt_mon=\"January;February;March;April;May;June;July;August;September;October;November;December\"\nab_alt_mon=\"Jan;Feb;Mar;Apr;May;Jun;Jul;Aug;Sep;Oct;Nov;Dec\"\nLC_MONETARY\nint_curr_symbol=\"\"\ncurrency_symbol=\"\"\nmon_decimal_point=\"\"\nmon_thousands_sep=\"\"\nmon_grouping=-1\npositive_sign=\"\"\nnegative_sign=\"\"\nint_frac_digits=-1\nfrac_digits=-1\np_cs_precedes=-1\np_sep_by_space=-1\nn_cs_precedes=-1\nn_sep_by_space=-1\np_sign_posn=-1\nn_sign_posn=-1\ncrncystr=\"-\"\nint_p_cs_precedes=-1\nint_p_sep_by_space=-1\nint_n_cs_precedes=-1\nint_n_sep_by_space=-1\nint_p_sign_posn=-1\nint_n_sign_posn=-1\nduo_int_curr_symbol=\"\"\nduo_currency_symbol=\"\"\nduo_int_frac_digits=-1\nduo_frac_digits=-1\nduo_p_cs_precedes=-1\nduo_p_sep_by_space=-1\nduo_n_cs_precedes=-1\nduo_n_sep_by_space=-1\nduo_int_p_cs_precedes=-1\nduo_int_p_sep_by_space=-1\nduo_int_n_cs_precedes=-1\nduo_int_n_sep_by_space=-1\nduo_p_sign_posn=-1\nduo_n_sign_posn=-1\nduo_int_p_sign_posn=-1\nduo_int_n_sign_posn=-1\nuno_valid_from=10101\nuno_valid_to=99991231\nduo_valid_from=10101\nduo_valid_to=99991231\nconversion_rate=1;1\nmonetary-decimal-point-wc=0\nmonetary-thousands-sep-wc=0\nmonetary-codeset=\"ANSI_X3.4-1968\"\n",
+    "status": 0
+  },
+  "locale/plain": {
+    "stdout": ".\n\n-1\n46\n0\nANSI_X3.4-1968\nLC_PAPER\n297\n210\nANSI_X3.4-1968\nLC_TIME\nSun;Mon;Tue;Wed;Thu;Fri;Sat\nLC_TIME\n\nLC_CTYPE\nupper;lower;alpha;digit;xdigit;space;print;graph;blank;cntrl;punct;alnum\nLC_TIME\n\nLC_NUMERIC\n-1\nLC_MONETARY\n1;1\nLC_CTYPE\nANSI_X3.4-1968\nLC_PAPER\n297\n",
+    "status": 0
+  },
+  "locale/keywords": {
+    "stdout": "decimal_point=\".\"\nthousands_sep=\"\"\ngrouping=-1\nheight=297\nwidth=210\npaper-codeset=\"ANSI_X3.4-1968\"\nLC_NUMERIC\n.\nLC_MEASUREMENT\n1\nANSI_X3.4-1968\n",
+    "status": 0
+  },
+  "locale/unknown": {
+    "stdout": ".\nlocale: unknown name \"nosuch\"\nst=1\nlocale: unknown name \"LANG\"\nst=1\nlocale: unknown name \"LC_ALL\"\nst=1\n",
+    "status": 0
+  },
+  "locale/bad-option": {
+    "stdout": "st=64\nst=64\n",
+    "status": 0
+  },
+  "locale/list": {
+    "stdout": "C\nC.utf8\nPOSIX\nC\nC.utf8\nPOSIX\nC\nC.utf8\nPOSIX\n1\n",
+    "status": 0
+  },
+  "locale/utf8-charmap": {
+    "stdout": "UTF-8\nANSI_X3.4-1968\nLC_IDENTIFICATION\nC locale\n\n",
+    "status": 0
+  },
+  "localedef/fr_FR": {
+    "stdout": "st=0\nLC_ADDRESS\nLC_COLLATE\nLC_CTYPE\nLC_IDENTIFICATION\nLC_MEASUREMENT\nLC_MESSAGES\nLC_MONETARY\nLC_NAME\nLC_NUMERIC\nLC_PAPER\nLC_TELEPHONE\nLC_TIME\ndecimal_point=\",\"\nthousands_sep=\"â¯\"\ngrouping=3\nnumeric-decimal-point-wc=44\nnumeric-thousands-sep-wc=8239\nnumeric-codeset=\"UTF-8\"\nint_curr_symbol=\"EUR \"\ncurrency_symbol=\"â¬\"\nmon_decimal_point=\",\"\nmon_thousands_sep=\"â¯\"\nmon_grouping=3\npositive_sign=\"\"\nnegative_sign=\"-\"\nint_frac_digits=2\nfrac_digits=2\np_cs_precedes=0\np_sep_by_space=1\nn_cs_precedes=0\nn_sep_by_space=1\np_sign_posn=1\nn_sign_posn=1\ncrncystr=\"+â¬\"\nint_p_cs_precedes=0\nint_p_sep_by_space=1\nint_n_cs_precedes=0\nint_n_sep_by_space=1\nint_p_sign_posn=1\nint_n_sign_posn=1\nduo_int_curr_symbol=\"EUR \"\nduo_currency_symbol=\"â¬\"\nduo_int_frac_digits=2\nduo_frac_digits=2\nduo_p_cs_precedes=0\nduo_p_sep_by_space=1\nduo_n_cs_precedes=0\nduo_n_sep_by_space=1\nduo_int_p_cs_precedes=0\nduo_int_p_sep_by_space=1\nduo_int_n_cs_precedes=0\nduo_int_n_sep_by_space=1\nduo_p_sign_posn=1\nduo_n_sign_posn=1\nduo_int_p_sign_posn=1\nduo_int_n_sign_posn=1\nuno_valid_from=10101\nuno_valid_to=99991231\nduo_valid_from=10101\nduo_valid_to=99991231\nconversion_rate=1;1\nmonetary-decimal-point-wc=44\nmonetary-thousands-sep-wc=8239\nmonetary-codeset=\"UTF-8\"\nyesexpr=\"^[+1oOyY]\"\nnoexpr=\"^[-0nN]\"\nyesstr=\"oui\"\nnostr=\"non\"\nmessages-codeset=\"UTF-8\"\nheight=297\nwidth=210\npaper-codeset=\"UTF-8\"\nname_fmt=\"%d%t%g%t%m%t%f\"\nname_gen=\"\"\nname_mr=\"M.\"\nname_mrs=\"Mme\"\nname_miss=\"Mlle\"\nname_ms=\"\"\nname-codeset=\"UTF-8\"\npostal_fmt=\"%f%N%a%N%d%N%b%N%s %h %e %r%N%z %T%N%c%N\"\ncountry_name=\"France\"\ncountry_post=\"FR\"\ncountry_ab2=\"FR\"\ncountry_ab3=\"FRA\"\ncountry_car=\"F\"\ncountry_num=250\ncountry_isbn=\"979-10\"\nlang_name=\"franÃ§ais\"\nlang_ab=\"fr\"\nlang_term=\"fra\"\nlang_lib=\"fre\"\naddress-codeset=\"UTF-8\"\ntel_int_fmt=\"+%c %a %l\"\ntel_dom_fmt=\"%a %l\"\nint_select=\"00\"\nint_prefix=\"33\"\ntelephone-codeset=\"UTF-8\"\nmeasurement=1\nmeasurement-codeset=\"UTF-8\"\ncharmap=\"UTF-8\"\nabday=\"dim.;lun.;mar.;mer.;jeu.;ven.;sam.\"\nday=\"dimanche;lundi;mardi;mercredi;jeudi;vendredi;samedi\"\nabmon=\"janv.;fÃ©vr.;mars;avril;mai;juin;juil.;aoÃ»t;sept.;oct.;nov.;dÃ©c.\"\nmon=\"janvier;fÃ©vrier;mars;avril;mai;juin;juillet;aoÃ»t;septembre;octobre;novembre;dÃ©cembre\"\nam_pm=\";\"\nd_t_fmt=\"%a %d %b %Y %T\"\nd_fmt=\"%d/%m/%Y\"\nt_fmt=\"%T\"\nt_fmt_ampm=\"\"\ndate_fmt=\"%a %d %b %Y %T %Z\"\nfirst_weekday=2\nweek-1stday=19971130\ntitle=\"French locale for France\"\nlanguage=\"French\"\nterritory=\"France\"\nrevision=\"1.0\"\n",
+    "status": 0
+  },
+  "localedef/de_DE": {
+    "stdout": "st=0\nLC_ADDRESS\nLC_COLLATE\nLC_CTYPE\nLC_IDENTIFICATION\nLC_MEASUREMENT\nLC_MESSAGES\nLC_MONETARY\nLC_NAME\nLC_NUMERIC\nLC_PAPER\nLC_TELEPHONE\nLC_TIME\ndecimal_point=\",\"\nthousands_sep=\".\"\ngrouping=3\nnumeric-decimal-point-wc=44\nnumeric-thousands-sep-wc=46\nnumeric-codeset=\"UTF-8\"\nint_curr_symbol=\"EUR \"\ncurrency_symbol=\"â¬\"\nmon_decimal_point=\",\"\nmon_thousands_sep=\".\"\nmon_grouping=3\npositive_sign=\"\"\nnegative_sign=\"-\"\nint_frac_digits=2\nfrac_digits=2\np_cs_precedes=0\np_sep_by_space=1\nn_cs_precedes=0\nn_sep_by_space=1\np_sign_posn=1\nn_sign_posn=1\ncrncystr=\"+â¬\"\nint_p_cs_precedes=0\nint_p_sep_by_space=1\nint_n_cs_precedes=0\nint_n_sep_by_space=1\nint_p_sign_posn=1\nint_n_sign_posn=1\nduo_int_curr_symbol=\"EUR \"\nduo_currency_symbol=\"â¬\"\nduo_int_frac_digits=2\nduo_frac_digits=2\nduo_p_cs_precedes=0\nduo_p_sep_by_space=1\nduo_n_cs_precedes=0\nduo_n_sep_by_space=1\nduo_int_p_cs_precedes=0\nduo_int_p_sep_by_space=1\nduo_int_n_cs_precedes=0\nduo_int_n_sep_by_space=1\nduo_p_sign_posn=1\nduo_n_sign_posn=1\nduo_int_p_sign_posn=1\nduo_int_n_sign_posn=1\nuno_valid_from=10101\nuno_valid_to=99991231\nduo_valid_from=10101\nduo_valid_to=99991231\nconversion_rate=1;1\nmonetary-decimal-point-wc=44\nmonetary-thousands-sep-wc=46\nmonetary-codeset=\"UTF-8\"\nyesexpr=\"^[+1jJyY]\"\nnoexpr=\"^[-0nN]\"\nyesstr=\"ja\"\nnostr=\"nein\"\nmessages-codeset=\"UTF-8\"\nheight=297\nwidth=210\npaper-codeset=\"UTF-8\"\nname_fmt=\"%d%t%g%t%m%t%f\"\nname_gen=\"\"\nname_mr=\"Herr\"\nname_mrs=\"Frau\"\nname_miss=\"Frau\"\nname_ms=\"Frau\"\nname-codeset=\"UTF-8\"\npostal_fmt=\"%f%N%a%N%d%N%b%N%s %h %e %r%N%z %T%N%c%N\"\ncountry_name=\"Deutschland\"\ncountry_post=\"D\"\ncountry_ab2=\"DE\"\ncountry_ab3=\"DEU\"\ncountry_car=\"D\"\ncountry_num=276\ncountry_isbn=\"3\"\nlang_name=\"Deutsch\"\nlang_ab=\"de\"\nlang_term=\"deu\"\nlang_lib=\"ger\"\naddress-codeset=\"UTF-8\"\ntel_int_fmt=\"+%c %a %l\"\ntel_dom_fmt=\"%A %l\"\nint_select=\"00\"\nint_prefix=\"49\"\ntelephone-codeset=\"UTF-8\"\nmeasurement=1\nmeasurement-codeset=\"UTF-8\"\ncharmap=\"UTF-8\"\nabday=\"So;Mo;Di;Mi;Do;Fr;Sa\"\nday=\"Sonntag;Montag;Dienstag;Mittwoch;Donnerstag;Freitag;Samstag\"\nabmon=\"Jan;Feb;MÃ¤r;Apr;Mai;Jun;Jul;Aug;Sep;Okt;Nov;Dez\"\nmon=\"Januar;Februar;MÃ¤rz;April;Mai;Juni;Juli;August;September;Oktober;November;Dezember\"\nam_pm=\";\"\nd_t_fmt=\"%a %d %b %Y %T %Z\"\nd_fmt=\"%d.%m.%Y\"\nt_fmt=\"%T\"\nt_fmt_ampm=\"\"\ndate_fmt=\"%a %-d. %b %H:%M:%S %Z %Y\"\nfirst_weekday=2\nweek-1stday=19971130\ntitle=\"German locale for Germany\"\nlanguage=\"German\"\nterritory=\"Germany\"\nrevision=\"1.0\"\n",
+    "status": 0
+  },
+  "localedef/en_US": {
+    "stdout": "st=0\nLC_ADDRESS\nLC_COLLATE\nLC_CTYPE\nLC_IDENTIFICATION\nLC_MEASUREMENT\nLC_MESSAGES\nLC_MONETARY\nLC_NAME\nLC_NUMERIC\nLC_PAPER\nLC_TELEPHONE\nLC_TIME\ndecimal_point=\".\"\nthousands_sep=\",\"\ngrouping=3\nnumeric-decimal-point-wc=46\nnumeric-thousands-sep-wc=44\nnumeric-codeset=\"UTF-8\"\nint_curr_symbol=\"USD \"\ncurrency_symbol=\"$\"\nmon_decimal_point=\".\"\nmon_thousands_sep=\",\"\nmon_grouping=3\npositive_sign=\"\"\nnegative_sign=\"-\"\nint_frac_digits=2\nfrac_digits=2\np_cs_precedes=1\np_sep_by_space=0\nn_cs_precedes=1\nn_sep_by_space=0\np_sign_posn=1\nn_sign_posn=1\ncrncystr=\"-$\"\nint_p_cs_precedes=1\nint_p_sep_by_space=1\nint_n_cs_precedes=1\nint_n_sep_by_space=1\nint_p_sign_posn=1\nint_n_sign_posn=1\nduo_int_curr_symbol=\"USD \"\nduo_currency_symbol=\"$\"\nduo_int_frac_digits=2\nduo_frac_digits=2\nduo_p_cs_precedes=1\nduo_p_sep_by_space=0\nduo_n_cs_precedes=1\nduo_n_sep_by_space=0\nduo_int_p_cs_precedes=1\nduo_int_p_sep_by_space=1\nduo_int_n_cs_precedes=1\nduo_int_n_sep_by_space=1\nduo_p_sign_posn=1\nduo_n_sign_posn=1\nduo_int_p_sign_posn=1\nduo_int_n_sign_posn=1\nuno_valid_from=10101\nuno_valid_to=99991231\nduo_valid_from=10101\nduo_valid_to=99991231\nconversion_rate=1;1\nmonetary-decimal-point-wc=46\nmonetary-thousands-sep-wc=44\nmonetary-codeset=\"UTF-8\"\nyesexpr=\"^[+1yY]\"\nnoexpr=\"^[-0nN]\"\nyesstr=\"yes\"\nnostr=\"no\"\nmessages-codeset=\"UTF-8\"\nheight=279\nwidth=216\npaper-codeset=\"UTF-8\"\nname_fmt=\"%d%t%g%t%m%t%f\"\nname_gen=\"\"\nname_mr=\"Mr.\"\nname_mrs=\"Mrs.\"\nname_miss=\"Miss.\"\nname_ms=\"Ms.\"\nname-codeset=\"UTF-8\"\npostal_fmt=\"%a%N%f%N%d%N%b%N%h %s %e %r%N%T, %S %z%N%c%N\"\ncountry_name=\"United States\"\ncountry_post=\"USA\"\ncountry_ab2=\"US\"\ncountry_ab3=\"USA\"\ncountry_car=\"USA\"\ncountry_num=840\ncountry_isbn=\"0\"\nlang_name=\"English\"\nlang_ab=\"en\"\nlang_term=\"eng\"\nlang_lib=\"eng\"\naddress-codeset=\"UTF-8\"\ntel_int_fmt=\"+%c (%a) %l\"\ntel_dom_fmt=\"(%a) %l\"\nint_select=\"11\"\nint_prefix=\"1\"\ntelephone-codeset=\"UTF-8\"\nmeasurement=2\nmeasurement-codeset=\"UTF-8\"\ncharmap=\"UTF-8\"\nabday=\"Sun;Mon;Tue;Wed;Thu;Fri;Sat\"\nday=\"Sunday;Monday;Tuesday;Wednesday;Thursday;Friday;Saturday\"\nabmon=\"Jan;Feb;Mar;Apr;May;Jun;Jul;Aug;Sep;Oct;Nov;Dec\"\nmon=\"January;February;March;April;May;June;July;August;September;October;November;December\"\nam_pm=\"AM;PM\"\nd_t_fmt=\"%a %d %b %Y %r %Z\"\nd_fmt=\"%m/%d/%Y\"\nt_fmt=\"%r\"\nt_fmt_ampm=\"%I:%M:%S %p\"\ndate_fmt=\"%a %b %e %r %Z %Y\"\nfirst_weekday=1\nweek-1stday=19971130\ntitle=\"English locale for the USA\"\nlanguage=\"American English\"\nterritory=\"United States\"\nrevision=\"1.0\"\n",
+    "status": 0
+  },
+  "localedef/ja_JP": {
+    "stdout": "st=0\nLC_ADDRESS\nLC_COLLATE\nLC_CTYPE\nLC_IDENTIFICATION\nLC_MEASUREMENT\nLC_MESSAGES\nLC_MONETARY\nLC_NAME\nLC_NUMERIC\nLC_PAPER\nLC_TELEPHONE\nLC_TIME\ndecimal_point=\".\"\nthousands_sep=\",\"\ngrouping=3\nnumeric-decimal-point-wc=46\nnumeric-thousands-sep-wc=44\nnumeric-codeset=\"UTF-8\"\nint_curr_symbol=\"JPY \"\ncurrency_symbol=\"ï¿¥\"\nmon_decimal_point=\".\"\nmon_thousands_sep=\",\"\nmon_grouping=3\npositive_sign=\"\"\nnegative_sign=\"-\"\nint_frac_digits=0\nfrac_digits=0\np_cs_precedes=1\np_sep_by_space=0\nn_cs_precedes=1\nn_sep_by_space=0\np_sign_posn=4\nn_sign_posn=4\ncrncystr=\"-ï¿¥\"\nint_p_cs_precedes=1\nint_p_sep_by_space=2\nint_n_cs_precedes=1\nint_n_sep_by_space=2\nint_p_sign_posn=4\nint_n_sign_posn=4\nduo_int_curr_symbol=\"JPY \"\nduo_currency_symbol=\"ï¿¥\"\nduo_int_frac_digits=0\nduo_frac_digits=0\nduo_p_cs_precedes=1\nduo_p_sep_by_space=0\nduo_n_cs_precedes=1\nduo_n_sep_by_space=0\nduo_int_p_cs_precedes=1\nduo_int_p_sep_by_space=2\nduo_int_n_cs_precedes=1\nduo_int_n_sep_by_space=2\nduo_p_sign_posn=4\nduo_n_sign_posn=4\nduo_int_p_sign_posn=4\nduo_int_n_sign_posn=4\nuno_valid_from=10101\nuno_valid_to=99991231\nduo_valid_from=10101\nduo_valid_to=99991231\nconversion_rate=1;1\nmonetary-decimal-point-wc=46\nmonetary-thousands-sep-wc=44\nmonetary-codeset=\"UTF-8\"\nyesexpr=\"^([+1yYï½ï¼¹]|ã¯ã|ãã¤)\"\nnoexpr=\"^([-0nNï½ï¼®]|ããã|ã¤ã¤ã¨)\"\nyesstr=\"ã¯ã\"\nnostr=\"ããã\"\nmessages-codeset=\"UTF-8\"\nheight=297\nwidth=210\npaper-codeset=\"UTF-8\"\nname_fmt=\"%p%t%f%t%g\"\nname_gen=\"æ§\"\nname_mr=\"Mr.\"\nname_mrs=\"Mrs.\"\nname_miss=\"Miss.\"\nname_ms=\"Ms.\"\nname-codeset=\"UTF-8\"\npostal_fmt=\"%z%c%T%s%b%e%r\"\ncountry_name=\"æ¥æ¬\"\ncountry_post=\"\"\ncountry_ab2=\"JP\"\ncountry_ab3=\"JPN\"\ncountry_car=\"J\"\ncountry_num=392\ncountry_isbn=\"\"\nlang_name=\"æ¥æ¬èª\"\nlang_ab=\"ja\"\nlang_term=\"jpn\"\nlang_lib=\"jpn\"\naddress-codeset=\"UTF-8\"\ntel_int_fmt=\"+%c ;%a ;%l\"\ntel_dom_fmt=\"\"\nint_select=\"010\"\nint_prefix=\"81\"\ntelephone-codeset=\"UTF-8\"\nmeasurement=1\nmeasurement-codeset=\"UTF-8\"\ncharmap=\"UTF-8\"\nabday=\"æ¥;æ;ç«;æ°´;æ¨;é;å\"\nday=\"æ¥ææ¥;æææ¥;ç«ææ¥;æ°´ææ¥;æ¨ææ¥;éææ¥;åææ¥\"\nabmon=\" 1æ; 2æ; 3æ; 4æ; 5æ; 6æ; 7æ; 8æ; 9æ;10æ;11æ;12æ\"\nmon=\"1æ;2æ;3æ;4æ;5æ;6æ;7æ;8æ;9æ;10æ;11æ;12æ\"\nam_pm=\"åå;åå¾\"\nd_t_fmt=\"%Yå¹´%mæ%dæ¥ %Hæ%Må%Sç§\"\nd_fmt=\"%Yå¹´%mæ%dæ¥\"\nt_fmt=\"%Hæ%Må%Sç§\"\nt_fmt_ampm=\"%p%Iæ%Må%Sç§\"\ndate_fmt=\"%Yå¹´ %b %eæ¥ %A %H:%M:%S %Z\"\nfirst_weekday=1\nweek-1stday=19971130\ntitle=\"Japanese language locale for Japan\"\nlanguage=\"Japanese\"\nterritory=\"Japan\"\nrevision=\"1.0\"\n",
+    "status": 0
+  },
+  "localedef/locale-name-normalised": {
+    "stdout": "st=0\nANSI_X3.4-1968\noui\n",
+    "status": 0
+  },
+  "localedef/latin1": {
+    "stdout": "st=0\ncharmap=\"ISO-8859-1\"\ndecimal_point=\".\"\nthousands_sep=\",\"\ngrouping=3\nnumeric-decimal-point-wc=46\nnumeric-thousands-sep-wc=44\nnumeric-codeset=\"ISO-8859-1\"\nint_curr_symbol=\"USD \"\ncurrency_symbol=\"$\"\nmon_decimal_point=\".\"\nmon_thousands_sep=\",\"\nmon_grouping=3\npositive_sign=\"\"\nnegative_sign=\"-\"\nint_frac_digits=2\nfrac_digits=2\np_cs_precedes=1\np_sep_by_space=0\nn_cs_precedes=1\nn_sep_by_space=0\np_sign_posn=1\nn_sign_posn=1\ncrncystr=\"-$\"\nint_p_cs_precedes=1\nint_p_sep_by_space=1\nint_n_cs_precedes=1\nint_n_sep_by_space=1\nint_p_sign_posn=1\nint_n_sign_posn=1\nduo_int_curr_symbol=\"USD \"\nduo_currency_symbol=\"$\"\nduo_int_frac_digits=2\nduo_frac_digits=2\nduo_p_cs_precedes=1\nduo_p_sep_by_space=0\nduo_n_cs_precedes=1\nduo_n_sep_by_space=0\nduo_int_p_cs_precedes=1\nduo_int_p_sep_by_space=1\nduo_int_n_cs_precedes=1\nduo_int_n_sep_by_space=1\nduo_p_sign_posn=1\nduo_n_sign_posn=1\nduo_int_p_sign_posn=1\nduo_int_n_sign_posn=1\nuno_valid_from=10101\nuno_valid_to=99991231\nduo_valid_from=10101\nduo_valid_to=99991231\nconversion_rate=1;1\nmonetary-decimal-point-wc=46\nmonetary-thousands-sep-wc=44\nmonetary-codeset=\"ISO-8859-1\"\nd_fmt=\"%m/%d/%Y\"\n",
+    "status": 0
+  },
+  "localedef/charmap-alias": {
+    "stdout": "st=4\nst=0\n12\n",
+    "status": 0
+  },
+  "localedef/partial-stdin": {
+    "stdout": "st=1\nLC_ADDRESS\nLC_COLLATE\nLC_CTYPE\nLC_IDENTIFICATION\nLC_MEASUREMENT\nLC_MESSAGES\nLC_MONETARY\nLC_NAME\nLC_NUMERIC\nLC_PAPER\nLC_TELEPHONE\nLC_TIME\nst=1\n",
+    "status": 0
+  },
+  "localedef/copy": {
+    "stdout": "st=1\nLC_ADDRESS\nLC_COLLATE\nLC_CTYPE\nLC_IDENTIFICATION\nLC_MEASUREMENT\nLC_MESSAGES\nLC_MONETARY\nLC_NAME\nLC_NUMERIC\nLC_PAPER\nLC_TELEPHONE\nLC_TIME\n",
+    "status": 0
+  },
+  "localedef/errors": {
+    "stdout": "Try `localedef --help' or `localedef --usage' for more information.\nst=4\nTry `localedef --help' or `localedef --usage' for more information.\nst=4\nst=4\nst=4\nst=4\nUsage: localedef [OPTION...] NAME\nst=4\nx\n",
+    "status": 0
+  }
+}

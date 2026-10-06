@@ -38,5 +38,10 @@ export enum TutorToneProfile {
      * Passionate, intense, and focused on terminal supremacy.
      * Mapping: High Extraversion, High Openness.
      */
-    RESISTANCE_LEADER = 'RESISTANCE_LEADER'
+    RESISTANCE_LEADER = 'RESISTANCE_LEADER',
+
+    /**
+     * Neutral, technical, and purely functional.
+     */
+    SYSTEM_CORE = 'SYSTEM_CORE'
 }

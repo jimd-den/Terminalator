@@ -11,6 +11,10 @@ import { TerminalState } from './TerminalState';
 
 export interface CommandResponse {
     output: string;
+    /** `output` is a byte string (one char per byte), e.g. compressed data. */
+    binary?: boolean;
+    /** Diagnostics destined for file descriptor 2 (optional; legacy commands put them in `output`). */
+    stderr?: string;
     exitCode: number;
     newState?: Partial<TerminalState>; // Commands can request state updates
     uiAction?: 'CLEAR'; // Special actions for the UI
@@ -20,10 +24,12 @@ export interface CommandResponse {
         params?: any;
     };
     controlFlow?: 'RETURN' | 'BREAK' | 'CONTINUE' | 'EXIT';
+    /** True when the input was syntactically incomplete (show the PS2 continuation prompt). */
+    incomplete?: boolean;
     command?: string; // [NEW] Context: The command that produced this response
     utility?: string; // [NEW] Context: The semantic utility name (e.g., 'grep')
     metadata?: {
-        renderType?: 'ls-pretty' | 'system-alert' | 'fish-style';
+        renderType?: 'ls-pretty' | 'system-alert' | 'fish-style' | 'archive-widget' | 'scheme-trace';
         data?: any;
     };
     executionStats?: {
@@ -31,6 +37,13 @@ export interface CommandResponse {
         memoryUsed: number;
         iterations: number;
     };
+}
+
+import { TheatricalVerb } from '../services/PresentationDirector';
+
+export interface CommandMetadata {
+    verb: TheatricalVerb;
+    style?: 'NORMAL' | 'GLITCH' | 'SYSTEM_ALERT';
 }
 
 export interface ICommand {
@@ -43,6 +56,11 @@ export interface ICommand {
      * Brief help text for the command
      */
     description: string;
+
+    /**
+     * Returns metadata for theatrical presentation.
+     */
+    getMetadata?(): CommandMetadata;
 
     /**
      * Execute the command with the given arguments and context.

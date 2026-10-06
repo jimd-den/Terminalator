@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useRef, useCallback, useEffect, ReactNode } from 'react';
 import { TextInput, AppState, AppStateStatus } from 'react-native';
+import { useTheme } from './ThemeContext';
 
 /**
  * InputContext - Presentation Layer
@@ -26,21 +27,24 @@ export interface InputContextType {
 const InputContext = createContext<InputContextType | undefined>(undefined);
 
 export const InputProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+    const { settings } = useTheme();
     const inputRef = useRef<TextInput>(null);
     // Initialize with a space to detect backspace
     const [inputValue, setInputValue] = useState(' ');
     const lastValue = useRef(' ');
     const [isLocked, setInputLocked] = useState(false);
+    const [isFocused, setIsFocused] = useState(false);
 
     // Handlers
     const onInputRef = useRef<((text: string) => void) | null>(null);
     const onKeyPressRef = useRef<((key: string) => void) | null>(null);
 
     const refocus = useCallback(() => {
-        // Small delay ensures the touch event doesn't steal focus back immediately
+        // Increased delay ensures layout transitions (Comms/Settings/Shell) 
+        // are complete before focusing to prevent keyboard dismissal.
         setTimeout(() => {
             inputRef.current?.focus();
-        }, 50);
+        }, 150);
     }, []);
 
     // Keep focus alive
@@ -51,14 +55,32 @@ export const InputProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             }
         });
 
-        const interval = setInterval(refocus, 2000); // Heartbeat focus
+        // Dynamic heartbeat: Safety net for focus loss
+        // We use a much slower interval to avoid fighting with OS keyboard state
+        const intervalTime = settings.forceKeyboardOpen ? 2000 : 5000;
+        const interval = setInterval(() => {
+            // Only refocus if we think we are not focused and it's forced
+            if (settings.forceKeyboardOpen && !isFocused) {
+                refocus();
+            }
+        }, intervalTime);
+
         refocus();
 
         return () => {
             subscription.remove();
             clearInterval(interval);
         };
-    }, [refocus]);
+    }, [refocus, settings.forceKeyboardOpen, isFocused]);
+
+    const handleFocus = () => setIsFocused(true);
+
+    const handleBlur = () => {
+        setIsFocused(false);
+        if (settings.forceKeyboardOpen) {
+            refocus();
+        }
+    };
 
     const handleTextChange = (text: string) => {
         if (isLocked) {
@@ -166,11 +188,21 @@ export const InputProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             {/* The Hidden Global Input */}
             <TextInput
                 ref={inputRef}
-                style={{ position: 'absolute', width: 1, height: 1, opacity: 0, zIndex: -1 }} // On-screen but invisible
+                style={{ 
+                    position: 'absolute', 
+                    bottom: 0, // Position at bottom so OS knows to clear keyboard
+                    left: 0, 
+                    right: 0,
+                    height: 80, // Approximate height of the command area
+                    opacity: 0.01,
+                    zIndex: -1 
+                }}
                 value={inputValue}
                 onChangeText={handleTextChange}
                 onKeyPress={handleKeyPressEvent}
                 onSubmitEditing={handleSubmitEditing}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
                 autoCapitalize="none"
                 autoCorrect={false}
                 autoFocus={true}

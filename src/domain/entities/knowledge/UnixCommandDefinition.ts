@@ -19,7 +19,9 @@ export enum CommandCapability {
     MODIFY = 'MODIFY',       // Changes FS state (touch, rm, mkdir)
     PERMISSION = 'PERMISSION', // Changes attributes (chmod, chown)
     SEARCH = 'SEARCH',       // Finds content (grep)
-    DELETE = 'DELETE'        // Removes content (rm)
+    DELETE = 'DELETE',       // Removes content (rm)
+    UTILITY = 'UTILITY',     // General-purpose helper (archive)
+    COMMUNICATIONS = 'COMMUNICATIONS' // Talks to other actors (irc)
 }
 
 export enum IOType {

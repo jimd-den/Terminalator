@@ -1,65 +1,31 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
-/**
- * LinkCommand - Core Command
- *
- * Call the link function to create a file having a link to another file.
- *
- * Pillar: The Four-Fold Shield (Strict Architecture)
- * Pillar: The Swift Stream (Performance)
- *
- * Intent:
- * Create hard links.
- * Refactored to implement IStructuredCommand for combinatorial scaling.
- */
-
-import { CommandBase } from '../CommandBase';
-import { CommandCapability } from '../IStructuredCommand';
-import { ProcessContext } from '../../../domain/entities/ProcessContext';
-import { FileSystemService } from '../../../domain/services/FileSystemService';
+/** link - call link(2) (POSIX): `link file1 file2`. */
+import { CommandResponse } from '../ICommand';
+import { ProcessContext } from '../../entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../entities/Command';
+import { FileSystemService } from '../../services/FileSystemService';
+import { Utility } from '../shared/Utility';
+import { statPath } from '../shared/FileInfo';
+import { strerror } from '../shared/PathOps';
 
-export class LinkCommand extends CommandBase {
-    public readonly capabilities = [CommandCapability.MODIFY];
-    public readonly utility = 'link';
+export class LinkCommand extends Utility {
+    readonly utility = 'link';
 
-    constructor(private fs: FileSystemService) { 
-        super();
-    }
+    constructor(private fs?: FileSystemService) { super(); }
 
-    protected async executeInternal(
-        rawArgs: string[],
-        flags: Set<string>,
-        operands: string[],
-        context: ProcessContext,
-        state: TerminalState
-    ): Promise<CommandResponse> {
-        if (operands.length !== 2) {
-            return { output: 'link: missing operand', newState: state, exitCode: 1 };
-        }
-
-        const source = operands[0];
-        const target = operands[1];
-
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const operands = args[0] === '--' ? args.slice(1) : args;
+        if (operands.length !== 2) return this.usage(state, operands.length < 2 ? 'missing operand' : `extra operand '${operands[2]}'`);
+        const [from, to] = operands;
+        const fs = context.fileSystemService;
+        const src = statPath(context, from, false);
+        if (!src) return this.usage(state, `cannot create link '${to}' to '${from}': No such file or directory`);
+        if (src.kind === 'directory') return this.usage(state, `cannot create link '${to}' to '${from}': Operation not permitted`);
+        if (statPath(context, to, false)) return this.usage(state, `cannot create link '${to}' to '${from}': File exists`);
         try {
-            const sourcePath = this.resolvePath(source, state);
-            const targetPath = this.resolvePath(target, state);
-
-            this.fs.link(sourcePath, targetPath);
-
-        } catch (e: any) {
-            return { output: `link: cannot create link '${target}' to '${source}': ${e.message}`, newState: state, exitCode: 1 };
+            fs.link(fs.resolveAbsolutePath(from, context.cwd), fs.resolveAbsolutePath(to, context.cwd), '/');
+        } catch (e) {
+            return this.usage(state, `cannot create link '${to}' to '${from}': ${strerror(e)}`);
         }
-
-        return {
-            output: '',
-            newState: state,
-            exitCode: 0
-        };
-    }
-
-    private resolvePath(path: string, state: TerminalState): string {
-        if (path.startsWith('/')) return path;
-        return state.currentDirectory === '/' ? `/${path}` : `${state.currentDirectory}/${path}`;
+        return this.respond(state, '');
     }
 }

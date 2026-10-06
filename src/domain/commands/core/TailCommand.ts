@@ -1,115 +1,57 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
- * TailCommand - Core Command
- *
- * Output the last part of files.
- *
- * Pillar: THE FOUR-FOLD SHIELD (Strict Architecture)
- * Pillar: THE Swift Stream (Performance)
- * Pillar: THE Storyteller’s Code (Literate Documentation)
- *
- * Intent:
- * Allows the operator to view the end of files.
- * Refactored to implement IStructuredCommand for combinatorial scaling.
+ * tail - copy the last part of files (POSIX).
+ * -n [+]N lines (default 10), -c [+]N bytes; "+N" counts from the start.
+ * -f is accepted; the simulation has no growing files to follow.
  */
-
-import { CommandBase } from '../CommandBase';
-import { CommandCapability } from '../IStructuredCommand';
-import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { CommandResponse } from '../ICommand';
+import { IStructuredCommand, CommandCapability } from '../IStructuredCommand';
+import { defaultBuildArgs } from '../CommandBase';
+import { ProcessContext } from '../../entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../entities/Command';
-
 import { FileSystemService } from '../../services/FileSystemService';
+import { getopt, normalizeObsoleteCount, readInput, splitLinesKeep } from '../shared/InputFiles';
 
-export class TailCommand extends CommandBase {
-    public readonly capabilities = [CommandCapability.READ, CommandCapability.FILTER];
-    public readonly utility = 'tail';
+export class TailCommand implements IStructuredCommand {
+    readonly capabilities = [CommandCapability.READ, CommandCapability.FILTER];
+    readonly utility = 'tail';
 
-    constructor(private fs: FileSystemService) {
-        super();
+    constructor(private fs?: FileSystemService) { }
+
+    buildArgs(requirements: Record<string, any>): string[] {
+        return defaultBuildArgs(requirements);
     }
 
-    protected override parseArgs(args: string[]) {
-        super.parseArgs(args, ['n', 'c']);
-    }
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const { opts, operands, error } = getopt(normalizeObsoleteCount(args), 'n:c:fqvF');
+        if (error) return { output: '', stderr: `tail: ${error}\n`, exitCode: 1, newState: state };
 
-    protected async executeInternal(
-        rawArgs: string[],
-        flags: Set<string>,
-        operands: string[],
-        context: ProcessContext,
-        state: TerminalState
-    ): Promise<CommandResponse> {
-        const input = getStdinAsString(context);
-        const fsService = context.fileSystemService || this.fs;
-        
-        let linesToPrint = 10;
-        let bytesToPrint = -1;
+        const bytes = opts.has('c');
+        const raw = String(opts.get(bytes ? 'c' : 'n') ?? '10');
+        const m = /^([-+]?)([0-9]+)$/.exec(raw);
+        if (!m) return { output: '', stderr: `tail: invalid number of ${bytes ? 'bytes' : 'lines'}: '${raw}'\n`, exitCode: 1, newState: state };
+        const fromStart = m[1] === '+';
+        const count = parseInt(m[2], 10);
 
-        const nOption = this.options.get('n');
-        if (nOption) linesToPrint = parseInt(nOption);
-
-        const cOption = this.options.get('c');
-        if (cOption) bytesToPrint = parseInt(cOption);
-
-        const getTail = (content: string): string => {
-            if (bytesToPrint !== -1) {
-                return content.slice(-bytesToPrint);
-            }
-
-            const lines = content.split('\n');
-            let effectiveLines = lines;
-            let hasTrailing = false;
-            if (lines.length > 0 && lines[lines.length - 1] === '') {
-                effectiveLines = lines.slice(0, -1);
-                hasTrailing = true;
-            }
-
-            const snippet = effectiveLines.slice(-linesToPrint);
-            let output = snippet.join('\n');
-            if (hasTrailing && snippet.length > 0) {
-                output += '\n';
-            }
-            return output;
-        };
-
-        if (operands.length === 0 || (operands.length === 1 && operands[0] === '-')) {
-            if (input !== undefined) {
-                return { output: getTail(input), newState: state, exitCode: 0 };
-            } else {
-                return { output: '', newState: state, exitCode: 0 };
-            }
-        }
-
+        const files = operands.length ? operands : ['-'];
+        const headers = (files.length > 1 || opts.has('v')) && !opts.has('q');
         let output = '';
-        let exitCode = 0;
-
-        for (let i = 0; i < operands.length; i++) {
-            const filename = operands[i];
-
-            if (operands.length > 1) {
-                if (i > 0) output += '\n';
-                output += `==> ${filename} <==\n`;
+        const errors: string[] = [];
+        files.forEach((f, idx) => {
+            const input = readInput(context, f);
+            if (!input.ok) { errors.push(`tail: cannot open '${f}' for reading: ${input.error.split(': ').pop()}`); return; }
+            if (headers) output += `${idx > 0 ? '\n' : ''}==> ${f === '-' ? 'standard input' : f} <==\n`;
+            if (bytes) {
+                output += fromStart ? input.data.substring(Math.max(0, count - 1)) : (count === 0 ? '' : input.data.slice(-count));
+            } else {
+                const lines = splitLinesKeep(input.data);
+                output += (fromStart ? lines.slice(Math.max(0, count - 1)) : (count === 0 ? [] : lines.slice(-count))).join('');
             }
-
-            let path = filename;
-            if (!path.startsWith('/')) {
-                path = state.currentDirectory === '/' ? `/${filename}` : `${state.currentDirectory}/${filename}`;
-            }
-
-            try {
-                const content = fsService.readFile(path);
-                output += getTail(content);
-            } catch (error: any) {
-                output += `tail: cannot open '${filename}' for reading: No such file or directory`;
-                exitCode = 1;
-            }
-        }
-
+        });
         return {
-            output: output,
+            output,
+            stderr: errors.length ? errors.join('\n') + '\n' : undefined,
+            exitCode: errors.length ? 1 : 0,
             newState: state,
-            exitCode: exitCode
         };
     }
 }

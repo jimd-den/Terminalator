@@ -1,119 +1,90 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
-/**
- * PasteCommand - Core Command
- *
- * Merge corresponding or subsequent lines of files.
- *
- * Pillar: The Four-Fold Shield (Strict Architecture)
- * Pillar: The Swift Stream (Performance)
- *
- * Intent:
- * Join files horizontally.
- */
-
-import { ICommand } from '../ICommand';
-import { ProcessContext } from '../../../domain/entities/ProcessContext';
+/** paste - merge corresponding or subsequent lines of files (POSIX): `paste [-s] [-d list] file...` */
+import { CommandResponse } from '../ICommand';
+import { ProcessContext } from '../../entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../entities/Command';
-
 import { FileSystemService } from '../../services/FileSystemService';
+import { CommandCapability } from '../IStructuredCommand';
+import { Utility } from '../shared/Utility';
+import { getopt, readInput } from '../shared/InputFiles';
 
-export class PasteCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+export function parseDelimiters(spec: string): string[] {
+    const out: string[] = [];
+    for (let i = 0; i < spec.length; i++) {
+        if (spec[i] !== '\\') { out.push(spec[i]); continue; }
+        const n = spec[++i];
+        out.push(n === 'n' ? '\n' : n === 't' ? '\t' : n === '0' ? '' : n === '\\' ? '\\' : n ?? '\\');
+    }
+    return out;
+}
+
+export class PasteCommand extends Utility {
+    readonly utility = 'paste';
+    readonly capabilities = [CommandCapability.TRANSFORM];
+
+    constructor(private fs?: FileSystemService) { super(); }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = getStdinAsString(context);
-        let delimiter = '\t';
-        let serial = false;
-        const files: string[] = [];
+        const { opts, operands, error } = getopt(args, 'sd:');
+        if (error) return this.usage(state, error);
+        const delims = opts.has('d') ? parseDelimiters(String(opts.get('d'))) : ['\t'];
+        if (delims.length === 0) return this.usage(state, 'delimiter list ends with an unescaped backslash');
+        const files = operands.length ? operands : ['-'];
 
-        let skipNext = false;
-        for (let i = 0; i < args.length; i++) {
-            if (skipNext) {
-                skipNext = false;
+        // Every '-' operand reads successive lines from the one standard input.
+        let stdinLines: string[] | null = null;
+        const sources: string[][] = [];
+        const errors: string[] = [];
+        let stdinPos = 0;
+        const stdinCursor = { next: () => (stdinLines && stdinPos < stdinLines.length ? stdinLines[stdinPos++] : undefined) };
+        for (const f of files) {
+            if (f === '-') {
+                if (stdinLines === null) {
+                    const r = readInput(context, '-');
+                    stdinLines = r.ok ? this.lines(r.data) : [];
+                }
+                sources.push([]);
                 continue;
             }
-            const arg = args[i];
-            if (arg === '-d') {
-                if (i + 1 < args.length) {
-                    delimiter = args[i + 1];
-                    delimiter = delimiter
-                        .replace(/\\t/g, '\t')
-                        .replace(/\\n/g, '\n')
-                        .replace(/\\\\/g, '\\');
-                    skipNext = true;
-                }
-            } else if (arg === '-s') {
-                serial = true;
-            } else if (!arg.startsWith('-')) {
-                files.push(arg);
-            }
+            const r = readInput(context, f);
+            if (!r.ok) { errors.push(r.error); return this.respond(state, '', errors); }
+            sources.push(this.lines(r.data));
         }
 
-        if (files.length === 0) {
-            return { output: '', newState: state, exitCode: 0 };
+        let out = '';
+        if (opts.has('s')) {
+            files.forEach((f, idx) => {
+                const ls = f === '-' ? stdinLines!.splice(0) : sources[idx];
+                let line = '';
+                ls.forEach((l, k) => { line += (k ? delims[(k - 1) % delims.length] : '') + l; });
+                out += line + '\n';
+            });
+            return this.respond(state, out, errors);
         }
 
-        const fileContents: string[][] = [];
-        try {
-            for (const file of files) {
-                if (file === '-') {
-                    fileContents.push((input || '').split('\n'));
-                } else {
-                    const path = this.resolvePath(file, state);
-                    const content = this.fs.readFile(path);
-                    const lines = content.split('\n');
-                    if (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
-                    fileContents.push(lines);
+        const pos = files.map(() => 0);
+        while (true) {
+            let any = false;
+            const cols: string[] = files.map((f, idx) => {
+                if (f === '-') {
+                    const l = stdinCursor.next();
+                    if (l !== undefined) any = true;
+                    return l ?? '';
                 }
-            }
-        } catch (e) {
-            return {
-                output: `paste: No such file or directory`,
-                newState: state,
-                exitCode: 1
-            };
+                const l = sources[idx][pos[idx]++];
+                if (l !== undefined) any = true;
+                return l ?? '';
+            });
+            if (!any) break;
+            let line = '';
+            cols.forEach((c, k) => { line += (k ? delims[(k - 1) % delims.length] : '') + c; });
+            out += line + '\n';
         }
-
-        const output: string[] = [];
-        const getDelim = (idx: number) => {
-            if (delimiter.length === 0) return '';
-            return delimiter[idx % delimiter.length];
-        };
-
-        if (serial) {
-            for (const lines of fileContents) {
-                let lineStr = '';
-                for (let k = 0; k < lines.length; k++) {
-                    if (k > 0) lineStr += getDelim(k - 1);
-                    lineStr += lines[k];
-                }
-                output.push(lineStr);
-            }
-        } else {
-            let maxLines = 0;
-            for (const lines of fileContents) maxLines = Math.max(maxLines, lines.length);
-
-            for (let i = 0; i < maxLines; i++) {
-                let rowStr = '';
-                for (let j = 0; j < fileContents.length; j++) {
-                    const lines = fileContents[j];
-                    if (j > 0) rowStr += getDelim(j - 1);
-                    rowStr += (i < lines.length ? lines[i] : '');
-                }
-                output.push(rowStr);
-            }
-        }
-
-        return {
-            output: output.join('\n'),
-            newState: state,
-            exitCode: 0
-        };
+        return this.respond(state, out, errors);
     }
 
-    private resolvePath(path: string, state: TerminalState): string {
-        if (path.startsWith('/')) return path;
-        return state.currentDirectory === '/' ? `/${path}` : `${state.currentDirectory}/${path}`;
+    private lines(data: string): string[] {
+        const ls = data.split('\n');
+        if (ls[ls.length - 1] === '') ls.pop();
+        return ls;
     }
 }

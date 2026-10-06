@@ -48,10 +48,28 @@ export const INITIAL_TEMPLATE_CATALOG: TutorTemplate[] = [
         text: "Typing '{utility}' like a blindfolded toddler won't get us into the Technocracy, Operator."
     },
     {
-        id: 'error-drone-1',
+        id: 'error-overlord-1',
+        intent: TutorIntent.REPRIMAND_MISTAKE,
+        tone: TutorToneProfile.AI_OVERLORD,
+        text: "EXECUTION FAILURE: {utility}. {vocab:emphasis} ERROR DETECTED. RECALIBRATE."
+    },
+    {
+        id: 'error-drone-2',
         intent: TutorIntent.REPRIMAND_MISTAKE,
         tone: TutorToneProfile.CORPORATE_DRONE,
-        text: "Command '{utility}' returned non-zero exit code. Please refer to the standard operating procedure."
+        text: "Efficiency metric drop detected. '{utility}' is not compliant with {vocab:noun} {vocab:adjective}."
+    },
+    {
+        id: 'error-snarky-3',
+        intent: TutorIntent.REPRIMAND_MISTAKE,
+        tone: TutorToneProfile.SNARKY_SYSADMIN,
+        text: "I've seen shell scripts with more {vocab:noun} than your attempt at '{utility}'."
+    },
+    {
+        id: 'error-gentle-3',
+        intent: TutorIntent.REPRIMAND_MISTAKE,
+        tone: TutorToneProfile.GENTLE_GUIDE,
+        text: "Almost! '{utility}' was close, but maybe try a different {vocab:noun}?"
     },
 
     // --- CELEBRATE_SUCCESS ---
@@ -60,6 +78,36 @@ export const INITIAL_TEMPLATE_CATALOG: TutorTemplate[] = [
         intent: TutorIntent.CELEBRATE_SUCCESS,
         tone: TutorToneProfile.GENTLE_GUIDE,
         text: "Perfect! You've successfully completed the objective. The Technocracy is one step closer to falling."
+    },
+    {
+        id: 'success-gentle-2',
+        intent: TutorIntent.CELEBRATE_SUCCESS,
+        tone: TutorToneProfile.GENTLE_GUIDE,
+        text: "Well done! That was a {vocab:adjective} {vocab:noun}."
+    },
+    {
+        id: 'success-gentle-3',
+        intent: TutorIntent.CELEBRATE_SUCCESS,
+        tone: TutorToneProfile.GENTLE_GUIDE,
+        text: "{vocab:greeting}, you solved it! Your {vocab:noun} is improving {vocab:adverb}."
+    },
+    {
+        id: 'success-snarky-1',
+        intent: TutorIntent.CELEBRATE_SUCCESS,
+        tone: TutorToneProfile.SNARKY_SYSADMIN,
+        text: "You didn't break the kernel. I'm {vocab:adjective}. Proceed to the next {vocab:noun}."
+    },
+    {
+        id: 'success-snarky-2',
+        intent: TutorIntent.CELEBRATE_SUCCESS,
+        tone: TutorToneProfile.SNARKY_SYSADMIN,
+        text: "Even a broken clock is right twice a day. Your {vocab:noun} was {vocab:adjective}."
+    },
+    {
+        id: 'success-overlord-2',
+        intent: TutorIntent.CELEBRATE_SUCCESS,
+        tone: TutorToneProfile.AI_OVERLORD,
+        text: "COMPLIANCE ACHIEVED. {vocab:noun} {vocab:adverb} INTEGRATED. {vocab:emphasis} SUCCESS."
     },
     {
         id: 'success-resistance-1',
@@ -154,6 +202,216 @@ export const INITIAL_TEMPLATE_CATALOG: TutorTemplate[] = [
         intent: TutorIntent.MISSION_BRIEFING,
         tone: TutorToneProfile.RESISTANCE_LEADER,
         text: "The Grid is waiting. {verb} the {noun} at {target} and show them the power of the terminal!"
+    },
+
+    // --- INSTRUCT_SSH ---
+    {
+        id: 'instr-ssh-gentle',
+        intent: TutorIntent.INSTRUCT_SSH,
+        tone: TutorToneProfile.GENTLE_GUIDE,
+        text: "To begin, please {vocab:verb} to the remote host: {lessonText}."
+    },
+    {
+        id: 'instr-ssh-gentle-2',
+        intent: TutorIntent.INSTRUCT_SSH,
+        tone: TutorToneProfile.GENTLE_GUIDE,
+        text: "Let's start by {vocab:verb}ing into {target}. Type {lessonText} when you're ready."
+    },
+    {
+        id: 'instr-ssh-snarky',
+        intent: TutorIntent.INSTRUCT_SSH,
+        tone: TutorToneProfile.SNARKY_SYSADMIN,
+        text: "Don't just sit there. {vocab:verb} into {target} using {lessonText}."
+    },
+    {
+        id: 'instr-ssh-snarky-2',
+        intent: TutorIntent.INSTRUCT_SSH,
+        tone: TutorToneProfile.SNARKY_SYSADMIN,
+        text: "I hope you remember the password for {target}. Run {lessonText}."
+    },
+    {
+        id: 'instr-ssh-overlord',
+        intent: TutorIntent.INSTRUCT_SSH,
+        tone: TutorToneProfile.AI_OVERLORD,
+        text: "ESTABLISH SATLINK. COMMAND: {lessonText}. {vocab:emphasis}."
+    },
+    {
+        id: 'instr-ssh-drone',
+        intent: TutorIntent.INSTRUCT_SSH,
+        tone: TutorToneProfile.CORPORATE_DRONE,
+        text: "Initiating remote session to {target}. Please input: {lessonText}."
+    },
+
+    // --- INSTRUCT_CD ---
+    {
+        id: 'instr-cd-gentle',
+        intent: TutorIntent.INSTRUCT_CD,
+        tone: TutorToneProfile.GENTLE_GUIDE,
+        text: "Next, we should move to the correct directory. Try typing {lessonText}."
+    },
+    {
+        id: 'instr-cd-gentle-2',
+        intent: TutorIntent.INSTRUCT_CD,
+        tone: TutorToneProfile.GENTLE_GUIDE,
+        text: "Let's {vocab:verb} into the data directory. Run {lessonText}."
+    },
+    {
+        id: 'instr-cd-snarky',
+        intent: TutorIntent.INSTRUCT_CD,
+        tone: TutorToneProfile.SNARKY_SYSADMIN,
+        text: "Navigation 101: {lessonText}. Do it now."
+    },
+    {
+        id: 'instr-cd-overlord',
+        intent: TutorIntent.INSTRUCT_CD,
+        tone: TutorToneProfile.AI_OVERLORD,
+        text: "NAVIGATE TO TARGET DIRECTORY. COMMAND: {lessonText}."
+    },
+
+    // --- INSTRUCT_ACTION ---
+    {
+        id: 'instr-act-gentle',
+        intent: TutorIntent.INSTRUCT_ACTION,
+        tone: TutorToneProfile.GENTLE_GUIDE,
+        text: "Now for the main task. Please {vocab:verb} with {lessonText}."
+    },
+    {
+        id: 'instr-act-gentle-2',
+        intent: TutorIntent.INSTRUCT_ACTION,
+        tone: TutorToneProfile.GENTLE_GUIDE,
+        text: "You're doing great. One last step: {lessonText}."
+    },
+    {
+        id: 'instr-act-leader',
+        intent: TutorIntent.INSTRUCT_ACTION,
+        tone: TutorToneProfile.RESISTANCE_LEADER,
+        text: "Time to strike! {vocab:verb} the data: {lessonText}."
+    },
+    {
+        id: 'instr-act-snarky',
+        intent: TutorIntent.INSTRUCT_ACTION,
+        tone: TutorToneProfile.SNARKY_SYSADMIN,
+        text: "Finish the job. Run {lessonText} and let's get out of here."
+    },
+    {
+        id: 'instr-act-drone',
+        intent: TutorIntent.INSTRUCT_ACTION,
+        tone: TutorToneProfile.CORPORATE_DRONE,
+        text: "Execute authorized {vocab:noun}: {lessonText}."
+    },
+
+    // --- LINK_ESTABLISHED ---
+    {
+        id: 'link-established-gentle',
+        intent: TutorIntent.LINK_ESTABLISHED,
+        tone: TutorToneProfile.GENTLE_GUIDE,
+        text: "Excellent. The link to {target} is stable."
+    },
+
+    // --- FILE_LOCATED ---
+    {
+        id: 'file-located-snarky',
+        intent: TutorIntent.FILE_LOCATED,
+        tone: TutorToneProfile.SNARKY_SYSADMIN,
+        text: "You found the directory. About time."
+    },
+
+    // --- MISSION_ACCOMPLISHED ---
+    {
+        id: 'mission-acc-overlord',
+        intent: TutorIntent.MISSION_ACCOMPLISHED,
+        tone: TutorToneProfile.AI_OVERLORD,
+        text: "MISSION SUCCESSFUL. RESOURCE ESCROW RELEASED."
+    },
+
+    // --- RHYTHM_REPORT ---
+    {
+        id: 'rhythm-snarky-fast',
+        intent: TutorIntent.RHYTHM_REPORT,
+        tone: TutorToneProfile.SNARKY_SYSADMIN,
+        text: "Slow down, Speed Racer. Your {vocab:noun} is becoming {vocab:adjective}."
+    },
+    {
+        id: 'rhythm-gentle-slow',
+        intent: TutorIntent.RHYTHM_REPORT,
+        tone: TutorToneProfile.GENTLE_GUIDE,
+        text: "Take a deep breath. A steady {vocab:noun} is better than a {vocab:adjective} one."
+    },
+
+    // --- ACCURACY_CRITIQUE ---
+    {
+        id: 'accuracy-overlord-1',
+        intent: TutorIntent.ACCURACY_CRITIQUE,
+        tone: TutorToneProfile.AI_OVERLORD,
+        text: "ACCURACY BELOW THRESHOLD. YOUR {vocab:noun} IS {vocab:adjective}."
+    },
+    {
+        id: 'accuracy-drone-1',
+        intent: TutorIntent.ACCURACY_CRITIQUE,
+        tone: TutorToneProfile.CORPORATE_DRONE,
+        text: "Quality control warning: {vocab:verb} your input more {vocab:adverb}."
+    },
+
+    // --- INPUT_PROGRESS ---
+    {
+        id: 'progress-leader-1',
+        intent: TutorIntent.INPUT_PROGRESS,
+        tone: TutorToneProfile.RESISTANCE_LEADER,
+        text: "Keep pushing! The {vocab:noun} is almost {vocab:adjective}!"
+    },
+    {
+        id: 'progress-snarky-1',
+        intent: TutorIntent.INPUT_PROGRESS,
+        tone: TutorToneProfile.SNARKY_SYSADMIN,
+        text: "You're actually {vocab:verb}ing this? I'm {vocab:adjective}."
+    },
+
+    // --- SYSTEM_CONNECTING ---
+    {
+        id: 'sys-conn-1',
+        intent: TutorIntent.SYSTEM_CONNECTING,
+        tone: TutorToneProfile.SYSTEM_CORE,
+        text: "CONNECTING TO SECURE CHANNEL {missionId}..."
+    },
+    {
+        id: 'sys-conn-2',
+        intent: TutorIntent.SYSTEM_CONNECTING,
+        tone: TutorToneProfile.SYSTEM_CORE,
+        text: "INITIALIZING SATLINK: {target}..."
+    },
+
+    // --- SYSTEM_REWARD_ESCROW ---
+    {
+        id: 'sys-esc-1',
+        intent: TutorIntent.SYSTEM_REWARD_ESCROW,
+        tone: TutorToneProfile.SYSTEM_CORE,
+        text: "REWARD ESCROW: {reward}"
+    },
+    {
+        id: 'sys-esc-2',
+        intent: TutorIntent.SYSTEM_REWARD_ESCROW,
+        tone: TutorToneProfile.SYSTEM_CORE,
+        text: "CREDIT HOLD AUTHORIZED: {reward}"
+    },
+
+    // --- PERSONA_INITIALIZED ---
+    {
+        id: 'pers-init-overlord',
+        intent: TutorIntent.PERSONA_INITIALIZED,
+        tone: TutorToneProfile.AI_OVERLORD,
+        text: "PERSONAL PROTOCOL {personaName} INITIALIZED. COMPLIANCE ESTIMATED AT 99.9%."
+    },
+    {
+        id: 'pers-init-snarky',
+        intent: TutorIntent.PERSONA_INITIALIZED,
+        tone: TutorToneProfile.SNARKY_SYSADMIN,
+        text: "Protocol {personaName} is online. Don't make me regret this."
+    },
+    {
+        id: 'pers-init-gentle',
+        intent: TutorIntent.PERSONA_INITIALIZED,
+        tone: TutorToneProfile.GENTLE_GUIDE,
+        text: "{vocab:greeting}, I am {personaName}. I'm here to help you navigate the system."
     },
 
     // --- COMBINATORIAL STRUCTURES ---

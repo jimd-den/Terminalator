@@ -44,21 +44,21 @@ export class TeeCommand implements ICommand {
 
                 // Check parent dir
                 const parentPath = path.substring(0, path.lastIndexOf('/')) || '/';
-                const parent = this.fs.resolve(parentPath);
-                if (!parent || !this.fs.isDirectory(parent)) {
+                const parent = context.fileSystemService.resolve(parentPath);
+                if (!parent || !context.fileSystemService.isDirectory(parent)) {
                     throw new Error('No such directory');
                 }
 
                 if (append) {
                     let existing = '';
                     try {
-                        existing = this.fs.readFile(path);
+                        existing = context.fileSystemService.readFile(path);
                     } catch (e) {
                         // ignore if missing
                     }
-                    this.fs.writeFile(path, existing + content, 'w');
+                    context.fileSystemService.writeFile(path, existing + content, 'w');
                 } else {
-                    this.fs.writeFile(path, content, 'w');
+                    context.fileSystemService.writeFile(path, content, 'w');
                 }
             } catch (e) {
                 // tee writes diagnostic and continues

@@ -1,338 +1,91 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
- * ValCommand - SCCS File Validator (POSIX Compliant)
+ * val - validate SCCS files (POSIX):
+ *   val -
+ *   val [-s] [-m name] [-r SID] [-y type] file...
  *
- * Validates SCCS files meeting specified characteristics.
- * Part of SCCS (Source Code Control System) utilities.
- *
- * Pillar: The Four-Fold Shield (Clean Architecture)
- * Pillar: The Storyteller's Code (Literate Documentation)
- *
- * Reference: IEEE Std 1003.1-2024 (SUSv5) - val utility
+ * Checks that each file is an intact s-file (magic number, structure,
+ * checksum) and optionally that a SID exists and that %M% / %Y% match.
+ * With "-", each line of standard input is a separate argument list.
+ * Diagnostics go to standard output ("file: message") unless -s. The exit
+ * status ORs together, over all files:
+ *   0x80 missing file argument      0x40 unknown or duplicate keyletter
+ *   0x20 corrupted SCCS file        0x10 cannot open file or not SCCS
+ *   0x08 SID invalid or ambiguous   0x04 SID does not exist
+ *   0x02 %Y% / -y mismatch          0x01 %M% / -m mismatch
  */
-import { CommandBase } from '../CommandBase';
 import { CommandResponse } from '../ICommand';
-import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { ProcessContext, getStdinAsString } from '../../entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandCapability } from '../IStructuredCommand';
+import { Utility } from '../shared/Utility';
+import { statPath, canAccess } from '../shared/FileInfo';
+import { parseSFile } from './sccs/SFile';
+import { Sid } from './sccs/Sid';
+import { SccsEnv, sccsOptions } from './sccs/SccsSupport';
 
-/**
- * POSIX exit code bits for val.
- * Exit status is a disjunction (OR) of these values.
- */
-const VAL_EXIT = {
-     MISSING_FILE_ARG: 0x80,  // Missing file argument
-     UNKNOWN_OPTION: 0x40,    // Unknown or duplicate option
-     CORRUPTED_SCCS: 0x20,    // Corrupted SCCS file
-     NOT_SCCS_FILE: 0x10,     // Cannot open file or file not SCCS
-     SID_INVALID: 0x08,       // SID is invalid or ambiguous
-     SID_NOT_EXIST: 0x04,     // SID does not exist
-     TYPE_MISMATCH: 0x02,     // %Y%, -y mismatch
-     NAME_MISMATCH: 0x01      // %M%, -m mismatch
-};
+export const VAL_EXIT = {
+    MISSING_FILE: 0x80,
+    BAD_KEYLETTER: 0x40,
+    CORRUPTED: 0x20,
+    CANNOT_OPEN: 0x10,
+    SID_INVALID: 0x08,
+    SID_MISSING: 0x04,
+    TYPE_MISMATCH: 0x02,
+    NAME_MISMATCH: 0x01,
+} as const;
 
-/**
- * Options for val command.
- */
-interface ValOptions {
-     silent: boolean;         // -s: Suppress diagnostic messages
-     moduleName?: string;     // -m: Module name to check against %M%
-     sid?: string;            // -r: SID to validate
-     type?: string;           // -y: Type to check against %Y%
-}
+export class ValCommand extends Utility {
+    readonly utility = 'val';
 
-export class ValCommand extends CommandBase {
-     public readonly capabilities: CommandCapability[] = [CommandCapability.READ];
-     public readonly utility: string = 'val';
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const env = new SccsEnv(context, state);
+        let out = '';
+        let status = 0;
+        if (args.length === 1 && args[0] === '-') {
+            const lines = (getStdinAsString(context) ?? '').split('\n').filter(l => l.trim());
+            for (const line of lines) {
+                const r = this.validate(line.trim().split(/\s+/), env, context);
+                out += r.out;
+                status |= r.status;
+            }
+        } else {
+            const r = this.validate(args, env, context);
+            out = r.out;
+            status = r.status;
+        }
+        return { output: out, exitCode: status, newState: state };
+    }
 
-     protected async executeInternal(
-          args: string[],
-          flags: Set<string>,
-          operands: string[],
-          context: ProcessContext,
-          state: TerminalState
-     ): Promise<CommandResponse> {
-          // Re-parse with SCCS specific options
-          this.parseArgs(args, ['m', 'r', 'y']);
-          const input = getStdinAsString(context);
+    private validate(args: string[], env: SccsEnv, context: ProcessContext): { out: string; status: number } {
+        const o = sccsOptions(args, 'sm:r:y:');
+        const silent = o.opts.has('s') || args.includes('-s');
+        let out = '';
+        const say = (msg: string) => { if (!silent) out += `${msg}\n`; };
+        if (o.error) { say(`val: ${o.error}`); return { out, status: VAL_EXIT.BAD_KEYLETTER }; }
+        const dup = [...o.opts.entries()].find(([, v]) => v.length > 1);
+        if (dup) { say(`val: duplicate keyletter -- '${dup[0]}'`); return { out, status: VAL_EXIT.BAD_KEYLETTER }; }
+        if (!o.operands.length) { say('val: missing file argument'); return { out, status: VAL_EXIT.MISSING_FILE }; }
 
-          const opts: ValOptions = {
-               silent: this.hasFlag('s'),
-               moduleName: this.options.get('m'),
-               sid: this.options.get('r'),
-               type: this.options.get('y')
-          };
-
-          const files = this.operands;
-
-          // Special case: "val -" reads file arguments from stdin
-          if (files.length === 1 && files[0] === '-') {
-               return this.processStdin(input, opts, context, state);
-          }
-
-          // If no files and no stdin mode indicator
-          if (files.length === 0) {
-               // No file argument - exit 0x80
-               return {
-                    output: opts.silent ? '' : 'val: missing file operand',
-                    newState: state,
-                    exitCode: VAL_EXIT.MISSING_FILE_ARG
-               };
-          }
-
-          // Process each file
-          return this.processFiles(files, opts, context, state);
-     }
-
-     /**
-      * Helper for inner parsing (stdin mode)
-      */
-     private parseArgsInner(args: string[]): { opts: ValOptions, files: string[] } {
-          const parser = new (class extends CommandBase {
-               public readonly capabilities: CommandCapability[] = [];
-               public readonly utility: string = 'val-parser';
-               public parse(a: string[]) { this.parseArgs(a, ['m', 'r', 'y']); }
-               public get() {
-                    return {
-                         opts: {
-                              silent: this.hasFlag('s'),
-                              moduleName: this.options.get('m'),
-                              sid: this.options.get('r'),
-                              type: this.options.get('y')
-                         },
-                         files: this.operands
-                    };
-               }
-               protected executeInternal(): any { return null; }
-          })();
-
-          parser.parse(args);
-          return parser.get();
-     }
-
-     /**
-      * Process files read from stdin (when file operand is '-').
-      */
-     private async processStdin(
-          input: string | undefined,
-          opts: ValOptions,
-          context: ProcessContext,
-          state: TerminalState
-     ): Promise<CommandResponse> {
-          if (!input || input.trim() === '') {
-               return { output: '', newState: state, exitCode: 0 };
-          }
-
-          const lines = input.trim().split('\n');
-          let aggregateExitCode = 0;
-          const outputs: string[] = [];
-
-          for (const line of lines) {
-               // Each line is treated as a command line argument list
-               const lineArgs = line.trim().split(/\s+/).filter(s => s.length > 0);
-               if (lineArgs.length === 0) continue;
-
-               // Parse this line's options and files
-               const { opts: lineOpts, files: lineFiles } = this.parseArgsInner(lineArgs);
-
-               // Merge with base opts (command line opts take precedence initially, then line opts)
-               const mergedOpts = { ...opts, ...lineOpts };
-
-               if (lineFiles.length === 0) {
-                    continue;
-               }
-
-               // Process files for this line
-               const result = await this.processFiles(lineFiles, mergedOpts, context, state, line);
-               if (result.output) {
-                    outputs.push(result.output);
-               }
-               aggregateExitCode |= result.exitCode;
-          }
-
-          return {
-               output: outputs.join('\n'),
-               newState: state,
-               exitCode: aggregateExitCode
-          };
-     }
-
-     /**
-      * Process a list of files.
-      */
-     private async processFiles(
-          files: string[],
-          opts: ValOptions,
-          context: ProcessContext,
-          state: TerminalState,
-          inputLine?: string
-     ): Promise<CommandResponse> {
-          let aggregateExitCode = 0;
-          const outputs: string[] = [];
-          const fs = context.fileSystemService;
-
-          for (const file of files) {
-               let fileExitCode = 0;
-               const messages: string[] = [];
-
-               // Check if file exists
-               const node = fs.resolve(file, state.currentDirectory);
-               if (!node) {
-                    fileExitCode |= VAL_EXIT.NOT_SCCS_FILE;
-                    messages.push(`${file}: cannot open file or file not SCCS`);
-               } else if (fs.isDirectory(node)) {
-                    fileExitCode |= VAL_EXIT.NOT_SCCS_FILE;
-                    messages.push(`${file}: is a directory`);
-               } else {
-                    // Read file content
-                    try {
-                         const content = fs.readFile(fs.getAbsolutePath(node));
-
-                         // Validate SCCS file format
-                         const validateResult = this.validateSccsFile(file, content, opts);
-                         fileExitCode |= validateResult.exitCode;
-                         messages.push(...validateResult.messages);
-                    } catch (e) {
-                         fileExitCode |= VAL_EXIT.NOT_SCCS_FILE;
-                         messages.push(`${file}: cannot read file`);
-                    }
-               }
-
-               // Output handling
-               if (messages.length > 0 && !opts.silent) {
-                    if (inputLine) {
-                         // Stdin mode output format
-                         outputs.push(`${inputLine}\n\n    ${file}: ${messages.join(', ')}`);
-                    } else {
-                         // Normal output format
-                         outputs.push(`${file}: ${messages.join(', ')}`);
-                    }
-               }
-
-               aggregateExitCode |= fileExitCode;
-          }
-
-          return {
-               output: outputs.join('\n'),
-               newState: state,
-               exitCode: aggregateExitCode
-          };
-     }
-
-     /**
-      * Validate SCCS file content and check options.
-      */
-     private validateSccsFile(
-          filename: string,
-          content: string,
-          opts: ValOptions
-     ): { exitCode: number, messages: string[] } {
-          let exitCode = 0;
-          const messages: string[] = [];
-
-          // SCCS files typically start with ^Ah (control-A h) header
-          // For our simulation, we check for reasonable SCCS markers
-
-          // Check if it's a valid SCCS file format
-          // Real SCCS files have specific structure; we simulate this
-          const isSccsFile = filename.startsWith('s.') ||
-               content.includes('@(#)') ||
-               content.includes('%M%') ||
-               content.includes('%Y%') ||
-               content.includes('%I%');
-
-          if (!isSccsFile && !content.includes('\x01h')) {
-               // Check for corruption markers
-               if (content.includes('bad') || content.includes('corrupt')) {
-                    exitCode |= VAL_EXIT.CORRUPTED_SCCS;
-                    messages.push('corrupted SCCS file');
-               } else {
-                    // Accept as valid SCCS (simulated) for files that start with s.
-                    if (!filename.startsWith('s.')) {
-                         exitCode |= VAL_EXIT.NOT_SCCS_FILE;
-                         messages.push('not an SCCS file');
-                    }
-               }
-          }
-
-          // -r SID validation
-          if (opts.sid) {
-               const sidValid = this.validateSid(opts.sid);
-               if (!sidValid.valid) {
-                    exitCode |= VAL_EXIT.SID_INVALID;
-                    messages.push(`SID ${opts.sid} is ${sidValid.reason}`);
-               } else {
-                    // Check if SID exists in file (simulated - always exists for s. files)
-                    const sidExists = filename.startsWith('s.') || content.includes(opts.sid);
-                    if (!sidExists) {
-                         exitCode |= VAL_EXIT.SID_NOT_EXIST;
-                         messages.push(`SID ${opts.sid} does not exist`);
-                    }
-               }
-          }
-
-          // -y type validation (check %Y% keyword)
-          if (opts.type) {
-               // Extract %Y% value from content
-               const typeMatch = content.match(/%Y%\s*=?\s*(\w+)/);
-               const fileType = typeMatch ? typeMatch[1] : undefined;
-
-               if (fileType && fileType !== opts.type) {
-                    exitCode |= VAL_EXIT.TYPE_MISMATCH;
-                    messages.push(`%Y%, -y mismatch`);
-               }
-          }
-
-          // -m name validation (check %M% keyword)
-          if (opts.moduleName) {
-               // Extract %M% value from content  
-               const nameMatch = content.match(/%M%\s*=?\s*(\w+)/);
-               const fileModule = nameMatch ? nameMatch[1] : undefined;
-
-               if (fileModule && fileModule !== opts.moduleName) {
-                    exitCode |= VAL_EXIT.NAME_MISMATCH;
-                    messages.push(`%M%, -m mismatch`);
-               }
-          }
-
-          return { exitCode, messages };
-     }
-
-     /**
-      * Validate SID format per SCCS rules.
-      * Valid formats: R.L or R.L.B.S where R=release, L=level, B=branch, S=sequence
-      */
-     private validateSid(sid: string): { valid: boolean, reason?: string } {
-          // SID format: release.level[.branch.sequence]
-          const parts = sid.split('.');
-
-          if (parts.length < 2 || parts.length > 4) {
-               return { valid: false, reason: 'invalid format' };
-          }
-
-          // All parts must be positive integers
-          for (const part of parts) {
-               const num = parseInt(part, 10);
-               if (isNaN(num) || num < 0 || part !== num.toString()) {
-                    return { valid: false, reason: 'invalid format' };
-               }
-          }
-
-          // Check for ambiguous SID (single number like "1")
-          if (parts.length === 1) {
-               return { valid: false, reason: 'ambiguous' };
-          }
-
-          // Level 0 is invalid (e.g., 1.0)
-          if (parts.length >= 2 && parseInt(parts[1], 10) === 0) {
-               return { valid: false, reason: 'invalid' };
-          }
-
-          // Branch 0 with sequence is invalid (e.g., 1.1.0.1)
-          if (parts.length === 4 && parseInt(parts[2], 10) === 0) {
-               return { valid: false, reason: 'invalid' };
-          }
-
-          return { valid: true };
-     }
+        const rText = o.opts.get('r')?.[0];
+        const sid = rText !== undefined ? Sid.parse(rText) : null;
+        let status = 0;
+        for (const path of o.operands) {
+            const fail = (bit: number, msg: string) => { status |= bit; say(`${path}: ${msg}`); };
+            if (!SccsEnv.isSccsName(path)) { fail(VAL_EXIT.CANNOT_OPEN, 'not an SCCS file'); continue; }
+            const info = statPath(context, path);
+            if (!info || info.kind === 'directory' || !canAccess(context, info, 4)) { fail(VAL_EXIT.CANNOT_OPEN, 'cannot open file'); continue; }
+            const parsed = parseSFile(env.read(path) ?? '');
+            if (!parsed.ok) { fail(VAL_EXIT.CORRUPTED, parsed.error); continue; }
+            const file = parsed.file;
+            if (!file.checksumOk) fail(VAL_EXIT.CORRUPTED, 'corrupted SCCS file (bad checksum)');
+            if (rText !== undefined) {
+                if (!sid || (sid.depth !== 2 && sid.depth !== 4)) fail(VAL_EXIT.SID_INVALID, `invalid or ambiguous SID '${rText}'`);
+                else if (!file.live.some(d => d.sid.equals(sid))) fail(VAL_EXIT.SID_MISSING, `SID ${sid} does not exist`);
+            }
+            const y = o.opts.get('y')?.[0];
+            if (y !== undefined && y !== (file.flags.get('t') ?? '')) fail(VAL_EXIT.TYPE_MISMATCH, `%Y%, -y mismatch`);
+            const m = o.opts.get('m')?.[0];
+            if (m !== undefined && m !== file.moduleName(SccsEnv.gName(path))) fail(VAL_EXIT.NAME_MISMATCH, `%M%, -m mismatch`);
+        }
+        return { out, status };
+    }
 }

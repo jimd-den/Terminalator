@@ -1,116 +1,74 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
- * UnexpandCommand - Core Command
- *
- * Convert spaces to tabs.
- *
- * Pillar: The Four-Fold Shield (Strict Architecture)
- * Pillar: The Swift Stream (Performance)
- *
- * Intent:
- * Convert runs of spaces to tabs.
- * Refactored to implement IStructuredCommand for combinatorial scaling.
+ * unexpand - convert spaces to tabs (POSIX): -a (all blanks), -t tablist.
+ * By default only leading blanks are converted (-t implies -a).
  */
-
-import { CommandBase } from '../CommandBase';
-import { CommandCapability } from '../IStructuredCommand';
-import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { CommandResponse } from '../ICommand';
+import { ProcessContext } from '../../entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../entities/Command';
-
 import { FileSystemService } from '../../services/FileSystemService';
+import { CommandCapability } from '../IStructuredCommand';
+import { Utility } from '../shared/Utility';
+import { getopt, readInput } from '../shared/InputFiles';
+import { nextStop, parseTabs } from './ExpandCommand';
 
-export class UnexpandCommand extends CommandBase {
-    public readonly capabilities = [CommandCapability.TRANSFORM];
-    public readonly utility = 'unexpand';
+export class UnexpandCommand extends Utility {
+    readonly utility = 'unexpand';
+    readonly capabilities = [CommandCapability.TRANSFORM];
 
-    constructor(private fs: FileSystemService) { 
-        super();
+    constructor(private fs?: FileSystemService) { super(); }
+
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const { opts, operands, error } = getopt(args, 'at:');
+        if (error) return this.usage(state, error);
+        const tabs = parseTabs(opts.get('t') as string | undefined);
+        if (typeof tabs === 'string') return this.usage(state, tabs);
+        const all = opts.has('a') || opts.has('t');
+
+        let out = '';
+        const errors: string[] = [];
+        for (const f of operands.length ? operands : ['-']) {
+            const input = readInput(context, f);
+            if (!input.ok) { errors.push(input.error); continue; }
+            for (const line of input.data.split(/(?<=\n)/)) out += this.convert(line, tabs, all);
+        }
+        return this.respond(state, out, errors);
     }
 
-    protected async executeInternal(
-        rawArgs: string[],
-        flags: Set<string>,
-        operands: string[],
-        context: ProcessContext,
-        state: TerminalState
-    ): Promise<CommandResponse> {
-        const input = getStdinAsString(context);
-        const all = flags.has('a');
-        const files = operands;
+    private convert(line: string, tabs: { every?: number; stops?: number[] }, all: boolean): string {
+        let out = '';
+        let col = 0;
+        let pending = ''; // blanks not yet emitted
+        let pendingStart = 0;
+        let leading = true;
+        const lastStop = tabs.stops ? tabs.stops[tabs.stops.length - 1] : Infinity;
 
-        let content = '';
-        if (files.length > 0) {
-            for (const file of files) {
-                try {
-                    content += this.fs.readFile(this.resolvePath(file, state));
-                } catch (e) {
-                    return { output: `unexpand: ${file}: No such file`, newState: state, exitCode: 1 };
+        for (const ch of line) {
+            const active = leading || all;
+            if ((ch === ' ' || ch === '\t') && active && col < lastStop) {
+                if (pending === '') pendingStart = col;
+                const to = ch === '\t' ? nextStop(col, tabs) : col + 1;
+                pending += ch;
+                col = to;
+                const stop = nextStop(pendingStart, tabs);
+                if (col >= stop && (pending.length > 1 || ch === '\t')) {
+                    // Blanks reached a tab stop: one tab replaces them.
+                    out += '\t';
+                    pending = '';
+                    pendingStart = col;
+                    // Any further stops covered by this run produce more tabs.
+                } else if (col >= stop) {
+                    out += pending;
+                    pending = '';
                 }
+                continue;
             }
-        } else if (input) {
-            content = input;
-        } else {
-            return { output: '', newState: state, exitCode: 0 };
+            out += pending;
+            pending = '';
+            if (ch === '\n') { out += ch; col = 0; leading = true; continue; }
+            if (ch === '\b') col = Math.max(0, col - 1); else col++;
+            leading = false;
+            out += ch;
         }
-
-        const lines = content.split('\n');
-        const output: string[] = [];
-        const tabStop = 8;
-
-        for (const line of lines) {
-            if (!all) {
-                let spaces = 0;
-                while (spaces < line.length && line[spaces] === ' ') {
-                    spaces++;
-                }
-                if (spaces > 0) {
-                    const tabs = Math.floor(spaces / tabStop);
-                    const rem = spaces % tabStop;
-                    output.push('\t'.repeat(tabs) + ' '.repeat(rem) + line.slice(spaces));
-                } else {
-                    output.push(line);
-                }
-            } else {
-                let res = '';
-                let col = 0;
-                let pendingSpaces = 0;
-
-                for (let i = 0; i < line.length; i++) {
-                    const char = line[i];
-                    if (char === ' ') {
-                        pendingSpaces++;
-                        col++;
-                        if (col % tabStop === 0 && pendingSpaces > 1) {
-                            res += '\t';
-                            pendingSpaces = 0;
-                        }
-                    } else {
-                        res += ' '.repeat(pendingSpaces);
-                        pendingSpaces = 0;
-                        res += char;
-                        col++;
-                        if (char === '\t') {
-                            col = Math.ceil((col + 1) / tabStop) * tabStop;
-                        } else if (char === '\b') {
-                            col--;
-                        }
-                    }
-                }
-                res += ' '.repeat(pendingSpaces);
-                output.push(res);
-            }
-        }
-
-        return {
-            output: output.join('\n'),
-            newState: state,
-            exitCode: 0
-        };
-    }
-
-    private resolvePath(path: string, state: TerminalState): string {
-        if (path.startsWith('/')) return path;
-        return state.currentDirectory === '/' ? `/${path}` : `${state.currentDirectory}/${path}`;
+        return out + pending;
     }
 }

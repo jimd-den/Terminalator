@@ -18,7 +18,7 @@ import { GameEventType } from '../../../domain/services/SimulationBus';
 export const HashRateMonitor: React.FC = () => {
     const { economyService } = useEconomy();
     const { bus } = useProcess();
-    const { theme } = useTheme();
+    const { theme, settings } = useTheme();
     const colors = theme.colors;
 
     const [hashRate, setHashRate] = useState(1.0);
@@ -50,15 +50,15 @@ export const HashRateMonitor: React.FC = () => {
             alignItems: 'center',
         },
         label: {
-            fontFamily: THEME.typography.fontFamily,
+            fontFamily: settings.fontFamily,
             fontSize: 10,
-            color: '#000',
+            color: colors.text.inverted,
             fontWeight: 'bold',
         },
         value: {
             fontSize: 14,
-            color: '#000',
-            fontFamily: THEME.typography.fontFamily,
+            color: colors.text.inverted,
+            fontFamily: settings.fontFamily,
             fontWeight: 'bold',
         }
     });

@@ -84,7 +84,7 @@ export class PathResolver {
                 const isLast = (i === parts.length - 1);
                 const shouldFollow = !isLast || followSymlinks;
 
-                if (shouldFollow && (inode.mode & S_IFLNK) && inode.target) {
+                if (shouldFollow && ((inode.mode & 0o170000) === S_IFLNK) && inode.target) {
                     if (symlinkCount++ > MAX_SYMLINKS) throw new Error('Too many levels of symbolic links');
 
                     const target = inode.target;

@@ -29,6 +29,9 @@ import { DirectoryService } from './filesystem/DirectoryService';
 // Local Alias for backward compat
 type Dentry = IFileSystemNode;
 
+/** Process credentials: user, primary group and supplementary groups. */
+export type Credentials = { uid: number, gid: number, groups: number[] };
+
 export class FileSystemService {
     private pathResolver: PathResolver;
     private permissionService: PermissionService;
@@ -36,6 +39,10 @@ export class FileSystemService {
     private fileOps: FileOperationService;
     private dirService: DirectoryService;
     private writeListeners: ((path: string, content: string | Uint8Array, actingUser?: { uid: number, gid: number, groups: number[] }) => void)[] = [];
+    /** Credentials of the process using this view (see `asUser`). Undefined = kernel/system access. */
+    private credentials?: Credentials;
+    /** File mode creation mask of the bound process (applied to default modes). */
+    private umask = 0o022;
 
     constructor(private fs: FileSystem) {
         // Dependency Injection / Composition Root for FS Sub-system
@@ -72,12 +79,38 @@ export class FileSystemService {
         return this.fs;
     }
 
+    /**
+     * A view of this file system bound to a process's credentials: every
+     * operation that is not given explicit credentials is permission-checked
+     * as `user`, and new files are owned by them. The view shares all state.
+     */
+    asUser(user: Credentials, umask = 0o022): FileSystemService {
+        const view = Object.create(this) as FileSystemService;
+        view.credentials = user;
+        view.umask = umask;
+        return view;
+    }
+
+    /** The credentials in effect (explicit argument, else the bound process). */
+    private who(actingUser?: Credentials): Credentials | undefined {
+        return actingUser ?? this.credentials;
+    }
+
+    /** Creating or removing an entry needs write+search permission on the directory. */
+    private checkParentWritable(parent: Dentry, actingUser?: Credentials): void {
+        const who = this.who(actingUser);
+        if (!who) return;
+        if (!this.permissionService.hasAccess(parent.inodeId, who, 2) || !this.permissionService.hasAccess(parent.inodeId, who, 1)) {
+            throw new Error('Permission denied');
+        }
+    }
+
     // ==========================================
     // PATH RESOLUTION (Delegated to PathResolver)
     // ==========================================
 
     resolve(path: string, cwd: string = '/', followSymlinks: boolean = true, actingUser?: { uid: number, gid: number, groups: number[] }): Dentry | null {
-        return this.pathResolver.resolve(this.fs.root, path, cwd, followSymlinks, actingUser);
+        return this.pathResolver.resolve(this.fs.root, path, cwd, followSymlinks, this.who(actingUser));
     }
 
     resolveAbsolutePath(path: string, cwd: string): string {
@@ -103,16 +136,17 @@ export class FileSystemService {
     readFile(path: string, cwd: string = '/', actingUser?: { uid: number, gid: number, groups: number[] }): string {
         const dentry = this.resolve(path, cwd, true, actingUser);
         if (!dentry) throw new Error(`${path}: No such file or directory`);
-        return this.fileOps.readFile(dentry, actingUser);
+        return this.fileOps.readFile(dentry, this.who(actingUser));
     }
 
     readFileBuffer(path: string, cwd: string = '/', actingUser?: { uid: number, gid: number, groups: number[] }): Uint8Array {
         const dentry = this.resolve(path, cwd, true, actingUser);
         if (!dentry) throw new Error(`${path}: No such file or directory`);
-        return this.fileOps.readFileBuffer(dentry, actingUser);
+        return this.fileOps.readFileBuffer(dentry, this.who(actingUser));
     }
 
-    writeFile(path: string, content: string | Uint8Array, modeStr: 'w' | 'a' = 'w', uid: number = 1000, gid: number = 1000, cwd: string = '/', actingUser?: { uid: number, gid: number, groups: number[] }): Dentry {
+    writeFile(path: string, content: string | Uint8Array, modeStr: 'w' | 'a' = 'w', uid?: number, gid?: number, cwd: string = '/', actingUser?: { uid: number, gid: number, groups: number[] }): Dentry {
+        actingUser = this.who(actingUser);
         // We need to resolve first to see if it exists
         let dentry = this.resolve(path, cwd, true, actingUser);
 
@@ -141,7 +175,8 @@ export class FileSystemService {
             // Wait, I didn't add parent perm check to FileOps.createFile?
             // I should fix that. But let's proceed with functionality.
 
-            dentry = this.fileOps.createFile(parent as DirectoryNode, name, 0o644, uid, gid);
+            this.checkParentWritable(parent, actingUser);
+            dentry = this.fileOps.createFile(parent as DirectoryNode, name, 0o666 & ~this.umask, uid ?? actingUser?.uid ?? 1000, gid ?? actingUser?.gid ?? 1000);
         }
 
         this.fileOps.writeFile(dentry, content, modeStr, actingUser);
@@ -153,7 +188,10 @@ export class FileSystemService {
         return dentry;
     }
 
-    createFile(path: string, mode: number = 0o644, uid: number = 1000, gid: number = 1000, cwd: string = '/'): Dentry {
+    createFile(path: string, mode?: number, uid?: number, gid?: number, cwd: string = '/'): Dentry {
+        mode ??= 0o666 & ~this.umask;
+        uid ??= this.credentials?.uid ?? 1000;
+        gid ??= this.credentials?.gid ?? 1000;
         // Similar parent resolution logic
         const absPath = this.resolveAbsolutePath(path, cwd);
         const parentPath = absPath.substring(0, absPath.lastIndexOf('/')) || '/';
@@ -161,11 +199,15 @@ export class FileSystemService {
 
         const parent = this.resolve(parentPath, cwd, true); // Root/System usage usually defaults to full access
         if (!parent || !parent.isDirectory()) throw new Error(`Cannot create '${path}': Parent directory not found`);
+        this.checkParentWritable(parent);
 
         return this.fileOps.createFile(parent as DirectoryNode, name, mode, uid, gid);
     }
 
-    mkfifo(path: string, mode: number = 0o644, uid: number = 1000, gid: number = 1000, cwd: string = '/'): Dentry {
+    mkfifo(path: string, mode?: number, uid?: number, gid?: number, cwd: string = '/'): Dentry {
+        mode ??= 0o666 & ~this.umask;
+        uid ??= this.credentials?.uid ?? 1000;
+        gid ??= this.credentials?.gid ?? 1000;
         const absPath = this.resolveAbsolutePath(path, cwd);
         const parentPath = absPath.substring(0, absPath.lastIndexOf('/')) || '/';
         const name = absPath.substring(absPath.lastIndexOf('/') + 1);
@@ -176,11 +218,8 @@ export class FileSystemService {
         return this.fileOps.mkfifo(parent as DirectoryNode, name, mode, uid, gid);
     }
 
-    // ==========================================
-    // DIRECTORY OPERATIONS (Delegated to DirService)
-    // ==========================================
-
-    mkdir(path: string, mode: number = 0o755, uid: number = 1000, gid: number = 1000, cwd: string = '/'): Dentry {
+    /** mknod(2): creates a device special file; `mode` includes the file type bits. */
+    mknod(path: string, mode: number, rdev: number, uid: number = 0, gid: number = 0, cwd: string = '/'): Dentry {
         const absPath = this.resolveAbsolutePath(path, cwd);
         const parentPath = absPath.substring(0, absPath.lastIndexOf('/')) || '/';
         const name = absPath.substring(absPath.lastIndexOf('/') + 1);
@@ -188,21 +227,46 @@ export class FileSystemService {
         const parent = this.resolve(parentPath, cwd, true);
         if (!parent || !parent.isDirectory()) throw new Error(`Cannot create '${path}': Parent directory not found`);
 
+        return this.fileOps.mknod(parent as DirectoryNode, name, mode, rdev, uid, gid);
+    }
+
+    // ==========================================
+    // DIRECTORY OPERATIONS (Delegated to DirService)
+    // ==========================================
+
+    mkdir(path: string, mode?: number, uid?: number, gid?: number, cwd: string = '/'): Dentry {
+        mode ??= 0o777 & ~this.umask;
+        uid ??= this.credentials?.uid ?? 1000;
+        gid ??= this.credentials?.gid ?? 1000;
+        const absPath = this.resolveAbsolutePath(path, cwd);
+        const parentPath = absPath.substring(0, absPath.lastIndexOf('/')) || '/';
+        const name = absPath.substring(absPath.lastIndexOf('/') + 1);
+
+        const parent = this.resolve(parentPath, cwd, true);
+        if (!parent || !parent.isDirectory()) throw new Error(`Cannot create '${path}': Parent directory not found`);
+        this.checkParentWritable(parent);
+
         return this.dirService.mkdir(parent as DirectoryNode, name, mode, uid, gid);
     }
 
-    mkdirp(path: string, mode: number = 0o755, uid: number = 1000, gid: number = 1000, cwd: string = '/'): Dentry {
+    mkdirp(path: string, mode?: number, uid?: number, gid?: number, cwd: string = '/'): Dentry {
+        mode ??= 0o777 & ~this.umask;
+        uid ??= this.credentials?.uid ?? 1000;
+        gid ??= this.credentials?.gid ?? 1000;
         return this.dirService.mkdirp(path, mode, uid, gid, cwd);
     }
 
-    createDirectory(path: string, mode: number = 0o755, uid: number = 1000, gid: number = 1000, cwd: string = '/'): Dentry {
+    createDirectory(path: string, mode?: number, uid?: number, gid?: number, cwd: string = '/'): Dentry {
+        mode ??= 0o777 & ~this.umask;
+        uid ??= this.credentials?.uid ?? 1000;
+        gid ??= this.credentials?.gid ?? 1000;
         return this.mkdirp(path, mode, uid, gid, cwd);
     }
 
     deleteNode(path: string, cwd: string = '/', actingUser?: { uid: number, gid: number, groups: number[] }): void {
         const dentry = this.resolve(path, cwd, false, actingUser);
         if (!dentry) throw new Error(`rm: cannot remove '${path}': No such file or directory`);
-        this.dirService.deleteNode(dentry, actingUser);
+        this.dirService.deleteNode(dentry, this.who(actingUser));
     }
 
     // ==========================================
@@ -212,13 +276,13 @@ export class FileSystemService {
     chmod(path: string, mode: number, cwd: string = '/', actingUser?: { uid: number, gid: number, groups: number[] }): void {
         const dentry = this.resolve(path, cwd, true, actingUser);
         if (!dentry) throw new Error(`chmod: cannot access '${path}': No such file or directory`);
-        this.ownershipService.chmod(dentry, mode, actingUser);
+        this.ownershipService.chmod(dentry, mode, this.who(actingUser));
     }
 
     chown(path: string, uid: number, gid: number, cwd: string = '/', actingUser?: { uid: number, gid: number, groups: number[] }): void {
         const dentry = this.resolve(path, cwd, true, actingUser);
         if (!dentry) throw new Error(`chown: cannot access '${path}': No such file or directory`);
-        this.ownershipService.chown(dentry, uid, gid, actingUser);
+        this.ownershipService.chown(dentry, uid, gid, this.who(actingUser));
     }
 
     // ==========================================
@@ -232,7 +296,7 @@ export class FileSystemService {
     isDirectory(dentry: Dentry): boolean {
         // Pure state check, fine to keep here or move to Dentry extension
         const inode = this.getInode(dentry.inodeId);
-        return inode ? (inode.mode & S_IFDIR) === S_IFDIR : false;
+        return inode ? (inode.mode & S_IFMT) === S_IFDIR : false;
     }
 
     getUsage(): number {
@@ -251,9 +315,10 @@ export class FileSystemService {
             mtime: inode.mtime,
             atime: inode.atime,
             ctime: inode.ctime,
-            isDirectory: (inode.mode & S_IFDIR) === S_IFDIR,
-            isFile: (inode.mode & S_IFREG) === S_IFREG,
-            isSymlink: (inode.mode & S_IFLNK) === S_IFLNK
+            // Compare the whole type field: S_IFLNK shares bits with S_IFREG and S_IFDIR.
+            isDirectory: (inode.mode & S_IFMT) === S_IFDIR,
+            isFile: (inode.mode & S_IFMT) === S_IFREG,
+            isSymlink: (inode.mode & S_IFMT) === S_IFLNK
         };
     }
 
@@ -274,8 +339,9 @@ export class FileSystemService {
 
         const parentDir = parent as DirectoryNode;
         if (parentDir.getChild(name)) throw new Error('File exists');
+        this.checkParentWritable(parentDir);
 
-        const inode = this.fs.inodeTable.allocate(S_IFLNK | 0o777, uid, gid);
+        const inode = this.fs.inodeTable.allocate(S_IFLNK | 0o777, this.credentials?.uid ?? uid, this.credentials?.gid ?? gid);
         const newNode = new FileNode(name, inode.id, parentDir);
         parentDir.addChild(newNode);
 
@@ -290,7 +356,7 @@ export class FileSystemService {
         const dentry = this.resolve(path, cwd, false);
         if (!dentry) throw new Error(`readlink: cannot access '${path}': No such file or directory`);
         const inode = this.getInode(dentry.inodeId)!;
-        if (!(inode.mode & S_IFLNK)) throw new Error(`readlink: '${path}': Invalid argument`);
+        if ((inode.mode & S_IFMT) !== S_IFLNK) throw new Error(`readlink: '${path}': Invalid argument`);
         return inode.target || '';
     }
 
@@ -300,7 +366,7 @@ export class FileSystemService {
         if (!oldDentry) throw new Error(`link: cannot access '${oldPath}': No such file or directory`);
         const inode = this.getInode(oldDentry.inodeId);
         if (!inode) throw new Error('Corrupt filesystem');
-        if (inode.mode & S_IFDIR) throw new Error(`link: '${oldPath}': Hard link to directory not allowed`);
+        if ((inode.mode & S_IFMT) === S_IFDIR) throw new Error(`link: '${oldPath}': Hard link to directory not allowed`);
 
         const absPath = this.resolveAbsolutePath(newPath, cwd);
         const parentPath = absPath.substring(0, absPath.lastIndexOf('/')) || '/';
@@ -311,6 +377,7 @@ export class FileSystemService {
 
         const parentDir = parent as DirectoryNode;
         if (parentDir.getChild(name)) throw new Error(`link: failed to create link '${newPath}': File exists`);
+        this.checkParentWritable(parentDir);
 
         const dentry = new FileNode(name, inode.id, parentDir);
         parentDir.addChild(dentry);
@@ -339,6 +406,8 @@ export class FileSystemService {
 
         const targetParentDir = newParent as DirectoryNode;
         const oldParent = oldDentry.parent as DirectoryNode;
+        this.checkParentWritable(oldParent);
+        this.checkParentWritable(targetParentDir);
 
         oldParent.removeChild(oldDentry.name);
         oldDentry.parent = targetParentDir;

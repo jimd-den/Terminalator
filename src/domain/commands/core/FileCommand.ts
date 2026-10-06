@@ -1,4 +1,3 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * FileCommand - Core Command
  *
@@ -23,7 +22,6 @@ export class FileCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = getStdinAsString(context);
         if (args.length === 0) {
             return { output: 'usage: file file...', newState: state, exitCode: 1 };
         }
@@ -34,14 +32,14 @@ export class FileCommand implements ICommand {
         for (const arg of args) {
             if (arg.startsWith('-')) continue; // Ignore flags for now
 
-            const dentry = this.fs.resolve(arg, state.currentDirectory);
+            const dentry = context.fileSystemService.resolve(arg, state.currentDirectory);
             if (!dentry) {
                 results.push(`${arg}: cannot open '${arg}' (No such file or directory)`);
                 finalExitCode = 1;
                 continue;
             }
 
-            const inode = this.fs.getInode(dentry.inodeId);
+            const inode = context.fileSystemService.getInode(dentry.inodeId);
             if (!inode) {
                 results.push(`${arg}: error reading inode`);
                 finalExitCode = 1;

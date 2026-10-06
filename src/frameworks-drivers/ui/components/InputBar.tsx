@@ -69,7 +69,7 @@ export const InputBar: React.FC<InputBarProps> = ({
             fontSize: THEME.typography.fontSize.lg,
         },
         ghostTextStyle: {
-            color: '#00FFFF', // Cyan
+            color: colors.secondary,
             opacity: 0.3,
         },
     });

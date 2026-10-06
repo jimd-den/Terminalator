@@ -10,12 +10,17 @@ import { CommandResponse } from '../entities/Command';
 import { TutorEngine, Lesson } from '../entities/TutorEngine';
 import { NPC } from '../entities/NPC';
 
+import { SimulationBus } from '../services/SimulationBus';
+import { TutorObserver } from '../services/tutor/TutorObserver';
+
 export interface IGameManager {
     tutorEngine: TutorEngine;
+    getSimulationBus(): SimulationBus;
+    getTutorObserver(): TutorObserver;
     spawnNPCEvent(): Promise<Mission | null> | Mission | null;
     getActiveMissions(): Mission[];
     getActiveNPCs(): NPC[];
-    startMission(id: string, currentState?: TerminalState): void;
+    startMission(id: string, currentState?: TerminalState): Promise<void>;
     abandonMission(id: string): void;
     onCommandExecuted(state: TerminalState, response: CommandResponse, prevFsContext?: string): void;
     startTutor(lessonId: string): void;

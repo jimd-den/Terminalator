@@ -10,7 +10,7 @@
 
 import React from 'react';
 import { View } from 'react-native';
-import { OutputContainer } from './OutputContainer';
+import { OutputContainer, WidgetContext } from './OutputContainer';
 import { InputBar } from './InputBar';
 import { FKeyBar, FKeyDef } from './FKeyBar';
 import { ContextHint } from './ContextHint';
@@ -29,6 +29,7 @@ interface ShellViewProps {
     tutorEmotion: any;
     crashingIndices: number[];
     contextualHint: string | null;
+    widgetContext: WidgetContext;
 
     // Actions
     onRefocus: () => void;
@@ -117,6 +118,7 @@ export const useShellView = (props: ShellViewProps) => {
                 onSave={props.onSave}
                 onMinimize={props.onMinimize}
                 onDelete={props.onDelete}
+                widgetContext={props.widgetContext}
             />
         ),
         middleContent: <FKeyBar keys={keys} />,

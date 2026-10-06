@@ -7,7 +7,7 @@ import { LessonRegistry } from './LessonRegistry';
 import { TutorAction, TutorProgressionResult } from '../interfaces/ITutorService';
 import { StrategyRegistry } from './mission-strategies/StrategyRegistry';
 
-export { TutorAction, TutorProgressionResult };
+export type { TutorAction, TutorProgressionResult };
 
 /**
  * TutorService - Domain Service

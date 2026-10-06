@@ -1,175 +1,108 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
- * JoinCommand - Core Command
- *
- * Join lines of two files on a common field.
- *
- * Pillar: The Four-Fold Shield (Strict Architecture)
- * Pillar: The Swift Stream (Performance)
- *
- * Intent:
- * Relational join on text files.
+ * join - relational database operator (POSIX):
+ * `join [-a 1|2] [-e string] [-o list] [-t char] [-v 1|2] [-1 field] [-2 field] file1 file2`
  */
-
-import { ICommand } from '../ICommand';
-import { ProcessContext } from '../../../domain/entities/ProcessContext';
-import { FileSystemService } from '../../../domain/services/FileSystemService';
+import { CommandResponse } from '../ICommand';
+import { ProcessContext } from '../../entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../entities/Command';
+import { FileSystemService } from '../../services/FileSystemService';
+import { CommandCapability } from '../IStructuredCommand';
+import { Utility } from '../shared/Utility';
+import { readInput } from '../shared/InputFiles';
 
-import { FileSystem } from '../../entities/FileSystem';
+type Spec = { file: 0 | 1 | 2; field: number };
 
-interface JoinOptions {
-    field1: number;
-    field2: number;
-    separator: string;
-    outputFormat: string | null;
-    showUnpaired1: boolean;
-    showUnpaired2: boolean;
-    ignoreCase: boolean;
-    emptyReplace: string;
-}
+export class JoinCommand extends Utility {
+    readonly utility = 'join';
+    readonly capabilities = [CommandCapability.TRANSFORM];
 
-export class JoinCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+    constructor(private fs?: FileSystemService) { super(); }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = getStdinAsString(context);
-        const options: JoinOptions = {
-            field1: 1,
-            field2: 1,
-            separator: '',
-            outputFormat: null,
-            showUnpaired1: false,
-            showUnpaired2: false,
-            ignoreCase: false,
-            emptyReplace: ''
-        };
-
-        const files: string[] = [];
-        let skipNext = false;
+        const unpaired = new Set<number>();
+        const only = new Set<number>();
+        let empty: string | undefined;
+        let format: Spec[] | undefined;
+        let sep: string | undefined;
+        let ignoreCase = false;
+        const field = [1, 1];
+        const operands: string[] = [];
 
         for (let i = 0; i < args.length; i++) {
-            const arg = args[i];
-            if (arg === '-1') {
-                options.field1 = parseInt(args[++i]);
-            } else if (arg === '-2') {
-                options.field2 = parseInt(args[++i]);
-            } else if (arg === '-t') {
-                options.separator = args[++i];
-            } else if (arg === '-o') {
-                options.outputFormat = args[++i];
-            } else if (arg === '-a') {
-                const filenum = args[++i];
-                if (filenum === '1') options.showUnpaired1 = true;
-                if (filenum === '2') options.showUnpaired2 = true;
-            } else if (arg === '-i') {
-                options.ignoreCase = true;
-            } else if (arg === '-e') {
-                options.emptyReplace = args[++i];
-            } else if (!arg.startsWith('-')) {
-                files.push(arg);
+            const a = args[i];
+            const val = () => (a.length > 2 ? a.substring(2) : args[++i]);
+            if (a === '--') { operands.push(...args.slice(i + 1)); break; }
+            if (!a.startsWith('-') || a === '-') { operands.push(a); continue; }
+            switch (a[1]) {
+                case 'i': ignoreCase = true; break;
+                case 'a': unpaired.add(Number(val())); break;
+                case 'v': only.add(Number(val())); break;
+                case 'e': empty = val(); break;
+                case 't': sep = val(); break;
+                case '1': field[0] = Number(val()); break;
+                case '2': field[1] = Number(val()); break;
+                case 'j': field[0] = field[1] = Number(val()); break;
+                case 'o': {
+                    const list: string[] = [val()];
+                    while (args[i + 1] !== undefined && /^(0|[12]\.[0-9]+)([, ]|$)/.test(args[i + 1]) && operands.length + (args.length - i - 1) > 2) list.push(args[++i]);
+                    format = list.join(',').split(/[, ]+/).filter(Boolean).map(s => {
+                        if (s === '0') return { file: 0, field: 0 } as Spec;
+                        const m = /^([12])\.([0-9]+)$/.exec(s);
+                        if (!m) throw new Error(`invalid field specifier: '${s}'`);
+                        return { file: Number(m[1]) as 1 | 2, field: Number(m[2]) };
+                    });
+                    break;
+                }
+                default: return this.usage(state, `invalid option -- '${a[1]}'`);
             }
         }
+        if (operands.length !== 2) return this.usage(state, operands.length < 2 ? 'missing operand' : `extra operand '${operands[2]}'`);
 
-        if (files.length !== 2) {
-            return { output: 'join: missing operand', newState: state, exitCode: 1 };
+        const read = (f: string) => readInput(context, f);
+        const r1 = read(operands[0]);
+        const r2 = operands[1] === '-' && operands[0] === '-' ? r1 : read(operands[1]);
+        if (!r1.ok) return this.respond(state, '', [r1.error]);
+        if (!r2.ok) return this.respond(state, '', [r2.error]);
+
+        const split = (line: string) => (sep !== undefined ? line.split(sep) : line.trim().split(/[ \t]+/));
+        const rows = (data: string) => data.split('\n').filter((l, k, all) => k < all.length - 1 || l !== '').map(split);
+        const a = rows(r1.data), b = rows(r2.data);
+        const key = (row: string[], n: number) => {
+            const k = row[field[n] - 1] ?? '';
+            return ignoreCase ? k.toLowerCase() : k;
+        };
+        const outSep = sep ?? ' ';
+
+        const render = (x: string[] | null, y: string[] | null): string => {
+            const k = x ? x[field[0] - 1] ?? '' : y![field[1] - 1] ?? '';
+            if (format) {
+                return format.map(s => {
+                    if (s.file === 0) return k;
+                    const row = s.file === 1 ? x : y;
+                    const v = row ? row[s.field - 1] : undefined;
+                    return v === undefined ? empty ?? '' : v;
+                }).join(outSep);
+            }
+            const rest = (row: string[] | null, n: number) => (row ? row.filter((_, i) => i !== field[n] - 1) : []);
+            return [k, ...rest(x, 0), ...rest(y, 1)].map(v => (v === '' && empty !== undefined ? empty : v)).join(outSep);
+        };
+
+        let out = '';
+        let i = 0, j = 0;
+        const printA = unpaired.has(1) || only.has(1);
+        const printB = unpaired.has(2) || only.has(2);
+        const showPairs = only.size === 0;
+        while (i < a.length || j < b.length) {
+            const ka = i < a.length ? key(a[i], 0) : null;
+            const kb = j < b.length ? key(b[j], 1) : null;
+            if (kb === null || (ka !== null && ka < kb)) { if (printA) out += render(a[i], null) + '\n'; i++; continue; }
+            if (ka === null || kb < ka) { if (printB) out += render(null, b[j]) + '\n'; j++; continue; }
+            // Equal keys: cartesian product of the runs.
+            let i2 = i; while (i2 < a.length && key(a[i2], 0) === ka) i2++;
+            let j2 = j; while (j2 < b.length && key(b[j2], 1) === kb) j2++;
+            if (showPairs) for (let x = i; x < i2; x++) for (let y = j; y < j2; y++) out += render(a[x], b[y]) + '\n';
+            i = i2; j = j2;
         }
-
-        try {
-            const content1 = this.readFile(files[0], state, input);
-            const content2 = this.readFile(files[1], state, input);
-
-            const lines1 = content1.split('\n').filter(l => l !== '');
-            const lines2 = content2.split('\n').filter(l => l !== '');
-
-            const splitLine = (line: string): string[] => {
-                if (options.separator) {
-                    return line.split(options.separator);
-                } else {
-                    return line.trim().split(/\s+/);
-                }
-            };
-
-            const map2 = new Map<string, string[]>();
-            for (const line of lines2) {
-                const fields = splitLine(line);
-                if (fields.length >= options.field2) {
-                    const key = fields[options.field2 - 1];
-                    const k = options.ignoreCase ? key.toLowerCase() : key;
-                    if (!map2.has(k)) map2.set(k, []);
-                    map2.get(k)!.push(line);
-                }
-            }
-
-            const output: string[] = [];
-            const matchedKeys2 = new Set<string>();
-
-            for (const line1 of lines1) {
-                const fields1 = splitLine(line1);
-                let key = '';
-                if (fields1.length >= options.field1) {
-                    key = fields1[options.field1 - 1];
-                }
-                const lookupKey = options.ignoreCase ? key.toLowerCase() : key;
-
-                if (map2.has(lookupKey)) {
-                    matchedKeys2.add(lookupKey);
-                    const matches = map2.get(lookupKey)!;
-                    for (const line2 of matches) {
-                        const fields2 = splitLine(line2);
-                        let outLine = '';
-                        const outSep = options.separator || ' ';
-
-                        if (options.outputFormat) {
-                            const rest1 = fields1.filter((_, idx) => idx !== options.field1 - 1).join(outSep);
-                            const rest2 = fields2.filter((_, idx) => idx !== options.field2 - 1).join(outSep);
-                            outLine = key + outSep + rest1 + outSep + rest2;
-                        } else {
-                            const rest1 = fields1.filter((_, idx) => idx !== options.field1 - 1).join(outSep);
-                            const rest2 = fields2.filter((_, idx) => idx !== options.field2 - 1).join(outSep);
-                            outLine = key + outSep + rest1 + outSep + rest2;
-                        }
-                        output.push(outLine);
-                    }
-                } else if (options.showUnpaired1) {
-                    output.push(line1);
-                }
-            }
-
-            if (options.showUnpaired2) {
-                for (const line2 of lines2) {
-                    const fields = splitLine(line2);
-                    const key = fields[options.field2 - 1];
-                    const k = options.ignoreCase ? key.toLowerCase() : key;
-                    if (!matchedKeys2.has(k)) {
-                        output.push(line2);
-                    }
-                }
-            }
-
-            return {
-                output: output.join('\n'),
-                newState: state,
-                exitCode: 0
-            };
-
-        } catch (e: any) {
-            if (e.message.includes('No such file')) {
-                return { output: `join: ${files.join(' ')}: No such file or directory`, newState: state, exitCode: 1 };
-            }
-            return { output: `join: error: ${e.message}`, newState: state, exitCode: 1 };
-        }
-    }
-
-    private readFile(pathStr: string, state: TerminalState, input?: string): string {
-        if (pathStr === '-') return input || '';
-        const path = this.resolvePath(pathStr, state);
-        return this.fs.readFile(path);
-    }
-
-    private resolvePath(path: string, state: TerminalState): string {
-        if (path.startsWith('/')) return path;
-        return state.currentDirectory === '/' ? `/${path}` : `${state.currentDirectory}/${path}`;
+        return this.respond(state, out);
     }
 }

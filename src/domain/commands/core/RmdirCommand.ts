@@ -53,7 +53,7 @@ export class RmdirCommand extends CommandBase {
         let cumulativeOutput = '';
 
         for (const target of operands) {
-            const result = this.handleOperand(target, parents, state.currentDirectory);
+            const result = this.handleOperand(context.fileSystemService, target, parents, state.currentDirectory);
             if (result.exitCode !== 0) {
                 overallExitCode = 1;
                 cumulativeOutput += result.output;
@@ -67,14 +67,14 @@ export class RmdirCommand extends CommandBase {
         };
     }
 
-    private handleOperand(target: string, parents: boolean, cwd: string): { output: string, exitCode: number } {
+    private handleOperand(fs: FileSystemService, target: string, parents: boolean, cwd: string): { output: string, exitCode: number } {
         const absolutePath = this.resolveAbsolutePath(target, cwd);
 
         if (parents) {
             const pathsToRemoval = this.getParentPaths(absolutePath);
             for (const path of pathsToRemoval) {
                 try {
-                    this.performRemoval(path);
+                    this.performRemoval(fs, path);
                 } catch (e: any) {
                     if (path === absolutePath) {
                         return { output: `rmdir: failed to remove '${target}': ${e.message}\n`, exitCode: 1 };
@@ -84,7 +84,7 @@ export class RmdirCommand extends CommandBase {
             }
         } else {
             try {
-                this.performRemoval(absolutePath);
+                this.performRemoval(fs, absolutePath);
             } catch (e: any) {
                 return { output: `rmdir: failed to remove '${target}': ${e.message}\n`, exitCode: 1 };
             }
@@ -93,14 +93,14 @@ export class RmdirCommand extends CommandBase {
         return { output: '', exitCode: 0 };
     }
 
-    private performRemoval(path: string): void {
-        const node = this.fs.resolve(path);
+    private performRemoval(fs: FileSystemService, path: string): void {
+        const node = fs.resolve(path);
         if (!node) {
             throw new Error('No such file or directory');
         }
 
-        const inode = this.fs.getInode(node.inodeId);
-        if (!inode || !(inode.mode & S_IFDIR)) {
+        const inode = fs.getInode(node.inodeId);
+        if (!inode || (inode.mode & 0o170000) !== S_IFDIR) {
             throw new Error('Not a directory');
         }
 
@@ -113,7 +113,7 @@ export class RmdirCommand extends CommandBase {
             throw new Error('Operation not permitted');
         }
 
-        this.fs.deleteNode(path);
+        fs.deleteNode(path);
     }
 
     private resolveAbsolutePath(path: string, cwd: string): string {

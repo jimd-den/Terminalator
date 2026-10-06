@@ -44,6 +44,7 @@ export interface Inode {
     links: number;   // Hard link count
     content: string | Uint8Array | Map<string, number> | null;    // string/buffer for files, Map for dirs, null for devs
     target?: string; // For symlinks
+    rdev?: number;   // Device number (major << 8 | minor) for character/block devices
 }
 
 // Dentry represents a node in the directory tree.

@@ -1,4 +1,3 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * EchoCommand - Core Command
  *
@@ -16,6 +15,7 @@ import { getStdinAsString } from '../../entities/ProcessContext';
  */
 
 import { ICommand } from '../ICommand';
+import { markByte, toByteString } from './PrintfCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
@@ -57,7 +57,7 @@ export const processEscapeSequences = (input: string): { result: string, suppres
                         j++;
                     }
                     if (octalStr.length > 0) {
-                        result += String.fromCharCode(parseInt(octalStr, 8));
+                        result += markByte(parseInt(octalStr, 8) & 0xff);
                         i = j - 1;
                     } else {
                         // Just \0
@@ -87,7 +87,6 @@ export class EchoCommand implements ICommand {
      * Executes the echo command.
      */
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = getStdinAsString(context);
         const timestamp = new Date().toISOString();
         this.log(`[${timestamp}] EchoCommand.execute(args=${JSON.stringify(args)})`);
 
@@ -117,7 +116,8 @@ export class EchoCommand implements ICommand {
 
         this.log(`[${new Date().toISOString()}] EchoCommand.execute returns exitCode=0`);
         return {
-            output: finalOutput,
+            output: toByteString(finalOutput),
+            binary: true,
             newState: state,
             exitCode: 0
         };

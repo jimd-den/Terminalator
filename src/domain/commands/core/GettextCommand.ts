@@ -1,82 +1,137 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
- * @file GettextCommand.ts
- * @description The 'gettext' command. Retrieve text string from the message database.
+ * gettext - retrieve text string from messages object (POSIX, GNU gettext):
+ *   gettext [-d textdomain] [-c context] [-e|-E] [[textdomain] msgid]
+ *   gettext [-d textdomain] [-c context] [-e|-E] [-n] -s [msgid]...
+ * The domain defaults to $TEXTDOMAIN; catalogs are looked up under
+ * $TEXTDOMAINDIR (default /usr/share/locale) for the LANGUAGE / LC_ALL /
+ * LC_MESSAGES / LANG languages. Untranslated text is printed as is.
  */
-import { ICommand, CommandResponse } from '../ICommand';
-import { ProcessContext } from '../../../domain/entities/ProcessContext';
-import { FileSystemService } from '../../../domain/services/FileSystemService';
+import { CommandResponse } from '../ICommand';
+import { ProcessContext } from '../../entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
+import { Utility } from '../shared/Utility';
+import { translate } from '../shared/MessageCatalog';
 
-export class GettextCommand implements ICommand {
-    constructor() { }
+/** Options shared by gettext and ngettext. */
+export interface GettextOptions {
+    domain?: string;
+    context?: string;
+    escapes: boolean;
+    noNewline: boolean;
+    echo: boolean;
+    operands: string[];
+}
 
-    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = getStdinAsString(context);
-        let expand = false;
-        let noNewline = false; // standard doesn't strictly specify -n for gettext but it's common in echo/printf. 
-        // Actually gettext usually just outputs the string.
-        // Wait, `gettext [text_domain] msgid`
-        // Flags: -d domain, -e (enable expansion of escapes).
-
-        const operands: string[] = [];
-        let domain = '';
-
-        for (let i = 0; i < args.length; i++) {
-            const arg = args[i];
-            if (arg === '-e') {
-                expand = true;
-            } else if (arg === '-d') {
-                if (i + 1 < args.length) {
-                    domain = args[++i];
-                }
-            } else if (arg.startsWith('-')) {
-                // POSIX gettext doesn't strictly specify many flags besides -d?
-                // Actually standard is: gettext [domain] msgid
-                // -e is an extension in some versions (GNU).
-            } else {
-                operands.push(arg);
+/**
+ * Parses the gettext/ngettext command line; options end at the first operand. Returns an error message for an invalid option.
+ */
+export function parseGettextArgs(args: string[], allowEcho: boolean): GettextOptions | { error: string } | { help: true } | { version: true } {
+    const o: GettextOptions = { escapes: false, noNewline: false, echo: false, operands: [] };
+    const shorts = allowEcho ? 'd:c:eEnsh' : 'd:c:eEh';
+    for (let i = 0; i < args.length; i++) {
+        const a = args[i];
+        if (a === '--') { o.operands.push(...args.slice(i + 1)); break; }
+        if (a.startsWith('--')) {
+            const [name, inline] = a.substring(2).split(/=(.*)/s, 2);
+            const value = () => inline ?? args[++i];
+            if (name === 'help') return { help: true };
+            if (name === 'version') return { version: true };
+            if (name === 'domain') o.domain = value();
+            else if (name === 'context') o.context = value();
+            else return { error: `unrecognized option '${a}'` };
+            continue;
+        }
+        // Option parsing stops at the first operand (getopt "+" mode).
+        if (!a.startsWith('-') || a === '-') { o.operands.push(...args.slice(i)); break; }
+        for (let j = 1; j < a.length; j++) {
+            const c = a[j];
+            const idx = shorts.indexOf(c);
+            if (idx === -1 || c === ':') return c === 'V' ? { version: true } : { error: `invalid option -- '${c}'` };
+            if (shorts[idx + 1] === ':') {
+                const v = j + 1 < a.length ? a.substring(j + 1) : args[++i];
+                if (v === undefined) return { error: `option requires an argument -- '${c}'` };
+                if (c === 'd') o.domain = v; else o.context = v;
+                break;
             }
+            if (c === 'h') return { help: true };
+            if (c === 'e') o.escapes = true;
+            else if (c === 'E') o.escapes = false;
+            else if (c === 'n') o.noNewline = true;
+            else if (c === 's') o.echo = true;
         }
+    }
+    return o;
+}
 
-        if (operands.length === 0) {
-            // "If msgid is not specified... exit >0"
-            return { output: 'gettext: missing operand', newState: state, exitCode: 1 };
+/** GNU gettext's -e escapes: \b \c \f \n \r \t \v \\ and octal \0nn; others stay literal. */
+export function expandGettextEscapes(s: string): { text: string; noNewline: boolean } {
+    let noNewline = false;
+    let text = '';
+    for (let i = 0; i < s.length; i++) {
+        if (s[i] !== '\\' || i + 1 >= s.length) { text += s[i]; continue; }
+        const c = s[i + 1];
+        const simple: Record<string, string> = { b: '\b', f: '\f', n: '\n', r: '\r', t: '\t', v: '\v', '\\': '\\' };
+        if (c in simple) { text += simple[c]; i++; continue; }
+        if (c === 'c') { noNewline = true; i++; continue; }
+        if (/[0-7]/.test(c)) {
+            let j = i + 1;
+            let v = 0;
+            while (j < s.length && j < i + 4 && /[0-7]/.test(s[j])) v = v * 8 + Number(s[j++]);
+            text += String.fromCharCode(v & 0xff);
+            i = j - 1;
+            continue;
         }
+        text += '\\';
+    }
+    return { text, noNewline };
+}
 
-        let msgid = operands[operands.length - 1];
-        // If 2 operands, first is domain? POSIX says:
-        // gettext [domain] msgid
-        // So if 2 args and no -d, arg[0] is domain.
-        if (operands.length > 1) {
-            domain = operands[0];
-            msgid = operands[1];
+export function gettextUsageError(state: TerminalState, name: string, message: string): CommandResponse {
+    return { output: '', stderr: `${name}: ${message}\nTry '${name} --help' for more information.\n`, exitCode: 1, newState: state };
+}
+
+const HELP = `Usage: gettext [OPTION] [[TEXTDOMAIN] MSGID]
+or:    gettext [OPTION] -s [MSGID]...
+
+Display native language translation of a textual message.
+
+  -d, --domain=TEXTDOMAIN   retrieve translated messages from TEXTDOMAIN
+  -c, --context=CONTEXT     specify context for MSGID
+  -e                        enable expansion of some escape sequences
+  -n                        suppress trailing newline
+  -E                        (ignored for compatibility)
+  [TEXTDOMAIN] MSGID        retrieve translated message corresponding
+                            to MSGID from TEXTDOMAIN
+`;
+
+export class GettextCommand extends Utility {
+    readonly utility = 'gettext';
+
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const parsed = parseGettextArgs(args, true);
+        if ('error' in parsed) return gettextUsageError(state, 'gettext', parsed.error);
+        if ('help' in parsed) return this.respond(state, HELP);
+        if ('version' in parsed) return this.respond(state, 'gettext (GNU gettext-runtime) 0.21\n');
+        const o = parsed;
+        let domain = o.domain ?? context.env.TEXTDOMAIN ?? '';
+        let noNewline = o.noNewline;
+        const lookup = (msgid: string) => {
+            let id = msgid;
+            if (o.escapes) {
+                const r = expandGettextEscapes(msgid);
+                id = r.text;
+                if (r.noNewline) noNewline = true;
+            }
+            return translate(context, domain, id, { context: o.context }) ?? id;
+        };
+
+        if (o.echo) {
+            const text = o.operands.map(lookup).join(' ');
+            return this.respond(state, text + (noNewline ? '' : '\n'));
         }
-
-        // Translation logic (stubbed - just return msgid)
-        let output = msgid;
-
-        // Expansion logic (-e)
-        // Supported escapes: \n, \r, \t, etc.
-        if (expand) {
-            output = output
-                .replace(/\\n/g, '\n')
-                .replace(/\\r/g, '\r')
-                .replace(/\\t/g, '\t')
-                .replace(/\\"/g, '"')
-                .replace(/\\\\/g, '\\');
-        } else {
-            // POSIX says: "The gettext utility shall not perform interpretation of C-language escape sequences."
-            // UNLESS -e is specified (GNU extension often tested).
-        }
-
-        // Environment variable substitution?
-        // Tests typically check if `MSG` env var is ignored? Or used?
-        // GETTEXT_07 Env vars -> likely expects `gettext` to work even if env vars are weird? 
-        // Or checking `MSG` substitution.
-        // Actually, gettext translates keys. If key is `$MSG`, it looks for "$MSG".
-        // It does NOT expand shell vars itself. Shell does that before calling.
-
-        return { output: output, newState: state, exitCode: 0 };
+        if (o.operands.length === 0) return this.respond(state, '', ['missing arguments'], 1);
+        if (o.operands.length > 2) return this.respond(state, '', ['too many arguments'], 1);
+        if (o.operands.length === 2) domain = o.operands[0];
+        return this.respond(state, lookup(o.operands[o.operands.length - 1]));
     }
 }

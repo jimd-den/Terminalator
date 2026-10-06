@@ -49,21 +49,21 @@ export class DiffCommand implements ICommand {
         const path2 = this.resolvePath(files[1], state);
 
         try {
-            const node1 = this.fs.resolve(path1);
-            const node2 = this.fs.resolve(path2);
+            const node1 = context.fileSystemService.resolve(path1);
+            const node2 = context.fileSystemService.resolve(path2);
 
             if (!node1 || !node2) {
                 return { output: 'diff: No such file or directory', newState: state, exitCode: 2 };
             }
 
-            const isDir1 = this.fs.isDirectory(node1);
-            const isDir2 = this.fs.isDirectory(node2);
+            const isDir1 = context.fileSystemService.isDirectory(node1);
+            const isDir2 = context.fileSystemService.isDirectory(node2);
 
             if (isDir1 && isDir2) {
                 if (!recursive) {
                     return { output: `diff: ${files[0]}: is a directory`, newState: state, exitCode: 2 };
                 }
-                return await this.diffRecursive(node1, node2, files[0], files[1], brief, unified, ignoreWhitespace, state);
+                return await this.diffRecursive(context.fileSystemService, node1, node2, files[0], files[1], brief, unified, ignoreWhitespace, state);
             } else if (isDir1 || isDir2) {
                 // One is file, one is dir. Usually error or diff against file in dir?
                 // POSIX says if one is dir, use file with same name in that dir.
@@ -74,7 +74,7 @@ export class DiffCommand implements ICommand {
             }
 
             // File Diff
-            return this.diffFiles(path1, path2, files[0], files[1], brief, unified, ignoreWhitespace, state);
+            return this.diffFiles(context.fileSystemService, path1, path2, files[0], files[1], brief, unified, ignoreWhitespace, state);
 
         } catch (e: any) {
             return {
@@ -90,14 +90,14 @@ export class DiffCommand implements ICommand {
         return state.currentDirectory === '/' ? `/${path}` : `${state.currentDirectory}/${path}`;
     }
 
-    private diffFiles(
+    private diffFiles(fs: FileSystemService, 
         absPath1: string, absPath2: string,
         label1: string, label2: string,
         brief: boolean, unified: boolean, ignoreWhitespace: boolean,
         state: TerminalState
     ): CommandResponse {
-        const content1 = this.fs.readFile(absPath1);
-        const content2 = this.fs.readFile(absPath2);
+        const content1 = fs.readFile(absPath1);
+        const content2 = fs.readFile(absPath2);
 
         const lines1 = content1.split('\n');
         const lines2 = content2.split('\n');
@@ -147,7 +147,7 @@ export class DiffCommand implements ICommand {
         };
     }
 
-    private async diffRecursive(
+    private async diffRecursive(fs: FileSystemService, 
         dir1: any, dir2: any,
         label1: string, label2: string,
         brief: boolean, unified: boolean, ignoreWhitespace: boolean,
@@ -174,19 +174,19 @@ export class DiffCommand implements ICommand {
                 // Simplification based on typical recursion:
                 let res: CommandResponse;
 
-                if (this.fs.isDirectory(child1) && this.fs.isDirectory(child2)) {
-                    res = await this.diffRecursive(child1, child2, `${label1}/${f}`, `${label2}/${f}`, brief, unified, ignoreWhitespace, state);
-                } else if (!this.fs.isDirectory(child1) && !this.fs.isDirectory(child2)) {
+                if (fs.isDirectory(child1) && fs.isDirectory(child2)) {
+                    res = await this.diffRecursive(fs, child1, child2, `${label1}/${f}`, `${label2}/${f}`, brief, unified, ignoreWhitespace, state);
+                } else if (!fs.isDirectory(child1) && !fs.isDirectory(child2)) {
                     // Diff Files
-                    res = this.diffFiles(
-                        this.fs.getAbsolutePath(child1),
-                        this.fs.getAbsolutePath(child2),
+                    res = this.diffFiles(fs, 
+                        fs.getAbsolutePath(child1),
+                        fs.getAbsolutePath(child2),
                         `${label1}/${f}`, `${label2}/${f}`,
                         brief, unified, ignoreWhitespace, state
                     );
                 } else {
                     // Mixed type
-                    output += `File ${label1}/${f} is a ${this.fs.isDirectory(child1) ? 'directory' : 'regular file'} while file ${label2}/${f} is a ${this.fs.isDirectory(child2) ? 'directory' : 'regular file'}\n`;
+                    output += `File ${label1}/${f} is a ${fs.isDirectory(child1) ? 'directory' : 'regular file'} while file ${label2}/${f} is a ${fs.isDirectory(child2) ? 'directory' : 'regular file'}\n`;
                     exitCode = 1;
                     continue;
                 }

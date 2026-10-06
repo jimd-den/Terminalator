@@ -1,49 +1,19 @@
-import { ASTNode, NodeType, IfNode, ForNode, WhileNode, SubshellNode, BlockNode, FunctionDefNode, CommandNode, RedirectNode } from '../../interfaces/ShellAST';
-import { TokenType } from '../ShellLexer';
+import { ASTNode, NodeType, WhileNode } from '../../interfaces/ShellAST';
 import { IStatementParser } from './IStatementParser';
 import { IShellParserFacade } from './IShellParserFacade';
+import { parseDoGroup } from './DoGroup';
 
-/**
- * WhileParser - Domain Layer
- * 
- * Parses WHILE-DO-DONE constructs.
- *
- * Pillar: The Balanced Scale (SRP) - Isolated parsing of 'while' loops.
- */
+/** while compound_list do_group | until compound_list do_group */
 export class WhileParser implements IStatementParser {
     canHandle(facade: IShellParserFacade): boolean {
-        const token = facade.peek();
-        return token.type === TokenType.WORD && token.value === 'while';
+        return facade.isWord('while') || facade.isWord('until');
     }
 
     parse(facade: IShellParserFacade): ASTNode {
-        facade.advance(); // while
-        const condition = facade.parseList();
-
-        while (facade.peek().type === TokenType.NEWLINE || facade.peek().type === TokenType.SEMI) {
-            facade.advance();
-        }
-
-        if (facade.peek().value !== 'do') {
-            throw new Error(`Syntax Error: Expected 'do' at position ${facade.peek().position}`);
-        }
-        facade.advance(); // do
-
-        const body = facade.parseList();
-
-        while (facade.peek().type === TokenType.NEWLINE || facade.peek().type === TokenType.SEMI) {
-            facade.advance();
-        }
-
-        if (facade.peek().value !== 'done') {
-            throw new Error(`Syntax Error: Expected 'done' at position ${facade.peek().position}`);
-        }
-        facade.advance(); // done
-
-        return {
-            type: NodeType.WHILE,
-            condition: condition!,
-            body: body!
-        } as WhileNode;
+        const until = facade.advance().value === 'until';
+        const condition = facade.parseCompoundList();
+        if (!condition) facade.syntaxError(`expected condition after '${until ? 'until' : 'while'}'`);
+        const body = parseDoGroup(facade);
+        return { type: NodeType.WHILE, condition: condition!, body, until } as WhileNode;
     }
 }

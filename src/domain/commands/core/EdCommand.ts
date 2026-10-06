@@ -45,7 +45,7 @@ export class EdCommand implements ICommand {
             try {
                 try {
                     // Try to read file directly. resolve() throws if not found.
-                    const content = this.fs.readFile(resolvedPath);
+                    const content = context.fileSystemService.readFile(resolvedPath);
                     if (content) {
                         this.buffer = content.split('\n');
                         // Handle potential trailing newline split issue if file ends with \n
@@ -95,7 +95,7 @@ export class EdCommand implements ICommand {
                 // Command Mode
                 const trimmed = line.trim();
                 if (!trimmed) continue;
-                this.processCommand(trimmed, outputLines, state);
+                this.processCommand(context.fileSystemService, trimmed, outputLines, state);
             }
         }
 
@@ -111,7 +111,7 @@ export class EdCommand implements ICommand {
         return state.currentDirectory === '/' ? `/${path}` : `${state.currentDirectory}/${path}`;
     }
 
-    private processCommand(cmdStr: string, output: string[], state: TerminalState): void {
+    private processCommand(fs: FileSystemService, cmdStr: string, output: string[], state: TerminalState): void {
         // Parse address and command char
         // E.g., "1,2p", "d", "1d", "w", "q"
 
@@ -180,7 +180,7 @@ export class EdCommand implements ICommand {
                 const path = this.resolvePath(target, state);
                 const content = this.buffer.join('\n');
                 try {
-                    this.fs.writeFile(path, content, 'w');
+                    fs.writeFile(path, content, 'w');
                     // ed writes bytes count
                     output.push(content.length.toString());
                 } catch (e) {

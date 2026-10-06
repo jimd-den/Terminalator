@@ -36,14 +36,8 @@ export const EconomyProvider: React.FC<{ children: ReactNode }> = ({ children })
     }, [bus]);
 
     const syncWallet = useCallback(async () => {
-        economyService.syncWallet();
         setZincBalance(economyService.getBalance());
     }, [economyService]);
-
-    // Initial sync
-    useEffect(() => {
-        syncWallet();
-    }, [syncWallet]);
 
     return (
         <EconomyContext.Provider value={{ zincBalance, syncWallet, economyService }}>

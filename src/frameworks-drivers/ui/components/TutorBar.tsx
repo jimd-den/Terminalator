@@ -22,14 +22,14 @@ interface TutorBarProps {
  * Now follows the active theme and animates based on message severity.
  */
 export const TutorBar: React.FC<TutorBarProps> = ({ message }) => {
-    const { theme } = useTheme();
+    const { theme, settings } = useTheme();
     const { isTutorTyping } = useTutorMessaging();
     const colors = theme.colors;
     const { transform, opacity } = useTutorAnimation(message);
 
     if (!message && !isTutorTyping) return null;
 
-    const hintColor = theme.id === 'matrix' ? '#FFB7C5' : colors.secondary;
+    const hintColor = theme.id === 'matrix' ? colors.secondary : colors.secondary;
 
     const typeStyle = message?.type === 'hint' ? { color: hintColor } : 
                       message?.type === 'warn' ? { color: colors.secondary } :
@@ -52,18 +52,18 @@ export const TutorBar: React.FC<TutorBarProps> = ({ message }) => {
             marginBottom: THEME.spacing.xs,
         },
         sender: {
-            fontFamily: THEME.typography.fontFamily,
+            fontFamily: settings.fontFamily,
             fontSize: THEME.typography.fontSize.sm,
             color: colors.secondary,
             fontWeight: 'bold',
         },
         timestamp: {
-            fontFamily: THEME.typography.fontFamily,
+            fontFamily: settings.fontFamily,
             fontSize: THEME.typography.fontSize.sm,
             color: colors.text.dim,
         },
         text: {
-            fontFamily: THEME.typography.fontFamily,
+            fontFamily: settings.fontFamily,
             fontSize: THEME.typography.fontSize.md,
             color: colors.text.primary,
         },

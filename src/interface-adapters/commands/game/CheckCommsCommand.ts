@@ -31,6 +31,7 @@ Close existing channels to establish new connections.
 [SECURE CONNECTION ESTABLISHED]
 Channel ID: ${mission.id}
 Source: ${mission.assignerName}
+Target: ${mission.targetSystem}
 Encryption: AES-256-GCM
 Status: HANDSHAKE_COMPLETE
 `.trim(),

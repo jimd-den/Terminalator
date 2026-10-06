@@ -1,41 +1,41 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
- * AwkCommand - Core Command
+ * awk - pattern scanning and processing language (POSIX XCU awk).
  *
- * Pattern scanning and processing language.
+ *   awk [-F sepstring] [-v assignment]... program [argument...]
+ *   awk [-F sepstring] -f progfile [-f progfile]... [-v assignment]... [argument...]
  *
- * Pillar: The Four-Fold Shield (Strict Architecture)
- * Pillar: The Swift Stream (Performance)
- * Pillar: The Storyteller’s Code (Literate Documentation)
+ * Arguments are input files ("-" is standard input) or var=value
+ * assignments, processed in order. `-F t` means a tab. Exit status: the
+ * value of `exit expr`, 0 by default, 2 for syntax and fatal errors.
  *
- * Intent:
- * Allows the operator to process text columns.
- * Refactored to implement IStructuredCommand for combinatorial scaling.
+ * This class only parses options and adapts the process (file system,
+ * streams, child processes) to the engine in ./awk.
  */
-
-import { CommandBase } from '../CommandBase';
-import { CommandCapability } from '../IStructuredCommand';
-import { ProcessContext } from '../../../domain/entities/ProcessContext';
-import { TerminalState } from '../../entities/TerminalState';
 import { CommandResponse } from '../../entities/Command';
-
+import { ProcessContext, getStdinAsString } from '../../entities/ProcessContext';
+import { TerminalState } from '../../entities/TerminalState';
+import { StringStream } from '../../entities/Stream';
+import { CommandCapability } from '../IStructuredCommand';
 import { FileSystemService } from '../../services/FileSystemService';
-import { AwkLexer } from './awk/AwkLexer';
-import { AwkParser } from './awk/AwkParser';
+import { Utility } from '../shared/Utility';
+import { readInput } from '../shared/InputFiles';
+import { strerror } from '../shared/PathOps';
+import { AwkSyntaxError, processEscapes } from './awk/AwkLexer';
+import { parseAwk } from './awk/AwkParser';
 import { AwkInterpreter } from './awk/AwkInterpreter';
+import { AwkRuntimeError } from './awk/AwkErrors';
+import { AwkHost, ReadResult } from './awk/AwkHost';
+import { RegexSyntaxError } from '../../utils/PosixRegex';
 
-export class AwkCommand extends CommandBase {
-    public readonly capabilities = [CommandCapability.TRANSFORM, CommandCapability.FILTER];
-    public readonly utility = 'awk';
+const USAGE = 'usage: awk [-F fs][-v var=value][prog | -f progfile][file ...]';
 
-    constructor(private fs: FileSystemService) {
-        super();
-    }
+export class AwkCommand extends Utility {
+    readonly utility = 'awk';
+    override readonly capabilities = [CommandCapability.TRANSFORM, CommandCapability.FILTER];
 
-    /**
-     * Protocol: Build arguments programmatically.
-     */
-    public override buildArgs(requirements: Record<string, any>): string[] {
+    constructor(_fs?: FileSystemService) { super(); }
+
+    override buildArgs(requirements: Record<string, any>): string[] {
         const args: string[] = [];
         if (requirements.fieldSeparator) args.push('-F', requirements.fieldSeparator);
         if (requirements.program) args.push(requirements.program);
@@ -43,72 +43,94 @@ export class AwkCommand extends CommandBase {
         return args;
     }
 
-    protected override parseArgs(args: string[]) {
-        // awk options that take arguments: -F, -v
-        super.parseArgs(args, ['F', 'v']);
+    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        let fs: string | undefined;
+        const assignments: [string, string][] = [];
+        const progFiles: string[] = [];
+        let i = 0;
+        for (; i < args.length; i++) {
+            const a = args[i];
+            if (a === '--') { i++; break; }
+            if (!a.startsWith('-') || a === '-') break;
+            const opt = a[1];
+            if (opt !== 'F' && opt !== 'v' && opt !== 'f') return this.usage(state, `invalid option -- '${opt}'\n${USAGE}`, 2);
+            const value = a.length > 2 ? a.slice(2) : args[++i];
+            if (value === undefined) return this.usage(state, `option requires an argument -- '${opt}'\n${USAGE}`, 2);
+            if (opt === 'F') fs = value === 't' ? '\t' : processEscapes(value);
+            else if (opt === 'f') progFiles.push(value);
+            else {
+                const eq = value.indexOf('=');
+                if (eq <= 0 || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value.slice(0, eq))) {
+                    return this.usage(state, `improper assignment: -v ${value}`, 2);
+                }
+                assignments.push([value.slice(0, eq), value.slice(eq + 1)]);
+            }
+        }
+
+        let source: string;
+        if (progFiles.length > 0) {
+            const parts: string[] = [];
+            for (const f of progFiles) {
+                const r = readInput(context, f);
+                if (!r.ok) return this.usage(state, `couldn't open file ${f}`, 2);
+                parts.push(r.data);
+            }
+            source = parts.join('\n');
+        } else {
+            if (i >= args.length) return this.usage(state, USAGE, 2);
+            source = args[i++];
+        }
+
+        let program;
+        try {
+            program = parseAwk(source);
+        } catch (e) {
+            if (e instanceof AwkSyntaxError) return this.usage(state, e.message, 2);
+            throw e;
+        }
+
+        const awk = new AwkInterpreter(program, this.host(context), { argv: ['awk', ...args.slice(i)], assignments, fs });
+        try {
+            const status = await awk.run();
+            return this.respond(state, '', [], status);
+        } catch (e) {
+            await awk.shutdown();
+            if (e instanceof AwkRuntimeError || e instanceof RegexSyntaxError) {
+                return this.usage(state, e instanceof AwkRuntimeError ? e.message : `run time error: ${e.message}`, 2);
+            }
+            throw e;
+        }
     }
 
-    protected async executeInternal(
-        rawArgs: string[],
-        flags: Set<string>,
-        operands: string[],
-        context: ProcessContext,
-        state: TerminalState
-    ): Promise<CommandResponse> {
-        const input = getStdinAsString(context);
-        let program = '';
-        const files: string[] = [];
-        let fieldSeparator = this.options.get('F') || ' ';
-
-        let opIndex = 0;
-        if (operands.length > 0) {
-            program = operands[opIndex++];
-        }
-
-        while (opIndex < operands.length) {
-            files.push(operands[opIndex++]);
-        }
-
-        if (!program) {
-            return { output: 'awk: missing program', newState: state, exitCode: 1 };
-        }
-
-        if ((program.startsWith("'") && program.endsWith("'")) || (program.startsWith('"') && program.endsWith('"'))) {
-            program = program.slice(1, -1);
-        }
-
-        try {
-            if (fieldSeparator !== ' ') {
-                program = `BEGIN { FS="${fieldSeparator}" } ` + program;
-            }
-
-            const lexer = new AwkLexer(program);
-            const tokens = lexer.tokenize();
-
-            const parser = new AwkParser(tokens);
-            const ast = parser.parse();
-
-            let content = '';
-            if (files.length > 0) {
-                for (const file of files) {
-                    try {
-                        const path = file.startsWith('/') ? file : (state.currentDirectory === '/' ? `/${file}` : `${state.currentDirectory}/${file}`);
-                        content += this.fs.readFile(path) + '\n';
-                    } catch (e: any) {
-                        return { output: `awk: ${file}: ${e.message}`, newState: state, exitCode: 1 };
-                    }
+    /** Adapts the process context to the interpreter's host port. */
+    private host(context: ProcessContext): AwkHost {
+        return {
+            writeStdout: data => context.stdout.write(data),
+            writeStderr: data => context.stderr.write(data),
+            readStdin: () => getStdinAsString(context) ?? '',
+            readFile: (path): ReadResult => {
+                const r = readInput(context, path);
+                if (r.ok) return { ok: true, data: r.data };
+                const error = r.error.startsWith(`${path}: `) ? r.error.slice(path.length + 2) : r.error;
+                return { ok: false, error, directory: error === 'Is a directory' };
+            },
+            writeFile: (path, data, append) => {
+                const fsys = context.fileSystemService;
+                try {
+                    fsys.writeFile(fsys.resolveAbsolutePath(path, context.cwd), data, append ? 'a' : 'w', undefined, undefined, '/');
+                    return null;
+                } catch (e) {
+                    return strerror(e);
                 }
-                if (content.endsWith('\n')) content = content.slice(0, -1);
-            } else if (input !== undefined) {
-                content = input;
-            }
-
-            const interpreter = new AwkInterpreter();
-            const output = interpreter.execute(ast, content);
-            return { output: output.trimEnd(), newState: state, exitCode: 0 };
-
-        } catch (e: any) {
-            return { output: `awk: ${e.message}`, newState: state, exitCode: 1 };
-        }
+            },
+            run: async (command, { stdin, capture }) => {
+                if (!context.spawn) return { status: 127, output: '' };
+                const out = capture ? new StringStream() : undefined;
+                const status = await context.spawn(['sh', '-c', command], { stdin, stdout: out });
+                return { status, output: out ? out.getContents() : '' };
+            },
+            environ: context.env,
+            now: () => Date.now() / 1000,
+        };
     }
 }

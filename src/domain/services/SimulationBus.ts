@@ -28,7 +28,9 @@ export enum GameEventType {
     TUTOR_EVENT = 'TUTOR_EVENT',
     ECONOMY_UPDATE = 'ECONOMY_UPDATE',
     KEYSTROKE_ACCEPTED = 'KEYSTROKE_ACCEPTED',
-    ERROR_OCCURRED = 'ERROR_OCCURRED'
+    ERROR_OCCURRED = 'ERROR_OCCURRED',
+    SYSTEM_BOOT = 'SYSTEM_BOOT',
+    PERSONA_SWITCHED = 'PERSONA_SWITCHED'
 }
 
 /**
@@ -165,6 +167,7 @@ export class SimulationBus {
                 try {
                     callback(event);
                 } catch (error) {
+                    console.error(`[SimulationBus] Listener Error for ${type}:`, error);
                     this.telemetry.error(`Error in SimulationBus listener for ${type}`, { error, event });
                 }
             });

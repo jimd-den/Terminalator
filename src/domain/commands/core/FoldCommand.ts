@@ -1,90 +1,71 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
- * FoldCommand - Core Command
- *
- * Wrap each input line to fit in specified width.
- *
- * Pillar: The Four-Fold Shield (Strict Architecture)
- * Pillar: The Swift Stream (Performance)
- *
- * Intent:
- * Break long lines for display.
- * Refactored to implement IStructuredCommand for combinatorial scaling.
+ * fold - filter for folding lines (POSIX): -b (count bytes), -s (break at
+ * blanks), -w width (default 80).
  */
-
-import { CommandBase } from '../CommandBase';
-import { CommandCapability } from '../IStructuredCommand';
-import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { CommandResponse } from '../ICommand';
+import { ProcessContext } from '../../entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../entities/Command';
-
 import { FileSystemService } from '../../services/FileSystemService';
+import { CommandCapability } from '../IStructuredCommand';
+import { Utility } from '../shared/Utility';
+import { getopt, readInput } from '../shared/InputFiles';
 
-export class FoldCommand extends CommandBase {
-    public readonly capabilities = [CommandCapability.TRANSFORM];
-    public readonly utility = 'fold';
+export class FoldCommand extends Utility {
+    readonly utility = 'fold';
+    readonly capabilities = [CommandCapability.TRANSFORM];
 
-    constructor(private fs: FileSystemService) { 
-        super();
+    constructor(private fs?: FileSystemService) { super(); }
+
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const normalized = args.map(a => (/^-[0-9]+$/.test(a) ? `-w${a.substring(1)}` : a));
+        const { opts, operands, error } = getopt(normalized, 'bsw:');
+        if (error) return this.usage(state, error);
+        const width = opts.has('w') ? Number(opts.get('w')) : 80;
+        if (!Number.isInteger(width) || width < 1) return this.usage(state, `invalid number of columns: '${opts.get('w')}'`);
+
+        let out = '';
+        const errors: string[] = [];
+        for (const f of operands.length ? operands : ['-']) {
+            const input = readInput(context, f);
+            if (!input.ok) { errors.push(input.error); continue; }
+            for (const line of input.data.split(/(?<=\n)/)) out += this.fold(line, width, opts.has('b'), opts.has('s'));
+        }
+        return this.respond(state, out, errors);
     }
 
-    protected override parseArgs(args: string[]) {
-        // fold options that take arguments: -w
-        super.parseArgs(args, ['w']);
-    }
-
-    protected async executeInternal(
-        rawArgs: string[],
-        flags: Set<string>,
-        operands: string[],
-        context: ProcessContext,
-        state: TerminalState
-    ): Promise<CommandResponse> {
-        const input = getStdinAsString(context);
-        let width = parseInt(this.options.get('w') || '80', 10) || 80;
-        let files = operands;
-
-        let content = '';
-
-        if (files.length > 0) {
-            for (const file of files) {
-                try {
-                    const path = this.resolvePath(file, state);
-                    content += this.fs.readFile(path);
-                } catch (e) {
-                    return { output: `fold: ${file}: No such file`, newState: state, exitCode: 1 };
-                }
-            }
-        } else if (input) {
-            content = input;
-        } else {
-            return { output: '', newState: state, exitCode: 0 };
-        }
-
-        const lines = content.split('\n');
-        const outputLines: string[] = [];
-
-        for (const line of lines) {
-            if (line.length <= width) {
-                outputLines.push(line);
-            } else {
-                let pos = 0;
-                while (pos < line.length) {
-                    outputLines.push(line.slice(pos, pos + width));
-                    pos += width;
-                }
-            }
-        }
-
-        return {
-            output: outputLines.join('\n'),
-            newState: state,
-            exitCode: 0
+    private fold(line: string, width: number, bytes: boolean, spaces: boolean): string {
+        const hasNl = line.endsWith('\n');
+        const text = hasNl ? line.slice(0, -1) : line;
+        let out = '';
+        let cur = '';
+        let col = 0;
+        const advance = (c: string, at: number) => {
+            if (bytes) return at + 1;
+            if (c === '\t') return at + 8 - (at % 8);
+            if (c === '\b') return Math.max(0, at - 1);
+            if (c === '\r') return 0;
+            return at + 1;
         };
-    }
-
-    private resolvePath(path: string, state: TerminalState): string {
-        if (path.startsWith('/')) return path;
-        return state.currentDirectory === '/' ? `/${path}` : `${state.currentDirectory}/${path}`;
+        for (const ch of text) {
+            const next = advance(ch, col);
+            if (next > width && cur !== '') {
+                let breakAt = -1;
+                if (spaces) {
+                    for (let i = cur.length - 1; i >= 0; i--) if (cur[i] === ' ' || cur[i] === '\t') { breakAt = i; break; }
+                }
+                if (breakAt >= 0) {
+                    out += cur.substring(0, breakAt + 1) + '\n';
+                    cur = cur.substring(breakAt + 1);
+                } else {
+                    out += cur + '\n';
+                    cur = '';
+                }
+                col = 0;
+                for (const c of cur) col = advance(c, col);
+            }
+            cur += ch;
+            col = advance(ch, col);
+        }
+        return out + cur + (hasNl ? '\n' : '');
     }
 }

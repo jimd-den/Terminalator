@@ -1,42 +1,49 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
- * @file UncompressCommand.ts
- * @description The 'uncompress' command. Expand data.
+ * uncompress - expand compressed data (POSIX XSI): `uncompress [-cfv] [file...]`.
+ * Operands may be given with or without the .Z suffix.
  */
 import { ICommand, CommandResponse } from '../ICommand';
-import { ProcessContext } from '../../../domain/entities/ProcessContext';
-import { FileSystemService } from '../../../domain/services/FileSystemService';
+import { ProcessContext } from '../../entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
+import { getopt, readInputBytes } from '../shared/InputFiles';
+import { exists, replaceFile } from '../shared/Compression';
+import { isCompressed, lzwDecompress } from '../../utils/Lzw';
+import { bytesToBinaryString } from '../../services/shell/io/OutputSink';
+
+export function expandFile(context: ProcessContext, operand: string, name: string):
+    { ok: true; data: Uint8Array; source: string } | { ok: false; error: string } {
+    const candidates = operand === '-' ? ['-'] : operand.endsWith('.Z') ? [operand] : [operand + '.Z', operand];
+    const source = candidates.find(c => c === '-' || exists(context, c)) ?? candidates[0];
+    const input = readInputBytes(context, source);
+    if (!input.ok) return { ok: false, error: `${name}: ${input.error}` };
+    if (!isCompressed(input.data)) return { ok: false, error: `${name}: ${source}: not in compressed format` };
+    try {
+        return { ok: true, data: lzwDecompress(input.data), source };
+    } catch (e: any) {
+        return { ok: false, error: `${name}: ${source}: ${e.message}` };
+    }
+}
 
 export class UncompressCommand implements ICommand {
-    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = getStdinAsString(context);
-        const fs = context.fileSystemService;
-        const file = args[0];
+    execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const { opts, operands, error } = getopt(args, 'cfvV');
+        if (error) return { output: '', stderr: `uncompress: ${error}\n`, exitCode: 1, newState: state };
+        const toStdout = opts.has('c') || operands.length === 0;
+        const err: string[] = [];
+        let output = '';
+        let status = 0;
 
-        if (!file) {
-            return { output: 'uncompress: missing file', newState: state, exitCode: 1 };
+        for (const operand of operands.length ? operands : ['-']) {
+            const res = expandFile(context, operand, 'uncompress');
+            if (!res.ok) { err.push(res.error); status = 1; continue; }
+            if (toStdout) { output += bytesToBinaryString(res.data); continue; }
+            const target = res.source.replace(/\.Z$/, '');
+            if (target === res.source) { err.push(`uncompress: ${res.source}: unknown suffix -- ignored`); status = 1; continue; }
+            if (exists(context, target) && !opts.has('f')) { err.push(`uncompress: ${target} already exists.`); status = 1; continue; }
+            if (exists(context, target)) context.fileSystemService.deleteNode(context.fileSystemService.resolveAbsolutePath(target, context.cwd), '/');
+            replaceFile(context, res.source, target, res.data);
+            if (opts.has('v')) err.push(`${res.source}: -- replaced with ${target}`);
         }
-
-        const node = fs.resolve(file, state.currentDirectory);
-        if (!node || fs.isDirectory(node)) {
-            return { output: `uncompress: ${file}: No such file or directory`, newState: state, exitCode: 1 };
-        }
-
-        const path = fs.getAbsolutePath(node);
-        const raw = fs.readFile(path);
-        const content = typeof raw === 'string' ? raw : new TextDecoder().decode(raw);
-
-        // Strip header if present
-        let decompressed = content;
-        if (content.startsWith(`\x1f\x9d`)) {
-            decompressed = content.substring(2);
-        }
-
-        const newPath = path.replace('.Z', '');
-        fs.writeFile(newPath, decompressed, 'w', 1000, 1000, state.currentDirectory);
-        fs.deleteNode(path, state.currentDirectory);
-
-        return { output: '', newState: state, exitCode: 0 };
+        return { output, binary: true, stderr: err.length ? err.join('\n') + '\n' : undefined, exitCode: status, newState: state };
     }
 }

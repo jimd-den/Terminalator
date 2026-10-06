@@ -1,4 +1,3 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file FuserCommand.ts
  * @description The 'fuser' command. Identify processes using files or sockets.
@@ -12,7 +11,6 @@ export class FuserCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = getStdinAsString(context);
         const files: string[] = [];
         let kill = false;
         let silent = false;
@@ -51,7 +49,7 @@ export class FuserCommand implements ICommand {
 
         // 2. Process Files
         for (const file of files) {
-            const dentry = this.fs.resolve(file, state.currentDirectory);
+            const dentry = context.fileSystemService.resolve(file, state.currentDirectory);
             if (!dentry) return { output: `fuser: ${file}: No such file or directory`, newState: state, exitCode: 1 };
 
             if (!silent) {

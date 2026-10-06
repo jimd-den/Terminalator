@@ -1,4 +1,3 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file CflowCommand.ts
  * @description The 'cflow' command. Generate a C-language flowgraph.
@@ -12,7 +11,6 @@ export class CflowCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = getStdinAsString(context);
         const files: string[] = [];
         let showInverse = false; // -i
         let defines: string[] = []; // -D
@@ -42,12 +40,12 @@ export class CflowCommand implements ICommand {
 
         // 2. Process Files
         for (const file of files) {
-            const dentry = this.fs.resolve(file, state.currentDirectory);
+            const dentry = context.fileSystemService.resolve(file, state.currentDirectory);
             if (!dentry) {
                 return { output: `cflow: cannot open '${file}': No such file or directory`, newState: state, exitCode: 1 };
             }
 
-            const rawContent = this.fs.readFile(file, state.currentDirectory);
+            const rawContent = context.fileSystemService.readFile(file, state.currentDirectory);
             const content = typeof rawContent === 'string' ? rawContent : new TextDecoder().decode(rawContent);
 
             // Basic Syntax Check (Naive)

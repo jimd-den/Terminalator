@@ -1,4 +1,3 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file UmaskCommand.ts
  * @description The 'umask' command. Get or set the file mode creation mask.
@@ -21,7 +20,6 @@ import { TerminalState } from '../../entities/TerminalState';
 
 export class UmaskCommand implements ICommand {
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = getStdinAsString(context);
         if (args.length === 0) {
             // Display current mask (mocked as 0022)
             return {

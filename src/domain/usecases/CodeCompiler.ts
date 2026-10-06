@@ -76,6 +76,8 @@ export class CodeCompiler {
 
                     const artifactPath = path.replace(/\.(s|asm)$/, '.exe');
                     this.service.writeFile(artifactPath, JSON.stringify(artifact, null, 2), 'w', inode.uid, inode.gid, cwd);
+                    // Like a real linker, the output is executable.
+                    this.service.chmod(artifactPath, 0o755, cwd);
 
                     return {
                         success: true,

@@ -9,6 +9,7 @@ import { CommandResponse } from '../../src/domain/entities/Command';
 import { OutputBuffer } from './OutputBuffer';
 import { GameManager } from '../../src/interface-adapters/GameManager';
 import { SimulationBus } from '../../src/domain/services/SimulationBus';
+import { RhythmConductor } from '../../src/domain/services/RhythmConductor';
 
 // Polyfill for React Native/Expo globals
 (global as any).__DEV__ = true;
@@ -36,10 +37,12 @@ export class TestUser {
         const telemetry = new ConsoleTelemetryAdapter(); // Keeps system logs as is
         const bus = new SimulationBus(telemetry);
         
-        this.gameManager = DependencyContainer.createGameManager(fs, networkMap, telemetry, bus);
+        const conductor = new RhythmConductor(bus);
+        this.gameManager = DependencyContainer.createGameManager(fs, networkMap, telemetry, bus, conductor);
         const fsService = new FileSystemService(fs);
+        const economyService = this.gameManager.getEconomyService();
         
-        this.executor = new GameCommandExecutor(fsService, this.gameManager, networkMap, telemetry);
+        this.executor = new GameCommandExecutor(fsService, this.gameManager, networkMap, economyService, telemetry);
         this.state = createInitialTerminalState();
     }
 

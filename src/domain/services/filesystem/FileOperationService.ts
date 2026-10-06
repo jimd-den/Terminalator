@@ -10,7 +10,8 @@
  * Pillar: The Balanced Scale (SRP)
  */
 
-import { Inode, S_IFDIR, S_IFREG, S_IFIFO, S_IRUSR, S_IWUSR } from '../../entities/filesystem/FileSystemTypes';
+import { Inode, S_IFDIR, S_IFREG, S_IFIFO, S_IFCHR, S_IRUSR, S_IWUSR } from '../../entities/filesystem/FileSystemTypes';
+import { deviceFor } from '../../entities/filesystem/Devices';
 import { InodeTable } from '../../entities/filesystem/InodeTable';
 import { IFileSystemNode } from '../../entities/filesystem/IFileSystemNode';
 import { FileNode } from '../../entities/filesystem/FileNode';
@@ -31,6 +32,8 @@ export class FileOperationService {
      */
     public readFile(dentry: Dentry, actingUser?: { uid: number, gid: number, groups: number[] }): string {
         const inode = this.validateAccess(dentry, actingUser, S_IRUSR); // Read check
+        const device = this.device(inode);
+        if (device) return device.read();
 
         const content = inode.content;
         if (content instanceof Uint8Array) {
@@ -44,6 +47,8 @@ export class FileOperationService {
      */
     public readFileBuffer(dentry: Dentry, actingUser?: { uid: number, gid: number, groups: number[] }): Uint8Array {
         const inode = this.validateAccess(dentry, actingUser, S_IRUSR); // Read check
+        const device = this.device(inode);
+        if (device) return Uint8Array.from(device.read(), (c: string) => c.charCodeAt(0));
 
         const content = inode.content;
         if (content instanceof Uint8Array) {
@@ -58,12 +63,20 @@ export class FileOperationService {
      */
     public writeFile(dentry: Dentry, content: string | Uint8Array, modeStr: 'w' | 'a' = 'w', actingUser?: { uid: number, gid: number, groups: number[] }): void {
         const inode = this.validateAccess(dentry, actingUser, S_IWUSR); // Write check
+        const device = this.device(inode);
+        if (device) {
+            device.write(content);
+            return;
+        }
 
         const oldSize = inode.size;
 
         if (modeStr === 'w') {
             // Truncate and Overwrite
             inode.content = content;
+        } else if (typeof inode.content === 'string' && typeof content === 'string') {
+            // Text append stays a string (cheap for redirections that append per write).
+            inode.content += content;
         } else {
             // Append Mode
             const current = inode.content instanceof Uint8Array
@@ -124,6 +137,21 @@ export class FileOperationService {
         return newNode;
     }
 
+    private device(inode: Inode) {
+        return (inode.mode & 0o170000) === S_IFCHR ? deviceFor(inode.rdev) : undefined;
+    }
+
+    /**
+     * Creates a device special file (mknod).
+     */
+    public mknod(parent: DirectoryNode, name: string, mode: number, rdev: number, uid: number, gid: number): Dentry {
+        const node = this.createDentry(parent, name, mode, uid, gid);
+        const inode = this.inodeTable.get(node.inodeId)!;
+        inode.rdev = rdev;
+        inode.content = null;
+        return node;
+    }
+
     /**
      * Common validation logic for Read/Write.
      */
@@ -131,7 +159,7 @@ export class FileOperationService {
         const inode = this.inodeTable.get(dentry.inodeId);
         if (!inode) throw new Error('Corrupt filesystem');
 
-        if (inode.mode & S_IFDIR) throw new Error('Is a directory');
+        if ((inode.mode & 0o170000) === S_IFDIR) throw new Error('Is a directory');
 
         if (actingUser && !this.permissions.hasAccess(inode.id, actingUser, requiredBit)) {
             throw new Error('Permission denied');

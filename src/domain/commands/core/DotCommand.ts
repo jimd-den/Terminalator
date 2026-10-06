@@ -39,10 +39,10 @@ export class DotCommand implements ICommand {
         if (file.indexOf('/') === -1 && state.environment['PATH']) {
             const paths = state.environment['PATH'].split(':');
             for (const p of paths) {
-                const node = this.fs.resolve(file, p);
-                if (node && !this.fs.isDirectory(node)) {
+                const node = context.fileSystemService.resolve(file, p);
+                if (node && !context.fileSystemService.isDirectory(node)) {
                     foundNode = node;
-                    absPath = this.fs.getAbsolutePath(node);
+                    absPath = context.fileSystemService.getAbsolutePath(node);
                     break;
                 }
             }
@@ -55,10 +55,10 @@ export class DotCommand implements ICommand {
         // Our tests imply it should find it if in CWD. 'DOT_02' is explicit about 'Path lookup'.
         // Let's fallback to CWD if not found.
         if (!foundNode) {
-            const node = this.fs.resolve(file, state.currentDirectory);
+            const node = context.fileSystemService.resolve(file, state.currentDirectory);
             if (node) {
                 foundNode = node;
-                absPath = this.fs.getAbsolutePath(node);
+                absPath = context.fileSystemService.getAbsolutePath(node);
             }
         }
 
@@ -70,7 +70,7 @@ export class DotCommand implements ICommand {
             };
         }
 
-        const content = this.fs.readFile(absPath);
+        const content = context.fileSystemService.readFile(absPath);
 
         if (context.executor) {
             let sourcedState = {

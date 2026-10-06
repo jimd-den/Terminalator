@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, View, StyleSheet, ViewStyle } from 'react-native';
 import { THEME } from '../Theme';
+import { useTheme } from '../context/ThemeContext';
 
 import { TutorEmotion } from '../../../domain/entities/TutorEngine';
 
@@ -17,6 +18,8 @@ interface CursorProps {
  * Adapts to Tutor's emotional state.
  */
 export const Cursor: React.FC<CursorProps> = ({ color, inputTrigger, emotion = TutorEmotion.NORMAL }) => {
+    const { theme } = useTheme();
+    const colors = theme.colors;
     const opacityAnim = useRef(new Animated.Value(1)).current;
     const scaleAnim = useRef(new Animated.Value(1)).current;
     const shakeAnim = useRef(new Animated.Value(0)).current;
@@ -69,7 +72,7 @@ export const Cursor: React.FC<CursorProps> = ({ color, inputTrigger, emotion = T
         cursor: {
             width: 10,
             height: 20,
-            backgroundColor: (emotion === TutorEmotion.MAD || emotion === TutorEmotion.CRASH_OUT) ? '#ff0000' : color,
+            backgroundColor: (emotion === TutorEmotion.MAD || emotion === TutorEmotion.CRASH_OUT) ? colors.error : color,
             marginLeft: 1, // Slight gap from text
         }
     });

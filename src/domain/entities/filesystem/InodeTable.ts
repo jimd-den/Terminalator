@@ -34,10 +34,10 @@ export class InodeTable {
             mtime: now,
             ctime: now,
             links: 1,
-            content: (mode & S_IFDIR) ? new Map() : ''
+            content: ((mode & 0o170000) === S_IFDIR) ? new Map() : ''
         };
 
-        if (mode & S_IFDIR) {
+        if ((mode & 0o170000) === S_IFDIR) {
             inode.size = 4096;
         }
 

@@ -1,84 +1,80 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
- * CatCommand - Core Command
- *
- * Concatenates and prints files.
- *
- * Pillar: The Four-Fold Shield (Strict Architecture)
- * Pillar: The Swift Stream (Performance)
- * Pillar: The Storyteller’s Code (Literate Documentation)
- *
- * Intent:
- * Allows the operator to view file contents.
- * Refactored to implement IStructuredCommand for combinatorial scaling.
+ * cat - concatenate and print files (POSIX), with the common display
+ * options -n -b -s -E -T -v -A. Continues past unreadable operands and
+ * reports each one on stderr, exiting 1 if any failed.
  */
-
 import { CommandBase } from '../CommandBase';
 import { CommandCapability } from '../IStructuredCommand';
-import { ProcessContext } from '../../../domain/entities/ProcessContext';
+import { ProcessContext } from '../../entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../entities/Command';
-
+import { CommandResponse, CommandMetadata } from '../../entities/Command';
 import { FileSystemService } from '../../services/FileSystemService';
-import { PathResolver } from '../../services/filesystem/PathResolver';
+import { readInput, readInputBytes } from '../shared/InputFiles';
+import { bytesToBinaryString } from '../../services/shell/io/OutputSink';
+import { TheatricalVerb } from '../../services/PresentationDirector';
 
 export class CatCommand extends CommandBase {
     public readonly capabilities = [CommandCapability.READ];
     public readonly utility = 'cat';
 
-    constructor(private fs: FileSystemService) {
+    constructor(private fs?: FileSystemService) {
         super();
     }
 
-    protected async executeInternal(
-        rawArgs: string[],
-        flags: Set<string>,
-        operands: string[],
-        context: ProcessContext,
-        state: TerminalState
-    ): Promise<CommandResponse> {
-        const fsService = context.fileSystemService || this.fs;
-        const input = getStdinAsString(context);
+    public getMetadata(): CommandMetadata {
+        return { verb: TheatricalVerb.EXTRACT, style: 'NORMAL' };
+    }
+
+    protected executeInternal(_raw: string[], flags: Set<string>, operands: string[], context: ProcessContext, state: TerminalState): CommandResponse {
+        const bad = [...flags].find(f => !'unbsETvAet'.includes(f));
+        if (bad) return { output: '', stderr: `cat: invalid option -- '${bad}'\n`, exitCode: 1, newState: state };
+
+        const show = (c: string) => flags.has(c) || (flags.has('A') && 'vET'.includes(c)) || (flags.has('e') && 'vE'.includes(c)) || (flags.has('t') && 'vT'.includes(c));
+        const decorate = show('n') || show('b') || show('s') || show('E') || show('T') || show('v');
 
         let output = '';
+        const errors: string[] = [];
+        let lineNo = 0;
+        let lastBlank = false;
 
-        if (operands.length === 0) {
-            if (input !== undefined) {
-                output = input;
-            } else {
-                return { output: 'cat: missing input', newState: state, exitCode: 1 };
+        if (!decorate) {
+            // Plain cat copies bytes exactly (binary-safe).
+            for (const operand of operands.length ? operands : ['-']) {
+                const input = readInputBytes(context, operand);
+                if (!input.ok) { errors.push(`cat: ${input.error}`); continue; }
+                output += bytesToBinaryString(input.data);
             }
-        } else {
-            for (const filename of operands) {
-                if (filename === '-') {
-                    output += input || '';
-                    continue;
-                }
+            return {
+                output, binary: true,
+                stderr: errors.length ? errors.join('\n') + '\n' : undefined,
+                exitCode: errors.length ? 1 : 0,
+                newState: state,
+            };
+        }
 
-                const path = PathResolver.resolveString(filename, state.currentDirectory, state.environment.HOME);
+        for (const operand of operands.length ? operands : ['-']) {
+            const input = readInput(context, operand);
+            if (!input.ok) { errors.push(`cat: ${input.error}`); continue; }
 
-                try {
-                    const node = fsService.resolve(path);
-                    const inode = node ? fsService.getInode(node.inodeId) : undefined;
-                    if (node && inode && (inode.mode & 0o040000)) { // S_IFDIR
-                        return { output: `cat: ${filename}: Is a directory`, newState: state, exitCode: 1 };
-                    }
-                    const content = fsService.readFile(path);
-                    output += content;
-                } catch (error: any) {
-                    return {
-                        output: `cat: ${filename}: No such file or directory`,
-                        newState: state,
-                        exitCode: 1
-                    };
-                }
+            for (const line of input.data.match(/[^\n]*\n|[^\n]+$/g) ?? []) {
+                const hasNl = line.endsWith('\n');
+                let body = hasNl ? line.slice(0, -1) : line;
+                const blank = body === '';
+                if (show('s') && blank && lastBlank) continue;
+                lastBlank = blank;
+                if (show('v')) body = body.replace(/[\x00-\x08\x0b-\x1f\x7f]/g, c => (c === '\x7f' ? '^?' : '^' + String.fromCharCode(c.charCodeAt(0) + 64)));
+                if (show('T')) body = body.replace(/\t/g, '^I');
+                let prefix = '';
+                if (show('b') ? !blank : show('n')) prefix = `${String(++lineNo).padStart(6)}\t`;
+                output += prefix + body + (show('E') && hasNl ? '$' : '') + (hasNl ? '\n' : '');
             }
         }
 
         return {
-            output: output,
+            output,
+            stderr: errors.length ? errors.join('\n') + '\n' : undefined,
+            exitCode: errors.length ? 1 : 0,
             newState: state,
-            exitCode: 0
         };
     }
 }

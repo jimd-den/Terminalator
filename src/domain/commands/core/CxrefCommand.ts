@@ -1,4 +1,3 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * @file CxrefCommand.ts
  * @description The 'cxref' command. Generate a C-language program cross-reference table.
@@ -12,7 +11,6 @@ export class CxrefCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = getStdinAsString(context);
         const inputFiles: string[] = [];
         let outputFile: string | null = null;
         let silent = false;
@@ -42,7 +40,7 @@ export class CxrefCommand implements ICommand {
 
         // 2. Process Files
         for (const file of inputFiles) {
-            const rawContent = this.fs.readFile(file, state.currentDirectory);
+            const rawContent = context.fileSystemService.readFile(file, state.currentDirectory);
             const content = typeof rawContent === 'string' ? rawContent : new TextDecoder().decode(rawContent);
 
             // Syntax Check Hook
@@ -58,7 +56,7 @@ export class CxrefCommand implements ICommand {
 
         // 3. Output
         if (outputFile) {
-            this.fs.writeFile(outputFile, result, 'w', 1000, 1000, state.currentDirectory);
+            context.fileSystemService.writeFile(outputFile, result, 'w', 1000, 1000, state.currentDirectory);
             return { output: '', newState: state, exitCode: 0 };
         }
 

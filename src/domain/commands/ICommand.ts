@@ -13,13 +13,19 @@ import { TerminalState } from '../entities/TerminalState';
 import { CommandResponse } from '../entities/Command';
 import { ProcessContext } from '../entities/ProcessContext';
 
-export { CommandResponse };
+export type { CommandResponse };
 
 export interface CommandContext extends ProcessContext {
     // Alias for backward compatibility if needed, or extend
 }
 
 export interface ICommand {
+    /**
+     * Output is exactly what the utility writes (no newline normalisation).
+     * Legacy commands that omit trailing newlines leave this unset.
+     */
+    readonly exactOutput?: boolean;
+
     /**
      * Executes the command.
      *

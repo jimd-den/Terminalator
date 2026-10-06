@@ -1,15 +1,9 @@
-import { ASTNode, NodeType, IfNode, ForNode, WhileNode, SubshellNode, BlockNode, FunctionDefNode, CommandNode, RedirectNode } from '../../interfaces/ShellAST';
+import { ASTNode, NodeType, SubshellNode } from '../../interfaces/ShellAST';
 import { TokenType } from '../ShellLexer';
 import { IStatementParser } from './IStatementParser';
 import { IShellParserFacade } from './IShellParserFacade';
 
-/**
- * SubshellParser - Domain Layer
- * 
- * Parses ( ... ) subshell constructs.
- *
- * Pillar: The Balanced Scale (SRP) - Isolated parsing of subshells.
- */
+/** subshell: '(' compound_list ')' */
 export class SubshellParser implements IStatementParser {
     canHandle(facade: IShellParserFacade): boolean {
         return facade.peek().type === TokenType.LPAREN;
@@ -17,19 +11,10 @@ export class SubshellParser implements IStatementParser {
 
     parse(facade: IShellParserFacade): ASTNode {
         facade.advance(); // (
-        while (facade.peek().type === TokenType.NEWLINE) facade.advance();
-
-        const inner = facade.parseList();
-
-        while (facade.peek().type === TokenType.NEWLINE) facade.advance();
-
-        if (!facade.match(TokenType.RPAREN)) {
-            throw new Error(`Syntax Error: Missing closing parenthesis for subshell at position ${facade.peek().position}`);
-        }
-
-        return {
-            type: NodeType.SUBSHELL,
-            root: inner!
-        } as SubshellNode;
+        const root = facade.parseCompoundList();
+        if (!root) facade.syntaxError("expected command after '('");
+        if (facade.peek().type !== TokenType.RPAREN) facade.syntaxError("expected ')'");
+        facade.advance();
+        return { type: NodeType.SUBSHELL, root: root! } as SubshellNode;
     }
 }

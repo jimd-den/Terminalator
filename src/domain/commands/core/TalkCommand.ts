@@ -1,4 +1,3 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
  * TalkCommand - Core Command
  *
@@ -23,7 +22,6 @@ export class TalkCommand implements ICommand {
     constructor(private fs: FileSystemService) { }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = getStdinAsString(context);
         const target = args[0];
         if (!target) {
             return { output: 'talk: missing operand', newState: state, exitCode: 1 };

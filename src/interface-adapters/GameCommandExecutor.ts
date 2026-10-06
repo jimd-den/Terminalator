@@ -25,12 +25,22 @@ import { SettingsCommand } from './commands/game/SettingsCommand';
 import { TutorCommand } from './commands/game/TutorCommand';
 import { CommandRegistry } from '../domain/commands/CommandRegistry';
 import { CoreUtilsModule } from '../domain/modules/CoreUtilsModule';
+import { GnuUtilsModule } from '../domain/modules/GnuUtilsModule';
 import { SystemUtilsModule } from '../domain/modules/SystemUtilsModule';
-import { ConnectCommand } from './commands/game/ConnectCommand';
 import { NetworkMap } from '../domain/services/NetworkMap';
-import { TerminalState } from '../domain/entities/TerminalState';
-import { CommandResponse } from '../domain/entities/Command';
+import { EconomyService } from '../domain/services/EconomyService';
+import type { TerminalState } from '../domain/entities/TerminalState';
+import type { CommandResponse } from '../domain/entities/Command';
 import { IShellExecutor } from '../domain/interfaces/IShellExecutor';
+
+import { NetScanCommand } from '../domain/commands/core/NetScanCommand';
+import { NetLinkCommand } from '../domain/commands/core/NetLinkCommand';
+import { BypassCommand } from '../domain/commands/core/BypassCommand';
+import { TransferCommand } from '../domain/commands/core/TransferCommand';
+import { NetConfCommand } from '../domain/commands/core/NetConfCommand';
+import { GenCommand } from '../domain/commands/core/GenCommand';
+import { IrcCommand } from '../domain/commands/core/IrcCommand';
+import { ArchiveCommand } from '../domain/commands/core/ArchiveCommand';
 
 export class GameCommandExecutor implements IShellExecutor {
     private mailSystem: MailSystem;
@@ -43,6 +53,7 @@ export class GameCommandExecutor implements IShellExecutor {
         fsService: FileSystemService,
         gameManager: GameManager,
         private networkMap: NetworkMap,
+        private economyService: EconomyService,
         private telemetry?: TelemetryPort
     ) {
         this.gameManager = gameManager;
@@ -52,6 +63,7 @@ export class GameCommandExecutor implements IShellExecutor {
         // 1. Register Core Modules
         new CoreUtilsModule(fsService.fileSystem, identityService).register(this.registry);
         new SystemUtilsModule(fsService).register(this.registry);
+        new GnuUtilsModule().register(this.registry);
 
         // 2. Compose Domain Engine
         this.engine = new ExecuteCommand(
@@ -60,7 +72,8 @@ export class GameCommandExecutor implements IShellExecutor {
             this.registry,
             undefined,
             networkMap,
-            gameManager.getWorldManager()
+            gameManager.getWorldManager(),
+            economyService
         );
 
         this.mailSystem = new MailSystem(fsService, telemetry);
@@ -80,9 +93,17 @@ export class GameCommandExecutor implements IShellExecutor {
         this.registry.register('options', new SettingsCommand());
         this.registry.register('settings', new SettingsCommand());
 
-        // SSH
-        this.registry.register('ssh', new ConnectCommand(this.networkMap));
-        this.registry.register('connect', new ConnectCommand(this.networkMap));
+        // Lattice Commands
+        this.registry.register('net-scan', new NetScanCommand());
+        this.registry.register('net-link', new NetLinkCommand());
+        this.registry.register('net-conf', new NetConfCommand());
+        this.registry.register('gen', new GenCommand());
+        this.registry.register('bypass.sh', new BypassCommand());
+        this.registry.register('transfer', new TransferCommand());
+
+        // Inline Apps
+        this.registry.register('irc', new IrcCommand(this.gameManager));
+        this.registry.register('archive', new ArchiveCommand());
 
         // Register Tutor
         this.registry.register('tutor', new TutorCommand(this.gameManager));

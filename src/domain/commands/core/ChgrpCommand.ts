@@ -57,9 +57,9 @@ export class ChgrpCommand extends CommandBase {
         for (const file of files) {
             try {
                 if (recursive) {
-                    this.chgrpRecursive(file, group.gid, state.currentDirectory, context.user);
+                    this.chgrpRecursive(context.fileSystemService, file, group.gid, state.currentDirectory, context.user);
                 } else {
-                    this.fs.chown(file, -1, group.gid, state.currentDirectory, context.user);
+                    context.fileSystemService.chown(file, -1, group.gid, state.currentDirectory, context.user);
                 }
             } catch (e: any) {
                 errors.push(`chgrp: ${file}: ${e.message}`);
@@ -73,20 +73,20 @@ export class ChgrpCommand extends CommandBase {
         };
     }
 
-    private chgrpRecursive(path: string, gid: number, cwd: string, user: any): void {
-        const dentry = this.fs.resolve(path, cwd, true, user);
+    private chgrpRecursive(fs: FileSystemService, path: string, gid: number, cwd: string, user: any): void {
+        const dentry = fs.resolve(path, cwd, true, user);
         if (!dentry) throw new Error(`${path}: No such file or directory`);
 
-        this.applyChgrpRecursive(dentry, gid, user);
+        this.applyChgrpRecursive(fs, dentry, gid, user);
     }
 
-    private applyChgrpRecursive(dentry: any, gid: number, user: any): void {
-        const path = this.fs.getAbsolutePath(dentry);
-        this.fs.chown(path, -1, gid, '/', user);
+    private applyChgrpRecursive(fs: FileSystemService, dentry: any, gid: number, user: any): void {
+        const path = fs.getAbsolutePath(dentry);
+        fs.chown(path, -1, gid, '/', user);
 
         if (dentry.children) {
             for (const child of dentry.children.values()) {
-                this.applyChgrpRecursive(child, gid, user);
+                this.applyChgrpRecursive(fs, child, gid, user);
             }
         }
     }

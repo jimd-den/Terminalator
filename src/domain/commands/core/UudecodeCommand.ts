@@ -1,113 +1,68 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
- * UudecodeCommand - Core Command
- *
- * Decode a binary file.
- *
- * Pillar: The Four-Fold Shield (Strict Architecture)
- * Pillar: The Swift Stream (Performance)
- *
- * Intent:
- * Text to binary decoding.
+ * uudecode - decode a uuencoded or base64 (begin-base64) file (POSIX):
+ * `uudecode [-o outfile] [file]`. Writes the file named in the header.
  */
-
-import { ICommand } from '../ICommand';
-import { ProcessContext } from '../../../domain/entities/ProcessContext';
-import { FileSystemService } from '../../../domain/services/FileSystemService';
+import { CommandResponse } from '../ICommand';
+import { ProcessContext } from '../../entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../entities/Command';
+import { FileSystemService } from '../../services/FileSystemService';
+import { Utility } from '../shared/Utility';
+import { getopt, readInput } from '../shared/InputFiles';
+import { base64Decode } from '../../utils/Base64';
+import { bytesToBinaryString } from '../../services/shell/io/OutputSink';
+import { strerror } from '../shared/PathOps';
 
-import { FileSystem } from '../../entities/FileSystem';
+export class UudecodeCommand extends Utility {
+    readonly utility = 'uudecode';
 
-export class UudecodeCommand implements ICommand {
-    constructor(private fs: FileSystemService) { }
+    constructor(private fs?: FileSystemService) { super(); }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
-        const input = getStdinAsString(context);
-        const file = args.length > 0 ? args[0] : null;
-        let content = '';
+        const { opts, operands, error } = getopt(args, 'o:m');
+        if (error) return this.usage(state, error);
+        const name = operands[0] ?? '-';
+        const input = readInput(context, name);
+        if (!input.ok) return this.respond(state, '', [input.error]);
+        const lines = input.data.split('\n');
+        const start = lines.findIndex(l => /^begin(-base64)? [0-7]+ /.test(l));
+        if (start < 0) return this.respond(state, '', [`${name}: No \`begin' line`]);
+        const header = /^begin(-base64)? ([0-7]+) (.*)$/.exec(lines[start])!;
+        const isBase64 = !!header[1];
+        const bytes: number[] = [];
 
-        if (file) {
-            try {
-                const raw = this.fs.readFile(this.resolvePath(file, state));
-                content = typeof raw === 'string' ? raw : new TextDecoder().decode(raw);
-            } catch (e) {
-                return { output: `uudecode: ${file}: No such file`, newState: state, exitCode: 1 };
-            }
-        } else if (input) {
-            content = input;
+        if (isBase64) {
+            const body: string[] = [];
+            for (let k = start + 1; k < lines.length && lines[k] !== '===='; k++) body.push(lines[k]);
+            try { bytes.push(...base64Decode(body.join(''))); } catch { return this.respond(state, '', [`${name}: invalid input`]); }
         } else {
-            return { output: '', newState: state, exitCode: 0 };
-        }
-
-        const lines = content.split('\n');
-        let mode = '';
-        let decodePath = '';
-        let started = false;
-        let output = '';
-
-        for (const line of lines) {
-            if (!started) {
-                if (line.startsWith('begin ')) {
-                    const parts = line.split(' ');
-                    mode = parts[1];
-                    decodePath = parts[2];
-                    started = true;
+            let ended = false;
+            for (let k = start + 1; k < lines.length; k++) {
+                const l = lines[k];
+                if (l === 'end') { ended = true; break; }
+                if (l === '' || l === '`') continue;
+                const n = (l.charCodeAt(0) - 32) & 0x3f;
+                const dec = (i: number) => ((l.charCodeAt(i) || 32) - 32) & 0x3f;
+                const chunk: number[] = [];
+                for (let i = 1; chunk.length < n; i += 4) {
+                    const a = dec(i), b = dec(i + 1), c = dec(i + 2), d = dec(i + 3);
+                    chunk.push(((a << 2) | (b >> 4)) & 0xff, ((b << 4) | (c >> 2)) & 0xff, ((c << 6) | d) & 0xff);
                 }
-                continue;
+                bytes.push(...chunk.slice(0, n));
             }
-
-            if (line === 'end') break;
-            if (line.length === 0) continue;
-
-            const lenChar = line.charCodeAt(0);
-            const len = (lenChar - 32) & 0x3F;
-            if (len === 0) continue; // End marker line often '`' or ' '
-
-            // Decode line
-            for (let i = 1; i < line.length && output.length < output.length + len; i += 4) {
-                const c1 = (line.charCodeAt(i) - 32) & 0x3F;
-                const c2 = (line.charCodeAt(i + 1) - 32) & 0x3F;
-                const c3 = (line.charCodeAt(i + 2) - 32) & 0x3F;
-                const c4 = (line.charCodeAt(i + 3) - 32) & 0x3F;
-
-                const val = (c1 << 18) | (c2 << 12) | (c3 << 6) | c4;
-
-                const b1 = (val >> 16) & 0xFF;
-                const b2 = (val >> 8) & 0xFF;
-                const b3 = val & 0xFF;
-
-                output += String.fromCharCode(b1);
-                if (output.length < output.length + len) output += String.fromCharCode(b2); // Should check count
-                if (output.length < output.length + len) output += String.fromCharCode(b3);
-            }
-            // Truncate to exact length logic omitted for simplicity, assumes strict blocks.
-            // But we track `output` string.
-            // Actually `len` is number of bytes on THIS line.
-            // We should only append `len` bytes from this group.
-            // Re-implement correctly?
-            // Since this is text-based simulation, binary fidelity is tricky with strings.
-            // Let's assume input valid.
+            if (!ended) return this.respond(state, '', [`${name}: No \`end' line`]);
         }
 
-        // Write to decodePath
-        if (decodePath && output) {
-            try {
-                this.fs.writeFile(this.resolvePath(decodePath, state), output, 'w');
-            } catch (e) {
-                return { output: `uudecode: cannot write ${decodePath}`, newState: state, exitCode: 1 };
-            }
+        const target = String(opts.get('o') ?? header[3]);
+        const data = Uint8Array.from(bytes);
+        if (target === '/dev/stdout' || target === '-') return this.respond(state, bytesToBinaryString(data), [], 0, true);
+        try {
+            const fs = context.fileSystemService;
+            const abs = fs.resolveAbsolutePath(target, context.cwd);
+            fs.writeFile(abs, data, 'w', undefined, undefined, '/');
+            fs.chmod(abs, parseInt(header[2], 8) & 0o777, '/');
+        } catch (e) {
+            return this.respond(state, '', [`${target}: ${strerror(e)}`]);
         }
-
-        return {
-            output: '', // silent on success
-            newState: state,
-            exitCode: 0
-        };
-    }
-
-    private resolvePath(path: string, state: TerminalState): string {
-        if (path.startsWith('/')) return path;
-        return state.currentDirectory === '/' ? `/${path}` : `${state.currentDirectory}/${path}`;
+        return this.respond(state, '');
     }
 }

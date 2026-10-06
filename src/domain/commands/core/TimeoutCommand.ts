@@ -1,75 +1,59 @@
-import { getStdinAsString } from '../../entities/ProcessContext';
 /**
- * TimeoutCommand - Core Command
- *
- * Run a command with a time limit.
- *
- * Pillar: The Four-Fold Shield (Strict Architecture)
- * Pillar: The Swift Stream (Performance)
- *
- * Intent:
- * Wraps execution in a Promise race.
+ * timeout - run a command with a time limit (GNU coreutils):
+ * `timeout [-s signal] [-k duration] [--foreground] [--preserve-status] duration command [args]`.
+ * Exits 124 if the command timed out, 125 on timeout's own errors, else the command's status.
  */
-
-import { ICommand } from '../ICommand';
-import { ProcessContext } from '../../../domain/entities/ProcessContext';
-import { FileSystemService } from '../../../domain/services/FileSystemService';
+import { CommandResponse } from '../ICommand';
+import { ProcessContext } from '../../entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../entities/Command';
+import { FileSystemService } from '../../services/FileSystemService';
+import { Utility } from '../shared/Utility';
+import { parseSignal } from '../../entities/Signal';
 
-import { FileSystem } from '../../entities/FileSystem';
+function duration(s: string): number | null {
+    const m = /^([0-9]*\.?[0-9]+)([smhd]?)$/.exec(s);
+    if (!m) return null;
+    return parseFloat(m[1]) * ({ '': 1, s: 1, m: 60, h: 3600, d: 86400 } as Record<string, number>)[m[2]];
+}
 
-export class TimeoutCommand implements ICommand {
-    constructor(
-        private fs: FileSystemService,
-        private commandProvider: (name: string) => ICommand | undefined
-    ) { }
+export class TimeoutCommand extends Utility {
+    readonly utility = 'timeout';
+
+    constructor(private fs?: FileSystemService) { super(); }
 
     async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
-        const input = getStdinAsString(context);
-        if (args.length < 2) {
-            return { output: 'timeout: missing operand', newState: state, exitCode: 125 };
+        let i = 0;
+        let preserve = false;
+        for (; i < args.length; i++) {
+            const a = args[i];
+            if (a === '--foreground' || a === '-v' || a === '--verbose') continue;
+            if (a === '--preserve-status') { preserve = true; continue; }
+            if (a === '-s' || a === '-k') {
+                const v = args[++i];
+                if (v === undefined || (a === '-s' ? parseSignal(v) === undefined : duration(v) === null)) {
+                    return this.usage(state, `invalid ${a === '-s' ? 'signal' : 'time interval'} '${v ?? ''}'`, 125);
+                }
+                continue;
+            }
+            if (a.startsWith('--signal=') || a.startsWith('--kill-after=')) continue;
+            if (a === '--') { i++; break; }
+            if (a.startsWith('-') && a.length > 1) return this.usage(state, `invalid option -- '${a.substring(1)}'`, 125);
+            break;
         }
+        const limit = duration(args[i] ?? '');
+        if (limit === null) return this.usage(state, args[i] === undefined ? 'missing operand' : `invalid time interval '${args[i]}'`, 125);
+        const argv = args.slice(i + 1);
+        if (!argv.length) return this.usage(state, 'missing operand', 125);
 
-        const durationStr = args[0];
-        const cmdName = args[1];
-        const cmdArgs = args.slice(2);
-
-        let duration = parseFloat(durationStr);
-
-        // Handle suffix: s, m, h, d
-        const lastChar = durationStr.slice(-1);
-        if (['s', 'm', 'h', 'd'].includes(lastChar)) {
-            duration = parseFloat(durationStr.slice(0, -1));
-            if (lastChar === 'm') duration *= 60;
-            if (lastChar === 'h') duration *= 3600;
-            if (lastChar === 'd') duration *= 86400;
+        if (limit === 0) {
+            const status = await context.spawn!(argv);
+            return this.respond(state, '', [], status);
         }
-
-        if (isNaN(duration)) {
-            return { output: `timeout: invalid time interval '${durationStr}'`, newState: state, exitCode: 125 };
-        }
-
-        // Convert to ms
-        const timeoutMs = duration * 1000;
-
-        const command = this.commandProvider(cmdName);
-        if (!command) {
-            return { output: `timeout: failed to run command '${cmdName}': No such file or directory`, newState: state, exitCode: 127 };
-        }
-
-        const timeoutPromise = new Promise<CommandResponse>((resolve) => {
-            setTimeout(() => {
-                resolve({
-                    output: '',
-                    newState: state,
-                    exitCode: 124
-                });
-            }, timeoutMs);
-        });
-
-        const executionPromise = command.execute(cmdArgs, context, state);
-
-        return Promise.race([executionPromise, timeoutPromise]);
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        const timedOut = new Promise<'timeout'>(resolve => { timer = setTimeout(() => resolve('timeout'), limit * 1000); });
+        const result = await Promise.race([context.spawn!(argv), timedOut]);
+        if (timer) clearTimeout(timer);
+        if (result === 'timeout') return this.respond(state, '', [], preserve ? 143 : 124);
+        return this.respond(state, '', [], result);
     }
 }

@@ -17,7 +17,8 @@ import { CommandBase } from '../CommandBase';
 import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../entities/Command';
+import { CommandResponse, CommandMetadata } from '../../entities/Command';
+import { TheatricalVerb } from '../../services/PresentationDirector';
 
 import { FileSystemService } from '../../services/FileSystemService';
 
@@ -27,6 +28,13 @@ export class PwdCommand extends CommandBase {
 
     constructor(private fs: FileSystemService) {
         super();
+    }
+
+    public getMetadata(): CommandMetadata {
+        return {
+            verb: TheatricalVerb.SCAN,
+            style: 'NORMAL'
+        };
     }
 
     protected async executeInternal(

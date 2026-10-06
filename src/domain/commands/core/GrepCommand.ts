@@ -16,7 +16,8 @@ import { CommandBase } from '../CommandBase';
 import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../entities/Command';
+import { CommandResponse, CommandMetadata } from '../../entities/Command';
+import { TheatricalVerb } from '../../services/PresentationDirector';
 
 import { FileSystemService } from '../../services/FileSystemService';
 import { S_IFDIR } from '../../entities/FileSystem';
@@ -97,6 +98,13 @@ export class GrepCommand extends CommandBase {
         super();
     }
 
+    public getMetadata(): CommandMetadata {
+        return {
+            verb: TheatricalVerb.EXTRACT,
+            style: 'NORMAL'
+        };
+    }
+
     /**
      * Protocol: Build arguments programmatically.
      */
@@ -113,7 +121,7 @@ export class GrepCommand extends CommandBase {
 
     protected override parseArgs(args: string[]) {
         // Grep options that take arguments: -e, -f
-        super.parseArgs(args, ['e', 'f']);
+        super.parseArgs(args, ['e', 'f', 'recursive']);
     }
 
     protected async executeInternal(
@@ -124,7 +132,7 @@ export class GrepCommand extends CommandBase {
         state: TerminalState
     ): Promise<CommandResponse> {
         const input = getStdinAsString(context);
-        const fs = context.fileSystemService || this.fs;
+        const fs = context.fileSystemService || context.fileSystemService;
 
         const options: GrepOptions = {
             extended: flags.has('E'),
@@ -137,7 +145,7 @@ export class GrepCommand extends CommandBase {
             lineNumbers: flags.has('n'),
             invertMatch: flags.has('v'),
             exactLine: flags.has('x'),
-            recursive: flags.has('r') || flags.has('R')
+            recursive: flags.has('r') || flags.has('R') || this.options.has('recursive')
         };
 
         const patterns: string[] = [];
@@ -255,7 +263,7 @@ export class GrepCommand extends CommandBase {
                         const inode = fs.getInode(node.inodeId);
                         if (!inode) return;
 
-                        if (inode.mode & S_IFDIR) {
+                        if ((inode.mode & 0o170000) === S_IFDIR) {
                             if (options.recursive) {
                                 for (const [name, child] of (node as DirectoryNode).children) {
                                     const childPath = path === '/' ? `/${name}` : `${path}/${name}`;

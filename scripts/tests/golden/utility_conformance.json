@@ -1,0 +1,894 @@
+{
+  "od/0:default": {
+    "stdout": "0000000 062550 066154 004557 067567 066162 005144 177401 041101\n0000020 000103\n0000021\n0000000 060541 060541 060541 060541 060541 060541 060541 060541\n*\n0000060 060541 060541 060541 060541 060541 060541 060541 000142\n0000077\n",
+    "status": 0
+  },
+  "od/1:-c": {
+    "stdout": "0000000   h   e   l   l   o  \\t   w   o   r   l   d  \\n 001 377   A   B\n0000020   C\n0000021\n0000000   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a\n*\n0000060   a   a   a   a   a   a   a   a   a   a   a   a   a   a   b\n0000077\n",
+    "status": 0
+  },
+  "od/2:-b": {
+    "stdout": "0000000 150 145 154 154 157 011 167 157 162 154 144 012 001 377 101 102\n0000020 103\n0000021\n0000000 141 141 141 141 141 141 141 141 141 141 141 141 141 141 141 141\n*\n0000060 141 141 141 141 141 141 141 141 141 141 141 141 141 141 142\n0000077\n",
+    "status": 0
+  },
+  "od/3:-x": {
+    "stdout": "0000000 6568 6c6c 096f 6f77 6c72 0a64 ff01 4241\n0000020 0043\n0000021\n0000000 6161 6161 6161 6161 6161 6161 6161 6161\n*\n0000060 6161 6161 6161 6161 6161 6161 6161 0062\n0000077\n",
+    "status": 0
+  },
+  "od/4:-d": {
+    "stdout": "0000000 25960 27756  2415 28535 27762  2660 65281 16961\n0000020    67\n0000021\n0000000 24929 24929 24929 24929 24929 24929 24929 24929\n*\n0000060 24929 24929 24929 24929 24929 24929 24929    98\n0000077\n",
+    "status": 0
+  },
+  "od/5:-s": {
+    "stdout": "0000000  25960  27756   2415  28535  27762   2660   -255  16961\n0000020     67\n0000021\n0000000  24929  24929  24929  24929  24929  24929  24929  24929\n*\n0000060  24929  24929  24929  24929  24929  24929  24929     98\n0000077\n",
+    "status": 0
+  },
+  "od/6:-o": {
+    "stdout": "0000000 062550 066154 004557 067567 066162 005144 177401 041101\n0000020 000103\n0000021\n0000000 060541 060541 060541 060541 060541 060541 060541 060541\n*\n0000060 060541 060541 060541 060541 060541 060541 060541 000142\n0000077\n",
+    "status": 0
+  },
+  "od/7:-t x1": {
+    "stdout": "0000000 68 65 6c 6c 6f 09 77 6f 72 6c 64 0a 01 ff 41 42\n0000020 43\n0000021\n0000000 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61\n*\n0000060 61 61 61 61 61 61 61 61 61 61 61 61 61 61 62\n0000077\n",
+    "status": 0
+  },
+  "od/8:-t d1": {
+    "stdout": "0000000  104  101  108  108  111    9  119  111  114  108  100   10    1   -1   65   66\n0000020   67\n0000021\n0000000   97   97   97   97   97   97   97   97   97   97   97   97   97   97   97   97\n*\n0000060   97   97   97   97   97   97   97   97   97   97   97   97   97   97   98\n0000077\n",
+    "status": 0
+  },
+  "od/9:-t u4": {
+    "stdout": "0000000 1819043176 1870072175  174353522 1111621377\n0000020         67\n0000021\n0000000 1633771873 1633771873 1633771873 1633771873\n*\n0000060 1633771873 1633771873 1633771873    6447457\n0000077\n",
+    "status": 0
+  },
+  "od/10:-t o4": {
+    "stdout": "0000000 15433062550 15735604557 01231066162 10220377401\n0000020 00000000103\n0000021\n0000000 14130260541 14130260541 14130260541 14130260541\n*\n0000060 14130260541 14130260541 14130260541 00030460541\n0000077\n",
+    "status": 0
+  },
+  "od/11:-t x8": {
+    "stdout": "0000000 6f77096f6c6c6568 4241ff010a646c72\n0000020 0000000000000043\n0000021\n0000000 6161616161616161 6161616161616161\n*\n0000060 6161616161616161 0062616161616161\n0000077\n",
+    "status": 0
+  },
+  "od/12:-t f4": {
+    "stdout": "0000000   1.1431415e+27     7.64542e+28   1.0998197e-32       48.499027\n0000020         9.4e-44\n0000021\n0000000    2.598459e+20    2.598459e+20    2.598459e+20    2.598459e+20\n*\n0000060    2.598459e+20    2.598459e+20    2.598459e+20    9.034812e-39\n0000077\n",
+    "status": 0
+  },
+  "od/13:-t f8": {
+    "stdout": "0000000   8.731722756329083e+228       154585404616.84723\n0000020                 3.3e-322\n0000021\n0000000  1.2217638442043777e+161  1.2217638442043777e+161\n*\n0000060  1.2217638442043777e+161   8.179546019469217e-307\n0000077\n",
+    "status": 0
+  },
+  "od/14:-a": {
+    "stdout": "0000000   h   e   l   l   o  ht   w   o   r   l   d  nl soh del   A   B\n0000020   C\n0000021\n0000000   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a\n*\n0000060   a   a   a   a   a   a   a   a   a   a   a   a   a   a   b\n0000077\n",
+    "status": 0
+  },
+  "od/15:-An -tx1": {
+    "stdout": " 68 65 6c 6c 6f 09 77 6f 72 6c 64 0a 01 ff 41 42\n 43\n 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61\n*\n 61 61 61 61 61 61 61 61 61 61 61 61 61 61 62\n",
+    "status": 0
+  },
+  "od/16:-Ad -tx2": {
+    "stdout": "0000000 6568 6c6c 096f 6f77 6c72 0a64 ff01 4241\n0000016 0043\n0000017\n0000000 6161 6161 6161 6161 6161 6161 6161 6161\n*\n0000048 6161 6161 6161 6161 6161 6161 6161 0062\n0000063\n",
+    "status": 0
+  },
+  "od/17:-Ax -c": {
+    "stdout": "000000   h   e   l   l   o  \\t   w   o   r   l   d  \\n 001 377   A   B\n000010   C\n000011\n000000   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a\n*\n000030   a   a   a   a   a   a   a   a   a   a   a   a   a   a   b\n00003f\n",
+    "status": 0
+  },
+  "od/18:-c -tx1": {
+    "stdout": "0000000   h   e   l   l   o  \\t   w   o   r   l   d  \\n 001 377   A   B\n         68  65  6c  6c  6f  09  77  6f  72  6c  64  0a  01  ff  41  42\n0000020   C\n         43\n0000021\n0000000   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a\n         61  61  61  61  61  61  61  61  61  61  61  61  61  61  61  61\n*\n0000060   a   a   a   a   a   a   a   a   a   a   a   a   a   a   b\n         61  61  61  61  61  61  61  61  61  61  61  61  61  61  62\n0000077\n",
+    "status": 0
+  },
+  "od/19:-j3 -N4 -c": {
+    "stdout": "0000003   l   o  \\t   w\n0000007\n0000003   a   a   a   a\n0000007\n",
+    "status": 0
+  },
+  "od/20:-tx1z": {
+    "stdout": "0000000 68 65 6c 6c 6f 09 77 6f 72 6c 64 0a 01 ff 41 42  >hello.world...AB<\n0000020 43                                               >C<\n0000021\n0000000 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61  >aaaaaaaaaaaaaaaa<\n*\n0000060 61 61 61 61 61 61 61 61 61 61 61 61 61 61 62     >aaaaaaaaaaaaaab<\n0000077\n",
+    "status": 0
+  },
+  "od/21:-w4 -tx1": {
+    "stdout": "0000000 68 65 6c 6c\n0000004 6f 09 77 6f\n0000010 72 6c 64 0a\n0000014 01 ff 41 42\n0000020 43\n0000021\n0000000 61 61 61 61\n*\n0000074 61 61 62\n0000077\n",
+    "status": 0
+  },
+  "od/22:-t d2 -t c": {
+    "stdout": "0000000   25960   27756    2415   28535   27762    2660    -255   16961\n          h   e   l   l   o  \\t   w   o   r   l   d  \\n 001 377   A   B\n0000020      67\n          C\n0000021\n0000000   24929   24929   24929   24929   24929   24929   24929   24929\n          a   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a\n*\n0000060   24929   24929   24929   24929   24929   24929   24929      98\n          a   a   a   a   a   a   a   a   a   a   a   a   a   a   b\n0000077\n",
+    "status": 0
+  },
+  "od/23:-v -c": {
+    "stdout": "0000000   h   e   l   l   o  \\t   w   o   r   l   d  \\n 001 377   A   B\n0000020   C\n0000021\n0000000   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a\n0000020   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a\n0000040   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a\n0000060   a   a   a   a   a   a   a   a   a   a   a   a   a   a   b\n0000077\n",
+    "status": 0
+  },
+  "od/24:-t u1 -t a": {
+    "stdout": "0000000 104 101 108 108 111   9 119 111 114 108 100  10   1 255  65  66\n          h   e   l   l   o  ht   w   o   r   l   d  nl soh del   A   B\n0000020  67\n          C\n0000021\n0000000  97  97  97  97  97  97  97  97  97  97  97  97  97  97  97  97\n          a   a   a   a   a   a   a   a   a   a   a   a   a   a   a   a\n*\n0000060  97  97  97  97  97  97  97  97  97  97  97  97  97  97  98\n          a   a   a   a   a   a   a   a   a   a   a   a   a   a   b\n0000077\n",
+    "status": 0
+  },
+  "od/stdin": {
+    "stdout": "0000000   x   y   z\n0000003\n",
+    "status": 0
+  },
+  "od/empty": {
+    "stdout": "0000000\n0000000\n",
+    "status": 0
+  },
+  "od/missing": {
+    "stdout": "st=1\n",
+    "status": 0
+  },
+  "od/two-files": {
+    "stdout": "0000002\n",
+    "status": 0
+  },
+  "cmp/same": {
+    "stdout": "st=0\n",
+    "status": 0
+  },
+  "cmp/differ": {
+    "stdout": "a b differ: char 9, line 2\nst=1\n",
+    "status": 0
+  },
+  "cmp/silent": {
+    "stdout": "st=1\n",
+    "status": 0
+  },
+  "cmp/list": {
+    "stdout": "3 143 130\n4 144 131\nst=1\n",
+    "status": 0
+  },
+  "cmp/eof": {
+    "stdout": "cmp: EOF on a after byte 2, in line 1\nst=1\ncmp: EOF on e which is empty\nst=1\n",
+    "status": 0
+  },
+  "cmp/skip": {
+    "stdout": "st=0\nst=0\n",
+    "status": 0
+  },
+  "cmp/limit": {
+    "stdout": "st=0\n",
+    "status": 0
+  },
+  "cmp/stdin": {
+    "stdout": "st=0\n",
+    "status": 0
+  },
+  "cmp/missing": {
+    "stdout": "st=2\n",
+    "status": 0
+  },
+  "wc/default": {
+    "stdout": " 2  3 14 f\n 2  3 14\n2 f\n3\n14 f\n",
+    "status": 0
+  },
+  "wc/multi": {
+    "stdout": "1 1 2 x\n2 3 6 y\n3 4 8 total\n1 x\n2 y\n3 total\n",
+    "status": 0
+  },
+  "wc/chars": {
+    "stdout": "7 u\n7 u\n",
+    "status": 0
+  },
+  "wc/stdin-pipe": {
+    "stdout": "      0       3       5\n0\n",
+    "status": 0
+  },
+  "cksum/basic": {
+    "stdout": "3015617425 6 h\n4294967295 0\n12738659 1\n1830648734 3893 s\n",
+    "status": 0
+  },
+  "nl/default": {
+    "stdout": "     1\ta\n       \n     2\tb\n",
+    "status": 0
+  },
+  "nl/all": {
+    "stdout": "     1\ta\n     2\t\n     3\tb\n",
+    "status": 0
+  },
+  "nl/opts": {
+    "stdout": "010: a\n012: b\n014: c\n",
+    "status": 0
+  },
+  "nl/ln": {
+    "stdout": "1     \ta\n2     \tb\n",
+    "status": 0
+  },
+  "nl/pattern": {
+    "stdout": "     1\tapple\n     2\tbanana\n       cherry\n",
+    "status": 0
+  },
+  "nl/pages": {
+    "stdout": "\n     1\thead\n\n     1\tbody1\n     2\tbody2\n\n     1\tfoot\n",
+    "status": 0
+  },
+  "nl/join": {
+    "stdout": "     1\ta\n       \n     2\t\n       \n     3\t\n     4\tb\n",
+    "status": 0
+  },
+  "strings/basic": {
+    "stdout": "hello\nworld!\nxy\ttabbed\nabc\nhello\nworld!\nxy\ttabbed\n      4 hello\n      b world!\n     12 xy\ttabbed\n     11 world!\n     18 xy\ttabbed\n",
+    "status": 0
+  },
+  "strings/stdin": {
+    "stdout": "longer\n",
+    "status": 0
+  },
+  "expand/default": {
+    "stdout": "0000000   a                               b                            \n0000020                                   c  \\n                        \n0000040           x  \\n\n0000044\n",
+    "status": 0
+  },
+  "expand/t4": {
+    "stdout": "a   b\n12345   c\n",
+    "status": 0
+  },
+  "expand/list": {
+    "stdout": "a  b   c    d\n",
+    "status": 0
+  },
+  "unexpand/leading": {
+    "stdout": "0000000  \\t   a                               b  \\n                   c\n0000020  \\n\n0000021\n",
+    "status": 0
+  },
+  "unexpand/all": {
+    "stdout": "0000000  \\t   a  \\t   b  \\n\n0000005\n",
+    "status": 0
+  },
+  "unexpand/t4": {
+    "stdout": "0000000  \\t   x  \\t   y  \\n\n0000005\n",
+    "status": 0
+  },
+  "fold/width": {
+    "stdout": "abcd\nefgh\nij\nshor\nt\n",
+    "status": 0
+  },
+  "fold/spaces": {
+    "stdout": "a \nb \nc d\nthe quick \nbrown fox \njumps\n",
+    "status": 0
+  },
+  "fold/tabs": {
+    "stdout": "0000000   a  \\t   b   c  \\n   d   e   f   g   h   i   j   k  \\n\n0000016\n",
+    "status": 0
+  },
+  "fold/bytes": {
+    "stdout": "ab\ncd\nef\n",
+    "status": 0
+  },
+  "fold/zero": {
+    "stdout": "st=1\n",
+    "status": 0
+  },
+  "tsort/basic": {
+    "stdout": "a\ne\nd\nb\nc\n",
+    "status": 0
+  },
+  "tsort/chain": {
+    "stdout": "pants\nshirt\nsocks\nbelt\ntie\nshoes\njacket\n",
+    "status": 0
+  },
+  "tsort/cycle": {
+    "stdout": "a\nb\nst=1\n",
+    "status": 0
+  },
+  "tsort/odd": {
+    "stdout": "st=1\n",
+    "status": 0
+  },
+  "ln/hard": {
+    "stdout": "1\nx\n",
+    "status": 0
+  },
+  "ln/symlink": {
+    "stdout": "f\nx\nnowhere\nst=1\n",
+    "status": 0
+  },
+  "ln/exists": {
+    "stdout": "ln: failed to create hard link 'b': File exists\nst=1\nst=0\n",
+    "status": 0
+  },
+  "ln/into-dir": {
+    "stdout": "f1\nf2\nok\n",
+    "status": 0
+  },
+  "ln/dir-hard": {
+    "stdout": "ln: d: hard link not allowed for directory\nst=1\n",
+    "status": 0
+  },
+  "ln/multi-not-dir": {
+    "stdout": "ln: target 'c': Not a directory\nst=1\n",
+    "status": 0
+  },
+  "link/basic": {
+    "stdout": "y\nst=1\nst=1\n",
+    "status": 0
+  },
+  "unlink/basic": {
+    "stdout": "gone\nst=1\nst=1\nst=1\n",
+    "status": 0
+  },
+  "readlink/canon": {
+    "stdout": "lb/f\nPWD/a/b/f\nst=1\nPWD/nope/x\nPWD/nope\nst=1\n",
+    "status": 0
+  },
+  "readlink/plain": {
+    "stdout": "st=1\nf\nf\nf\n",
+    "status": 0
+  },
+  "realpath/basic": {
+    "stdout": "PWD/x/y/f\nPWD/ly/f\nPWD\nPWD/missing\nst=1\nPWD/b/c\n",
+    "status": 0
+  },
+  "mkfifo/basic": {
+    "stdout": "p\nst=1\nprw-------\nfifo\n",
+    "status": 0
+  },
+  "sed/subst": {
+    "stdout": "hell0 world\nf0o bar\nhell0 w0rld\nf00 bar\nhello w0rld\nfo0 bar\nX bar\n",
+    "status": 0
+  },
+  "sed/multi-e": {
+    "stdout": "c\nd\n",
+    "status": 0
+  },
+  "sed/addresses": {
+    "stdout": "2\n3\n4\n1\n2\n4\n5\n3\n4\n5\n1\n2\n3\n4\n1\n3\n5\n2\n",
+    "status": 0
+  },
+  "sed/regex": {
+    "stdout": "abcX3def\nX\nehllo\npath:to:x\ntwo one\n",
+    "status": 0
+  },
+  "sed/amp-case": {
+    "stdout": "[]h[]e[ll]o[]\nX\n",
+    "status": 0
+  },
+  "sed/commands": {
+    "stdout": "a\ninserted\nb\nc\na\nb\nappended\nc\na\nchanged\nc\n3\nx\ny\nz\n",
+    "status": 0
+  },
+  "sed/hold": {
+    "stdout": "3\n2\n1\na,b\n",
+    "status": 0
+  },
+  "sed/inplace": {
+    "stdout": "y\n",
+    "status": 0
+  },
+  "sed/quit": {
+    "stdout": "1\n2\n2\n",
+    "status": 0
+  },
+  "sed/script-file": {
+    "stdout": "c\n",
+    "status": 0
+  },
+  "tr/basic": {
+    "stdout": "HELLO\nheo\nabc\nxellxxlla\nb\n",
+    "status": 0
+  },
+  "tr/classes": {
+    "stdout": "HELLO WORLD 123\nHello \na b c\nxxx\nxxxx\n",
+    "status": 0
+  },
+  "tr/escapes": {
+    "stdout": "a b\nzbc\n",
+    "status": 0
+  },
+  "split/lines": {
+    "stdout": "xaa\nxab\nxac\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\np.aaa\np.aab\np.aac\n",
+    "status": 0
+  },
+  "split/bytes": {
+    "stdout": "xaa:123\nxab:456\nxac:7\n",
+    "status": 0
+  },
+  "split/default": {
+    "stdout": " 1000 xaa\n 1000 xab\n  500 xac\n 2500 total\n",
+    "status": 0
+  },
+  "split/stdin-prefix": {
+    "stdout": "1\n2\npartaa\npartab\n",
+    "status": 0
+  },
+  "split/numeric": {
+    "stdout": "x00\nx01\nx02\nx03\n",
+    "status": 0
+  },
+  "csplit/line": {
+    "stdout": "2\n4\na\n--\nb\nc\n",
+    "status": 0
+  },
+  "csplit/regex": {
+    "stdout": "xx00\nxx01\nxx02\nxx03\nh2\ny\n",
+    "status": 0
+  },
+  "csplit/opts": {
+    "stdout": "4\n4\n4\npart000\npart001\npart002\n12\nst=1\n1\n",
+    "status": 0
+  },
+  "csplit/offset": {
+    "stdout": "1\n2\n3\n4\n--\n7\n8\n",
+    "status": 0
+  },
+  "csplit/missing": {
+    "stdout": "st=1\n",
+    "status": 0
+  },
+  "paste/basic": {
+    "stdout": "1\tx\n2\ty\n3\t\n1,x\n2,y\n3,\n1\t2\t3\nx\ty\n1:2;3\n1:x;1\n2:y;2\n3:;3\n",
+    "status": 0
+  },
+  "paste/stdin": {
+    "stdout": "1\t2\n3\t4\na\tb\n",
+    "status": 0
+  },
+  "join/basic": {
+    "stdout": "1 a x\n3 c z\n1 a x\n2 b\n3 c z\n4 w\na x\nc z\n1 x\n2 NONE\n3 z\n",
+    "status": 0
+  },
+  "join/fields": {
+    "stdout": "1:a:x\n2:b:y\n",
+    "status": 0
+  },
+  "comm/basic": {
+    "stdout": "a\n\t\tb\n\tc\n\t\td\nb\nd\na\n\tc\n\t\tb\n\tc\n\td\n",
+    "status": 0
+  },
+  "uname/errors": {
+    "stdout": "st=1\nst=1\n1\n",
+    "status": 0
+  },
+  "sleep/errors": {
+    "stdout": "st=1\nst=1\nst=0\nst=1\n",
+    "status": 0
+  },
+  "pathchk/basic": {
+    "stdout": "st=0\nst=1\nst=1\nst=0\nst=1\n",
+    "status": 0
+  },
+  "dirname/multi": {
+    "stdout": "a\nc\n/\n",
+    "status": 0
+  },
+  "iconv/basic": {
+    "stdout": " 63 61 66 e9 0a\ncafÃ©\nst=1\nx\n",
+    "status": 0
+  },
+  "awk/fields": {
+    "stdout": "alice NY\n3 30\nbob LA\n3 25\ncarol NY\n3 35\ndave SF\n3 40\n",
+    "status": 0
+  },
+  "awk/sum": {
+    "stdout": "130 32.5 4\n",
+    "status": 0
+  },
+  "awk/patterns": {
+    "stdout": "alice 30 NY\ncarol 35 NY\ncarol\ndave\nbob 25 LA\n",
+    "status": 0
+  },
+  "awk/range": {
+    "stdout": "3\n4\n5\nr 7\n2\n3\n4\n5\n6\n",
+    "status": 0
+  },
+  "awk/begin-end": {
+    "stdout": "b\ne 0\n1\nst=0\n",
+    "status": 0
+  },
+  "awk/default-fs": {
+    "stdout": "3:a:b:c\n0:::\n1:x::\n",
+    "status": 0
+  },
+  "awk/fs-char": {
+    "stdout": "4\n[a][b][][c]\n3\n[][x][]\n",
+    "status": 0
+  },
+  "awk/fs-tab": {
+    "stdout": "c|3\na b\n",
+    "status": 0
+  },
+  "awk/fs-regex": {
+    "stdout": "4 a d\nyz\n",
+    "status": 0
+  },
+  "awk/fs-pipe": {
+    "stdout": "b\nc\n",
+    "status": 0
+  },
+  "awk/ofs-ors": {
+    "stdout": "alice-30;bob-25;carol-35;dave-40;\n",
+    "status": 0
+  },
+  "awk/field-assign": {
+    "stdout": "a X c\n3\na b c  e\n5\na:b:c\n",
+    "status": 0
+  },
+  "awk/nf-assign": {
+    "stdout": "a b\n2\na,b,,\n",
+    "status": 0
+  },
+  "awk/record-assign": {
+    "stdout": "3 z\n3\na b \n",
+    "status": 0
+  },
+  "awk/rs-char": {
+    "stdout": "1: a\n2: b\n3: c\nx\ny\n",
+    "status": 0
+  },
+  "awk/rs-paragraph": {
+    "stdout": "1 3 a c\n2 3 d f\n",
+    "status": 0
+  },
+  "awk/no-trailing-newline": {
+    "stdout": "1 a\n2 b\n0\n",
+    "status": 0
+  },
+  "awk/arith": {
+    "stdout": "7 9 3.5 1 -1 1024 512 -4 5 1000 0.75\n",
+    "status": 0
+  },
+  "awk/ofmt-convfmt": {
+    "stdout": "0.3 0.333333 300000 1000000 3\n3.14\n3.14159\n3.142\n17\n",
+    "status": 0
+  },
+  "awk/integers": {
+    "stdout": "2147483648 1099511627776 1000000000000 -3 3 12\n",
+    "status": 0
+  },
+  "awk/assign-ops": {
+    "stdout": "15\n12\n24\n6\n2\n8\n7 7\n",
+    "status": 0
+  },
+  "awk/incdec": {
+    "stdout": "5 6 7 7 5 5\n2\n4 4\n",
+    "status": 0
+  },
+  "awk/unary": {
+    "stdout": "-3 3 0 1 1 0 4\n",
+    "status": 0
+  },
+  "awk/ternary": {
+    "stdout": "odd small\neven mid\nodd mid\neven big\nodd big\n",
+    "status": 0
+  },
+  "awk/logic": {
+    "stdout": "0 1 0 1 0\n",
+    "status": 0
+  },
+  "awk/concat": {
+    "stdout": "ab3\n1 2 34\n-1-2\n",
+    "status": 0
+  },
+  "awk/compare-strnum": {
+    "stdout": "0 0\n0 1\n0 0\n0 1\n0 1\n",
+    "status": 0
+  },
+  "awk/compare-rules": {
+    "stdout": "1 0 1 1 0 1 1\n0 1\n",
+    "status": 0
+  },
+  "awk/uninit": {
+    "stdout": "0 0 []\nabsent\ncreated\n",
+    "status": 0
+  },
+  "awk/regex-match": {
+    "stdout": "1 0 1 1 1\n1 0\n",
+    "status": 0
+  },
+  "awk/regex-ere": {
+    "stdout": "1 color\n1 colour\n2 abab\n3 x+y\n",
+    "status": 0
+  },
+  "awk/regex-brackets": {
+    "stdout": "slash\nbracket\nclass\n",
+    "status": 0
+  },
+  "awk/dynamic-regex": {
+    "stdout": "a.b\nfoo\n",
+    "status": 0
+  },
+  "awk/if-else": {
+    "stdout": "one\ntwo\nmany\nmany\n",
+    "status": 0
+  },
+  "awk/loops": {
+    "stdout": "0 1 2 \nw1 w3 \n5\n4\n",
+    "status": 0
+  },
+  "awk/for-in": {
+    "stdout": "LA 1\nNY 2\nSF 1\n",
+    "status": 0
+  },
+  "awk/delete": {
+    "stdout": "2 0\n2\n",
+    "status": 0
+  },
+  "awk/multi-subscript": {
+    "stdout": "1 2\n1 0\n",
+    "status": 0
+  },
+  "awk/next": {
+    "stdout": "1\n3\n5\n",
+    "status": 0
+  },
+  "awk/exit": {
+    "stdout": "1\n2\nend\nst=3\ne\nst=0\nst=4\n",
+    "status": 0
+  },
+  "awk/exit-in-end": {
+    "stdout": "end\nst=5\n",
+    "status": 0
+  },
+  "awk/functions": {
+    "stdout": "120 3628800\n[]\n",
+    "status": 0
+  },
+  "awk/func-locals": {
+    "stdout": "6 keep 3\n",
+    "status": 0
+  },
+  "awk/func-arrays": {
+    "stdout": "30 9\n",
+    "status": 0
+  },
+  "awk/func-scalar-byvalue": {
+    "stdout": "1\n",
+    "status": 0
+  },
+  "awk/length": {
+    "stdout": "11 11 5 5\n2\n",
+    "status": 0
+  },
+  "awk/substr": {
+    "stdout": "ell|ello|he|lo|||\n",
+    "status": 0
+  },
+  "awk/index": {
+    "stdout": "3 4 0\n",
+    "status": 0
+  },
+  "awk/split": {
+    "stdout": "3 a c\n3 b\n3 c\n0\n1 x\n",
+    "status": 0
+  },
+  "awk/split-strnum": {
+    "stdout": "1\n",
+    "status": 0
+  },
+  "awk/sub-gsub": {
+    "stdout": "3 bbb\nheLlo\n-a-b-c-\nf[o][o] bar\nf&&\n",
+    "status": 0
+  },
+  "awk/gsub-record": {
+    "stdout": "2 x b x x\na c d\n2\n",
+    "status": 0
+  },
+  "awk/gsub-anchor": {
+    "stdout": "Xaa\nabc!\nabc\n",
+    "status": 0
+  },
+  "awk/match": {
+    "stdout": "2 2 2\n0 0 -1\n1 0\n",
+    "status": 0
+  },
+  "awk/case": {
+    "stdout": "ABC1 abc-d\n",
+    "status": 0
+  },
+  "awk/math": {
+    "stdout": "0.8415 1.0000 3.1416 2.7183 2.3026 1.4142\n",
+    "status": 0
+  },
+  "awk/rand": {
+    "stdout": "1\n7\n",
+    "status": 0
+  },
+  "awk/printf-int": {
+    "stdout": "42|   42|42   |00042|+42| 42|007|-3\n",
+    "status": 0
+  },
+  "awk/printf-radix": {
+    "stdout": "10|ff|FF|010|0xff|42\n",
+    "status": 0
+  },
+  "awk/printf-float": {
+    "stdout": "3.141590|2.50|   3.142|2.2     |1.234568e+04|1.23E-04|0.0001|1E-05|1.23457e+08|100\n",
+    "status": 0
+  },
+  "awk/printf-round": {
+    "stdout": "0 2 2 0.12 0.2\n",
+    "status": 0
+  },
+  "awk/printf-str": {
+    "stdout": "abc|       abc|abc       |ab|A|h|%\n",
+    "status": 0
+  },
+  "awk/printf-star": {
+    "stdout": "   42|7   |3.14\n",
+    "status": 0
+  },
+  "awk/sprintf": {
+    "stdout": "007-x 5\n",
+    "status": 0
+  },
+  "awk/printf-parens": {
+    "stdout": "a b\nx y\npq\n",
+    "status": 0
+  },
+  "awk/escapes": {
+    "stdout": "0000000   a  \\t   b   \\   c   \"   d   A  \\n  \\n\n0000012\n",
+    "status": 0
+  },
+  "awk/v-option": {
+    "stdout": "6 a\tb\n6\n",
+    "status": 0
+  },
+  "awk/v-strnum": {
+    "stdout": "1\n",
+    "status": 0
+  },
+  "awk/operand-assign": {
+    "stdout": "1 a\n2 b\nhello\n",
+    "status": 0
+  },
+  "awk/operand-assign-end": {
+    "stdout": "last\n",
+    "status": 0
+  },
+  "awk/argv": {
+    "stdout": "1 f1\n2 x=1\na\n",
+    "status": 0
+  },
+  "awk/filename-fnr": {
+    "stdout": "f1 1 1\nf1 2 2\nf2 3 1\nf1\nf2\n",
+    "status": 0
+  },
+  "awk/stdin-dash": {
+    "stdout": "f\ns\nf\n",
+    "status": 0
+  },
+  "awk/environ": {
+    "stdout": "bar\n",
+    "status": 0
+  },
+  "awk/f-option": {
+    "stdout": "1 2\n",
+    "status": 0
+  },
+  "awk/getline-plain": {
+    "stdout": "after 2 2\nvar 4 3 4\n",
+    "status": 0
+  },
+  "awk/getline-file": {
+    "stdout": "2 l2\nl1 0\n-1\n",
+    "status": 0
+  },
+  "awk/getline-cmd": {
+    "stdout": "hi\nv=a\nv=b\n0\n",
+    "status": 0
+  },
+  "awk/getline-end": {
+    "stdout": "0 x\n",
+    "status": 0
+  },
+  "awk/print-redirect": {
+    "stdout": "one\ntwo\nfour\nthree\n",
+    "status": 0
+  },
+  "awk/print-pipe": {
+    "stdout": "a\nb\nafter\n",
+    "status": 0
+  },
+  "awk/print-pipe-exit": {
+    "stdout": "y\nz\ndone\n",
+    "status": 0
+  },
+  "awk/system": {
+    "stdout": "before\ninside\nafter 3\n",
+    "status": 0
+  },
+  "awk/stderr": {
+    "stdout": "out\n",
+    "status": 0
+  },
+  "awk/comments-newlines": {
+    "stdout": "ok\n",
+    "status": 0
+  },
+  "awk/semicolons": {
+    "stdout": "a\nc\nd\n",
+    "status": 0
+  },
+  "awk/syntax-error": {
+    "stdout": "st=2\nst=2\n",
+    "status": 0
+  },
+  "awk/missing-file": {
+    "stdout": "st=2\n",
+    "status": 0
+  },
+  "awk/regex-pattern-only": {
+    "stdout": "banana\nC:cherry\n",
+    "status": 0
+  },
+  "awk/numeric-output": {
+    "stdout": "0.10 1e2 007\n0.1 100 7\n",
+    "status": 0
+  },
+  "awk/convfmt-key": {
+    "stdout": "0.3\nx\n",
+    "status": 0
+  },
+  "awk/word-count": {
+    "stdout": "1 cat\n1 dog\n1 end\n3 the\n",
+    "status": 0
+  },
+  "awk/columns-csv": {
+    "stdout": "ann   90.0\nbo    85.0\navg 87.5\n",
+    "status": 0
+  },
+  "awk/uniq-lines": {
+    "stdout": "a\nb\nc\n",
+    "status": 0
+  },
+  "awk/reverse-fields": {
+    "stdout": "d c b a\n",
+    "status": 0
+  },
+  "awk/in-precedence": {
+    "stdout": "1\nno y\n",
+    "status": 0
+  },
+  "awk/regex-as-value": {
+    "stdout": "1 0\n",
+    "status": 0
+  },
+  "awk/dollar-expr": {
+    "stdout": "a b c b\n0\n1\n",
+    "status": 0
+  },
+  "awk/nextfile": {
+    "stdout": "f1 a\nf2 c\n",
+    "status": 0
+  },
+  "awk/delete-all": {
+    "stdout": "0\n1\n",
+    "status": 0
+  },
+  "awk/getline-var-strnum": {
+    "stdout": "1\n",
+    "status": 0
+  },
+  "awk/split-dot": {
+    "stdout": "3 b\n",
+    "status": 0
+  },
+  "awk/length-noparen": {
+    "stdout": "abc\n8\n",
+    "status": 0
+  },
+  "awk/printf-c-strnum": {
+    "stdout": "A|B\n",
+    "status": 0
+  },
+  "awk/regex-dynamic-special": {
+    "stdout": "a-b\n_.y\n",
+    "status": 0
+  },
+  "awk/assign-field-nf": {
+    "stdout": "a  c\n3\n",
+    "status": 0
+  },
+  "awk/while-getline-file-count": {
+    "stdout": "15\n",
+    "status": 0
+  },
+  "awk/pipe-to-cat-order": {
+    "stdout": "1\n2\n3\n",
+    "status": 0
+  },
+  "awk/printf-g-big": {
+    "stdout": "1e+100 123456 1.23457e+06 0.000123 1.00000\n",
+    "status": 0
+  },
+  "awk/exp-notation": {
+    "stdout": "1e+301 1e-05 123456789012 1e-06\n",
+    "status": 0
+  },
+  "awk/string-to-num": {
+    "stdout": "4.5 12 0.5 -100 0 4\n",
+    "status": 0
+  }
+}

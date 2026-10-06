@@ -18,7 +18,8 @@ import { CommandBase } from '../CommandBase';
 import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../../domain/entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../entities/Command';
+import { CommandResponse, CommandMetadata } from '../../entities/Command';
+import { TheatricalVerb } from '../../services/PresentationDirector';
 
 import { FileSystemService } from '../../services/FileSystemService';
 import { PathResolver } from '../../services/filesystem/PathResolver';
@@ -31,6 +32,13 @@ export class CdCommand extends CommandBase {
         super();
     }
 
+    public getMetadata(): CommandMetadata {
+        return {
+            verb: TheatricalVerb.UPLINK,
+            style: 'NORMAL'
+        };
+    }
+
     /**
      * Executes the 'cd' command.
      */
@@ -41,7 +49,7 @@ export class CdCommand extends CommandBase {
         context: ProcessContext,
         state: TerminalState
     ): Promise<CommandResponse> {
-        const fsService = context.fileSystemService || this.fs;
+        const fsService = context.fileSystemService || context.fileSystemService;
         const target = operands.length > 0 ? operands[0] : '~';
         let newPath = target;
 

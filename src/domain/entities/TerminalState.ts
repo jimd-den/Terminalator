@@ -26,6 +26,29 @@ export interface TerminalState {
     traps: Map<string, string>; // Signal -> Command
     callStackDepth: number;
     fsContext?: string; // Hostname of active remote system
+
+    // --- POSIX shell session state (optional for backward compatibility) ---
+    /** $1..$n */
+    positionalParams?: string[];
+    /** $0 when running a script or `sh -c` */
+    scriptName?: string;
+    /** `set -o` options (errexit, nounset, noclobber, ...) */
+    shellOptions?: Record<string, boolean>;
+    /** Names carrying the export attribute; undefined = legacy (all exported). */
+    exportedVars?: string[];
+    readonlyVars?: string[];
+    /** $$ */
+    shellPid?: number;
+    /** $! */
+    lastBackgroundPid?: number;
+    /** Nice value of the shell (inherited by the commands it runs). */
+    niceIncrement?: number;
+    /** File mode creation mask (umask). */
+    umask?: number;
+    /** Resource limits set with ulimit, keyed by option letter (null = unlimited). */
+    limits?: Record<string, { soft: number | null; hard: number | null }>;
+    /** Saved values for `local` variables, one frame per active function call (null = was unset). */
+    localFrames?: Array<Record<string, string | null>>;
 }
 
 /**
@@ -49,21 +72,28 @@ export const createInitialTerminalState = (): TerminalState => {
         currentDirectory: '/home/operator',
         history: [],
         environment: {
-            PATH: '/bin:/usr/bin',
+            PATH: '/usr/local/bin:/usr/bin:/bin',
             USER: 'operator',
+            LOGNAME: 'operator',
+            PWD: '/home/operator',
+            LANG: 'C.UTF-8',
             HOME: '/home/operator',
             SHELL: '/bin/sh',
             TERM: 'xterm-256color',
         },
         aliases: {
             'll': 'ls -l',
-            'la': 'ls -a',
-            'source': '.'
+            'la': 'ls -a'
         },
         user: { uid: 1000, gid: 1000, groups: [1000, 1001, 100] },
         lastExitCode: 0,
         functions: new Map(),
         traps: new Map(),
-        callStackDepth: 0
+        callStackDepth: 0,
+        positionalParams: [],
+        shellOptions: {},
+        exportedVars: ['PATH', 'USER', 'HOME', 'SHELL', 'TERM', 'LOGNAME', 'PWD', 'LANG'],
+        readonlyVars: [],
+        shellPid: 4242
     };
 }

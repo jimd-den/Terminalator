@@ -24,6 +24,7 @@ import { Environment } from '../../../domain/entities/Environment';
 import { ProcedureRegistry } from '../../../domain/entities/ProcedureRegistry';
 import { schemeToString, makeProcedure } from '../../../domain/entities/SchemeValue';
 import { registerStandardLibrary, getPrelude } from '../../scheme/StandardLibrary';
+import { formatTrace } from '../../../domain/usecases/SchemeTrace';
 
 export class SchemeCommand implements ICommand {
     readonly name = 'scheme';
@@ -83,13 +84,27 @@ export class SchemeCommand implements ICommand {
         return this.globalEnv;
     }
 
-    async execute(args: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+    async execute(argv: string[], context: ProcessContext, state: TerminalState): Promise<CommandResponse> {
+        let args = argv;
         const input = context.stdin;
         const env = this.getEnv();
         const fs = this.fs;
 
         let exprCode = '';
         let filename = '';
+
+        // -t / --trace records evaluation as replayable steps so the terminal
+        // can SHOW how the expression ran, not just what it produced.
+        const tracing = args.includes('-t') || args.includes('--trace');
+        args = args.filter(a => a !== '-t' && a !== '--trace');
+
+        if (args.length === 0) {
+            return {
+                output: 'MAINFRAME SCHEME v1.0\nUsage: scheme [-t] <file.scm> | scheme [-t] -e "(expr)"\n  -t  trace evaluation (frames, tail calls, continuations)',
+                newState: state,
+                exitCode: 0
+            };
+        }
 
         if (args[0] === '-e' && args.length > 1) {
             exprCode = args.slice(1).join(' ');
@@ -144,14 +159,26 @@ export class SchemeCommand implements ICommand {
                 const expressions = this.parser.parse(exprCode);
                 if (expressions.length === 0) return { output: '', newState: state, exitCode: 0 };
 
+                // Tracing is opt-in: it costs the VM work on every call and
+                // lookup, so an untraced run stays at full speed.
+                this.evaluator.setTracing(tracing);
+
                 const startTime = Date.now();
                 const result = this.evaluator.evaluate(expressions[0], env);
                 const endTime = Date.now();
 
+                const trace = this.evaluator.lastTrace;
+                this.evaluator.setTracing(false);
+
                 return { 
-                    output: schemeToString(result), 
+                    output: tracing && trace
+                        ? `${formatTrace(trace)}\n\n=> ${schemeToString(result)}`
+                        : schemeToString(result),
                     newState: state, 
                     exitCode: 0,
+                    metadata: tracing && trace
+                        ? { renderType: 'scheme-trace', data: trace }
+                        : undefined,
                     executionStats: {
                         timeMs: endTime - startTime,
                         iterations: this.evaluator.lastInstructionCount,

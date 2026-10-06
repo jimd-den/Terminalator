@@ -62,10 +62,11 @@ export class TutorBrain {
     }
 
     private initialize() {
-        this.bus.subscribe('*', (event) => {
-            this.lastEventTime = Date.now();
-            this.handleEvent(event);
-        });
+        // Legacy: Observation now happens via the TutorObserver.
+        // this.bus.subscribe('*', (event) => {
+        //     this.lastEventTime = Date.now();
+        //     this.handleEvent(event);
+        // });
     }
 
     private startIdleTimer() {
