@@ -9,13 +9,14 @@ import { CommandBase } from '../CommandBase';
 import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../entities/Command';
+import { CommandResponse, CommandMetadata } from '../../entities/Command';
 import { FileSystemService } from '../../services/FileSystemService';
 import { DirectoryNode } from '../../entities/filesystem/DirectoryNode';
 import { UserDatabase } from '../../services/UserDatabase';
 import { FileInfo, kindOf, statPath, canAccess } from '../shared/FileInfo';
 import { S_ISUID, S_ISGID, S_ISVTX } from '../../entities/FileSystem';
 import { major, minor } from '../../entities/filesystem/Devices';
+import { TheatricalVerb } from '../../services/PresentationDirector';
 
 interface Entry {
     name: string;   // as displayed (operand text or directory entry name)
@@ -62,6 +63,10 @@ export class LsCommand extends CommandBase {
     public readonly utility = 'ls';
 
     constructor(private fsService: FileSystemService) { super(); }
+
+    public getMetadata(): CommandMetadata {
+        return { verb: TheatricalVerb.SCAN, style: 'NORMAL' };
+    }
 
     executeInternal(_args: string[], flags: Set<string>, operands: string[], context: ProcessContext, state: TerminalState): CommandResponse {
         const fs = context.fileSystemService || context.fileSystemService;

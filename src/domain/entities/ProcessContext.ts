@@ -5,6 +5,7 @@ import { IStream } from './Stream';
 import { JobControlService } from '../services/JobControlService';
 import { NetworkMap } from '../services/NetworkMap';
 import { ProcessTable } from './ProcessTable';
+import { EconomyService } from '../services/EconomyService';
 
 /**
  * ProcessContext Entity - Domain Layer
@@ -23,6 +24,11 @@ export interface ProcessContext {
      * FileSystem Service for high-level operations
      */
     fileSystemService: FileSystemService;
+
+    /**
+     * Local FileSystem Service (always the primary workstation)
+     */
+    localFileSystemService?: FileSystemService;
 
     /**
      * Environment variables for the process
@@ -98,6 +104,9 @@ export interface ProcessContext {
     /** This process's id and the host's process table (ps, kill, nice...). */
     pid?: number;
     processes?: ProcessTable;
+
+    /** Economy Service for transactions (e.g., buy, mine). */
+    economy?: EconomyService;
 }
 
 export interface SpawnOptions {

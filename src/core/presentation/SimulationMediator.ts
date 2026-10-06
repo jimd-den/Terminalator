@@ -31,48 +31,90 @@ export class SimulationMediator {
         }
 
         const parts = input.trim().split(/\s+/);
-        const verb = parts[0];
+        const cmdName = parts[0];
         const args = parts.slice(1);
 
-        console.log(`[SimulationMediator] Orchestrating execution for: ${verb}`);
+        // Fetch Metadata from Command Registry if possible
+        let verb = cmdName.toUpperCase();
+        const registry = (this.executor as any).getRegistry?.();
+        if (registry) {
+            const cmd = registry.get(cmdName);
+            if (cmd && cmd.getMetadata) {
+                const meta = cmd.getMetadata();
+                verb = meta.verb || verb;
+            }
+        }
 
-        // 1. Prepare for Animation Completion (Subscribe BEFORE triggering)
-        const animationPromise = new Promise<void>((resolve) => {
+        console.log(`[SimulationMediator] Orchestrating execution for: ${cmdName} using verb: ${verb}`);
+
+        // 1. Lock Input
+        this.bus.emit(GameEventType.TUTOR_EVENT, { type: 'THEATRE_ACTIVE' as any, payload: { command: cmdName } });
+
+        // 2. Pre-Execution Animation
+        const preAnimPromise = this.waitForEvent('ANIMATION_COMPLETE');
+        this.bus.emit(GameEventType.TUTOR_EVENT, { 
+            type: 'PRESENTATION_START' as any, 
+            payload: { 
+                verb: verb.toUpperCase(), 
+                command: input, 
+                args, 
+                stage: 'PRE' 
+            } 
+        });
+        await preAnimPromise;
+
+        // 3. Domain Execution
+        const response = await this.executor.execute(input, state);
+
+        // 4. Push Result Card data to UI (So it has it during POST-animation)
+        this.bus.emit(GameEventType.TUTOR_EVENT, { 
+            type: 'RESULT_CARD' as any, 
+            payload: { 
+                id: Math.random().toString(36).substring(2, 9),
+                command: input,
+                output: response.output,
+                exitCode: response.exitCode,
+                metadata: response.metadata, // Pass metadata (e.g., renderType) to the UI
+                timestamp: Date.now(),
+                hostname: response.newState?.fsContext || state.fsContext || 'LOCAL'
+            } 
+        });
+
+        // 5. Post-Execution Animation (Result)
+        const postAnimPromise = this.waitForEvent('ANIMATION_COMPLETE');
+        this.bus.emit(GameEventType.TUTOR_EVENT, { 
+            type: 'PRESENTATION_RESULT' as any, 
+            payload: { 
+                verb, 
+                command: verb, 
+                exitCode: response.exitCode,
+                stage: 'POST' 
+            } 
+        });
+        await postAnimPromise;
+
+        // 6. Unlock Input
+        this.bus.emit(GameEventType.TUTOR_EVENT, { type: 'THEATRE_COMPLETE' as any, payload: { command: cmdName } });
+        
+        return response;
+    }
+
+    /**
+     * Internal helper to await specific tutor event types.
+     */
+    private waitForEvent(targetType: string): Promise<void> {
+        return new Promise((resolve) => {
             const unsub = this.bus.subscribe(GameEventType.TUTOR_EVENT, (event) => {
-                if (event.payload.type === 'ANIMATION_COMPLETE') {
-                    console.log("[SimulationMediator] Received ANIMATION_COMPLETE. Proceeding.");
+                if (event.payload.type === targetType) {
                     unsub();
                     resolve();
                 }
             });
-            // Safety timeout to prevent permanent hang
+            // Safety timeout
             setTimeout(() => {
-                console.warn("[SimulationMediator] Animation timed out. Forcing continuation.");
                 unsub();
                 resolve();
-            }, 2000);
+            }, 5000);
         });
-
-        // 2. Signal Theatre Start (Lock Input)
-        console.log("[SimulationMediator] Emitting THEATRE_ACTIVE.");
-        this.bus.emit(GameEventType.TUTOR_EVENT, { type: 'THEATRE_ACTIVE' as any, payload: { command: verb } });
-
-        // 3. Trigger Presentation
-        console.log("[SimulationMediator] Triggering PresentationDirector.");
-        await this.director.presentCommand(verb, args);
-
-        // 4. Await Animation Completion from UI
-        console.log("[SimulationMediator] Awaiting animation completion...");
-        await animationPromise;
-
-        // 5. Execute Domain Command
-        console.log("[SimulationMediator] Executing domain command.");
-        const response = await this.executor.execute(input, state);
-
-        // 6. Signal Theatre End (Unlock Input)
-        console.log("[SimulationMediator] Emitting THEATRE_COMPLETE.");
-        this.bus.emit(GameEventType.TUTOR_EVENT, { type: 'THEATRE_COMPLETE' as any, payload: { command: verb } });
-        
-        return response;
     }
 }

@@ -23,7 +23,7 @@ function machine() {
 test('every registered utility has an executable in /usr/bin', async () => {
     const shell = ShellFactory.create();
     const missing = shell.executor.getRegistry().getCommandNames().filter(n => !DEFAULT_UTILITIES.includes(n));
-    expectEqual(missing.filter(n => !['gui', 'dispatch', ':', '.', 'break', 'continue', 'exit', 'export', 'readonly', 'return', 'set', 'shift', 'times', 'trap', 'unset', 'eval', 'exec'].includes(n)), []);
+    expectEqual(missing.filter(n => !['gui', 'dispatch', 'net-scan', 'net-link', ':', '.', 'break', 'continue', 'exit', 'export', 'readonly', 'return', 'set', 'shift', 'times', 'trap', 'unset', 'eval', 'exec'].includes(n)), []);
 });
 
 test('FHS layout with merged /usr', async () => {

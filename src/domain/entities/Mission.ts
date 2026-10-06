@@ -40,6 +40,7 @@ export interface Mission {
     objectiveTarget: string;
     description: string;
     reward: string;
+    rewardValue: number; // [NEW] Numeric value for economic integration
     status: 'pending' | 'active' | 'completed' | 'failed';
     currentStep: MissionStep; // [LEGACY] Track granular progress
     currentStepId?: string;    // [NEW] ID for current StepRule in MissionGrammar

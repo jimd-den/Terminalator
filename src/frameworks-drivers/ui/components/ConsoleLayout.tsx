@@ -1,8 +1,7 @@
 import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ViewStyle } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { THEME } from '../Theme';
 import { useTheme } from '../context/ThemeContext';
-import { GlobalTutorBar } from './GlobalTutorBar';
 
 interface ConsoleLayoutProps {
     status?: string;
@@ -12,6 +11,14 @@ interface ConsoleLayoutProps {
     bottomContent: React.ReactNode;
     style?: ViewStyle;
     sideContent?: React.ReactNode;
+    /**
+     * Slots mirroring StandardLayout. This layout previously hardcoded its own
+     * GlobalTutorBar and had no economy slot at all, so a screen using it
+     * silently lost chrome that the standard layout showed -- and could not
+     * suppress the tutor bar even where it made no sense.
+     */
+    tutorBarComponent?: React.ReactNode;
+    economyBarComponent?: React.ReactNode;
     children?: React.ReactNode;
 }
 
@@ -22,10 +29,13 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
     middleContent,
     bottomContent,
     sideContent,
+    tutorBarComponent,
+    economyBarComponent,
     style,
     children
 }) => {
     const { theme, settings } = useTheme();
+    const insets = useSafeAreaInsets();
     const colors = theme.colors;
 
     const dynamicStyles = StyleSheet.create({
@@ -35,6 +45,7 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
         },
         flex: {
             flex: 1,
+            paddingTop: insets.top, // Only handle top inset here
         },
         mainRow: {
             flex: 1,
@@ -56,7 +67,7 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
             alignItems: 'center',
             paddingVertical: THEME.spacing.md,
             borderBottomWidth: 1,
-            borderBottomColor: 'rgba(0, 255, 65, 0.1)',
+            borderBottomColor: colors.primary_10,
         },
         headerText: {
             color: colors.primary,
@@ -64,7 +75,7 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
             fontSize: THEME.typography.fontSize.sm,
         },
         topBox: {
-            flex: 2,
+            flex: 1,
             paddingHorizontal: THEME.spacing.xl,
             paddingTop: THEME.spacing.xl,
             backgroundColor: 'transparent',
@@ -80,12 +91,11 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
     });
 
     return (
-        <SafeAreaView style={[dynamicStyles.container, style]}>
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
-                style={dynamicStyles.flex}
-            >
-
+        <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={dynamicStyles.container}
+        >
+            <View style={dynamicStyles.flex}>
                 {headerComponent ? (
                     <View style={dynamicStyles.header}>
                         {headerComponent}
@@ -96,6 +106,8 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
                     </View>
                 )}
 
+                {economyBarComponent}
+
                 <View style={dynamicStyles.mainRow}>
                     {/* Left Column (Main Terminal) */}
                     <View style={dynamicStyles.leftColumn}>
@@ -105,15 +117,21 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
                         </View>
 
                         {/* TUTOR BAR: IRC-style chat above the keyboard/F-keys */}
-                        <GlobalTutorBar />
+                        {tutorBarComponent}
 
                         {/* MIDDLE: Virtual Toolbar (Optional) */}
-                        {middleContent}
+                        {middleContent && (
+                            <View>
+                                {middleContent}
+                            </View>
+                        )}
 
                         {/* BOTTOM BOX: Input/Prompt/Command */}
-                        <View style={dynamicStyles.bottomBox}>
-                            {bottomContent}
-                        </View>
+                        {bottomContent && (
+                            <View style={dynamicStyles.bottomBox}>
+                                {bottomContent}
+                            </View>
+                        )}
                     </View>
 
                     {/* Right Column (Side Pane) */}
@@ -123,9 +141,8 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({
                         </View>
                     )}
                 </View>
-
-            </KeyboardAvoidingView>
-            {children}
-        </SafeAreaView>
+                {children}
+            </View>
+        </KeyboardAvoidingView>
     );
 };

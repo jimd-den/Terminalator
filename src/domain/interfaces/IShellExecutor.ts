@@ -1,5 +1,5 @@
-import { TerminalState } from '../entities/TerminalState';
-import { CommandResponse } from '../entities/Command';
+import type { TerminalState } from '../entities/TerminalState';
+import type { CommandResponse } from '../entities/Command';
 import { CommandRegistry } from '../commands/CommandRegistry';
 
 export interface IShellExecutor {

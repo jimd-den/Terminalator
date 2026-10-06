@@ -31,7 +31,7 @@ export interface TerminalOutputLine {
     isDeleted?: boolean;
     timestamp?: number;
     metadata?: {
-        renderType?: 'ls-pretty' | 'system-alert' | 'fish-style';
+        renderType?: 'ls-pretty' | 'system-alert' | 'fish-style' | 'archive-widget' | 'scheme-trace';
         data?: any;
     };
 }

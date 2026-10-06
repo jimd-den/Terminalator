@@ -18,10 +18,11 @@ import { ShellResult } from '../services/shell/ShellRuntime';
 import { IncompleteInputError, ShellSyntaxError } from '../services/shell/ShellSyntaxError';
 import { getOption } from '../services/shell/expansion/ShellVariables';
 import { ExecutableFormat } from '../services/shell/ProgramLoader';
+import { EconomyService } from '../services/EconomyService';
 import { NativeBinaryFormat, RiscvArtifactFormat } from './ExecutableFormats';
 import { ASTNode } from '../interfaces/ShellAST';
 
-export { CommandResponse };
+export type { CommandResponse };
 
 const LOCAL_HOSTS = new Set([undefined, '', 'localhost', 'terminalator']);
 
@@ -49,6 +50,7 @@ export class ExecuteCommand implements IShellExecutor {
         protected binaryRunner?: IBinaryRunner,
         networkMap?: NetworkMap,
         worldManager?: IWorldManager,
+        protected economyService?: EconomyService,
         private bus?: SimulationBus
     ) {
         if (fsOrService instanceof FileSystemService) {
@@ -84,6 +86,8 @@ export class ExecuteCommand implements IShellExecutor {
             executorFactory: () => this,
             networkMap: this.networkMap,
             bus: this.bus,
+            economy: this.economyService,
+            localFsService: this.service,
             formats,
             homeOf: user => this.homeOf(fsService, user),
         });

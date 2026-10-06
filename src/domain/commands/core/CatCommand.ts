@@ -7,10 +7,11 @@ import { CommandBase } from '../CommandBase';
 import { CommandCapability } from '../IStructuredCommand';
 import { ProcessContext } from '../../entities/ProcessContext';
 import { TerminalState } from '../../entities/TerminalState';
-import { CommandResponse } from '../../entities/Command';
+import { CommandResponse, CommandMetadata } from '../../entities/Command';
 import { FileSystemService } from '../../services/FileSystemService';
 import { readInput, readInputBytes } from '../shared/InputFiles';
 import { bytesToBinaryString } from '../../services/shell/io/OutputSink';
+import { TheatricalVerb } from '../../services/PresentationDirector';
 
 export class CatCommand extends CommandBase {
     public readonly capabilities = [CommandCapability.READ];
@@ -18,6 +19,10 @@ export class CatCommand extends CommandBase {
 
     constructor(private fs?: FileSystemService) {
         super();
+    }
+
+    public getMetadata(): CommandMetadata {
+        return { verb: TheatricalVerb.EXTRACT, style: 'NORMAL' };
     }
 
     protected executeInternal(_raw: string[], flags: Set<string>, operands: string[], context: ProcessContext, state: TerminalState): CommandResponse {

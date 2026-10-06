@@ -13,7 +13,7 @@ import { UserSettings, DEFAULT_SETTINGS } from '../../../domain/entities/Setting
 import { useFileSystem } from './FileSystemProvider';
 import { DiskSettingsRepository } from '../../../interface-adapters/DiskSettingsRepository';
 import { FileSystemService } from '../../../domain/services/FileSystemService';
-import { ThemeComponentMap } from '../../../domain/entities/ThemeComponents';
+import { ThemeComponentMap, LayoutProps, TextRendererProps, CursorProps } from '../../../domain/entities/ThemeComponents';
 import { getComponentsForTheme } from '../themes/ThemeRegistry';
 
 interface ThemeContextType {
@@ -21,6 +21,7 @@ interface ThemeContextType {
     settings: UserSettings;
     setTheme: (id: string) => void;
     setFont: (font: string) => void;
+    setForceKeyboardOpen: (open: boolean) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -52,8 +53,14 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         await settingsRepo.saveSettings(next);
     };
 
+    const setForceKeyboardOpen = async (open: boolean) => {
+        const next = { ...settings, forceKeyboardOpen: open };
+        setSettings(next);
+        await settingsRepo.saveSettings(next);
+    };
+
     return (
-        <ThemeContext.Provider value={{ theme, settings, setTheme, setFont }}>
+        <ThemeContext.Provider value={{ theme, settings, setTheme, setFont, setForceKeyboardOpen }}>
             {children}
         </ThemeContext.Provider>
     );
@@ -68,6 +75,12 @@ export const useTheme = () => {
 };
 
 export const useThemeComponents = (): ThemeComponentMap => {
-    const { theme } = useTheme();
-    return useMemo(() => getComponentsForTheme(theme.id), [theme.id]);
+    const { theme, settings } = useTheme();
+    const rawComponents = useMemo(() => getComponentsForTheme(theme.id), [theme.id]);
+
+    return useMemo(() => ({
+        Layout: (props: LayoutProps) => <rawComponents.Layout {...props} theme={theme} settings={settings} />,
+        TextRenderer: (props: TextRendererProps) => <rawComponents.TextRenderer {...props} theme={theme} settings={settings} />,
+        Cursor: (props: CursorProps) => <rawComponents.Cursor {...props} theme={theme} settings={settings} />,
+    }), [rawComponents, theme, settings]);
 };

@@ -58,5 +58,6 @@ export interface UtteranceContext {
     error?: string;
     missionName?: string;
     technocracyName?: string;
+    suggestedCommand?: string;
     [key: string]: string | number | undefined;
 }

@@ -12,7 +12,7 @@ import React, { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { THEME } from '../Theme';
 import { CommsPane } from '../components/CommsPane';
-import { StatusBar } from '../components/StatusBar';
+import { SystemBar } from '../components/SystemBar';
 import { useShellView } from '../components/ShellView';
 import { GlobalTutorBar } from '../components/GlobalTutorBar';
 import { useInput } from '../context/InputContext';
@@ -23,9 +23,8 @@ import { MissionDTO } from '../../../domain/dtos/MissionDTO';
 import { BufferScreen } from './BufferScreen';
 import { BufferDTO } from '../../../domain/dtos/BufferDTO';
 import { FKeyBar, FKeyDef } from '../components/FKeyBar';
-import { MainframeOverlay } from '../components/MainframeOverlay';
-import { TheatricalCanvas } from '../components/theatrical/TheatricalCanvas';
-import { EconomyBar } from '../components/EconomyBar';
+import { RhythmHUD } from '../components/theatrical/RhythmHUD';
+import { ResultStackView } from '../components/theatrical/ResultStackView';
 
 export interface ShellScreenProps {
     // State
@@ -41,7 +40,6 @@ export interface ShellScreenProps {
     buffers: BufferDTO[];
 
     // View State
-    activeView: 'SHELL' | 'COMMS' | 'BUFFERS';
     ircMissionId: string | null;
 
     // Actions
@@ -49,8 +47,6 @@ export interface ShellScreenProps {
     handleAction: (action: string) => void;
     markLineComplete: () => void;
     handleKeyPress: (key: string) => void;
-    toggleCommsView: () => void;
-    toggleBufferView: () => void;
     setIrcMissionId: (id: string | null) => void;
     handleStartMission: (id: string) => void;
     handleAbandonMission: (id: string) => void;
@@ -86,6 +82,15 @@ export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
     }, [props.handleKeyPress, setOnInput, setOnKeyPress, refocus, isInputLocked]);
 
     // -- View Composition --
+    const widgetContext = {
+        missions: props.missions,
+        activeMissionId: props.ircMissionId,
+        onMissionSelect: props.setIrcMissionId,
+        onStartMission: props.handleStartMission,
+        onAbandonMission: props.handleAbandonMission,
+        buffers: props.buffers
+    };
+
     const shellView = useShellView({
         outputLines: props.outputLines,
         renderedLineCount: props.renderedLineCount,
@@ -97,6 +102,7 @@ export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
         tutorEmotion: props.tutorEmotion,
         crashingIndices: props.crashingIndices,
         contextualHint: props.contextualHint,
+        widgetContext,
         onRefocus: refocus,
         onKeyPress: props.handleKeyPress,
         onFKeyAction: props.handleAction,
@@ -113,18 +119,21 @@ export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
     // -- View Composition --
     const mainLayout = (
         <View style={{ flex: 1 }}>
-            {shellView.topContent}
-            <MainframeOverlay />
-            <TheatricalCanvas />
+            {/* Legacy output removed in favor of ResultStackView */}
+            <ResultStackView widgetContext={widgetContext} />
+            <RhythmHUD />
         </View>
     );
 
+    // Status and economy are one block now: a single place to look, and it can
+    // show where in the lattice the shell is standing.
     const statusBar = (
-        <StatusBar
+        <SystemBar
             status={props.state.fsContext ? "REMOTE" : "OPERATIONAL"}
             user={props.state.environment.USER || "OPERATOR"}
             connectionStatus={props.state.fsContext ? 'SECURE' : 'LOCAL'}
             activeMissionName={missionName}
+            host={props.state.fsContext || props.state.environment.HOSTNAME || 'localhost'}
         />
     );
 
@@ -136,7 +145,6 @@ export const ShellScreen: React.FC<ShellScreenProps> = (props) => {
             middleContent={<FKeyBar keys={props.fKeys} />}
             bottomContent={shellView.bottomContent}
             tutorBarComponent={<GlobalTutorBar />}
-            economyBarComponent={<EconomyBar />}
         />
     );
 };

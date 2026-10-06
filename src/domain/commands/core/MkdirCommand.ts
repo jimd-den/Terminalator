@@ -13,13 +13,19 @@ import { Utility } from '../shared/Utility';
 import { getopt } from '../shared/InputFiles';
 import { statPath } from '../shared/FileInfo';
 import { strerror } from '../shared/PathOps';
+import { CommandMetadata } from '../../entities/Command';
 import { ModeParser } from '../../services/ModeParser';
+import { TheatricalVerb } from '../../services/PresentationDirector';
 
 export class MkdirCommand extends Utility {
     readonly utility = 'mkdir';
     readonly capabilities = [CommandCapability.MODIFY];
 
     constructor(private fs?: FileSystemService) { super(); }
+
+    public getMetadata(): CommandMetadata {
+        return { verb: TheatricalVerb.SYNTHESIZE, style: 'NORMAL' };
+    }
 
     execute(args: string[], context: ProcessContext, state: TerminalState): CommandResponse {
         const { opts, operands, error } = getopt(args, 'pm:v');

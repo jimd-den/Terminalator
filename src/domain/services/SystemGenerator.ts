@@ -76,8 +76,33 @@ export class SystemGenerator {
 
         service.writeFile('/etc/passwd', passwdContent, 'w');
 
-        // 2. Generate Logs (/var/log)
+        // 2. Generate Binaries (/bin)
+        this.generateBinaries(service);
+
+        // 3. Generate Logs (/var/log)
         this.generateLogs(service, theme);
+    }
+
+    private generateBinaries(service: FileSystemService) {
+        const tools = [
+            { name: 'net-scan', desc: 'Lattice Node Scanner' },
+            { name: 'net-link', desc: 'Secure Net-Link Client' },
+            { name: 'transfer', desc: 'ZINC Transaction Utility' },
+            { name: 'check-comms', desc: 'Secure Channel Synchronizer' },
+            { name: 'ls', desc: 'List directory contents' },
+            { name: 'cat', desc: 'Concatenate and print files' },
+            { name: 'grep', desc: 'Search for patterns in files' },
+            { name: 'awk', desc: 'Pattern scanning and processing language' },
+            { name: 'sed', desc: 'Stream editor for filtering and transforming text' },
+            { name: 'cd', desc: 'Change the working directory' },
+            { name: 'pwd', desc: 'Print name of current/working directory' }
+        ];
+
+        tools.forEach(tool => {
+            const content = `[ BINARY: ${tool.name.toUpperCase()} ]\n# ${tool.desc}\n# Authorized for system operator.`;
+            service.writeFile(`/bin/${tool.name}`, content, 'w', 0, 0);
+            service.chmod(`/bin/${tool.name}`, 0o755);
+        });
     }
 
     private populateSystem(service: FileSystemService, options: SystemGenerationOptions) {

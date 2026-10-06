@@ -230,6 +230,14 @@ export class SchemeParser {
         if (word === '') throw new Error('Unexpected empty atom');
 
         // Number check (simple)
+        // Rational literals (1/2, -3/4). Note this yields the quotient as a
+        // float: the exact numeric tower (exact rationals, bignums) is not
+        // implemented, so 1/3 is 0.333... rather than an exact third.
+        const rational = /^([+-]?\d+)\/(\d+)$/.exec(word);
+        if (rational) {
+            return makeNumber(Number(rational[1]) / Number(rational[2]));
+        }
+
         const num = Number(word);
         if (!isNaN(num) && word !== '+' && word !== '-') {
             return makeNumber(num);

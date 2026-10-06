@@ -5,6 +5,8 @@ import { StringStream } from '../../entities/Stream';
 import { TerminalState } from '../../entities/TerminalState';
 import { IShellExecutor } from '../../interfaces/IShellExecutor';
 import { NetworkMap } from '../NetworkMap';
+import { EconomyService } from '../EconomyService';
+import { FileSystemService } from '../FileSystemService';
 import { IOContext, inputFromString, isTty } from './io/IOContext';
 import { processTableFor } from '../../entities/ProcessTable';
 import { binaryStringToBytes, bytesToStreamText } from './io/OutputSink';
@@ -35,7 +37,10 @@ export class UtilityRunner {
     constructor(
         private runtime: ShellRuntime,
         private executorFactory?: () => IShellExecutor,
-        private networkMap?: NetworkMap
+        private networkMap?: NetworkMap,
+        private economy?: EconomyService,
+        /** The player's own workstation (fileSystemService may be a remote host). */
+        private localFsService?: FileSystemService
     ) { }
 
     async run(
@@ -80,6 +85,8 @@ export class UtilityRunner {
             executor: this.executorFactory?.(),
             jobControl: this.runtime.jobControl,
             networkMap: this.networkMap,
+            economy: this.economy,
+            localFileSystemService: this.localFsService,
             stdoutIsTty: io.isatty(1),
             argv0: name,
             pid: proc.pid,
@@ -136,7 +143,7 @@ export class UtilityRunner {
             if (io.stdout.writeBytes) io.stdout.writeBytes(bytes);
             else io.stdout.write(bytesToStreamText(bytes));
             io.stderr.write(streamedErr + (response.stderr ?? ''));
-            return this.finish(response, state, status);
+            return this.finish(name, response, state, status);
         }
         const { out, err } = command.exactOutput
             ? { out: response.output ?? '', err: '' }
@@ -144,10 +151,10 @@ export class UtilityRunner {
         io.stdout.write(streamed + out);
         io.stderr.write(streamedErr + (response.stderr ?? '') + err);
 
-        return this.finish(response, state, status);
+        return this.finish(name, response, state, status);
     }
 
-    private finish(response: CommandResponse, state: TerminalState, status: number): { result: ShellResult; response: CommandResponse } {
+    private finish(name: string, response: CommandResponse, state: TerminalState, status: number): { result: ShellResult; response: CommandResponse } {
         const newState: TerminalState = { ...state, ...(response.newState || {}), lastExitCode: status };
         return {
             result: {
@@ -158,7 +165,7 @@ export class UtilityRunner {
                     navigationAction: response.navigationAction,
                     metadata: response.metadata,
                     executionStats: response.executionStats,
-                    utility: response.utility,
+                    utility: response.utility ?? name,
                 },
             },
             response,

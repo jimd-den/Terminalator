@@ -3,7 +3,7 @@
  * 
  * A massive, tagged vocabulary for combinatorial dialogue generation.
  * Mathematical Permutations: 
- * ~30 Verbs * 30 Adjectives * 30 Nouns * 10 Connectors * 10 Adverbs = 2,700,000+ potential unique sentences.
+ * ~50 Verbs * 50 Adjectives * 50 Nouns * 10 Connectors * 10 Adverbs = 12,500,000+ potential unique sentences.
  */
 
 import { Lexicon, PartOfSpeech } from '../../entities/tutor/Lexicon';
@@ -11,7 +11,7 @@ import { TutorToneProfile } from '../../entities/tutor/TutorToneProfile';
 
 export const CORE_LEXICON: Lexicon = {
     entries: [
-        // --- VERBS (30+) ---
+        // --- VERBS ---
         { word: 'Execute', pos: PartOfSpeech.VERB, tags: ['tech'], tones: [TutorToneProfile.AI_OVERLORD, TutorToneProfile.CORPORATE_DRONE] },
         { word: 'Deploy', pos: PartOfSpeech.VERB, tags: ['tactical'], tones: [TutorToneProfile.RESISTANCE_LEADER] },
         { word: 'Smash', pos: PartOfSpeech.VERB, tags: ['aggro'], tones: [TutorToneProfile.SNARKY_SYSADMIN] },
@@ -36,7 +36,33 @@ export const CORE_LEXICON: Lexicon = {
         { word: 'Overload', pos: PartOfSpeech.VERB, tags: ['aggro'] },
         { word: 'Monitor', pos: PartOfSpeech.VERB, tags: ['standard'] },
         { word: 'Survey', pos: PartOfSpeech.VERB, tags: ['standard'] },
-// ... (in Adjectives)
+        { word: 'Validate', pos: PartOfSpeech.VERB, tags: ['tech'] },
+        { word: 'Intercept', pos: PartOfSpeech.VERB, tags: ['tactical'] },
+        { word: 'Scrutinize', pos: PartOfSpeech.VERB, tags: ['precision'] },
+        { word: 'Overhaul', pos: PartOfSpeech.VERB, tags: ['aggro'] },
+        { word: 'Optimize', pos: PartOfSpeech.VERB, tags: ['tech'] },
+        { word: 'Configure', pos: PartOfSpeech.VERB, tags: ['tech'] },
+        { word: 'Infiltrate', pos: PartOfSpeech.VERB, tags: ['tactical'] },
+        { word: 'Exfiltrate', pos: PartOfSpeech.VERB, tags: ['tactical'] },
+        { word: 'Encrypt', pos: PartOfSpeech.VERB, tags: ['tech'] },
+        { word: 'Decrypt', pos: PartOfSpeech.VERB, tags: ['tech'] },
+        { word: 'Manipulate', pos: PartOfSpeech.VERB, tags: ['aggro'] },
+        { word: 'Siphon', pos: PartOfSpeech.VERB, tags: ['tactical'] },
+        { word: 'Tunnel', pos: PartOfSpeech.VERB, tags: ['tech'] },
+        { word: 'Map', pos: PartOfSpeech.VERB, tags: ['standard'] },
+        { word: 'Scan', pos: PartOfSpeech.VERB, tags: ['standard'] },
+        { word: 'Trace', pos: PartOfSpeech.VERB, tags: ['tech'] },
+        { word: 'Bypass', pos: PartOfSpeech.VERB, tags: ['tactical'] },
+        { word: 'Secure', pos: PartOfSpeech.VERB, tags: ['positive'] },
+        { word: 'Isolate', pos: PartOfSpeech.VERB, tags: ['tech'] },
+        { word: 'Fragment', pos: PartOfSpeech.VERB, tags: ['tech'] },
+        { word: 'Synthesize', pos: PartOfSpeech.VERB, tags: ['tech'] },
+        { word: 'Navigate', pos: PartOfSpeech.VERB, tags: ['standard'] },
+        { word: 'Traverse', pos: PartOfSpeech.VERB, tags: ['tech'] },
+        { word: 'Crawl', pos: PartOfSpeech.VERB, tags: ['standard'] },
+        { word: 'Harvest', pos: PartOfSpeech.VERB, tags: ['standard'] },
+
+        // --- ADJECTIVES ---
         { word: 'manual', pos: PartOfSpeech.ADJECTIVE, tags: ['negative'] },
         { word: 'quantum', pos: PartOfSpeech.ADJECTIVE, tags: ['tech'] },
         { word: 'neural', pos: PartOfSpeech.ADJECTIVE, tags: ['tech'] },
@@ -45,8 +71,49 @@ export const CORE_LEXICON: Lexicon = {
         { word: 'classified', pos: PartOfSpeech.ADJECTIVE, tags: ['authoritative'] },
         { word: 'restricted', pos: PartOfSpeech.ADJECTIVE, tags: ['authoritative'] },
         { word: 'unauthorized', pos: PartOfSpeech.ADJECTIVE, tags: ['aggro'] },
+        { word: 'technical', pos: PartOfSpeech.ADJECTIVE, tags: ['tech'] },
+        { word: 'tactical', pos: PartOfSpeech.ADJECTIVE, tags: ['tactical'] },
+        { word: 'critical', pos: PartOfSpeech.ADJECTIVE, tags: ['urgent'] },
+        { word: 'sluggish', pos: PartOfSpeech.ADJECTIVE, tags: ['negative'] },
+        { word: 'efficient', pos: PartOfSpeech.ADJECTIVE, tags: ['positive'] },
+        { word: 'unstable', pos: PartOfSpeech.ADJECTIVE, tags: ['urgent'] },
+        { word: 'secure', pos: PartOfSpeech.ADJECTIVE, tags: ['positive'] },
+        { word: 'elegant', pos: PartOfSpeech.ADJECTIVE, tags: ['precision'] },
+        { word: 'clunky', pos: PartOfSpeech.ADJECTIVE, tags: ['negative'] },
+        { word: 'primitive', pos: PartOfSpeech.ADJECTIVE, tags: ['aggro'] },
+        { word: 'sophisticated', pos: PartOfSpeech.ADJECTIVE, tags: ['precision'] },
+        { word: 'leaking', pos: PartOfSpeech.ADJECTIVE, tags: ['urgent'] },
+        { word: 'hardened', pos: PartOfSpeech.ADJECTIVE, tags: ['tech'] },
+        { word: 'redundant', pos: PartOfSpeech.ADJECTIVE, tags: ['tech'] },
+        { word: 'deprecated', pos: PartOfSpeech.ADJECTIVE, tags: ['tech'] },
+        { word: 'optimized', pos: PartOfSpeech.ADJECTIVE, tags: ['positive'] },
+        { word: 'recursive', pos: PartOfSpeech.ADJECTIVE, tags: ['tech'] },
+        { word: 'volatile', pos: PartOfSpeech.ADJECTIVE, tags: ['urgent'] },
+        { word: 'persistent', pos: PartOfSpeech.ADJECTIVE, tags: ['tech'] },
+        { word: 'anonymous', pos: PartOfSpeech.ADJECTIVE, tags: ['tactical'] },
+        { word: 'encrypted', pos: PartOfSpeech.ADJECTIVE, tags: ['tech'] },
+        { word: 'corrupted', pos: PartOfSpeech.ADJECTIVE, tags: ['urgent'] },
+        { word: 'legacy', pos: PartOfSpeech.ADJECTIVE, tags: ['standard'] },
+        { word: 'virtual', pos: PartOfSpeech.ADJECTIVE, tags: ['tech'] },
+        { word: 'distributed', pos: PartOfSpeech.ADJECTIVE, tags: ['tech'] },
+        { word: 'centralized', pos: PartOfSpeech.ADJECTIVE, tags: ['authoritative'] },
+        { word: 'decentralized', pos: PartOfSpeech.ADJECTIVE, tags: ['tactical'] },
+        { word: 'immutable', pos: PartOfSpeech.ADJECTIVE, tags: ['tech'] },
+        { word: 'recursive', pos: PartOfSpeech.ADJECTIVE, tags: ['tech'] },
+        { word: 'asynchronous', pos: PartOfSpeech.ADJECTIVE, tags: ['tech'] },
+        { word: 'atomic', pos: PartOfSpeech.ADJECTIVE, tags: ['precision'] },
+        { word: 'monolithic', pos: PartOfSpeech.ADJECTIVE, tags: ['authoritative'] },
+        { word: 'obsolete', pos: PartOfSpeech.ADJECTIVE, tags: ['negative'] },
+        { word: 'robust', pos: PartOfSpeech.ADJECTIVE, tags: ['positive'] },
+        { word: 'fragile', pos: PartOfSpeech.ADJECTIVE, tags: ['negative'] },
+        { word: 'encrypted', pos: PartOfSpeech.ADJECTIVE, tags: ['tech'] },
+        { word: 'plaintext', pos: PartOfSpeech.ADJECTIVE, tags: ['vulnerable'] },
+        { word: 'vulnerable', pos: PartOfSpeech.ADJECTIVE, tags: ['urgent'] },
+        { word: 'stealthy', pos: PartOfSpeech.ADJECTIVE, tags: ['tactical'] },
+        { word: 'overt', pos: PartOfSpeech.ADJECTIVE, tags: ['standard'] },
+        { word: 'covert', pos: PartOfSpeech.ADJECTIVE, tags: ['tactical'] },
 
-        // --- NOUNS (30+) ---
+        // --- NOUNS ---
         { word: 'protocol', pos: PartOfSpeech.NOUN, tags: ['tech'] },
         { word: 'maneuver', pos: PartOfSpeech.NOUN, tags: ['tactical'] },
         { word: 'operation', pos: PartOfSpeech.NOUN, tags: ['standard'] },
@@ -86,8 +153,19 @@ export const CORE_LEXICON: Lexicon = {
         { word: 'encryption', pos: PartOfSpeech.NOUN, tags: ['tech'] },
         { word: 'decryption', pos: PartOfSpeech.NOUN, tags: ['tech'] },
         { word: 'conduit', pos: PartOfSpeech.NOUN, tags: ['tech'] },
+        { word: 'vector', pos: PartOfSpeech.NOUN, tags: ['tactical'] },
+        { word: 'firewall', pos: PartOfSpeech.NOUN, tags: ['tech'] },
+        { word: 'socket', pos: PartOfSpeech.NOUN, tags: ['tech'] },
+        { word: 'daemon', pos: PartOfSpeech.NOUN, tags: ['tech'] },
+        { word: 'proxy', pos: PartOfSpeech.NOUN, tags: ['tech'] },
+        { word: 'segment', pos: PartOfSpeech.NOUN, tags: ['standard'] },
+        { word: 'cluster', pos: PartOfSpeech.NOUN, tags: ['tech'] },
+        { word: 'root', pos: PartOfSpeech.NOUN, tags: ['authoritative'] },
+        { word: 'admin', pos: PartOfSpeech.NOUN, tags: ['authoritative'] },
+        { word: 'operator', pos: PartOfSpeech.NOUN, tags: ['standard'] },
+        { word: 'peripheral', pos: PartOfSpeech.NOUN, tags: ['tech'] },
 
-        // --- ADVERBS (10+) ---
+        // --- ADVERBS ---
         { word: 'swiftly', pos: PartOfSpeech.ADVERB, tags: ['urgent'] },
         { word: 'precisely', pos: PartOfSpeech.ADVERB, tags: ['precision'] },
         { word: 'silently', pos: PartOfSpeech.ADVERB, tags: ['tactical'] },
@@ -98,8 +176,12 @@ export const CORE_LEXICON: Lexicon = {
         { word: 'locally', pos: PartOfSpeech.ADVERB, tags: ['standard'] },
         { word: 'repeatedly', pos: PartOfSpeech.ADVERB, tags: ['standard'] },
         { word: 'manually', pos: PartOfSpeech.ADVERB, tags: ['negative'] },
+        { word: 'automatically', pos: PartOfSpeech.ADVERB, tags: ['tech'] },
+        { word: 'viscerally', pos: PartOfSpeech.ADVERB, tags: ['aggro'] },
+        { word: 'coldly', pos: PartOfSpeech.ADVERB, tags: ['authoritative'] },
+        { word: 'warmly', pos: PartOfSpeech.ADVERB, tags: ['gentle'] },
 
-        // --- CONNECTORS (10+) ---
+        // --- CONNECTORS ---
         { word: 'because', pos: PartOfSpeech.CONNECTOR, tags: ['causal'] },
         { word: 'in order to', pos: PartOfSpeech.CONNECTOR, tags: ['causal'] },
         { word: 'so you can', pos: PartOfSpeech.CONNECTOR, tags: ['casual'] },
@@ -116,6 +198,19 @@ export const CORE_LEXICON: Lexicon = {
         { word: 'Warning.', pos: PartOfSpeech.INTERJECTION, tags: ['alert'] },
         { word: 'Success.', pos: PartOfSpeech.INTERJECTION, tags: ['alert'] },
         { word: 'Correction.', pos: PartOfSpeech.INTERJECTION, tags: ['alert'] },
-        { word: 'Fascinating.', pos: PartOfSpeech.INTERJECTION, tags: ['alert'] }
+        { word: 'Fascinating.', pos: PartOfSpeech.INTERJECTION, tags: ['alert'] },
+
+        // --- GREETINGS ---
+        { word: 'Hello', pos: PartOfSpeech.GREETING, tags: ['gentle'], tones: [TutorToneProfile.GENTLE_GUIDE] },
+        { word: 'Greetings', pos: PartOfSpeech.GREETING, tags: ['standard'], tones: [TutorToneProfile.CORPORATE_DRONE] },
+        { word: 'Operator', pos: PartOfSpeech.GREETING, tags: ['tactical'], tones: [TutorToneProfile.RESISTANCE_LEADER] },
+        { word: 'User', pos: PartOfSpeech.GREETING, tags: ['standard'], tones: [TutorToneProfile.SNARKY_SYSADMIN] },
+        { word: 'Subject', pos: PartOfSpeech.GREETING, tags: ['authoritative'], tones: [TutorToneProfile.AI_OVERLORD] },
+
+        // --- EMPHASIS ---
+        { word: 'critical', pos: PartOfSpeech.EMPHASIS, tags: ['urgent'] },
+        { word: 'mandatory', pos: PartOfSpeech.EMPHASIS, tags: ['authoritative'] },
+        { word: 'optional', pos: PartOfSpeech.EMPHASIS, tags: ['casual'] },
+        { word: 'vital', pos: PartOfSpeech.EMPHASIS, tags: ['standard'] }
     ]
 };

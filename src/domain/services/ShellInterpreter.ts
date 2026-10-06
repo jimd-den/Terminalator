@@ -29,6 +29,7 @@ import { ControlFlowExecutor } from './shell/executors/ControlFlowExecutor';
 import { SubshellExecutor } from './shell/executors/SubshellExecutor';
 import { FunctionDefExecutor } from './shell/executors/FunctionDefExecutor';
 import { BlockExecutor } from './shell/executors/BlockExecutor';
+import { EconomyService } from './EconomyService';
 import { RedirectedExecutor } from './shell/executors/RedirectedExecutor';
 import { TimedExecutor } from './shell/executors/TimedExecutor';
 
@@ -53,6 +54,10 @@ export interface ShellInterpreterOptions {
     formats?: ExecutableFormat[];
     /** Home directory lookup for `~user` (backed by /etc/passwd). */
     homeOf?: (user: string) => string | undefined;
+    /** Economy of computation (buy, mine, transfer). */
+    economy?: EconomyService;
+    /** The player's own workstation, when the shell runs on a remote host. */
+    localFsService?: FileSystemService;
 }
 
 /**
@@ -92,7 +97,7 @@ export class ShellInterpreter implements ShellRuntime {
         });
         this.redirector = new Redirector(this.fsService, this.expander);
 
-        const utilities = new UtilityRunner(this, opts.executorFactory, opts.networkMap);
+        const utilities = new UtilityRunner(this, opts.executorFactory, opts.networkMap, opts.economy, opts.localFsService);
         const loader = new ProgramLoader(this, this.fsService, this.registry, utilities, opts.formats);
         this.commandExecutor = new CommandExecutor(this, this.builtins, utilities, loader, opts.bus);
 

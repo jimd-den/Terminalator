@@ -101,7 +101,11 @@ export class WorldPatchService {
      * This is used for the initial "Boot" of the user's primary workstation.
      */
     public initializeRootFileSystem(fs: FileSystem) {
-        new SystemInstaller().install(new FileSystemService(fs), LOCAL_HOST_PROFILE);
+        const fsService = new FileSystemService(fs);
+        // A "cold" system has no /bin/ls yet and needs the full OS image installed.
+        let cold = false;
+        try { cold = !fsService.resolve('/bin/ls'); } catch { cold = true; }
+        if (cold) new SystemInstaller().install(fsService, LOCAL_HOST_PROFILE);
     }
 
 }

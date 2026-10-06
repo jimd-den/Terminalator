@@ -29,7 +29,7 @@ export interface CommandResponse {
     command?: string; // [NEW] Context: The command that produced this response
     utility?: string; // [NEW] Context: The semantic utility name (e.g., 'grep')
     metadata?: {
-        renderType?: 'ls-pretty' | 'system-alert' | 'fish-style';
+        renderType?: 'ls-pretty' | 'system-alert' | 'fish-style' | 'archive-widget' | 'scheme-trace';
         data?: any;
     };
     executionStats?: {
@@ -37,6 +37,13 @@ export interface CommandResponse {
         memoryUsed: number;
         iterations: number;
     };
+}
+
+import { TheatricalVerb } from '../services/PresentationDirector';
+
+export interface CommandMetadata {
+    verb: TheatricalVerb;
+    style?: 'NORMAL' | 'GLITCH' | 'SYSTEM_ALERT';
 }
 
 export interface ICommand {
@@ -49,6 +56,11 @@ export interface ICommand {
      * Brief help text for the command
      */
     description: string;
+
+    /**
+     * Returns metadata for theatrical presentation.
+     */
+    getMetadata?(): CommandMetadata;
 
     /**
      * Execute the command with the given arguments and context.

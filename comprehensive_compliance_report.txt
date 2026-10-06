@@ -606,23 +606,14 @@ UTILITY: env
 [PASS] ENV_10
 UTILITY: ar
 [PASS] AR_01
-[FAIL] AR_02: List contents -t
-       -> Exit Code: Expected 0, got 1
-[FAIL] AR_03: Verbose list -tv
-       -> Exit Code: Expected 0, got 1
-[FAIL] AR_04: Delete member -d
-       -> Exit Code: Expected 0, got 1
-[FAIL] AR_05: Extract -x
-       -> Exit Code: Expected 0, got 1
+[PASS] AR_02
+[PASS] AR_03
+[PASS] AR_04
+[PASS] AR_05
 [PASS] AR_06
 [PASS] AR_07
-[FAIL] AR_08: Move -m (stub)
-       -> Exit Code: Expected 0, got 1
-[FAIL] AR_09: Print -p
-       -> Exit Code: Expected 0, got 1
-       -> Stdout Regex Mismatch.
-   Expected: /x/
-   Got: "ar: lib.a: No such file or directory"
+[PASS] AR_08
+[PASS] AR_09
 [PASS] AR_10
 UTILITY: make
 [PASS] MAKE_01
@@ -696,10 +687,7 @@ UTILITY: du
 [PASS] DU_01
 [PASS] DU_02
 [PASS] DU_03
-[FAIL] DU_04: Human readable -h (Ext)
-       -> Stdout Regex Mismatch.
-   Expected: /[KMG]/
-   Got: "9	/home/operator\n17	/home\n185	/usr/bin\n8	/usr/sbin\n8	/usr/lib\n8	/usr/local/bin\n8	/usr/local/lib\n24	/usr/local\n8	/usr/include\n8	/usr/share/doc\n8	/usr/share/man/man1\n16	/usr/share/man\n8	/usr/share/dict\n40	/usr/share\n281	/usr\n8	/tmp\n8	/var/mail\n11	/var/log\n8	/var/tmp\n8	/var/spool/cron\n16	/var/spool\n8	/var/lib\n8	/var/cache\n8	/var/www\n8	/var/backups\n83	/var\n9	/etc/ssh\n8	/etc/cron.d\n9	/etc/skel\n52	/etc\n9	/root\n8	/run\n8	/dev/pts\n8	/dev/shm\n32	/dev\n11	/proc/sys/kernel\n19	/proc/sys\n9	/proc/net\n44	/proc\n8	/sys\n8	/mnt\n8	/media\n8	/opt\n8	/srv\n8	/boot\n590	/"
+[PASS] DU_04
 [PASS] DU_05
 [PASS] DU_06
 [PASS] DU_07
@@ -785,49 +773,35 @@ UTILITY: zcat
 [PASS] ZCAT_09
 [PASS] ZCAT_10
 UTILITY: gzip
-[FAIL] GZIP_01: Compress
-       -> Missing File: Expected /home/operator/f.gz to be created.
+[PASS] GZIP_01
 [PASS] GZIP_02
 [PASS] GZIP_03
 [PASS] GZIP_04
 [PASS] GZIP_05
 [PASS] GZIP_06
 [PASS] GZIP_07
-[FAIL] GZIP_08: Keep -k
-       -> Missing File: Expected /home/operator/f to be created.
+[PASS] GZIP_08
 [PASS] GZIP_09
-[FAIL] GZIP_10: Suffix -S
-       -> Missing File: Expected /home/operator/f.z to be created.
+[PASS] GZIP_10
 UTILITY: gunzip
-[FAIL] GUNZIP_01: Decompress
-       -> Missing File: Expected /home/operator/f to be created.
+[PASS] GUNZIP_01
 [PASS] GUNZIP_02
 [PASS] GUNZIP_03
 [PASS] GUNZIP_04
-[FAIL] GUNZIP_05: Fail bad magic
-       -> Exit Code: Expected 1, got 0
+[PASS] GUNZIP_05
 [PASS] GUNZIP_06
 [PASS] GUNZIP_07
 [PASS] GUNZIP_08
-[FAIL] GUNZIP_09: Fail missing
-       -> Exit Code: Expected 1, got 0
+[PASS] GUNZIP_09
 [PASS] GUNZIP_10
 UTILITY: tar
-[FAIL] TAR_01: Create -c
-       -> Missing File: Expected /home/operator/a.tar to be created.
+[PASS] TAR_01
 [PASS] TAR_02
-[FAIL] TAR_03: List -t
-       -> Stdout Regex Mismatch.
-   Expected: /f/
-   Got: ""
-[FAIL] TAR_04: Verbose -v
-       -> Stdout Regex Mismatch.
-   Expected: /f/
-   Got: ""
+[PASS] TAR_03
+[PASS] TAR_04
 [PASS] TAR_05
 [PASS] TAR_06
-[FAIL] TAR_07: Fail missing
-       -> Exit Code: Expected 1, got 0
+[PASS] TAR_07
 [PASS] TAR_08
 [PASS] TAR_09
 [PASS] TAR_10
@@ -836,27 +810,20 @@ UTILITY: cpio
 [PASS] CPIO_02
 [PASS] CPIO_03
 [PASS] CPIO_04
-[FAIL] CPIO_05: List -t
-       -> Exit Code: Expected 0, got 2
+[PASS] CPIO_05
 [PASS] CPIO_06
 [PASS] CPIO_07
 [PASS] CPIO_08
 [PASS] CPIO_09
-[FAIL] CPIO_10: Fail bad input
-       -> Exit Code: Expected 1, got 0
+[PASS] CPIO_10
 UTILITY: pax
-[FAIL] PAX_01: List (default)
-       -> Stdout Regex Mismatch.
-   Expected: /f/
-   Got: ""
-[FAIL] PAX_02: Write -w
-       -> Missing File: Expected /home/operator/a.pax to be created.
+[PASS] PAX_01
+[PASS] PAX_02
 [PASS] PAX_03
 [PASS] PAX_04
 [PASS] PAX_05
 [PASS] PAX_06
-[FAIL] PAX_07: Fail missing
-       -> Exit Code: Expected 1, got 0
+[PASS] PAX_07
 [PASS] PAX_08
 [PASS] PAX_09
 [PASS] PAX_10
@@ -956,17 +923,12 @@ UTILITY: tsort
 [PASS] TSORT_10
 UTILITY: man
 [PASS] MAN_01
-[FAIL] MAN_02: Fail missing
-       -> Exit Code: Expected 1, got 0
+[PASS] MAN_02
 [PASS] MAN_03
-[FAIL] MAN_04: Keyword -k
-       -> Stdout Regex Mismatch.
-   Expected: /ls/
-   Got: "Man page for -k: [Simulated help content]"
+[PASS] MAN_04
 [PASS] MAN_05
 [PASS] MAN_06
-[FAIL] MAN_07: Fail section mismatch
-       -> Exit Code: Expected 1, got 0
+[PASS] MAN_07
 [PASS] MAN_08
 [PASS] MAN_09
 [PASS] MAN_10
@@ -1278,7 +1240,7 @@ UTILITY: who
 [FAIL] WHO_02: Headers -H
        -> Stdout Regex Mismatch.
    Expected: /NAME/
-   Got: "operator   tty1   2026-10-05 03:06"
+   Got: "operator   tty1   2026-10-06 02:28"
 [PASS] WHO_03
 [PASS] WHO_04
 [PASS] WHO_05
@@ -1323,40 +1285,31 @@ UTILITY: at
 [PASS] AT_04
 [PASS] AT_05
 [PASS] AT_06
-[FAIL] AT_07: Fail time
-       -> Exit Code: Expected 1, got 0
-[FAIL] AT_08: Fail no args
-       -> Exit Code: Expected 1, got 0
+[PASS] AT_07
+[PASS] AT_08
 [PASS] AT_09
 [PASS] AT_10
 UTILITY: batch
 [PASS] BATCH_01
 [PASS] BATCH_02
-[FAIL] BATCH_03: Fail syntax
-       -> Exit Code: Expected 1, got 0
+[PASS] BATCH_03
 [PASS] BATCH_04
 [PASS] BATCH_05
 [PASS] BATCH_06
 [PASS] BATCH_07
-[FAIL] BATCH_08: Fail missing file
-       -> Exit Code: Expected 1, got 0
+[PASS] BATCH_08
 [PASS] BATCH_09
 [PASS] BATCH_10
 UTILITY: crontab
-[FAIL] CRONTAB_01: List -l
-       -> Exit Code: Expected 0, got 1
+[PASS] CRONTAB_01
 [PASS] CRONTAB_02
 [PASS] CRONTAB_03
 [PASS] CRONTAB_04
-[FAIL] CRONTAB_05: Fail missing
-       -> Exit Code: Expected 1, got 0
+[PASS] CRONTAB_05
 [PASS] CRONTAB_06
-[FAIL] CRONTAB_07: Fail invalid line
-       -> Exit Code: Expected 1, got 0
-[FAIL] CRONTAB_08: No args
-       -> Exit Code: Expected 1, got 0
-[FAIL] CRONTAB_09: Consistency
-       -> Exit Code: Expected 0, got 1
+[PASS] CRONTAB_07
+[PASS] CRONTAB_08
+[PASS] CRONTAB_09
 [PASS] CRONTAB_10
 UTILITY: vi
 [PASS] VI_01
@@ -1412,8 +1365,7 @@ UTILITY: lp
 [PASS] LP_03
 [PASS] LP_04
 [PASS] LP_05
-[FAIL] LP_06: Fail missing
-       -> Exit Code: Expected 1, got 0
+[PASS] LP_06
 [PASS] LP_07
 [PASS] LP_08
 [PASS] LP_09
@@ -1423,33 +1375,21 @@ UTILITY: mailx
 [PASS] MAILX_02
 [PASS] MAILX_03
 [PASS] MAILX_04
-[FAIL] MAILX_05: Fail no user
-       -> Exit Code: Expected 1, got 0
+[PASS] MAILX_05
 [PASS] MAILX_06
 [PASS] MAILX_07
 [PASS] MAILX_08
 [PASS] MAILX_09
 [PASS] MAILX_10
 UTILITY: m4
-[FAIL] M4_01: Process file
-       -> Stdout Regex Mismatch.
-   Expected: /B/
-   Got: ""
-[FAIL] M4_02: Define -D
-       -> Stdout Regex Mismatch.
-   Expected: /B/
-   Got: ""
+[PASS] M4_01
+[PASS] M4_02
 [PASS] M4_03
-[FAIL] M4_04: Fail missing
-       -> Exit Code: Expected 1, got 0
-[FAIL] M4_05: Stdin
-       -> Stdout Regex Mismatch.
-   Expected: /Y/
-   Got: ""
+[PASS] M4_04
+[PASS] M4_05
 [PASS] M4_06
 [PASS] M4_07
-[FAIL] M4_08: Fatal error
-       -> Exit Code: Expected 1, got 0
+[PASS] M4_08
 [PASS] M4_09
 [PASS] M4_10
 UTILITY: lex
@@ -1866,23 +1806,16 @@ UTILITY: locale
 [PASS] LOCALE_03
 [PASS] LOCALE_04
 [PASS] LOCALE_05
-[FAIL] LOCALE_06: Fail invalid
-       -> Exit Code: Expected 1, got 0
+[PASS] LOCALE_06
 [PASS] LOCALE_07
 [PASS] LOCALE_08
-[FAIL] LOCALE_09: POSIX locale
-       -> Exit Code: Expected 0, got 1
-[FAIL] LOCALE_10: Output fmt
-       -> Stdout Regex Mismatch.
-   Expected: /"/
-   Got: "LANG=en_US.UTF-8\nLC_ALL="
+[PASS] LOCALE_09
+[PASS] LOCALE_10
 UTILITY: localedef
 [PASS] LOCALEDEF_01
-[FAIL] LOCALEDEF_02: List? (No)
-       -> Exit Code: Expected 1, got 0
+[PASS] LOCALEDEF_02
 [PASS] LOCALEDEF_03
-[FAIL] LOCALEDEF_04: Fail missing
-       -> Exit Code: Expected 1, got 0
+[PASS] LOCALEDEF_04
 [PASS] LOCALEDEF_05
 [PASS] LOCALEDEF_06
 [PASS] LOCALEDEF_07
@@ -1978,22 +1911,16 @@ UTILITY: gettext
 [PASS] GETTEXT_09
 [PASS] GETTEXT_10
 UTILITY: msgfmt
-[FAIL] MSGFMT_01: Compile po
-       -> Missing File: Expected /home/operator/messages.mo to be created.
-[FAIL] MSGFMT_02: Output -o
-       -> Missing File: Expected /home/operator/out.mo to be created.
-[FAIL] MSGFMT_03: Fail missing
-       -> Exit Code: Expected 1, got 0
-[FAIL] MSGFMT_04: No args
-       -> Exit Code: Expected 1, got 0
+[PASS] MSGFMT_01
+[PASS] MSGFMT_02
+[PASS] MSGFMT_03
+[PASS] MSGFMT_04
 [PASS] MSGFMT_05
-[FAIL] MSGFMT_06: Fail syntax
-       -> Exit Code: Expected 1, got 0
+[PASS] MSGFMT_06
 [PASS] MSGFMT_07
 [PASS] MSGFMT_08
 [PASS] MSGFMT_09
-[FAIL] MSGFMT_10: Multiple inputs?
-       -> Exit Code: Expected 1, got 0
+[PASS] MSGFMT_10
 UTILITY: newgrp
 [PASS] NEWGRP_01
 [PASS] NEWGRP_02
@@ -2010,34 +1937,15 @@ UTILITY: newgrp
 [PASS] NEWGRP_10
 UTILITY: ngettext
 [PASS] NGETTEXT_01
-[FAIL] NGETTEXT_02: Plural select
-       -> Stdout Regex Mismatch.
-   Expected: /p/
-   Got: "s"
+[PASS] NGETTEXT_02
 [PASS] NGETTEXT_03
-[FAIL] NGETTEXT_04: Fail args
-       -> Exit Code: Expected 1, got 0
-[FAIL] NGETTEXT_05: Expand -e
-       -> Stdout Regex Mismatch.
-   Expected: /a\n/
-   Got: "-e\n"
-[FAIL] NGETTEXT_06: Fail missing
-       -> Stdout Regex Mismatch.
-   Expected: /s/
-   Got: "-d"
-[FAIL] NGETTEXT_07: Zero
-       -> Stdout Regex Mismatch.
-   Expected: /p/
-   Got: "s"
+[PASS] NGETTEXT_04
+[PASS] NGETTEXT_05
+[PASS] NGETTEXT_06
+[PASS] NGETTEXT_07
 [PASS] NGETTEXT_08
-[FAIL] NGETTEXT_09: Large num
-       -> Stdout Regex Mismatch.
-   Expected: /b/
-   Got: "a"
-[FAIL] NGETTEXT_10: Negative?
-       -> Stdout Regex Mismatch.
-   Expected: /b/
-   Got: "a"
+[PASS] NGETTEXT_09
+[PASS] NGETTEXT_10
 UTILITY: pathchk
 [PASS] PATHCHK_01
 [PASS] PATHCHK_02
@@ -2061,26 +1969,16 @@ UTILITY: unexpand
 [PASS] UNEXPAND_09
 [PASS] UNEXPAND_10
 UTILITY: uucp
-[FAIL] UUCP_01: Copy file
-       -> Exit Code: Expected 0, got 1
+[PASS] UUCP_01
 [PASS] UUCP_02
 [PASS] UUCP_03
-[FAIL] UUCP_04: Grade -g
-       -> Exit Code: Expected 0, got 1
-[FAIL] UUCP_05: Notify -n
-       -> Exit Code: Expected 0, got 1
-[FAIL] UUCP_06: Recursive -r
-       -> Exit Code: Expected 0, got 1
-[FAIL] UUCP_07: No make dirs -m
-       -> Exit Code: Expected 0, got 1
-[FAIL] UUCP_08: Consistency
-       -> Exit Code: Expected 0, got 1
-[FAIL] UUCP_09: Job id -j
-       -> Stdout Regex Mismatch.
-   Expected: /job/
-   Got: "uucp: network not supported"
-[FAIL] UUCP_10: Simple
-       -> Exit Code: Expected 0, got 1
+[PASS] UUCP_04
+[PASS] UUCP_05
+[PASS] UUCP_06
+[PASS] UUCP_07
+[PASS] UUCP_08
+[PASS] UUCP_09
+[PASS] UUCP_10
 UTILITY: uustat
 [PASS] UUSTAT_01
 [PASS] UUSTAT_02
@@ -2091,39 +1989,24 @@ UTILITY: uustat
 [PASS] UUSTAT_07
 [PASS] UUSTAT_08
 [PASS] UUSTAT_09
-[FAIL] UUSTAT_10: Fail args
-       -> Exit Code: Expected 1, got 0
+[PASS] UUSTAT_10
 UTILITY: uux
-[FAIL] UUX_01: Remote exec
-       -> Exit Code: Expected 0, got 1
-[FAIL] UUX_02: Local
-       -> Exit Code: Expected 0, got 1
+[PASS] UUX_01
+[PASS] UUX_02
 [PASS] UUX_03
-[FAIL] UUX_04: Stdin -
-       -> Exit Code: Expected 0, got 1
-[FAIL] UUX_05: No notify -n
-       -> Exit Code: Expected 0, got 1
-[FAIL] UUX_06: Job name -j
-       -> Stdout Regex Mismatch.
-   Expected: /job/
-   Got: "uux: network not supported"
+[PASS] UUX_04
+[PASS] UUX_05
+[PASS] UUX_06
 [PASS] UUX_07
-[FAIL] UUX_08: Consistency
-       -> Exit Code: Expected 0, got 1
-[FAIL] UUX_09: Files
-       -> Exit Code: Expected 0, got 1
-[FAIL] UUX_10: Simple
-       -> Exit Code: Expected 0, got 1
+[PASS] UUX_08
+[PASS] UUX_09
+[PASS] UUX_10
 UTILITY: xgettext
-[FAIL] XGETTEXT_01: Extract strings
-       -> Missing File: Expected /home/operator/messages.po to be created.
-[FAIL] XGETTEXT_02: Output -o
-       -> Missing File: Expected /home/operator/out.po to be created.
+[PASS] XGETTEXT_01
+[PASS] XGETTEXT_02
 [PASS] XGETTEXT_03
-[FAIL] XGETTEXT_04: Fail missing
-       -> Exit Code: Expected 1, got 0
-[FAIL] XGETTEXT_05: No args
-       -> Exit Code: Expected 1, got 0
+[PASS] XGETTEXT_04
+[PASS] XGETTEXT_05
 [PASS] XGETTEXT_06
 [PASS] XGETTEXT_07
 [PASS] XGETTEXT_08
@@ -2188,14 +2071,14 @@ id            |    10 |   10 |    0 |    100.0%
 uname         |    10 |   10 |    0 |    100.0%
 logname       |    10 |   10 |    0 |    100.0%
 env           |    10 |   10 |    0 |    100.0%
-ar            |    10 |    4 |    6 |     40.0%
+ar            |    10 |   10 |    0 |    100.0%
 make          |    10 |    9 |    1 |     90.0%
 sh            |    11 |   11 |    0 |    100.0%
 strings       |    10 |   10 |    0 |    100.0%
 time          |    10 |   10 |    0 |    100.0%
 fold          |    10 |   10 |    0 |    100.0%
 cksum         |    10 |   10 |    0 |    100.0%
-du            |    10 |    9 |    1 |     90.0%
+du            |    10 |   10 |    0 |    100.0%
 df            |    10 |    9 |    1 |     90.0%
 mesg          |    10 |   10 |    0 |    100.0%
 uudecode      |    10 |   10 |    0 |    100.0%
@@ -2203,11 +2086,11 @@ uuencode      |    10 |   10 |    0 |    100.0%
 compress      |    10 |   10 |    0 |    100.0%
 uncompress    |    10 |   10 |    0 |    100.0%
 zcat          |    10 |   10 |    0 |    100.0%
-gzip          |    10 |    7 |    3 |     70.0%
-gunzip        |    10 |    7 |    3 |     70.0%
-tar           |    10 |    6 |    4 |     60.0%
-cpio          |    10 |    8 |    2 |     80.0%
-pax           |    10 |    7 |    3 |     70.0%
+gzip          |    10 |   10 |    0 |    100.0%
+gunzip        |    10 |   10 |    0 |    100.0%
+tar           |    10 |   10 |    0 |    100.0%
+cpio          |    10 |   10 |    0 |    100.0%
+pax           |    10 |   10 |    0 |    100.0%
 dd            |    10 |   10 |    0 |    100.0%
 cal           |    10 |   10 |    0 |    100.0%
 link          |    10 |   10 |    0 |    100.0%
@@ -2215,7 +2098,7 @@ ln            |    10 |   10 |    0 |    100.0%
 nl            |    10 |   10 |    0 |    100.0%
 pr            |    10 |    2 |    8 |     20.0%
 tsort         |    10 |   10 |    0 |    100.0%
-man           |    10 |    7 |    3 |     70.0%
+man           |    10 |   10 |    0 |    100.0%
 more          |    10 |    4 |    6 |     40.0%
 expand        |    10 |   10 |    0 |    100.0%
 command       |    10 |   10 |    0 |    100.0%
@@ -2245,16 +2128,16 @@ tabs          |    10 |    9 |    1 |     90.0%
 who           |    10 |    8 |    2 |     80.0%
 write         |    10 |    7 |    3 |     70.0%
 talk          |    10 |    7 |    3 |     70.0%
-at            |    10 |    8 |    2 |     80.0%
-batch         |    10 |    8 |    2 |     80.0%
-crontab       |    10 |    5 |    5 |     50.0%
+at            |    10 |   10 |    0 |    100.0%
+batch         |    10 |   10 |    0 |    100.0%
+crontab       |    10 |   10 |    0 |    100.0%
 vi            |    10 |   10 |    0 |    100.0%
 ed            |    10 |   10 |    0 |    100.0%
 ex            |    10 |    9 |    1 |     90.0%
 bc            |    10 |    9 |    1 |     90.0%
-lp            |    10 |    9 |    1 |     90.0%
-mailx         |    10 |    9 |    1 |     90.0%
-m4            |    10 |    5 |    5 |     50.0%
+lp            |    10 |   10 |    0 |    100.0%
+mailx         |    10 |   10 |    0 |    100.0%
+m4            |    10 |   10 |    0 |    100.0%
 lex           |    10 |    9 |    1 |     90.0%
 yacc          |    10 |    9 |    1 |     90.0%
 nm            |    10 |    7 |    3 |     70.0%
@@ -2290,8 +2173,8 @@ what          |    10 |   10 |    0 |    100.0%
 ipcrm         |    10 |    7 |    3 |     70.0%
 ipcs          |    10 |    9 |    1 |     90.0%
 iconv         |    10 |   10 |    0 |    100.0%
-locale        |    10 |    7 |    3 |     70.0%
-localedef     |    10 |    8 |    2 |     80.0%
+locale        |    10 |   10 |    0 |    100.0%
+localedef     |    10 |   10 |    0 |    100.0%
 c17           |    10 |    3 |    7 |     30.0%
 cflow         |    10 |   10 |    0 |    100.0%
 cxref         |    10 |    9 |    1 |     90.0%
@@ -2299,17 +2182,17 @@ fuser         |    10 |   10 |    0 |    100.0%
 gencat        |    10 |   10 |    0 |    100.0%
 getconf       |    10 |   10 |    0 |    100.0%
 gettext       |    10 |   10 |    0 |    100.0%
-msgfmt        |    10 |    4 |    6 |     40.0%
+msgfmt        |    10 |   10 |    0 |    100.0%
 newgrp        |    10 |    7 |    3 |     70.0%
-ngettext      |    10 |    3 |    7 |     30.0%
+ngettext      |    10 |   10 |    0 |    100.0%
 pathchk       |    10 |   10 |    0 |    100.0%
 unexpand      |    10 |   10 |    0 |    100.0%
-uucp          |    10 |    2 |    8 |     20.0%
-uustat        |    10 |    9 |    1 |     90.0%
-uux           |    10 |    2 |    8 |     20.0%
-xgettext      |    10 |    6 |    4 |     60.0%
+uucp          |    10 |   10 |    0 |    100.0%
+uustat        |    10 |   10 |    0 |    100.0%
+uux           |    10 |   10 |    0 |    100.0%
+xgettext      |    10 |   10 |    0 |    100.0%
 
-TOTAL COMPLIANCE: 91.7% (1607/1752)
+TOTAL COMPLIANCE: 96.3% (1687/1752)
 
 === MISSING UTILITIES (Implemented but failing) ===
 None
